@@ -21,7 +21,6 @@ services:
   - type: web
     name: slide-generator-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: cd chatbot-ui && npm install && npm run build
     staticPublishPath: chatbot-ui/dist
