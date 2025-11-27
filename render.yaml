@@ -4,7 +4,6 @@ services:
     name: slide-generator-api
     env: python
     region: oregon
-    plan: free
     buildCommand: |
       apt-get update
       apt-get install -y texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra ffmpeg
@@ -21,7 +20,6 @@ services:
   - type: web
     name: slide-generator-frontend
     env: static
-    plan: free
     buildCommand: cd chatbot-ui && npm install && npm run build
     staticPublishPath: chatbot-ui/dist
     routes:
