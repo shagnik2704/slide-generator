@@ -1,0 +1,240 @@
+{
+  "presentation_title": "The Art Of The Prompt - A Guide For Everyone",
+  "module": "AI Literacy and Prompt Engineering",
+  "episode": "Episode 1: Mastering AI Communication",
+  "learning_objectives": [
+    "Identify key components for effective AI prompts.",
+    "Construct clear and specific prompts for AI tools.",
+    "Apply iterative refinement to improve AI responses.",
+    "Utilize advanced prompting strategies like role-playing and formatting."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to AI Communication",
+    "Clarity and Specificity in Prompts",
+    "Context and Role-Playing with AI",
+    "Output Formatting and Constraints",
+    "Iterative Prompt Refinement",
+    "Practical Prompting Exercise",
+    "Summary and Next Steps"
+  ],
+  "meta_tags": [
+    "AI",
+    "Prompt Engineering",
+    "Generative AI",
+    "AI Communication",
+    "Digital Literacy",
+    "Machine Learning",
+    "Prompt Crafting",
+    "Spoken Tutorial"
+  ],
+  "prerequisites": "Basic computer literacy, familiarity with web browsers, and an active internet connection.",
+  "slides": [
+    {
+      "title": "The Art Of The Prompt",
+      "content": [
+        "A Guide For Everyone",
+        "Presented by EduPyramids / IIT Bombay Spoken Tutorial",
+        "Date: 22 May 2024"
+      ],
+      "narration": [
+        "Namaste! Welcome to this spoken tutorial.",
+        "Today, we will learn about 'The Art of the Prompt'.",
+        "This guide is for everyone.",
+        "It helps you talk to AI effectively."
+      ],
+      "image_prompt": "A futuristic hand holding a glowing pen, writing on a digital interface with AI symbols, representing communication between human and AI, soft blue and purple lighting, educational theme",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "By the end of this tutorial, you will be able to:",
+        "1. Identify key prompt components for effective AI communication.",
+        "2. Construct clear and specific prompts for various AI tools.",
+        "3. Apply iterative techniques to refine AI responses.",
+        "4. Utilize advanced strategies like role-playing and output formatting."
+      ],
+      "narration": [
+        "At the end of this spoken tutorial, you will be able to:",
+        "First, identify key prompt components.",
+        "These help you talk to AI effectively.",
+        "Second, construct clear and specific prompts.",
+        "These work for many AI tools.",
+        "Third, apply iterative techniques."
+      ],
+      "image_prompt": "A whiteboard with four distinct bullet points, each with an icon representing different learning objectives (e.g., a lightbulb for 'identify', a speech bubble for 'construct', a magnifying glass for 'apply', a gear for 'utilize'), clean educational background",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer literacy.",
+        "Familiarity with using a web browser.",
+        "An active internet connection."
+      ],
+      "narration": [
+        "To follow this tutorial, you need some basic knowledge.",
+        "You should have basic computer literacy.",
+        "This means knowing how to use a mouse and keyboard.",
+        "You also need to be familiar with using a web browser."
+      ],
+      "image_prompt": "A person comfortably using a laptop, browsing the internet, with simple icons representing a computer, web browser, and Wi-Fi signal, warm and inviting atmosphere",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Any modern operating system (Windows, macOS, Linux).",
+        "A modern web browser (e.g., Chrome, Firefox, Edge).",
+        "Reliable internet connectivity."
+      ],
+      "narration": [
+        "Let us look at the system requirements.",
+        "You can use any modern operating system.",
+        "This includes Windows, macOS, or Linux.",
+        "Ensure you have a modern web browser installed."
+      ],
+      "image_prompt": "Icons representing various operating systems (Windows, Apple, Linux penguin), web browsers (Chrome, Firefox, Edge), and a strong Wi-Fi signal, all floating around a central, glowing server rack",
+      "is_video_slide": false
+    },
+    {
+      "title": "Communicating with AI: A New Skill",
+      "content": [
+        "AI is a powerful assistant.",
+        "Like talking to a human, good input brings good output.",
+        "Quality prompts save time and boost capabilities.",
+        "Mastering prompts unlocks AI's full potential."
+      ],
+      "narration": [
+        "Imagine AI as a very smart assistant.",
+        "You need to tell it exactly what to do.",
+        "Just like talking to a human assistant.",
+        "Good input always gives you good output.",
+        "Clear prompts save you time and effort."
+      ],
+      "image_prompt": "An abstract depiction of a person having a clear dialogue with a robot or AI interface, represented by speech bubbles and clear data flow, vibrant and intelligent colors",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity and Specificity: The Basics",
+      "content": [
+        "Clarity is King: Avoid vague requests.",
+        "AI needs precise details.",
+        "Think like a detective, provide all facts.",
+        "Specificity Sells: Be exact in your request.",
+        "Define length, tone, and audience.",
+        "Example: 'Tell me about electric cars' vs. 'Write 75 words on benefits of electric cars for urban commuters, positive tone'."
+      ],
+      "narration": [
+        "First, **clarity is king**.",
+        "Do not give vague requests to AI.",
+        "AI cannot read your mind.",
+        "It needs precise details from you.",
+        "Think like a detective.",
+        "Give all necessary facts upfront.",
+        "Second, **specificity sells**."
+      ],
+      "image_prompt": "A magnifying glass focusing on two distinct prompts: one vague and one highly specific, showing the contrast, with clear text overlays and checkmarks for the specific one, minimalist design",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context and Role-Playing: Deeper Engagement",
+      "content": [
+        "Provide Context: Give background information.",
+        "Helps AI understand the 'why'.",
+        "Share relevant details or data.",
+        "Role-Playing: Assign a persona to AI.",
+        "Influences style, vocabulary, perspective.",
+        "Example: 'Act as a marketing expert. Summarize this article (link) for our Q3 social media strategy.'"
+      ],
+      "narration": [
+        "Now, let us add depth to our prompts.",
+        "First, **provide context** to the AI.",
+        "Give it background information.",
+        "This helps AI understand 'why' you are asking.",
+        "Share relevant details or data points.",
+        "Second, try **role-playing**.",
+        "Tell the AI to pretend it is someone."
+      ],
+      "image_prompt": "A split image: one side showing a user feeding background information into an AI symbol (context), the other side showing an AI symbol wearing different hats (e.g., a chef hat, a business hat) representing role-playing, interconnected thought bubbles",
+      "is_video_slide": false
+    },
+    {
+      "title": "Format and Constraints: Shaping Output",
+      "content": [
+        "Define Format: Tell AI how to present output.",
+        "Specify lists, paragraphs, tables, code.",
+        "Set Constraints: Dictate what to include or exclude.",
+        "Limit word count, restrict topics, define tone.",
+        "Example: 'List 5 party themes for adults, budget-friendly, diverse group' versus 'Generate a table with Theme, Idea, Decor; 5 distinct themes for young professionals; exclude costumes'."
+      ],
+      "narration": [
+        "Next, we shape the AI's output.",
+        "First, **define the format**.",
+        "Tell the AI how you want the answer to look.",
+        "Specify if you need lists, paragraphs, or a table.",
+        "Second, **set constraints**.",
+        "Tell the AI what to include or exclude."
+      ],
+      "image_prompt": "A user pointing to various output formats on a screen (bullet points, table, paragraph) on one side, and on the other side, a fence or boundary symbol with specific 'allow' and 'disallow' tags, illustrating constraints, organized and structured visual",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary: Your Prompting Checklist",
+      "content": [
+        "Always be Clear and Specific.",
+        "Provide Context and assign a Role.",
+        "Define Format and apply Constraints.",
+        "Remember, it is an Iterative Process."
+      ],
+      "narration": [
+        "Let us quickly summarise what we learned.",
+        "Always remember to be **clear and specific**.",
+        "Provide **context** to the AI.",
+        "Also, assign a **role** for the AI to play.",
+        "Define the **format** you want for the output."
+      ],
+      "image_prompt": "A checklist icon with four main checkmarks, each representing a key prompting principle: Clarity & Specificity, Context & Role, Format & Constraints, Iteration, clean and simple design",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Scenario:",
+        "You need a social media post for a new eco-friendly coffee cup launch.",
+        "Task:",
+        "Draft a prompt for an AI to generate this post.",
+        "Include clarity, specificity, context, role, format, and constraints."
+      ],
+      "narration": [
+        "Here is a small assignment for you.",
+        "The scenario is: You need a social media post.",
+        "This post is for a new eco-friendly coffee cup launch.",
+        "Your task is to draft a prompt for an AI.",
+        "The AI will generate this social media post.",
+        "Make sure your prompt includes everything we learned."
+      ],
+      "image_prompt": "A person thinking creatively, surrounded by thought bubbles containing keywords like 'clarity', 'role', 'format', 'constraints', and a coffee cup icon, representing the assignment task, illustrative and encouraging",
+      "is_video_slide": false
+    },
+    {
+      "title": "Acknowledgement",
+      "content": [
+        "This spoken tutorial is brought to you by EduPyramids.",
+        "It is a part of the FOSSEE project.",
+        "FOSSEE is supported by NMEICT, MHRD, Government of India.",
+        "More information is available on the Spoken Tutorial website."
+      ],
+      "narration": [
+        "Thank you for joining this spoken tutorial.",
+        "It was brought to you by EduPyramids.",
+        "This initiative is part of the FOSSEE project.",
+        "FOSSEE is supported by NMEICT.",
+        "That is the National Mission on Education."
+      ],
+      "image_prompt": "Logos of EduPyramids, FOSSEE, NMEICT, and MHRD on a clean background, with a subtle wave or digital connection motif, professional and official look",
+      "is_video_slide": false
+    }
+  ]
+}

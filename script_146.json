@@ -1,0 +1,236 @@
+{
+  "presentation_title": "The Art Of The Prompt - A Guide For Everyone",
+  "module": "AI Literacy",
+  "episode": "Episode 1: The Art of the Prompt",
+  "learning_objectives": [
+    "Identify essential components of an effective prompt.",
+    "Apply strategies to refine and iterate on prompts.",
+    "Differentiate between weak, good, and advanced prompting techniques.",
+    "Formulate clear, concise, and context-rich prompts."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction: Unlocking AI's Potential",
+    "The Foundation: Anatomy of a Great Prompt (Clarity & Specificity)",
+    "Elevating Your Prompts: Context, Constraints, and Examples",
+    "The Iterative Process: Refining for Perfection",
+    "Practical Application: Your Turn to Prompt!",
+    "Summary & Conclusion"
+  ],
+  "meta_tags": [
+    "AI prompting",
+    "prompt engineering",
+    "AI communication",
+    "chatbot interaction",
+    "generative AI",
+    "effective prompts",
+    "AI tools",
+    "digital literacy"
+  ],
+  "prerequisites": "Basic computer literacy and an understanding of what AI is.",
+  "slides": [
+    {
+      "title": "Welcome to The Art of the Prompt",
+      "content": [
+        "The Art of the Prompt - A Guide For Everyone",
+        "Presenter: EduPyramids Team"
+      ],
+      "narration": [
+        "Namaste and welcome to this tutorial on The Art of the Prompt.",
+        "Today, we will learn how to communicate effectively with AI tools.",
+        "This session is brought to you by the EduPyramids Team."
+      ],
+      "image_prompt": "A visually appealing title slide with 'The Art of the Prompt' prominently displayed. Subtle AI elements like neural networks or glowing data lines in the background. A friendly, professional presenter avatar.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify essential components of an effective prompt.",
+        "Apply strategies to refine and iterate on prompts.",
+        "Differentiate between weak, good, and advanced prompting techniques.",
+        "Formulate clear, concise, and context-rich prompts."
+      ],
+      "narration": [
+        "At the end of this tutorial, you will be able to:",
+        "Identify essential components of an effective prompt for AI tools.",
+        "Also, apply strategies to refine your prompts effectively.",
+        "You will differentiate between various prompting techniques.",
+        "Finally, you will formulate clear and precise prompts for AI."
+      ],
+      "image_prompt": "An infographic style slide with four distinct icons representing each learning objective. Clean, modern design. A subtle AI brain or digital hand in the background.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer literacy.",
+        "Familiarity with common software tools.",
+        "An understanding of what AI is (e.g., chatbots, image generators)."
+      ],
+      "narration": [
+        "Before we begin, let's review the prerequisites for this lesson.",
+        "You should have basic computer literacy.",
+        "Familiarity with common software tools will also be helpful.",
+        "And a general understanding of what AI is, like chatbots."
+      ],
+      "image_prompt": "An image showing a person comfortably using a computer, with symbols of basic software applications and a thought bubble containing simple AI icons (robot, chatbot speech bubble). Represents foundational knowledge.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A computer or mobile device.",
+        "Reliable internet connection.",
+        "Access to any AI tool for practice (e.g., a chatbot or image generator)."
+      ],
+      "narration": [
+        "Here are the system requirements for practicing alongside us.",
+        "You will need a computer or a mobile device.",
+        "A stable internet connection is also necessary.",
+        "Finally, have access to any AI tool for your practice."
+      ],
+      "image_prompt": "A minimalist image of a laptop and a smartphone connected by a network line, with a subtle cloud icon indicating internet. Represents accessibility and basic tech.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Unlocking AI's Potential",
+      "content": [
+        "Artificial Intelligence is a powerful tool.",
+        "Its effectiveness depends on how we communicate.",
+        "Analogy: A super-smart assistant.",
+        "Clear instructions yield better results."
+      ],
+      "narration": [
+        "Welcome to the world of prompting!",
+        "Artificial Intelligence is rapidly growing in our daily lives.",
+        "It's a powerful tool, from chatbots to image generators.",
+        "However, its effectiveness depends on how we communicate.",
+        "Think of it like having a super-smart assistant."
+      ],
+      "image_prompt": "An illustration of a person giving instructions to a friendly, intelligent robot assistant. The assistant is holding a glowing thought bubble, ready to execute tasks. Focus on clear communication.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity: Say What You Mean",
+      "content": [
+        "AI cannot read your mind; precision is key.",
+        "Ambiguity leads to generic or incorrect responses.",
+        "Weak: 'Write about dogs.'",
+        "Good: 'Write a short paragraph about owning a dog.'",
+        "Advanced: 'Write a concise, engaging paragraph for a pet blog on psychological benefits of dog ownership, highlighting companionship for busy professionals.'"
+      ],
+      "narration": [
+        "Let's explore the anatomy of a great prompt.",
+        "First, clarity: Say exactly what you mean.",
+        "The AI cannot read your mind; precision is key.",
+        "Ambiguity leads to generic or irrelevant responses.",
+        "For example, a weak prompt: 'Write about dogs.'",
+        "A good prompt: 'Write a short paragraph about owning a dog.'",
+        "An advanced prompt goes further.",
+        "It specifies the audience, format, and key themes.",
+        "For instance, it might highlight psychological benefits for professionals."
+      ],
+      "image_prompt": "A visual comparing three speech bubbles. The first is vague (a question mark), the second is slightly clearer (a simple dog icon), the third is detailed (a dog icon with a thought bubble of 'psychological benefits, busy professionals'). Emphasize precision.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Specificity: Details Matter",
+      "content": [
+        "Provide enough information for AI to understand.",
+        "Avoid vagueness in your requests.",
+        "Weak: 'Tell me a story.'",
+        "Good: 'Tell me a short sci-fi story about a robot.'",
+        "Advanced: 'Write a 500-word sci-fi story set on Mars, featuring a robot named Unit 734 discovering an alien artifact. Focus on discovery and friendship with a hopeful ending.'",
+        "Pro Tip: Use the 5 W's and H (Who, What, When, Where, Why, How)."
+      ],
+      "narration": [
+        "Next, let's talk about specificity.",
+        "Provide enough information for the AI to understand.",
+        "Always avoid vagueness in your requests.",
+        "A weak prompt: 'Tell me a story.'",
+        "A good prompt: 'Tell me a short sci-fi story about a robot.'",
+        "An advanced prompt specifies length, setting, character, and themes.",
+        "Pro Tip: Use the 5 W's and H: Who, What, When, Where, Why, How."
+      ],
+      "image_prompt": "An illustration of a magnifying glass focusing on a small detail within a larger image. Next to it, icons representing the 5 W's and H (Who, What, When, Where, Why, How). Highlight the importance of granular details.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context and Constraints",
+      "content": [
+        "Context: Give the AI a role or persona.",
+        "Weak: 'Explain photosynthesis.'",
+        "Advanced: 'Act as a high school biology teacher. Explain photosynthesis to 10th graders using a cooking analogy, covering main inputs and outputs.'",
+        "Constraints: Tell the AI how to present information.",
+        "Weak: 'Give me ideas for a birthday party.'",
+        "Advanced: 'Generate 5 unique, budget-friendly ideas for a 30th birthday party for a board game and craft beer lover. Present each with a 2-3 sentence description and 2-3 bullet points for activities, decor, and food pairings.'"
+      ],
+      "narration": [
+        "Elevating prompts involves context and constraints.",
+        "Context is king: Give the AI a role or persona.",
+        "A weak prompt: 'Explain photosynthesis.' (You get a generic entry.)",
+        "An advanced prompt provides a teacher's persona and analogy.",
+        "Constraints shape the output's format and style.",
+        "A weak prompt: 'Give me ideas for a birthday party.'",
+        "An advanced prompt specifies number, interests, and format."
+      ],
+      "image_prompt": "A visual metaphor: a director (person) on a film set, clearly instructing an actor (robot) on their role (persona) and scene boundaries (constraints). The actor is performing exactly as directed.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary: Key Takeaways",
+      "content": [
+        "Clarity & Specificity: Be precise and detailed.",
+        "Context & Constraints: Give AI a role and define output.",
+        "Iterate & Refine: Experiment and adjust prompts.",
+        "The AI is a tool: You are the director."
+      ],
+      "narration": [
+        "Let's quickly summarize our key takeaways.",
+        "Remember clarity and specificity: Be precise in your requests.",
+        "Use context and constraints: Give the AI a role.",
+        "Also, define how you want the output formatted.",
+        "Iterate and refine: Don't expect perfection initially."
+      ],
+      "image_prompt": "A vibrant infographic summarizing the four key takeaways: clarity, specificity, context/constraints, and iteration. Each point has a small, relevant icon. A central image of a brain or lightbulb connecting these ideas.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment: Your Turn to Prompt!",
+      "content": [
+        "Scenario: Plan a simple, healthy dinner for two people for a weeknight.",
+        "Initial Weak Prompt: 'Give me a dinner recipe.'",
+        "Activity: Transform this weak prompt into a 'Good,' then 'Better,' and finally an 'Advanced' prompt.",
+        "Consider: Who is eating? What kind of meal? Dietary needs? Output format?"
+      ],
+      "narration": [
+        "Now for a practical application: your turn to prompt!",
+        "Scenario: You need a simple, healthy dinner for two.",
+        "Your initial weak prompt is: 'Give me a dinner recipe.'",
+        "Your activity is to transform this prompt.",
+        "Make it 'Good,' then 'Better,' and finally 'Advanced.'"
+      ],
+      "image_prompt": "An illustration of a notepad and pen, with a thought bubble showing a meal being planned. Icons representing healthy food, a clock for time, and two people (for number of diners). Encourages practical application.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You & Acknowledgements",
+      "content": [
+        "Presented by EduPyramids Team.",
+        "Developed under the FOSSEE project, IIT Bombay.",
+        "Spoken Tutorial project is funded by NMEICT, MHRD, Govt. of India.",
+        "Practice regularly to master prompting!"
+      ],
+      "narration": [
+        "Thank you for attending this tutorial on The Art of the Prompt.",
+        "This presentation was brought to you by the EduPyramids Team.",
+        "It was developed under the FOSSEE project, IIT Bombay.",
+        "The Spoken Tutorial project is funded by NMEICT, MHRD, Govt. of India.",
+        "We encourage you to practice regularly with various AI tools."
+      ],
+      "image_prompt": "A professional closing slide with logos of EduPyramids, IIT Bombay, and FOSSEE project. A friendly, encouraging tone. An open book or computer screen in the background symbolizing continued learning.",
+      "is_video_slide": false
+    }
+  ]
+}

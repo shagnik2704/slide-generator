@@ -37,7 +37,7 @@ const MessageBubble = ({ message }) => {
                 {/* Message Content */}
                 <div style={{
                     backgroundColor: isUser ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                    color: isUser ? 'white' : 'var(--text-primary)',
+                    color: isUser ? 'var(--bg-primary)' : 'var(--text-primary)',
                     padding: '0.75rem 1.25rem',
                     borderRadius: isUser ? '1.25rem 1.25rem 0.25rem 1.25rem' : '1.25rem 1.25rem 1.25rem 0.25rem',
                     boxShadow: 'var(--shadow-md)',

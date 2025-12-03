@@ -1,0 +1,228 @@
+{
+  "presentation_title": "The Gen AI Landscape And World Of Open Source AI",
+  "module": "Generative AI Fundamentals",
+  "episode": "Episode 1: Gen AI Landscape and Open Source AI",
+  "learning_objectives": [
+    "Differentiate proprietary and open-source Generative AI models.",
+    "Identify key players and foundational models in the Gen AI ecosystems.",
+    "Explain benefits and challenges of leveraging open-source AI.",
+    "Formulate effective prompts for a Generative AI model."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to the AI Revolution",
+    "Decoding Generative AI: Core Concepts",
+    "Proprietary vs. Open Source AI",
+    "Deeper Dive into Open Source AI",
+    "Crafting Effective Prompts",
+    "Challenges and Future of Open Source AI",
+    "Summary and Next Steps"
+  ],
+  "meta_tags": [
+    "Generative AI",
+    "Open Source AI",
+    "Proprietary AI",
+    "LLM",
+    "Stable Diffusion",
+    "Prompt Engineering",
+    "AI Models",
+    "Hugging Face",
+    "AI Landscape",
+    "AI Basics"
+  ],
+  "prerequisites": "Basic computer literacy and an interest in Artificial Intelligence.",
+  "slides": [
+    {
+      "title": "Welcome to our tutorial!",
+      "content": [
+        "The Gen AI Landscape And World Of Open Source AI",
+        "Presented by EduPyramids / FOSSEE, IIT Bombay"
+      ],
+      "narration": [
+        "Hello everyone!",
+        "Welcome to this exciting tutorial on Generative AI.",
+        "Today, we will explore the Gen AI Landscape."
+      ],
+      "image_prompt": "A futuristic digital landscape with various AI symbols, connecting lines, and a prominent 'Generative AI' title. Include FOSSEE and EduPyramids logos subtly.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Differentiate proprietary and open-source Gen AI models.",
+        "Identify key players and foundational models.",
+        "Explain benefits and challenges of open-source AI.",
+        "Formulate effective prompts for Gen AI models."
+      ],
+      "narration": [
+        "At the end of this tutorial, you will be able to:",
+        "First, differentiate proprietary and open-source Gen AI models.",
+        "Second, identify key players and foundational models.",
+        "Third, explain benefits and challenges of open-source AI.",
+        "Finally, you will formulate effective prompts for Gen AI models."
+      ],
+      "image_prompt": "A graphic displaying four bullet points with checkmarks, abstract learning icons, and a brain processing information.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer literacy.",
+        "An interest in Artificial Intelligence."
+      ],
+      "narration": [
+        "To get the most from this tutorial, you should have:",
+        "Basic computer literacy.",
+        "Also, an interest in Artificial Intelligence will be helpful."
+      ],
+      "image_prompt": "A person with a lightbulb above head, thinking, surrounded by tech symbols.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A computer or smartphone.",
+        "An internet connection.",
+        "A web browser."
+      ],
+      "narration": [
+        "For hands-on practice, you will need:",
+        "A computer or smartphone.",
+        "An active internet connection.",
+        "And a web browser to access online tools."
+      ],
+      "image_prompt": "Icons of a desktop computer, a mobile phone, a Wi-Fi symbol, and a browser window, all connected.",
+      "is_video_slide": false
+    },
+    {
+      "title": "What is Generative AI?",
+      "content": [
+        "AI that creates new, original content.",
+        "Generates text, images, code, audio, video.",
+        "Shift from 'predictive' to 'generative' capabilities."
+      ],
+      "narration": [
+        "Remember when AI just predicted things?",
+        "Now, Generative AI creates!",
+        "It produces new, original content.",
+        "Think of text, images, code, or even video."
+      ],
+      "image_prompt": "An AI robot hand sketching a diverse range of items: text, a landscape, code snippets, a musical note, and a video play button, all coming from its fingertips.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Proprietary AI: The Walled Gardens",
+      "content": [
+        "Developed and owned by private companies.",
+        "Limited access to inner workings.",
+        "Examples: OpenAI (GPT), Google (Gemini).",
+        "Advantages: High performance, dedicated support.",
+        "Disadvantages: High cost, vendor lock-in, less transparency."
+      ],
+      "narration": [
+        "First, let us understand Proprietary AI.",
+        "These models are owned by private companies.",
+        "Access to their code is usually restricted.",
+        "Examples include OpenAI's GPT and Google's Gemini.",
+        "They offer cutting-edge performance and support.",
+        "But, they come with high costs and less transparency."
+      ],
+      "image_prompt": "A tall, imposing digital wall with a futuristic gate, symbolizing closed-off technology. Include small logos of major tech companies faintly visible behind the wall.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Open Source AI: The Open Fields",
+      "content": [
+        "Code and architecture are publicly available.",
+        "Anyone can inspect, use, modify, distribute.",
+        "Examples: Meta (Llama), Stability AI (Stable Diffusion).",
+        "Hugging Face is a central hub.",
+        "Advantages: Transparency, customizability, cost-effective."
+      ],
+      "narration": [
+        "Next, we have Open Source AI.",
+        "Here, the underlying code is public.",
+        "Anyone can use, modify, or share it.",
+        "Meta's Llama and Stable Diffusion are examples.",
+        "Hugging Face is a major platform for this.",
+        "Benefits include transparency, customization, and lower costs."
+      ],
+      "image_prompt": "A vast, open digital field stretching to the horizon, with diverse users collaboratively planting and growing digital crops. Interconnected lines represent community and sharing.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Choose Open Source AI?",
+      "content": [
+        "Cost efficiency: Run locally or on cheaper infrastructure.",
+        "Customization: Fine-tune models with your own data.",
+        "Transparency: Audit for bias, understand behavior.",
+        "Community: Leverage collective intelligence and rapid innovation."
+      ],
+      "narration": [
+        "Why is Open Source AI a strategic choice?",
+        "It offers great cost efficiency.",
+        "You can run models locally or on cheaper servers.",
+        "Customization is key; fine-tune with your data.",
+        "Transparency allows bias checks and better understanding."
+      ],
+      "image_prompt": "Four interconnected icons: a piggy bank (cost-efficiency), a customizable gear (customization), an open book (transparency), and a group of people working together (community).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary of Key Points",
+      "content": [
+        "Generative AI creates new content.",
+        "Proprietary AI is closed, powerful, but costly.",
+        "Open Source AI is open, flexible, and community-driven.",
+        "Prompt Engineering is crucial for good AI output."
+      ],
+      "narration": [
+        "Let's quickly recap what we learned.",
+        "Generative AI creates new content, not just predicts.",
+        "Proprietary AI offers polish but with a price.",
+        "Open Source AI gives power, flexibility, and community.",
+        "Remember, prompt engineering is your superpower."
+      ],
+      "image_prompt": "A concise mind map showing connections between 'Generative AI', 'Proprietary AI', 'Open Source AI', and 'Prompt Engineering', with small descriptive icons for each.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment: Practice Prompting",
+      "content": [
+        "Visit a free online Gen AI demo (e.g., a Hugging Face Space).",
+        "Experiment with text or image generation.",
+        "Start with a basic prompt.",
+        "Then, refine it to include more details and context.",
+        "Observe how your output changes with better prompts."
+      ],
+      "narration": [
+        "Now for a small assignment.",
+        "Visit a free online Generative AI demo.",
+        "Try out a Hugging Face Space for text or images.",
+        "Start with a simple prompt, like 'Write a story'.",
+        "Then, make it specific.",
+        "Add details like audience, length, and tone."
+      ],
+      "image_prompt": "A user interacting with an AI chat interface on a screen, showing a basic prompt evolving into a detailed, creative prompt. Two different AI outputs are shown side-by-side, one generic, one rich.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Acknowledgement",
+      "content": [
+        "Thank you for joining this Spoken Tutorial.",
+        "Spoken Tutorials are an IIT Bombay initiative.",
+        "More information: spoken-tutorial.org",
+        "This content is brought to you by EduPyramids."
+      ],
+      "narration": [
+        "Thank you for participating in this Spoken Tutorial.",
+        "Spoken Tutorials are an initiative of IIT Bombay.",
+        "Find more free tutorials at spoken-tutorial.org.",
+        "This content was created with EduPyramids.",
+        "Keep exploring the world of Generative AI!"
+      ],
+      "image_prompt": "Logos of IIT Bombay, FOSSEE, and EduPyramids prominently displayed, with a 'Thank You' message and a globe icon.",
+      "is_video_slide": false
+    }
+  ]
+}

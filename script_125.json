@@ -1,0 +1,249 @@
+{
+  "presentation_title": "The Art Of The Prompt - A Guide For Everyone",
+  "module": "Effective AI Communication",
+  "episode": "Episode 1: The Art Of The Prompt - A Guide For Everyone",
+  "learning_objectives": [
+    "Define what a powerful prompt is and its significance.",
+    "Identify key components for effective prompting.",
+    "Apply strategies to improve prompt outcomes.",
+    "Construct refined and effective prompts for various purposes."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Prompting",
+    "Clarity and Specificity",
+    "Context and Persona",
+    "Format and Constraints",
+    "Iterative Prompting",
+    "Practical Application",
+    "Summary and Conclusion"
+  ],
+  "meta_tags": [
+    "prompt engineering",
+    "AI communication",
+    "generative AI",
+    "ChatGPT",
+    "DALL-E",
+    "effective communication",
+    "prompt writing",
+    "AI tools",
+    "spoken tutorial"
+  ],
+  "prerequisites": "Basic computer literacy and a general understanding of what AI tools like ChatGPT or DALL-E are.",
+  "slides": [
+    {
+      "title": "The Art Of The Prompt - A Guide For Everyone",
+      "content": [
+        "Presented by:",
+        "IIT Bombay Spoken Tutorial Team"
+      ],
+      "narration": [
+        "Hello, and welcome to this tutorial.",
+        "Today, we explore 'The Art Of The Prompt'.",
+        "This guide is for everyone."
+      ],
+      "image_prompt": "A vibrant illustration of a human hand writing a prompt into a glowing AI interface, with abstract data flowing around, text 'The Art Of The Prompt' prominently displayed. Modern, engaging, friendly style.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "At the end of this tutorial, you will be able to:",
+        "Define a powerful prompt and its significance.",
+        "Identify key components for effective prompting.",
+        "Apply strategies to improve prompt outcomes.",
+        "Construct refined and effective prompts for various purposes."
+      ],
+      "narration": [
+        "At tutorial's end, you will be able to:",
+        "[Pause]",
+        "Define a powerful prompt.",
+        "Understand its significance.",
+        "[Pause]",
+        "Identify key prompt components."
+      ],
+      "image_prompt": "An infographic style slide with four distinct icons, each representing a learning objective, like a lightbulb for 'define', a magnifying glass for 'identify', a gear for 'apply', and a building block for 'construct'. Clean, modern design.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "To follow this tutorial, you should have:",
+        "Basic computer literacy.",
+        "A general understanding of AI tools like ChatGPT or DALL-E."
+      ],
+      "narration": [
+        "To follow this tutorial, you need:",
+        "[Pause]",
+        "Basic computer literacy.",
+        "[Pause]"
+      ],
+      "image_prompt": "A simple illustration showing a user confidently operating a computer keyboard, with small icons of AI tool logos (like a chat bubble and an image icon) subtly in the background. Minimalist and clear.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "This tutorial uses a generic setup.",
+        "No specific software installation is required.",
+        "An internet browser for AI tool access is beneficial."
+      ],
+      "narration": [
+        "This tutorial uses a generic setup.",
+        "No specific software is needed.",
+        "[Pause]",
+        "An internet browser is beneficial."
+      ],
+      "image_prompt": "A minimalist icon representing a generic computer screen with a web browser interface open, suggesting internet access. No specific software logos, just a general 'online' feel.",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Power of Your Words",
+      "content": [
+        "Ever struggled to explain something clearly?",
+        "AI tools also need clear instructions.",
+        "A prompt is a specific instruction for a desired output.",
+        "It is more than just a simple question."
+      ],
+      "narration": [
+        "Ever struggle to explain things?",
+        "AI tools also need clear instructions.",
+        "[Pause]",
+        "A prompt is a specific instruction.",
+        "It seeks a desired output."
+      ],
+      "image_prompt": "An illustration of two people trying to communicate, with speech bubbles showing mixed signals. On the right, a clear, direct arrow points from a person to an AI robot, symbolizing effective prompting. Analogy of clear communication.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Be Crystal Clear: The 5 Ws and H",
+      "content": [
+        "Vague requests give vague results.",
+        "Use 'Who, What, When, Where, Why, How'.",
+        "Example:",
+        "Weak: 'Write about cats.'",
+        "Good: 'Write a short paragraph about domestic cats.'",
+        "Better: 'Write 50 words for kids (5-7) about playful orange tabby cats and their toys.'"
+      ],
+      "narration": [
+        "Vague requests give vague results.",
+        "Be crystal clear.",
+        "[Pause]",
+        "Use the '5 Ws and H' checklist.",
+        "Who, What, When, Where, Why, How.",
+        "[Pause]",
+        "See examples."
+      ],
+      "image_prompt": "An infographic showcasing the 'Who, What, When, Where, Why, How' checklist. Below it, three progressively refined text bubbles showing the cat examples from 'Weak' to 'Better' prompts. Clear visual progression.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Setting the Scene: Context and Persona",
+      "content": [
+        "Give background information for better understanding.",
+        "AI needs to know your specific situation.",
+        "Tell the AI *who* to be (e.g., 'Act as an expert').",
+        "A persona shapes the tone and content.",
+        "Example:",
+        "Weak: 'Write a story.'",
+        "Better: 'You are a fantasy novelist. Write 200 words about a weary knight, melancholic tone, for young adults.'"
+      ],
+      "narration": [
+        "AI lacks prior intentions.",
+        "Give background information.",
+        "Context helps AI understand requests.",
+        "This tailors responses.",
+        "[Pause]",
+        "Tell the AI *who* to be.",
+        "Adopt a persona.",
+        "Example: 'Act as an expert'."
+      ],
+      "image_prompt": "A split image. On one side, a thought bubble with disjointed ideas (lack of context). On the other, a scene where a user is giving clear instructions to an AI robot, with the AI wearing different 'hats' (e.g., a chef's hat, a doctor's hat) representing personas. Visualizes context and role-playing.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Getting Exactly What You Need",
+      "content": [
+        "Specify *how* to structure the response (e.g., list, table).",
+        "Define the tone (e.g., formal, casual, humorous).",
+        "Set constraints: word count, character limit, exclusions.",
+        "Example:",
+        "Weak: 'Ideas for a healthy breakfast.'",
+        "Better: 'You are a nutritionist. Provide 5 unique, gluten-free breakfast ideas, <300 calories, <10 min prep. Markdown table: 'Idea', 'Calories', 'Prep Time', 'Ingredients'. Friendly tone. Include a 'Pro Tip'.'"
+      ],
+      "narration": [
+        "Specify *how* to structure the response.",
+        "Use lists, tables, or paragraphs.",
+        "Ensures desired presentation.",
+        "[Pause]",
+        "Define tone and style.",
+        "Examples: 'formal', 'casual', 'humorous'.",
+        "[Pause]"
+      ],
+      "image_prompt": "An infographic with three distinct sections: 'Format' (icons for list, table, paragraph), 'Tone' (emojis for happy, serious, funny), and 'Constraints' (a ruler for length, a checkbox for exclusions). A clear, well-structured example prompt text box shows the refined breakfast example.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Key Takeaways: The ABCs of Great Prompts",
+      "content": [
+        "**A**lways be **C**lear and **S**pecific.",
+        "**B**ring **C**ontext and **P**ersona.",
+        "**C**onstrain for **F**ormat and **T**one.",
+        "**D**ialogue is **I**terative; **R**efine and **R**espond.",
+        "Effective prompting is a universal communication skill."
+      ],
+      "narration": [
+        "Let us recap key takeaways.",
+        "[Pause]",
+        "**A**lways be **C**lear and **S**pecific.",
+        "**B**ring **C**ontext and **P**ersona.",
+        "**C**onstrain for **F**ormat and **T**one.",
+        "**D**ialogue is **I**terative."
+      ],
+      "image_prompt": "A summary slide featuring bolded letters A, B, C, D, each with a small icon representing the associated concept (e.g., a magnifying glass for 'Clear', a mask for 'Persona', a wrench for 'Constraint', speech bubbles for 'Dialogue'). Clean, impactful design.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment: Craft Your Own Masterpiece Prompt",
+      "content": [
+        "**Task**: Plan a simple day trip using an AI tool.",
+        "1. Choose a destination (e.g., local park, museum).",
+        "2. Define your audience (e.g., family with kids, solo traveler).",
+        "3. Specify budget, activities, and duration.",
+        "4. Define desired output format (e.g., bulleted list itinerary).",
+        "5. Add a persona (e.g., 'Act as a budget travel planner').",
+        "6. Write your prompt and observe the AI's response."
+      ],
+      "narration": [
+        "Here is your assignment.",
+        "Plan a simple day trip using an AI tool.",
+        "[Pause]",
+        "First, choose your destination.",
+        "Example: a park or museum.",
+        "[Pause]",
+        "Second, define your audience.",
+        "Families or solo travelers."
+      ],
+      "image_prompt": "A visually appealing prompt template with empty fields, and a small travel icon. The steps for the assignment are overlaid, guiding the user to fill in their own prompt details. Encouraging and interactive.",
+      "is_video_slide": false
+    },
+    {
+      "title": "About the Spoken Tutorial Project",
+      "content": [
+        "This tutorial is part of the Spoken Tutorial Project.",
+        "It is an initiative of IIT Bombay.",
+        "For more information, visit spoken-tutorial.org.",
+        "Thank you for joining us today!"
+      ],
+      "narration": [
+        "This tutorial is part of the Spoken Tutorial Project.",
+        "It is an initiative of IIT Bombay.",
+        "[Pause]",
+        "Visit spoken-tutorial.org for more information.",
+        "[Pause]"
+      ],
+      "image_prompt": "The FOSSEE and IIT Bombay logos prominently displayed. Text 'spoken-tutorial.org' clearly visible. A warm, concluding graphic, perhaps a fading lightbulb or a completed puzzle piece.",
+      "is_video_slide": false
+    }
+  ]
+}

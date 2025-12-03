@@ -1,19 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+/* Light Theme - OpenAI Style (Clean, B&W) */
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #fdf2f8;
-  --bg-tertiary: #fce7f3;
-  --text-primary: #334155;
-  --text-secondary: #64748b;
-  --accent-primary: #db2777;
-  --accent-secondary: #f472b6;
-  --accent-glow: rgba(219, 39, 119, 0.2);
-  --border-color: #fbcfe8;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #000000;
+  --text-secondary: #6b7280;
+  --accent-primary: #000000;
+  /* Black accent as requested */
+  --accent-secondary: #000000;
+  --accent-glow: rgba(0, 0, 0, 0.05);
+  --border-color: #e5e7eb;
+  --font-sans: 'Google Sans', 'Outfit', system-ui, -apple-system, sans-serif;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   --shadow-glow: 0 0 15px var(--accent-glow);
+}
+
+/* Dark Theme - OpenAI Style (Black & White) */
+[data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #262626;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --accent-primary: #e5e5e5;
+  /* Softer off-white accent */
+  --accent-secondary: #d4d4d4;
+  --accent-glow: rgba(255, 255, 255, 0.1);
+  --border-color: #404040;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
 * {
@@ -30,6 +53,7 @@ body {
   -webkit-font-smoothing: antialiased;
   height: 100vh;
   overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
