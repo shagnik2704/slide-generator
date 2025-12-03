@@ -24,50 +24,76 @@ def generate_outline(state: AgentState):
     
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
     
-    # Generate outline prompt (without target audience)
-    meta_prompt = f"""Act as an expert instructional designer and curriculum developer specializing in creating engaging educational content.
+    # Generate outline following user's example format
+    meta_prompt = f"""Create a detailed, practical outline for a Spoken Tutorial on: "{topic}"
 
-Create a detailed, structured outline for a lesson/presentation on: "{topic}"
+=== STYLE TO FOLLOW ===
 
-**REQUIREMENTS:**
+Use the EXACT style from this example:
 
-1. **Learning Objectives**: Define 3-4 clear learning objectives that learners should achieve. Use appropriate action verbs based on the target audience
+**Module Structure:**
+- Module title with topic name
+- Brief welcome/intro explaining why this matters
+- Clear numbered sections (2.1, 2.2, 2.3...)
 
-2. **Estimated Duration**: Suggest appropriate duration (e.g., "3-4 minutes", "5-7 minutes")
+**Content Style:**
+- Direct, practical explanations
+- Concrete examples with labels:
+  * "Weak Example:", "Good Example:", "Better Example:", "Excellent Example:"
+  * OR "Basic:", "Intermediate:", "Advanced:"
+- Show progressions (weak → good → better)
+- Include specific prompts/examples that learners can copy
 
-**OUTLINE STRUCTURE:**
+**Section Format:**
+Each section should have:
+1. Clear section number and title (e.g., "2.1: The Anatomy of...")
+2. Brief explanation (1-2 sentences)
+3. Concrete examples showing the concept
+4. Where applicable, show before/after or weak/strong comparisons
 
-Create 5-7 numbered main sections. For each section:
+**Required Elements:**
+- **Learning objectives (2-3 SIMPLE, ACHIEVABLE objectives)**
+  * Keep them realistic for a 3-4 minute tutorial
+  * Focus on ONE skill or concept, not multiple
+  * Use clear action verbs: "create", "identify", "use", "apply"
+  * Example: "Create a clear prompt" NOT "Master advanced prompt engineering"
+- Prerequisites (what to know before)
+- 5-7 main sections each with:
+  * Concept explanation
+  * Multiple concrete examples
+  * Hands-on practice activity
+- Final section: "Your Turn!" with practical exercises
 
-- Use hierarchical numbering (e.g., 2.1, 2.2, 2.3)
-- Provide a clear, descriptive title
-- Include 2-3 sub-points explaining what will be covered
-- Where appropriate, include progressive examples showing skill development:
-  * **Weak/Basic approach**
-  * **Good approach**
-  * **Better/Advanced approach**
-  * **Excellent/Expert approach** (optional)
+**Language:**
+- Simple, direct sentences
+- Use "you" to address learner
+- Avoid: "exciting journey", "let's dive in", "embark", "delve"
+- Use: "Now...", "Here's how...", "Try this..."
 
-**SPECIAL SECTIONS TO INCLUDE:**
+**Examples Must Be:**
+- Specific and actionable
+- Show actual prompts/commands/code learners can try
+- Progress from simple to complex
+- Include expected output/results
 
-1. **Introduction/Overview** - Hook the audience, explain relevance
-2. **Core Concepts** - 3-5 main teaching sections with examples
-3. **Practical Application** - Hands-on activity or exercise
-4. **Summary/Conclusion** - Key takeaways
+=== OUTPUT FORMAT ===
 
-**STYLE GUIDELINES:**
+Module [Number]: {topic}
+[2-3 sentence introduction explaining why this skill matters]
 
-- **Spacing:** Ensure there is a blank line between every section and sub-section for readability.
-- **Formatting:** Use bold text for key terms and headers.
-- **Tone:** Use a friendly, conversational tone.
-- **Clarity:** Make complex ideas accessible.
-- **Insights:** Include "Pro Tip" or "Bonus" insights where relevant.
-- **Teaching Moments:** Add teaching moments (e.g., "This sounds technical, but it's simple...")
+[Section 2.1]: [First Main Concept]
+[Explanation in 2-3 sentences]
+[Concrete Example 1 with label]
+[Concrete Example 2 with label]
+[Concrete Example 3 showing progression]
 
-**FORMAT:** Output as Markdown with clear hierarchy, proper numbering, and visual formatting.
+[Section 2.2]: [Second Main Concept]
+[Continue same pattern...]
 
-**CRITICAL:** Generate original, substantive content for "{topic}". Don't just provide generic section titles - include specific details, concepts, and examples relevant to this topic.
-"""
+[Final Section]: Your Turn! / Practical Lab
+[Hands-on exercise with specific instructions]
+
+Generate a complete, detailed outline following this exact format."""
     
     try:
         print(f"Generating structured outline...")

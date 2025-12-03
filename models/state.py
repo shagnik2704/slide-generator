@@ -20,7 +20,6 @@ class AgentState(TypedDict):
     project_id: Optional[int]
     outline: Optional[str]
     mode: str
-    target_audience: str  # "kids", "students", "professionals", "general"
     json_script: dict
     script_pdf_path: Optional[str]
     slides_pdf_path: Optional[str]
@@ -29,12 +28,6 @@ class AgentState(TypedDict):
     latex_content: Optional[str]
     audio_map: dict
     video_path: Optional[str]
-    # Storytelling quality review fields
-    # storytelling_iteration: int
-    # storytelling_review_passed: bool
-    # storytelling_feedback: Optional[str]
-    
-    # Evaluation & Optimization fields
     evaluation_iteration: int
     evaluation_passed: bool
     evaluation_feedback: Optional[str]
