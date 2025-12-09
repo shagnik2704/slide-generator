@@ -3,9 +3,10 @@ PDF generation nodes (script PDF, LaTeX conversion, compilation).
 """
 import os
 import subprocess
+import shutil
 from datetime import datetime
 from script_pdf_generator import create_script_pdf
-from latex_templates import render_standard, render_split_vertical, render_quote, render_immersive, render_big_number, escape_latex
+from latex_templates import escape_latex, get_renderer, get_renderer_by_title
 import latex_templates
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable
@@ -15,11 +16,14 @@ def generate_script_pdf(state: AgentState):
     """Generates a PDF for script review."""
     print("Generating script review PDF...")
     json_script = state['json_script']
-    project_id = state.get('project_id', 'temp')
+    
+    # Generate unique filename using timestamp
+    import time
+    project_id = int(time.time())
     
     filename = f"static/script_review_{project_id}.pdf"
     pdf_path = create_script_pdf(json_script, output_filename=filename)
-    return {"script_pdf_path": pdf_path}
+    return {"script_pdf_path": pdf_path, "project_id": project_id}
 
 @retry(
     retry=retry_if_exception_type((ResourceExhausted, ServiceUnavailable)),
@@ -51,118 +55,56 @@ def generate_images(state: AgentState):
     client = genai.Client(api_key=api_key)
         
     for i, slide in enumerate(slides):
+        slide_title = slide.get('title', '').lower()
+        
+        # Skip image generation for intro and ending slides
+        skip_titles = [
+            'title slide', 'learning objective', 'system requirement', 
+            'prerequisite', 'pre-requisite', 'summary', 'assignment', 
+            'thank you', 'thank-you', 'what we did', 'recap'
+        ]
+        
+        should_skip = any(skip in slide_title for skip in skip_titles)
+        
+        if should_skip:
+            print(f"⏭️  Skipping image generation for slide {i+1}: {slide.get('title', 'Untitled')}")
+            continue
+        
         prompt = slide.get('image_prompt')
         if prompt:
-            # Check if this is a video slide
-            if slide.get('is_video_slide'):
-                try:
-                    # Use dedicated video prompt if available, otherwise fallback to image prompt
-                    raw_video_prompt = slide.get('video_prompt') or prompt
-                    print(f"Generating VIDEO for slide {i+1} (Audience: {target_audience}) using Veo...")
-                    video_prompt = f"{style_prefix} {raw_video_prompt}. Cinematic, smooth motion, high quality."
-                    
-                    # Use generate_videos instead of generate_content
-                    operation = client.models.generate_videos(
-                        model='veo-3.1-generate-preview',
-                        prompt=video_prompt,
-                    )
-                    print(f"Operation started: {operation.name}")
-                    
-                    # Poll for completion
-                    while True:
-                        time.sleep(5)
-                        print(".", end="", flush=True)
-                        op_status = client.operations.get(operation)
-                        if op_status.done:
-                            print("\nOperation done!")
-                            if op_status.result:
-                                video_uri = op_status.result.generated_videos[0].video.uri
-                                print(f"Downloading video from {video_uri}...")
-                                
-                                # Download video
-                                import requests
-                                headers = {"x-goog-api-key": api_key}
-                                vid_response = requests.get(video_uri, headers=headers)
-                                
-                                if vid_response.status_code == 200:
-                                    video_path = f"generated_images/slide_{i}.mp4"
-                                    with open(video_path, "wb") as f:
-                                        f.write(vid_response.content)
-                                    slide['image_path'] = os.path.abspath(video_path)
-                                    print(f"✓ Video generated for slide {i+1}")
-                                else:
-                                    raise Exception(f"Failed to download video: {vid_response.status_code}")
-                            else:
-                                raise Exception("Operation completed but no result returned")
-                            break
-                    
-                except Exception as e:
-                    print(f"Failed to generate video for slide {i+1}: {e}")
-                    # Fallback to image generation if video fails
-                    print("Falling back to image generation...")
-                    try:
-                        prompt = f"{style_prefix} {prompt}"
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash-image',
-                            contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_modality=["IMAGE"],
-                            image_config=types.ImageConfig(aspect_ratio="1:1"),
-                        ),
-                        )
-                        if response.parts:
-                            for part in response.parts:
-                                if part.inline_data:
-                                    try:
-                                        generated_image = part.as_image()
-                                        image_path = f"generated_images/slide_{i}.png"
-                                        generated_image.save(image_path)
-                                        slide['image_path'] = os.path.abspath(image_path)
-                                        print(f"✓ Fallback image generated for slide {i+1}")
-                                        break
-                                    except Exception as e_img:
-                                        print(f"Error saving fallback image for slide {i+1}: {e_img}")
-                        else:
-                            print(f"No image parts returned for fallback slide {i+1}")
-                    except Exception as e2:
-                        print(f"Failed to generate fallback image for slide {i+1}: {e2}")
-
-            else:
-                # Standard Image Generation
-                prompt = f"{style_prefix} {prompt}"
-                try:
-                    print(f"Generating image for slide {i+1} (Audience: {target_audience})...")
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash-image',
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_modalities=["IMAGE"],
-                            image_config=types.ImageConfig(aspect_ratio="1:1"),
-                        ),
-                    )
-                    if response.parts:
-                        for part in response.parts:
-                            if part.inline_data:
-                                try:
-                                    generated_image = part.as_image()
-                                    image_path = f"generated_images/slide_{i}.png"
-                                    generated_image.save(image_path)
-                                    slide['image_path'] = os.path.abspath(image_path)
-                                    print(f"✓ Image generated for slide {i+1}")
-                                    break
-                                except Exception as e_img:
-                                    print(f"Error saving image for slide {i+1}: {e_img}")
-                    else:
-                         print(f"No image parts returned for slide {i+1}")
-                except Exception as e:
-                    print(f"Failed to generate image for slide {i+1}: {e}")
+            # Standard Image Generation for content slides only
+            prompt = f"{style_prefix} {prompt}"
+            try:
+                print(f"Generating image for slide {i+1} (Audience: {target_audience})...")
+                response = client.models.generate_content(
+                    model='gemini-3-pro-image-preview',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"],
+                        image_config=types.ImageConfig(aspect_ratio="1:1"),
+                    ),
+                )
+                if response.parts:
+                    for part in response.parts:
+                        if part.inline_data:
+                            try:
+                                generated_image = part.as_image()
+                                image_path = f"generated_images/slide_{i}.png"
+                                generated_image.save(image_path)
+                                slide['image_path'] = os.path.abspath(image_path)
+                                print(f"✓ Image generated for slide {i+1}")
+                                break
+                            except Exception as e_img:
+                                print(f"Error saving image for slide {i+1}: {e_img}")
+                else:
+                     print(f"No image parts returned for slide {i+1}")
+            except Exception as e:
+                print(f"Failed to generate image for slide {i+1}: {e}")
                 
     return {"json_script": json_script}
 
-from latex_templates import (
-    render_standard, render_split_vertical, render_quote, 
-    render_immersive, render_big_number, escape_latex
-)
+from latex_templates import escape_latex, get_renderer, get_renderer_by_title
+import latex_templates
 
 def convert_to_latex(state: AgentState):
     """Converts JSON script to LaTeX using the Template Library."""
@@ -172,45 +114,67 @@ def convert_to_latex(state: AgentState):
     # Escape title
     safe_title = escape_latex(json_data.get('presentation_title', 'Presentation'))
     
-    # Date Format: Day Month Year (e.g., 29 November 2025)
-    current_date = datetime.now().strftime("%d %B %Y")
+    # Get absolute path to logo
+    logo_path = os.path.abspath("static/logo.png")
     
     latex_content = r"""
-\documentclass[17pt]{beamer}
+\documentclass[17pt,xcolor=table]{beamer} 
+\setbeamersize{text margin left=0.75cm,text margin right=0.75cm}
+
+% --- Packages ---
+\mathversion{bold}
+\usepackage{beamerthemesplit}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetheme{Madrid}
-\usecolortheme{default}
+\usetikzlibrary{calc}
 
-% Remove navigation symbols
+% --- Colors and beamer setup ---
+\definecolor{grey}{rgb}{0.44, 0.5, 0.58}
+\setbeamercolor{structure}{fg=grey}
+\setbeamercolor{alerted text}{fg=grey}
+
+% --- Remove navigation symbols ---
 \setbeamertemplate{navigation symbols}{}
 
-% Remove footer (slide numbers)
-\setbeamertemplate{footline}{}
+% --- Logo is now added per-slide for intro/outro slides only ---
+% Content slides with images do NOT show the logo
 
-\title{""" + safe_title + r"""}
-\author{Madhulika Goyal \\ IIT Bombay}
-\date{""" + current_date + r"""}
-
-% Global Background Logo (Bottom Right)
-\addtobeamertemplate{background canvas}{}{
-    \begin{tikzpicture}[remember picture,overlay]
-        \node[anchor=south east, inner sep=0.5cm] at (current page.south east) {
-            \includegraphics[width=2.5cm]{""" + os.path.abspath("assets/logo.png") + r"""}
-        };
-    \end{tikzpicture}
+% --- Title info ---
+\title [""" + safe_title + r"""\hspace{0.5cm}]
+{""" + safe_title + r"""}\date{}
+\author [\ EduPyramids Educational Services Pvt.\ Ltd.]{%
+{Spoken Tutorial}\\[5pt]
+  { \small brought to you by }\\[5pt]
+{EduPyramids Educational Services Pvt.\ Ltd.}\\[10pt]
+  { \textcolor{blue}{https://spoken-tutorial.org}}
 }
-\begin{document}
+\date{} % empty date
 
-\frame{\titlepage}
+\begin{document}
+\sffamily\bfseries
+
+% ---- Title slide ----
+\begin{frame}
+  \titlepage
+\end{frame}
 """
     
-    # Slides
+    # Slides - skip title slide since titlepage is already rendered above
     for slide in json_data.get('slides', []):
-        layout = 'standard'
+        slide_title = slide.get('title', '').lower()
         
-        # Use the factory to get the right renderer
-        renderer = latex_templates.get_renderer(layout)
+        # Skip title slide (already rendered above)
+        if 'title slide' in slide_title:
+            continue
+        
+        # First check if explicit layout is set
+        layout = slide.get('layout')
+        if layout:
+            renderer = latex_templates.get_renderer(layout)
+        else:
+            # Auto-detect renderer based on slide title
+            renderer = latex_templates.get_renderer_by_title(slide.get('title', ''))
+        
         latex_content += renderer(slide)
         
     latex_content += r"\end{document}"
@@ -230,7 +194,24 @@ def compile_pdf(state: AgentState):
         env = os.environ.copy()
         env["PATH"] = f"/Library/TeX/texbin:/usr/local/bin:{env['PATH']}"
         subprocess.run(["pdflatex", "-interaction=nonstopmode", "-file-line-error", output_tex], check=True, capture_output=True, env=env)
-        return {"pdf_path": "output.pdf"}
+        
+        # Move PDF to static folder with timestamp
+        import time
+        import shutil
+        timestamp = int(time.time())
+        static_pdf_path = f"static/slides_{timestamp}.pdf"
+        
+        # Ensure static directory exists
+        os.makedirs("static", exist_ok=True)
+        
+        # Move the compiled PDF to static folder
+        if os.path.exists("output.pdf"):
+            shutil.move("output.pdf", static_pdf_path)
+            print(f"✅ PDF moved to {static_pdf_path}")
+            return {"pdf_path": static_pdf_path}
+        else:
+            return {"error": "PDF compilation succeeded but output.pdf not found"}
+            
     except subprocess.CalledProcessError as e:
         error_msg = e.stdout.decode() if e.stdout else str(e)
         print(f"Error compiling PDF: {error_msg}")

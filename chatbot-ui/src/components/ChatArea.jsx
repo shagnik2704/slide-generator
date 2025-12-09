@@ -10,11 +10,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
     const [messages, setMessages] = useState([
-        { id: 1, role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you today?' }
+        { id: 1, role: 'assistant', content: 'Hello! Please upload your presentation outline to get started. I\'ll help you generate a script, slides, and video from it.' }
     ]);
     const [isTyping, setIsTyping] = useState(false);
     const [currentProjectId, setCurrentProjectId] = useState(null);
-    // targetAudience state removed
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -25,44 +24,43 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    const handleSendMessage = async (text) => {
-        const newUserMessage = { id: Date.now(), role: 'user', content: text };
-        setMessages(prev => [...prev, newUserMessage]);
+    const handleSendMessage = async (file) => {
+        // Show upload status
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Uploading outline: ${file.name}...`
+        };
+        setMessages(prev => [...prev, uploadMessage]);
         setIsTyping(true);
 
         try {
-            // Phase 0: Generate Outline
-            const response = await fetch(`${API_URL}/generate_outline`, {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_URL}/upload_outline`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    topic: text
-                }),
+                body: formData,
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to generate outline');
+                throw new Error(errorData.detail || 'Failed to upload outline');
             }
 
             const data = await response.json();
 
-            // Store project_id for subsequent steps
-            if (data.project_id) {
-                setCurrentProjectId(data.project_id);
-                console.log(`✅ Created project #${data.project_id}`);
-            }
+            // Generate a simple project ID
+            const projectId = Date.now();
+            setCurrentProjectId(projectId);
 
             const newBotMessage = {
                 id: Date.now() + 1,
                 role: 'assistant',
-                content: `I've generated an outline for your presentation (Project #${data.project_id}). Download the Word document below to review and edit it.`,
+                content: `✅ Outline uploaded successfully!\n\nYou can now generate the script.`,
                 outline: data.outline,
-                outlineDocxUrl: data.outline_docx_url,
-                projectId: data.project_id,
-                type: 'outline_review'
+                projectId: projectId,
+                type: 'outline_uploaded'
             };
             setMessages(prev => [...prev, newBotMessage]);
 
@@ -79,27 +77,79 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         }
     };
 
+    const handleUploadScript = async (file) => {
+        // Show upload status
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Uploading script: ${file.name}...`
+        };
+        setMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_URL}/upload_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to upload script');
+            }
+
+            const data = await response.json();
+            setCurrentProjectId(data.project_id);
+
+            const newBotMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides) You can now generate slides directly.`,
+                jsonScript: data.json_script,
+                projectId: data.project_id,
+                type: 'script_uploaded'
+            };
+            setMessages(prev => [...prev, newBotMessage]);
+
+        } catch (error) {
+            console.error("Error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: error.message || "Sorry, something went wrong uploading the script."
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
     const handleGenerateScript = async (outline, projectId) => {
         setIsTyping(true);
+
         const statusMessage = {
             id: Date.now(),
             role: 'assistant',
-            content: `Generating script based on outline...`
+            content: `Generating script...`
         };
         setMessages(prev => [...prev, statusMessage]);
 
         try {
-            // Phase 1: Generate Script
+            const requestBody = {
+                outline: outline,
+                title: `Project #${projectId}`,
+                project_id: projectId
+            };
+
             const response = await fetch(`${API_URL}/generate_script`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    topic: outline, // Pass outline as topic/context
-                    title: `Project #${projectId}`,
-                    project_id: projectId
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
@@ -133,54 +183,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         }
     };
 
-    const handleUploadOutline = async (file, projectId) => {
-        setIsTyping(true);
-        const statusMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Uploading and processing your edited outline...`
-        };
-        setMessages(prev => [...prev, statusMessage]);
 
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('project_id', projectId);
-
-            const response = await fetch(`${API_URL}/upload_outline?project_id=${projectId}`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to upload outline');
-            }
-
-            const data = await response.json();
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ Outline updated successfully! You can now generate the script based on your edited outline.`,
-                outline: data.outline,
-                projectId: projectId,
-                type: 'outline_uploaded'
-            };
-            setMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong uploading the outline."
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
 
     const handleGenerateSlides = async (jsonScript, projectId) => {
         console.log("🚀 handleGenerateSlides called with:", { jsonScript, projectId });
@@ -353,7 +356,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                         alignItems: 'center',
                         gap: '0.5rem'
                     }}>
-                        New Chat
+                        Spoken Tutorial Generator
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -385,132 +388,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                     {messages.map((msg) => (
                         <div key={msg.id}>
                             <MessageBubble message={msg} />
-                            {msg.type === 'outline_review' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
-                                    <a
-                                        href={`${API_URL}${msg.outlineDocxUrl}`}
-                                        download={`outline_${msg.projectId}.docx`}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: 'linear-gradient(135deg, #4CAF50, #45a049)',
-                                            color: 'white',
-                                            textDecoration: 'none',
-                                            borderRadius: '0.75rem',
-                                            fontSize: '1rem',
-                                            fontWeight: 600,
-                                            marginBottom: '1rem',
-                                            boxShadow: 'var(--shadow-md)',
-                                            transition: 'all 0.3s ease',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <Download size={20} />
-                                        Download Outline (Word Doc)
-                                    </a>
-                                    <br />
-                                    <input
-                                        type="file"
-                                        accept=".md,.docx,.txt"
-                                        id={`file-upload-${msg.projectId}`}
-                                        style={{ display: 'none' }}
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file) {
-                                                handleUploadOutline(file, msg.projectId);
-                                            }
-                                        }}
-                                    />
-                                    <label
-                                        htmlFor={`file-upload-${msg.projectId}`}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, #2196F3, #1976D2)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            borderRadius: '0.75rem',
-                                            fontSize: '1rem',
-                                            fontWeight: 600,
-                                            marginBottom: '1rem',
-                                            marginRight: '1rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            transition: 'all 0.3s ease',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={20} />
-                                        Upload Edited Outline
-                                    </label>
-                                    <br />
-                                    <button
-                                        onClick={() => handleGenerateScript(msg.outline, msg.projectId)}
-                                        disabled={isTyping}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={20} />
-                                        Approve & Generate Script
-                                    </button>
-                                </div>
-                            )}
+
                             {msg.type === 'outline_uploaded' && (
                                 <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
                                     <button
@@ -549,6 +427,47 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                                     >
                                         <FileText size={20} />
                                         Generate Script from Edited Outline
+                                    </button>
+                                </div>
+                            )}
+                            {msg.type === 'script_uploaded' && (
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                    <button
+                                        onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
+                                        disabled={isTyping}
+                                        style={{
+                                            padding: '0.75rem 1.5rem',
+                                            background: isTyping
+                                                ? 'var(--bg-tertiary)'
+                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                            color: isTyping ? 'var(--text-secondary)' : 'white',
+                                            border: 'none',
+                                            borderRadius: '0.75rem',
+                                            cursor: isTyping ? 'not-allowed' : 'pointer',
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
+                                            opacity: isTyping ? 0.6 : 1,
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isTyping) {
+                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isTyping) {
+                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }
+                                        }}
+                                    >
+                                        <FileText size={20} />
+                                        Generate Slides from Script
                                     </button>
                                 </div>
                             )}
@@ -737,10 +656,8 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 </div>
             </div>
 
-            {/* Audience Selector Removed */}
-
             {/* Input Area */}
-            <InputArea onSendMessage={handleSendMessage} disabled={isTyping} />
+            <InputArea onSendMessage={handleSendMessage} onUploadScript={handleUploadScript} disabled={isTyping} />
 
             <style>{`
         @keyframes bounce {

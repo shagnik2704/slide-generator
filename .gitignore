@@ -36,5 +36,11 @@ Thumbs.db
 # Logs
 *.log
 
+
 # Uploads
 uploads/
+
+# Local Generated Data
+archive/
+generated_images/
+

@@ -30,10 +30,5 @@ def route_step(state: AgentState):
     elif mode == "video_production":
         return "video"
         
-    elif mode == "outline_only":
-        return "outline"
-        
-    if state.get("outline"):
-        return "script"
-        
+    # Default: script generation (outline is always provided by user)
     return "script"

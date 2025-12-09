@@ -1,0 +1,348 @@
+{
+  "presentation_title": "Coding with AI",
+  "module": null,
+  "episode": null,
+  "learning_objectives": [],
+  "duration": null,
+  "outline": [
+    "Explaining programming concepts",
+    "Adding files to the project workspace",
+    "Getting our code reviewed",
+    "Asking for the explanation of a program"
+  ],
+  "meta_tags": [
+    "chatgpt",
+    "ai",
+    "assistant",
+    "code",
+    "review",
+    "video tutorial"
+  ],
+  "prerequisites": "To follow this tutorial, learners should have basic knowledge of:\nUsing internet, and\nProgramming in C/C++",
+  "slides": [
+    {
+      "title": "Slide 1\nTitle Slide",
+      "content": [],
+      "narration": "Welcome to the Spoken Tutorial on\nCoding with Al.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 2\nLearning Objectives",
+      "content": [],
+      "narration": "In this tutorial, we will learn how to\nuse ChatGPT to\nExplain programming concepts\nand\nGet our code reviewed",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 3\nSystem Requirements",
+      "content": [
+        "To record this tutorial, I am using",
+        "Ubuntu Linux OS v22.04",
+        "Firefox web browser v141.0.4",
+        "Visual Studio Code v1.100.3"
+      ],
+      "narration": "To record this tutorial, I am using the\nfollowing setup.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 4\nPre-requisites",
+      "content": [],
+      "narration": "To follow this tutorial, learners should\nhave basic knowledge of:\nUsing internet, and\nProgramming in C/C++",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 5\nCode Files",
+      "content": [
+        "The following code files are required to\npractice this tutorial.",
+        "1. strReverse.cpp",
+        "2. abstractCls.cpp",
+        "These files are provided in the Code Files\nlink of this tutorial page."
+      ],
+      "narration": "The following code files are required\nto practice this tutorial.\nThese files are provided in the Code\nFiles link of this tutorial page.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 6\nSignificance of Conversational AI",
+      "content": [],
+      "narration": "Tools like ChatGPT can serve\nas a reliable coding assistant.\nIt can help with syntax, explain\ntricky concepts, review your\ncode, and suggest\noptimizations.\nIt is like a knowledgeable\ncolleague you can ask anytime\nfor guidance.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Suppose I forgot how to use typedef\nin C programming.\nLet us go to ChatGPT and ask how to\nuse typedef.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "First, let us create a New project.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Projects help us organize our work\nbetter.\nProjects keep chats, files, and custom\ninstructions in one place.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on Projects and enter a name\nof your choice.\nI will add the name, C/C++\nProgramming.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on Create Project.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Observe that the project is created.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "The name of the project appears\nabove the Chat window.\nIt indicates that we are now in the\nworkspace of our project.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us now ask our queries here.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Type,\nExplain how to use typedef in C\nprogramming with some examples.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Press Enter.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "ChatGPT first explains what a\ntypedef is, followed by its syntax and\nusage.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Now, suppose I have written some\ncode.\nI want ChatGPT to review it.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I have written a C++ code to reverse\na string.\nThe code works fine, but I want\nChatGPT to suggest improvements.\nFor that, we can directly copy and\npaste the code in the Chat window.\nThen give the prompt.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I have saved the file strReverse.cpp\non my Desktop.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Go to your project, C/C++\nProgramming.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on Add files.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on \"Add files\".\nA pop-up window appears stating\n\"Add documents, code files, images,\nand more.\"",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on that message and upload the\nfile.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Wait for the file to get uploaded.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Close this window.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "type this prompt",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Press Enter.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Observe that it first confirms the\ncorrectness of the program.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Next, it checks for readability, best\npractices, and improvements.\nIf needed, we can ask follow-up\nquestions.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "We can ask ChatGPT to explain some\ncode as well.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I have a class-based code that uses\nan abstract class.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I want to understand why an abstract\nclass is being used in this code.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I have saved this program as\nabstractCls.cpp on my system.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us add this file to the project\nworkspace.\nClick on the project titled C/C++\nProgramming.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on the Add Files icon and\nupload abstractCIs.cpp file",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "In the Chat window, type the following\nprompt.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Press Enter and observe the\nresponse. bei",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 7\nSummary",
+      "content": [],
+      "narration": "With this, we come to the end of this\ntutorial.\nLet us summarise.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [
+        "In this tutorial, we have learnt how to use\nChatGPT to",
+        "Explain programming concepts",
+        "Get our code reviewed"
+      ],
+      "narration": null,
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 8\nAssignment",
+      "content": [],
+      "narration": "As an assignment, please do the\nfollowing.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [
+        "As an assignment,"
+      ],
+      "narration": null,
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Create a new project and give the\nC++ code that reverses a string to\nChatGPT.\nAsk it to write an equivalent Python\ncode.\nEnsure that both programs produce\nthe same results.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Slide 9\nThank you",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you\nby EduPyramids Educational Services\nPrivate limited SINE IIT Bombay\nThank you for joining!",
+      "image_prompt": null,
+      "is_video_slide": false
+    }
+  ]
+}

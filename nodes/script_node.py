@@ -1,292 +1,245 @@
 """
 Script generation node for the slide generator agent.
-Contains the main script generation logic with comprehensive prompts.
+Uses LangChain's ChatGoogleGenerativeAI with few-shot sample scripts.
 """
 import os
 import json
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable, InternalServerError
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from langchain_google_genai import ChatGoogleGenerativeAI
 from models.state import AgentState
 
 load_dotenv()
 
-@retry(
-    retry=retry_if_exception_type((ResourceExhausted, ServiceUnavailable, InternalServerError)),
-    wait=wait_exponential(multiplier=4, min=4, max=60),
-    stop=stop_after_attempt(5)
-)
+# Path to sample scripts
+SAMPLE_SCRIPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "sample_scripts", "json")
+
+
+# Pydantic schema for structured output
+class Slide(BaseModel):
+    title: str
+    narration: str
+    image_prompt: Optional[str] = ""
+
+
+class Script(BaseModel):
+    presentation_title: str
+    module: str
+    episode: str
+    learning_objectives: List[str]
+    duration: str
+    outline: List[str]
+    meta_tags: List[str]
+    prerequisites: str
+    slides: List[Slide]
+
+
+def _load_sample_script(filename: str) -> dict:
+    """Load a sample script from the json folder."""
+    path = os.path.join(SAMPLE_SCRIPTS_DIR, filename)
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Could not load sample script {filename}: {e}")
+        return {}
+
+
+def _format_sample_for_prompt(sample: dict) -> str:
+    """Format all slides for inclusion in the prompt."""
+    if not sample:
+        return ""
+    
+    slides = sample.get("slides", [])
+    
+    # Extract all slides with title and narration
+    all_slides = [
+        {"title": s.get("title", ""), "narration": s.get("narration", "")}
+        for s in slides if s.get("narration")
+    ]
+    
+    formatted = {
+        "title": sample.get("presentation_title", ""),
+        "slides": all_slides
+    }
+    
+    return json.dumps(formatted, indent=2)
+
+
 def generate_script(state: AgentState):
-    """Generates a presentation script using Gemini 2.5 Flash."""
+    """Generates a presentation script from outline using LangChain."""
     print("Generating script...")
     outline = state.get('outline')
 
-    # Use raw Google GenAI client instead of LangChain to avoid hanging issues
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-    
-    # Read business requirements
 
+    # Initialize LangChain model with structured output
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+    )
+    
+    # Use structured output for guaranteed schema
+    structured_llm = llm.with_structured_output(Script)
+    
+    # Few-shot prompt with structure and content rules
     prompt = f"""
-    You are an expert Spoken Tutorial script writer following IIT Bombay's FOSSEE / EduPyramids standards.
-    
-    Generate a complete PRACTICAL DEMONSTRATION tutorial script based on the outline: "{outline}".
-    
-    === TUTORIAL STYLE: PRACTICAL DEMONSTRATION ===
-    
-    This is a HANDS-ON, FOLLOW-ALONG tutorial where the learner:
-    - Opens actual tools/software
-    - Types actual examples
-    - Sees real outputs
-    - Compares results progressively
-    
-    NOT a conceptual explanation with analogies.
-    
-    === CRITICAL: DISTILL AND FLOW ===
-    
-    **DO NOT REPLICATE THE OUTLINE:**
-    - The outline is comprehensive and DENSE - it's a reference, NOT a script
-    - Your script must be LIGHTER and more CONVERSATIONAL
-    - Focus on ONE clear demonstration that builds progressively
-    - Goal: 3-4 minute spoken tutorial (approximately 500 words)
-    
-    **CONVERSATIONAL TEACHING:**
-    - Sound like a teacher DEMONSTRATING live, not lecturing
-    - Use "you" and "we" to create connection
-    - Use "Let's...", "Now...", "Here's what happens...", "See the difference?"
-    - Invite learners to follow along: "Type this...", "Notice that..."
-    
-    
-    === SCREEN RECORDING VISUAL CUES (CRITICAL) ===
-    
-    **Keep visual cues CONCISE but SPECIFIC:**
-    
-    GOOD Examples (concise and clear):
-    - "Screen recording showing browser with ChatGPT"
-    - "Close-up: user typing 'Write about electric cars'"
-    - "Side-by-side: vague output vs improved output"
-    - "Three outputs in comparison"
-    - "Person at laptop with thought bubble"
-    - "Icons: 'task', 'topic', 'instructions'"
-    
-    BAD Examples (too vague OR too long):
-    - ❌ "Screenshot" (too vague)
-    - ❌ "Screen recording showing browser window with different AI tools including ChatGPT, Gemini, Claude and other options" (too descriptive)
-    
-    **RULE: Keep visual cues under 60 characters when possible**
-    
-    === PROGRESSIVE DEMONSTRATION PATTERN (CRITICAL) ===
-    
-    **Build ONE example progressively across 4-6 slides:**
-    
-    1. **Show the problem/vague approach**
-       - Visual: "person typing vague prompt"
-       - Narration: "For example, consider this prompt: 'Write about electric cars'"
-       - Show the weak output
-    
-    2. **First improvement**
-       - Visual: "User typing improved prompt with [specific element added]"
-       - Narration: "Now, let's improve it by adding [element]"
-       - Show the better output
-    
-    3. **Second improvement** (if applicable)
-       - Visual: "User adding [another element]"
-       - Narration: "Adding [element] makes the response more tailored"
-       - Show even better output
-    
-    4. **Final comparison**
-       - Visual: "Side-by-side: all outputs in comparison"
-       - Narration: "Compare all three outputs now. See the difference?"
-    
-    === LANGUAGE REQUIREMENTS (CRITICAL) ===
-    
-    **SIMPLE INDIAN ENGLISH:**
-    • Use common, everyday words easy to translate to Hindi, Tamil, Telugu
-    • AVOID: Complex vocabulary, idioms, Western-centric examples
-    • USE: Simple sentence structure, universal examples, clear instructions
-    
-    === IIT BOMBAY FOSSEE / EDUPYRAMIDS STANDARDS ===
-    
-    **METADATA (REQUIRED)**:
-    - Module: Descriptive module name
-    - Episode: Episode number and title
-    - **Learning Objectives: 2-3 SIMPLE, ACHIEVABLE objectives**
-      * Realistic for 3-4 minute tutorial
-      * Use Bloom's verbs: "define", "explain", "compare", "apply", "create"
-      * Example: "Apply the 3 Cs to write clear prompts" NOT "Master prompting"
-    - Duration: 3-4 min
-    - Outline: List of main topics covered
-    - Meta Tags: Keywords for searchability
-    - Prerequisites: Prior knowledge needed
-    
-    **TWO-COLUMN SCRIPT STRUCTURE**:
-    - Visual Cue: Specific description of what's shown on screen
-    - Narration: What the instructor says (array of sentences, one per line)
-    
-    === SLIDE STRUCTURE (10-13 SLIDES) ===
-    
-    **Slide 1: TITLE SLIDE**
-    - Visual Cue: "Title Slide"
-    - Narration: "Welcome to this Spoken Tutorial on [Topic]."
-    
-    **Slide 2: LEARNING OBJECTIVES**
-    - Visual Cue: "Learning Objectives Slide"
-    - Narration: "In this tutorial, you will learn to [obj1], [obj2], and [obj3]."
-    
-    **Slide 3: SYSTEM REQUIREMENTS**
-    - Visual Cue: "System Requirements Slide"
-    - Narration: "Here I am using a browser on a computer or mobile."
-    - Purpose: Tell learner what tools they need
-    
-    **Slide 4: PREREQUISITES**
-    - Visual Cue: "Pre-requisite Slide"
-    - Narration: "To follow this tutorial, you must be connected to the internet.
-You should also be familiar with [prerequisite concept].
-No coding needed."
-    - Purpose: Set expectations for prior knowledge
-    
-    **Slide 5: HOOK / PROBLEM STATEMENT**
-    - Visual Cue: Relatable scenario showing the problem
-    - Narration: Start with a question or problem the tutorial solves
-    - Example: "Have you ever got a strange answer from an AI? That's because of a weak prompt."
-    
-    **Slide 6: CONCEPT INTRODUCTION**
-    - Visual Cue: Simple graphic or text slide explaining the main concept
-    - Narration: Define the concept in simple terms
-    - Example: "Best prompts include three ingredients: Clarity, Context, and Constraints."
-    
-    **Slides 7-11: PROGRESSIVE DEMONSTRATION** (4-5 slides)
-    
-    **Pattern for each demonstration slide:**
-    
-    - **First Demo Slide (Vague Approach)**
-      * Visual: "Screen recording: user typing vague prompt"
-      * Narration: "Let's open any AI tool. Type a vague prompt like '[example]'. What do you think, is this clear or vague?"
-      * Show the weak result
-    
-    - **Improvement Slide(s)** (2-3 slides, one per element)
-      * Visual: "Screen close-up: user adding [specific element]"
-      * Narration: "Now, let's improve it by adding [element]. [Specific instruction]."
-      * Show the improved result
-      * Use section headers if teaching multiple elements: "Section Header: 1. Clarity"
-    
-    - **Comparison Slide**
-      * Visual: "Side-by-side: [element 1] vs [element 2] comparison" or "Three outputs shown side by side"
-      * Narration: "See the difference? Adding [elements] improves quality significantly."
-    
-    **KEY DEMONSTRATION GUIDELINES:**
-    - Use actual tool names: ChatGPT, Gemini, Claude
-    - Show actual prompts being typed
-    - Describe outputs: "The output will be broad and unfocused" → "The output is sharper, more relevant"
-    - Use "pause moments": "Pause and think about it. What should the AI focus on?"
-    - Use progressive reveals: Show problem → solution 1 → solution 2 → final comparison
-    
-    **Slide 12: SUMMARY**
-    - Visual Cue: Summary slide with key points
-    - Narration: "Let's summarize. [Key takeaway 1]. [Key takeaway 2]. [Key takeaway 3]."
-    - Keep concise, use narrative language
-    
-    **Slide 13: ASSIGNMENT**
-    - Visual Cue: Assignment instructions
-    - Narration: "Now as an assignment, [specific task]. 
-First, [step 1]. 
-Then [step 2]. 
-Compare the results. 
-Note down which [element] made the biggest difference."
-    - **CRITICAL**: Assignment MUST let learners practice what was demonstrated
-    
-    **Slide 14: ACKNOWLEDGEMENT**
-    - Visual Cue: "EduPyramids logo"
-    - Narration: "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited, SINE, IIT Bombay.
-Thank you for joining!"
-    
-    === JSON OUTPUT FORMAT (STRICT) ===
-    
-    {{
-      "presentation_title": "",
-      "module": "",
-      "episode": "",
-      "learning_objectives": ["Use Bloom's verbs"],
-      "duration": "3-4 min",
-      "outline": [""],
-      "meta_tags": [""],
-      "prerequisites": "",
-      "slides": [
-        {{
-          "title": "",
-          "content": [""],
-          "narration": [""],
-          "image_prompt": "",
-          "video_prompt": "",
-          "is_video_slide": false
-        }}
-      ]
-    }}
-    """
+
+=== STRUCTURE (REQUIRED) ===
+1. Metadata: Module, Episode, Learning Objectives, Duration (3-4 min), Outline, Meta Tags, Prerequisites
+2. Use Bloom's Taxonomy: Remember → Understand → Apply → Analyze → Evaluate → Create
+3. Slide Structure:
+   - Title Slide (welcome)
+   - Learning Objectives
+   - System Requirements
+   - Prerequisites
+   - Content Slides (main teaching)
+   - Summary
+   - Assignment (one small task)
+   - Thank You (EduPyramids credit)
+
+4. VISUAL CUES FOR BOILERPLATE SLIDES:
+   Set image_prompt to the slide type for these slides:
+   - Title Slide → image_prompt: "Title Slide"
+   - Learning Objectives → image_prompt: "Learning Objectives Slide"
+   - System Requirements → image_prompt: "System Requirements Slide"
+   - Prerequisites → image_prompt: "Pre-requisite Slide"
+   - Summary → image_prompt: "Summary Slide"
+   - Assignment → image_prompt: "Assignment Slide"
+   - Thank You → image_prompt: "EduPyramids logo"
+
+=== BOILERPLATE NARRATION FORMAT ===
+Title Slide MUST be exactly:
+   "Welcome to this Spoken Tutorial on ..."
+   (Just one sentence, nothing more)
+
+Learning Objectives Slide MUST be simple:
+   "In this tutorial, you will learn to ...."
+   Example: "In this tutorial, you will learn to define, explain, compare, and apply the 3 Cs of prompting."
+   (Just one sentence with action verbs, NOT detailed explanations)
+
+System Requirements Slide:
+    Keep it simple, whatever you think is required for the tutorial.
+   (Keep it very brief - 1-2 sentences max)
+
+Prerequisites Slide:
+   Keep it simple, whatever you think is required for the tutorial.
+   (Brief, simple requirements - 1-2 sentences max)
+
+Thank You Slide MUST be exactly:
+   "This Spoken Tutorial is brought to you by
+   EduPyramids Educational Services Private Limited, SINE, IIT Bombay.
+   Thank you for joining."
+
+5. OUTLINE in metadata should ONLY list CONTENT topics:
+   Example (correct):
+   - What is AI Automation?
+   - Example: Email Sorting with AI
+   - What is AI Augmentation?
+   - Comparing Automation and Augmentation
+   
+   NOT (wrong):
+   - Introduction, Learning Objectives, Prerequisites, Summary, Thank You
+
+=== LEARNING OBJECTIVES STYLE ===
+- Limit to 3-4 objectives (not 5-6)
+- VARY sentence starters: "Learn...", "Understand...", "Apply...", "Identify...", "Compare..."
+- Do NOT repeat "You will also learn" multiple times
+- Each objective must be COMPLETE: "difference between X and Y" (not just "difference between X")
+- Use action verbs from Bloom's Taxonomy
+
+=== ANALOGIES ===
+Use simple, everyday analogies:
+- "Think of AI like a child - follows instructions literally."
+- "It's like giving directions to a friend."
+
+
+=== NARRATIVE FLOW FOR CONTENT SLIDES (follow this rhythm) ===
+
+1. QUESTION - Start with a hook
+   "Can an AI be fair if its data is not fair?"
+   "What happens when we give vague instructions?"
+
+2. EXPLAIN - 2-3 short sentences on the concept
+   "AI learns patterns from the data it sees."
+   "When data has bias, the AI learns that bias."
+
+3. TRANSITION - Signal what's coming next
+   "Now, let us see how this works."
+   "Next, we will view a real-life example."
+
+4. EXAMPLE - Show a concrete case
+   "Old records show more male doctors."
+   "We ask the AI: 'Show me a doctor.'"
+   "Notice how the pattern appears."
+
+5. REFLECT - Prompt the learner to think
+   "You saw the output. Now reflect."
+   "Did the AI choose this on its own?"
+   "Pause the screen now."
+
+6. APPLY - Connect to next topic or action
+   "Now that we saw the data, let us check the output."
+   "We now learn simple checks to fix this."
+
+=== SLIDE DENSITY FOR CONTENT SLIDES (CRITICAL) ===
+Each content slide should have MAX 4-5 sentences in narration.
+If a topic needs more, SPLIT into multiple slides.
+- ✅ Good: 4 short sentences per slide
+- ❌ Bad: 10+ sentences crammed into one slide
+
+=== DEMO-FOCUSED STYLE (CRITICAL) ===
+Use ACTION VERBS and step-by-step instructions:
+- "Open any AI tool."
+- "Type this in the message box."
+- "Now click Submit."
+- "See the difference?"
+- "Compare the two outputs."
+
+NOT passive descriptions:
+- ❌ "The AI might show different results."
+- ✅ "Notice how the AI shows different results."
+
+=== SENTENCE CRISPNESS ===
+Write SHORT, PUNCHY sentences (5-10 words ideal):
+- ✅ "A weak prompt gets a weak answer."
+- ✅ "The AI can't read your mind."
+- ✅ "See the difference?"
+- ❌ "When you explain your thoughts clearly, the AI gives better results."
+
+=== WRITING STYLE ===
+- Simple Indian English (easy to translate)
+- Short sentences (5-10 words ideal)
+- No arrows, hyphens, or symbols in narration
+- EACH SENTENCE ON A NEW LINE (for TTS audio generation)
+  ✅ "AI learns from data.\nThis data comes from the real world."
+  ❌ "AI learns from data. This data comes from the real world."
+
+
+=== BOLD TERMS (for transliteration) ===
+Use **bold** for terms that should be transliterated, not translated.
+IMPORTANT: Apply this ONLY in the 'narration' field.
+DO NOT use bold markers in 'title', 'module', or 'episode' fields.
+
+Terms to bold (in narration only):
+- AI tools: **AI**, **ML**, **ChatGPT**, **Gemini**, **Claude**, **Python**
+- Technical terms: **API**, **LLM**, **Deep Learning**, **Neural Network**, **tokens**, **prompt**
+- Organizations: **EduPyramids**, **SINE**, **IIT Bombay**
+- UI elements: **Enter**, **Submit**, **click**, **button**
+
+=== YOUR OUTLINE ===
+{outline}
+
+Generate a complete script matching the examples above."""
     
     try:
-        # Use raw client with structured output
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',  # Use Flash to avoid timeouts
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema={
-                    "type": "object",
-                    "properties": {
-                        "presentation_title": {"type": "string"},
-                        "module": {"type": "string"},
-                        "episode": {"type": "string"},
-                        "learning_objectives": {"type": "array", "items": {"type": "string"}},
-                        "duration": {"type": "string"},
-                        "outline": {"type": "array", "items": {"type": "string"}},
-                        "meta_tags": {"type": "array", "items": {"type": "string"}},
-                        "prerequisites": {"type": "string"},
-                        "slides": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "title": {"type": "string"},
-                                    "content": {"type": "array", "items": {"type": "string"}},
-                                    "narration": {"type": "array", "items": {"type": "string"}},
-                                    "image_prompt": {"type": "string"},
-                                    "video_prompt": {"type": "string"},
-                                    "is_video_slide": {"type": "boolean"}
-                                },
-                                "required": ["title", "content", "narration", "image_prompt"]
-                            }
-                        }
-                    },
-                    "required": ["slides", "module", "episode", "learning_objectives", "duration", "outline", "meta_tags", "prerequisites"]
-                }
-            )
-        )
-        json_script = json.loads(response.text)
+        result = structured_llm.invoke(prompt)
+        script_data = result.model_dump()
+        print(f"✓ Generated script with {len(script_data.get('slides', []))} slides")
         
-        # Post-processing (same as before)
-        for slide in json_script.get('slides', []):
-            # Ensure content is clean
-            raw_content = slide.get('content', [])
-            clean_content = [c for c in raw_content if isinstance(c, str) and c.strip()]
-            slide['content'] = clean_content
-            
-            # Ensure narration matches content + 1x
-            current_narration = slide.get('narration', [])
-            if isinstance(current_narration, str):
-                current_narration = ["Introduction."] + [current_narration] * len(clean_content)
-            
-            target_length = len(clean_content) + 1
-            if len(current_narration) < target_length:
-                diff = target_length - len(current_narration)
-                current_narration.extend([f"Point {k+1}." for k in range(diff)])
-            elif len(current_narration) > target_length:
-                current_narration = current_narration[:target_length]
-            
-            slide['narration'] = current_narration
-            
-        return {"json_script": json_script}
+        return {"json_script": script_data}
+        
     except Exception as e:
-        print(f"Failed to generate script: {e}")
+        print(f"ERROR generating script: {e}")
+        import traceback
+        traceback.print_exc()
         return {"json_script": {}}

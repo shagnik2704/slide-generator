@@ -3,7 +3,7 @@ Data models for the slide generator agent.
 Contains TypedDict and Pydantic model definitions.
 """
 from typing import TypedDict, Optional, List
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class Slide(TypedDict):

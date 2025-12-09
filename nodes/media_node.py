@@ -2,6 +2,7 @@
 Media generation nodes (images and audio).
 """
 import os
+import shutil
 import time
 import random
 import wave
@@ -24,35 +25,38 @@ def generate_images(state: AgentState):
     print("Generating images...")
     json_script = state.get('json_script')
     slides = json_script['slides']
-    target_audience = state.get('target_audience', 'general')
     
     if os.path.exists("generated_images"):
         shutil.rmtree("generated_images")
     os.makedirs("generated_images")
     
-    # Audience-specific image style prefixes
-    audience_style_prefix = {
-        'kids': "Hand-drawn crayon sketch, colorful, playful, child-friendly illustration,",
-        'students': "Hand-drawn pencil sketch, educational diagram, clear and informative,",
-        'professionals': "Minimalist architectural sketch, clean lines, professional, blueprint style,",
-        'general': "Artistic ink sketch, hand-drawn illustration, high quality,"
-    }
-    
-    style_prefix = audience_style_prefix.get(target_audience, audience_style_prefix['general'])
-    
     api_key = os.getenv("GOOGLE_API_KEY")
     client = genai.Client(api_key=api_key)
         
+    total_slides = len(slides)
+    
     for i, slide in enumerate(slides):
         prompt = slide.get('image_prompt')
+        layout = slide.get('layout', 'bullets_left_image_right')
+        
+        # Skip first 4 slides (Title, LO, System Req, Prerequisites) and last 3 (Summary, Assignment, Thank You)
+        if i < 4 or i >= total_slides - 3:
+            print(f"ℹ️  Skipping image for slide {i+1} (intro/outro slide)")
+            continue
+        
+        # Skip image generation for text-only layouts
+        if layout == 'text_only' or not prompt:
+            print(f"ℹ️  Skipping image for slide {i+1} (text-only layout)")
+            continue
+            
         if prompt:
             # Check if this is a video slide
             if slide.get('is_video_slide'):
                 try:
                     # Use dedicated video prompt if available, otherwise fallback to image prompt
                     raw_video_prompt = slide.get('video_prompt') or prompt
-                    print(f"Generating VIDEO for slide {i+1} (Audience: {target_audience}) using Veo...")
-                    video_prompt = f"{style_prefix} {raw_video_prompt}. Cinematic, smooth motion, high quality."
+                    print(f"Generating VIDEO for slide {i+1} using Veo...")
+                    video_prompt = f"{raw_video_prompt}. Cinematic, smooth motion, high quality."
                     
                     # Use generate_videos instead of generate_content
                     operation = client.models.generate_videos(
@@ -94,9 +98,9 @@ def generate_images(state: AgentState):
                     # Fallback to image generation if video fails
                     print("Falling back to image generation...")
                     try:
-                        prompt = f"{style_prefix} {prompt}"
+                        # Use plain prompt for image generation
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash-image',
+                            model='gemini-3-pro-image-preview',
                             contents=prompt,
                         config=types.GenerateContentConfig(
                             response_modality=["IMAGE"],
@@ -122,11 +126,10 @@ def generate_images(state: AgentState):
 
             else:
                 # Standard Image Generation
-                prompt = f"{style_prefix} {prompt}"
                 try:
-                    print(f"Generating image for slide {i+1} (Audience: {target_audience})...")
+                    print(f"Generating image for slide {i+1}...")
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash-image',
+                        model='gemini-3-pro-image-preview',
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_modalities=["IMAGE"],
@@ -171,13 +174,6 @@ async def generate_audio(state: AgentState):
     
     target_audience = state.get('target_audience', 'general')
     
-    # Audience-specific voice prompts
-    tts_prompts = {
-        'kids': "Read aloud in a fun, energetic, and playful tone, like a storyteller for children.",
-        'students': "Read aloud in a clear, educational, and engaging tone, like a friendly teacher.",
-        'professionals': "Read aloud in a professional, confident, and concise tone, suitable for a business presentation.",
-        'general': "Read aloud in a warm, welcoming, and conversational tone."
-    }
     
     voice_instruction = tts_prompts.get(target_audience, tts_prompts['general'])
     

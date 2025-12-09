@@ -1,114 +1,105 @@
 """
 Evaluator node for checking script quality.
+Uses LangChain's ChatGoogleGenerativeAI.
 """
 import os
-import json
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from pydantic import BaseModel
+from langchain_google_genai import ChatGoogleGenerativeAI
 from models.state import AgentState
+import json
 
 load_dotenv()
 
-# PLACEHOLDER PROMPT - User to provide specific criteria
-EVALUATOR_PROMPT = """
-You are a strict quality control evaluator for Spoken Tutorial educational scripts.
 
-Analyze the provided script and determine if it meets the following quality standards.
+class EvaluationResult(BaseModel):
+    passed: bool
+    feedback: str
 
-=== SPOKEN TUTORIAL PRINCIPLES (CRITICAL) ===
-Check for:
-1. **Simple Indian English**: Use words that are easy to translate.
-2. **Step-by-Step Examples**: Every concept is explained through a clear, concrete example.
-3. **Beginner-Friendly Steps**: Examples are broken into simple, actionable steps.
-4. **Translation-Ready**: Avoids complex vocabulary, idioms, or difficult English phrases.
-5. **Skill Building Focus**: Script builds a skill, not just delivers information.
-6. **NO Clichés**: Reject if narration contains phrases like "exciting journey", "let's dive in", "embark on", "delve into", "master the art of", "unlock", "game-changer".
-7. **Natural Speech Flow**: Narration must sound natural when spoken aloud, like a teacher talking (not reading). Check for awkward phrasing or unnatural sentence structures.
-8. **Learning Objectives Met**: Check that:
-   * Only achievable objectives are stated
-   * The script content ACTUALLY teaches these objectives
-   * Objectives are realistic for 3-4 minutes
-   * The assignment/practice activity directly fulfills the objectives
-
-=== PEDAGOGICAL CHECKS ===
-Check for the presence and quality of:
-1. **Bridge the scene anticipation**: Does the narration prepare learners for what's next?
-2. **Link action to reflection**: Does it help learners think about what they're doing?
-3. **Connect observation to timing**: Does it guide attention during demos?
-4. **Tie motivation to action**: Does it explain WHY before HOW?
-5. **Smooth transition to new action**: Is the flow seamless?
-6. **Accuracy and clarity**: Are instructions precise?
-
-=== FORMATTING & STYLE CHECKS ===
-Ensure the following conditions are met:
-1. **Sentence Length**: EVERY narration sentence must be under 80 characters (including spaces).
-2. **New Lines**: Start EACH new sentence on a new line.
-3. **Narration Style**: No arrows (->), hyphens (-), or symbols that cannot be narrated.
-4. **Complete Sentences**: No sentences cut in the middle.
-5. **Structure**: Maintain 2 column format (Visual Cue and Narration).
-
-=== OUTPUT ===
-If the script meets ALL standards, return:
-{{
-  "passed": true,
-  "feedback": "Script meets all quality standards."
-}}
-
-If the script fails ANY standard, return:
-{{
-  "passed": false,
-  "feedback": "Specific feedback listing EXACTLY what failed. Example: 'Slide 3 narration has sentences > 80 chars', 'Missing bridge anticipation in Slide 5'."
-}}
-
-Script to evaluate:
-{script_content}
-"""
 
 def evaluate_quality(state: AgentState):
-    """Evaluates the script quality using a defined prompt."""
+    """Evaluates the script quality using LangChain."""
+    
     print("Evaluating script quality...")
     json_script = state.get('json_script')
     iteration = state.get('evaluation_iteration', 0)
     
-    # CRITICAL: If no script exists, force proceed to avoid infinite loop
+    # If no script exists, force proceed
     if not json_script or not json_script.get('slides'):
-        print("⚠️ No script to evaluate - forcing proceed to prevent infinite loop.")
+        print("⚠️ No script to evaluate - skipping.")
         return {
-            "evaluation_passed": True,  # Force pass to exit loop
-            "evaluation_feedback": "No script found - skipping evaluation.",
+            "evaluation_passed": True,
+            "evaluation_feedback": "No script found.",
             "evaluation_iteration": iteration + 1
         }
 
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    # Initialize LangChain model with structured output
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.7,
+    )
     
+    structured_llm = llm.with_structured_output(EvaluationResult)
+    
+    # Formatting evaluation prompt
+    prompt = f"""Check this Spoken Tutorial script for formatting issues.
+
+=== FORMATTING RULES ===
+
+1. SENTENCE LENGTH: Sentences in narration should generally be ≤ 80 characters
+   
+   EXCEPTIONS (RELAX the limit):
+   - Title Slide, Learning Objectives, System Requirements, Prerequisites: NO LIMIT
+   - Step-by-step examples: "Step 1: ... Step 2: ..." can be longer
+   - Technical terms or code examples: Allow up to 100 chars
+   
+   
+
+2. NEW LINES: Each sentence must start on a new line
+   - Multiple sentences on same line = FAIL
+   - Exception: short phrases like "Think about it. What do you think?"
+
+3. NO SYMBOLS: Narration cannot contain arrows or bullet symbols
+   - No: ->, -->, •, * at start of lines
+   - Exception: **bold** markers are ALLOWED
+
+4. COMPLETE SENTENCES: No fragments or mid-cut sentences
+
+5. BOLD TERMS: Technical terms should be in **bold** (advisory only)
+
+=== SLIDES TO SKIP FOR LENGTH CHECK ===
+Do NOT check sentence length for:
+- Title Slide / Welcome
+- Learning Objectives  
+- System Requirements
+- Prerequisites
+
+=== SCRIPT TO CHECK ===
+{json.dumps(json_script, indent=2)}
+
+=== RESPONSE FORMAT ===
+passed=true if script is acceptable (minor issues OK)
+passed=false only for MAJOR issues (multiple long sentences, symbols, fragments)"""
+
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',  # Use Flash for faster evaluation
-            contents=EVALUATOR_PROMPT.format(script_content=json.dumps(json_script, indent=2)),
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema={
-                    "type": "object",
-                    "properties": {
-                        "passed": {"type": "boolean"},
-                        "feedback": {"type": "string"}
-                    },
-                    "required": ["passed", "feedback"]
-                }
-            )
-        )
+        result = structured_llm.invoke(prompt)
         
-        # Parse JSON response
-        result = json.loads(response.text)
+        # Handle None result
+        if result is None:
+            print("⚠ Evaluator returned None - passing by default")
+            return {
+                "evaluation_passed": True,
+                "evaluation_feedback": "Evaluator returned no result.",
+                "evaluation_iteration": iteration + 1
+            }
         
-        passed = result.get('passed', False)
-        feedback = result.get('feedback', '')
+        passed = result.passed
+        feedback = result.feedback
         
         if passed:
             print("✓ Script passed evaluation.")
         else:
-            print(f"✗ Script failed evaluation (Iteration {iteration}). Feedback: {feedback[:100]}...")
+            print(f"✗ Script failed. Feedback: {feedback[:100]}...")
             
         return {
             "evaluation_passed": passed,
@@ -116,24 +107,10 @@ def evaluate_quality(state: AgentState):
             "evaluation_iteration": iteration + 1
         }
         
-    except json.JSONDecodeError as json_err:
-        print(f"⚠ JSON parsing error in evaluator: {json_err}")
-        print(f"Raw response text: {response.text}")
+    except Exception as e:
+        print(f"⚠ Evaluation error: {e}")
         return {
             "evaluation_passed": True,  # Fail open
-            "evaluation_feedback": f"Evaluation JSON parsing failed: {str(json_err)}",
-            "evaluation_iteration": iteration + 1
-        }
-    except Exception as e:
-        print(f"⚠ Evaluation failed with error: {e}")
-        print(f"Error type: {type(e).__name__}")
-        # Try to print response if it exists
-        try:
-            print(f"Response text (if available): {response.text[:500]}")
-        except:
-            pass
-        return {
-            "evaluation_passed": True, # Fail open if API fails
-            "evaluation_feedback": "Evaluation failed due to error.",
+            "evaluation_feedback": f"Evaluation error: {e}",
             "evaluation_iteration": iteration + 1
         }

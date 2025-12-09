@@ -1,34 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Mic } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Upload, FileJson } from 'lucide-react';
 
-const InputArea = ({ onSendMessage, disabled }) => {
-    const [input, setInput] = useState('');
-    const textareaRef = useRef(null);
+const InputArea = ({ onSendMessage, onUploadScript, disabled }) => {
+    const fileInputRef = useRef(null);
+    const scriptInputRef = useRef(null);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (input.trim() && !disabled) {
-            onSendMessage(input);
-            setInput('');
-            if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto';
-            }
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && !disabled) {
+            onSendMessage(file);
+            e.target.value = '';
         }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit(e);
+    const handleScriptSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && !disabled && onUploadScript) {
+            onUploadScript(file);
+            e.target.value = '';
         }
     };
 
-    const handleInput = (e) => {
-        const target = e.target;
-        target.style.height = 'auto';
-        target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
-        setInput(target.value);
-    };
+    const buttonStyle = (isDisabled) => ({
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.5rem',
+        background: isDisabled
+            ? 'var(--bg-tertiary)'
+            : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+        color: isDisabled ? 'var(--text-secondary)' : 'white',
+        border: 'none',
+        borderRadius: '0.75rem',
+        padding: '0.85rem 1rem',
+        fontSize: '0.9rem',
+        fontWeight: 600,
+        cursor: isDisabled ? 'not-allowed' : 'pointer',
+        boxShadow: isDisabled ? 'none' : 'var(--shadow-md)',
+        transition: 'all 0.3s ease',
+        opacity: isDisabled ? 0.6 : 1,
+    });
 
     return (
         <div style={{
@@ -42,61 +54,80 @@ const InputArea = ({ onSendMessage, disabled }) => {
                 margin: '0 auto',
                 position: 'relative'
             }}>
-                <form onSubmit={handleSubmit} style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    gap: '0.5rem',
-                    background: 'var(--bg-secondary)',
-                    borderRadius: '1rem',
-                    padding: '0.75rem',
-                    boxShadow: 'var(--shadow-lg)',
-                    border: '1px solid var(--border-color)'
-                }}>
-                    <button type="button" className="btn-icon">
-                        <Paperclip size={20} />
+                {/* Hidden file inputs */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".md,.docx,.txt"
+                    onChange={handleFileSelect}
+                    disabled={disabled}
+                    style={{ display: 'none' }}
+                />
+                <input
+                    ref={scriptInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleScriptSelect}
+                    disabled={disabled}
+                    style={{ display: 'none' }}
+                />
+
+                {/* Button row */}
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    {/* Upload Outline Button */}
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={disabled}
+                        style={buttonStyle(disabled)}
+                        onMouseEnter={(e) => {
+                            if (!disabled) {
+                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!disabled) {
+                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }
+                        }}
+                    >
+                        <Upload size={20} />
+                        Upload Outline
                     </button>
 
-                    <textarea
-                        ref={textareaRef}
-                        value={input}
-                        onChange={handleInput}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Message Chatbot..."
-                        rows={1}
+                    {/* Upload Script Button */}
+                    <button
+                        type="button"
+                        onClick={() => scriptInputRef.current?.click()}
                         disabled={disabled}
-                        style={{
-                            flex: 1,
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-primary)',
-                            resize: 'none',
-                            padding: '0.5rem',
-                            fontSize: '1rem',
-                            lineHeight: 1.5,
-                            maxHeight: '200px',
-                            outline: 'none',
-                            fontFamily: 'inherit'
+                        style={buttonStyle(disabled)}
+                        onMouseEnter={(e) => {
+                            if (!disabled) {
+                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                            }
                         }}
-                    />
+                        onMouseLeave={(e) => {
+                            if (!disabled) {
+                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }
+                        }}
+                    >
+                        <FileJson size={20} />
+                        Upload Script (.json)
+                    </button>
+                </div>
 
-                    {input.trim() ? (
-                        <button type="submit" className="btn-primary" style={{ padding: '0.5rem', borderRadius: '0.5rem' }} disabled={disabled}>
-                            <Send size={20} />
-                        </button>
-                    ) : (
-                        <button type="button" className="btn-icon">
-                            <Mic size={20} />
-                        </button>
-                    )}
-                </form>
                 <div style={{
                     textAlign: 'center',
                     fontSize: '0.75rem',
                     color: 'var(--text-secondary)',
                     marginTop: '0.75rem'
                 }}>
-                    AI can make mistakes. Please verify important information.
+                    Upload outline to generate script, or upload existing script to skip to slides.
                 </div>
             </div>
         </div>

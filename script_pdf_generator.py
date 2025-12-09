@@ -3,8 +3,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
-
+import re
 import os
+
+def convert_bold_markdown(text):
+    """Convert **text** to <b>text</b> for PDF rendering."""
+    if not text:
+        return text
+    return re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', str(text))
 
 def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     """Generate a Spoken Tutorial script PDF matching the standard format."""
@@ -79,21 +85,21 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     module = json_data.get('module', 'N/A')
     metadata_data.append([
         Paragraph("<b>Module</b>", metadata_label_style),
-        Paragraph(module, metadata_value_style)
+        Paragraph(convert_bold_markdown(module), metadata_value_style)
     ])
     
     # Episode
     episode = json_data.get('episode', 'N/A')
     metadata_data.append([
         Paragraph("<b>Episode</b>", metadata_label_style),
-        Paragraph(episode, metadata_value_style)
+        Paragraph(convert_bold_markdown(episode), metadata_value_style)
     ])
     
     # Learning Objectives
     learning_objectives = json_data.get('learning_objectives', [])
     if learning_objectives:
         obj_html = "At the end of this tutorial learner will be able to<br/>"
-        obj_html += "<br/>".join([f"{i+1}. {obj}" for i, obj in enumerate(learning_objectives)])
+        obj_html += "<br/>".join([f"{i+1}. {convert_bold_markdown(obj)}" for i, obj in enumerate(learning_objectives)])
         metadata_data.append([
             Paragraph("<b>Learning Objective</b>", metadata_label_style),
             Paragraph(obj_html, metadata_value_style)
@@ -109,7 +115,7 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     # Outline
     outline = json_data.get('outline', [])
     if outline:
-        outline_html = "<br/>".join([f"• {item}" for item in outline])
+        outline_html = "<br/>".join([f"• {convert_bold_markdown(item)}" for item in outline])
         metadata_data.append([
             Paragraph("<b>Outline</b>", metadata_label_style),
             Paragraph(outline_html, metadata_value_style)
@@ -118,7 +124,7 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     # Meta Tags
     meta_tags = json_data.get('meta_tags', [])
     if meta_tags:
-        tags_text = ", ".join(meta_tags)
+        tags_text = ", ".join([convert_bold_markdown(tag) for tag in meta_tags])
         metadata_data.append([
             Paragraph("<b>Meta Tags</b>", metadata_label_style),
             Paragraph(tags_text, metadata_value_style)
@@ -128,7 +134,7 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     prerequisites = json_data.get('prerequisites', 'None')
     metadata_data.append([
         Paragraph("<b>Pre-requisite Tutorial</b>", metadata_label_style),
-        Paragraph(prerequisites, metadata_value_style)
+        Paragraph(convert_bold_markdown(prerequisites), metadata_value_style)
     ])
     
     # Create and style metadata table
@@ -183,7 +189,12 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
         if isinstance(narration, list):
             narration_text = "<br/><br/>".join(narration)
         else:
-            narration_text = narration
+            # Convert \n to <br/> for PDF rendering
+            narration_text = narration.replace('\n', '<br/>')
+        
+        # Convert **word** to <b>word</b> for non-translatable terms
+        # These words will appear bold in the PDF to indicate "do not translate"
+        narration_text = convert_bold_markdown(narration_text)
         
         # Bold standard slide names in visual cues
         standard_slides = [
@@ -198,7 +209,12 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
             "Closing Slide"
         ]
         
-        visual_cue_text = image_prompt
+        visual_cue_text = image_prompt if image_prompt else "No visual cue provided."
+        
+        # Ensure it's a string (just in case)
+        if not isinstance(visual_cue_text, str):
+            visual_cue_text = str(visual_cue_text)
+
         for slide_name in standard_slides:
             if slide_name in visual_cue_text:
                 visual_cue_text = visual_cue_text.replace(slide_name, f"<b>{slide_name}</b>")

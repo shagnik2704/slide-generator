@@ -33,15 +33,12 @@ class Slide(BaseModel):
     content: List[Union[str, dict]]
 
 class GenerateScriptRequest(BaseModel):
-    topic: Optional[str] = None  # Either topic OR outline must be provided
-    outline: Optional[str] = None  # Pre-generated outline
+    outline: str  # User must provide outline
     title: Optional[str] = None
     target_audience: Optional[str] = None
     mode: Optional[str] = "script_only"
 
-class GenerateOutlineRequest(BaseModel):
-    topic: str
-    target_audience: Optional[str] = None
+
 
 class GenerateVideoRequest(BaseModel):
     json_script: dict
@@ -50,36 +47,7 @@ class GenerateVideoRequest(BaseModel):
 class GenerateSlidesRequest(BaseModel):
     json_script: dict
 
-@app.post("/generate_outline")
-async def generate_outline(request: GenerateOutlineRequest):
-    try:
-        # Run the agent to generate outline
-        inputs = {
-            "topic": request.topic,
-            "mode": "outline_only"
-        }
-        
-        result = await graph.ainvoke(inputs)
-        
-        outline_text = result.get("outline", "")
-        
-        # Generate a simple project ID (timestamp-based)
-        import time
-        project_id = int(time.time())
-        
-        # Generate Markdown file from outline
-        docx_path = create_outline_docx(outline_text, project_id)
-        outline_url = f"/download/outline/{os.path.basename(docx_path)}"
-        
-        return {
-            "outline": outline_text,
-            "outline_docx_url": outline_url,
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"ERROR in generate_outline: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/upload_outline")
 async def upload_outline(file: UploadFile = File(...)):
@@ -116,45 +84,60 @@ async def upload_outline(file: UploadFile = File(...)):
         print(f"ERROR in upload_outline: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/upload_script")
+async def upload_script(file: UploadFile = File(...)):
+    """Upload a script JSON file directly to skip outline → script generation."""
+    try:
+        # Validate file type
+        if not file.filename.endswith('.json'):
+            raise HTTPException(status_code=400, detail="Only .json files are allowed")
+        
+        import time
+        
+        # Read and parse JSON content
+        content = await file.read()
+        json_script = json.loads(content.decode('utf-8'))
+        
+        # Generate project ID
+        project_id = int(time.time())
+        
+        # Save a copy
+        json_path = f"script_{project_id}.json"
+        with open(json_path, 'w') as f:
+            json.dump(json_script, f, indent=2)
+        
+        print(f"✅ Script uploaded: {file.filename} → project #{project_id}")
+        
+        return {
+            "json_script": json_script,
+            "project_id": project_id,
+            "message": "Script uploaded successfully"
+        }
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON format: {str(e)}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"ERROR in upload_script: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/generate_script")
 async def generate_script(request: GenerateScriptRequest):
-    """Generates a presentation script. If topic is provided, generates outline first."""
+    """Generates a presentation script from a user-provided outline."""
     
-    # Validate that either topic or outline is provided
-    if not request.topic and not request.outline:
-        raise HTTPException(status_code=400, detail="Either 'topic' or 'outline' must be provided")
-    
-    print(f"Received request to generate script. Topic: {request.topic}, Has outline: {bool(request.outline)}")
+    print(f"Received request to generate script from outline ({len(request.outline)} chars)")
 
     try:
-        # STEP 1: Generate outline if only topic is provided
-        outline_text = request.outline
+        import time
         
-        if not outline_text and request.topic:
-            print(f"🔍 Step 1: Generating outline for topic: {request.topic}")
-            outline_state = {
-                "topic": request.topic,
-                "mode": "outline_only"
-            }
-            
-            outline_result = await graph.ainvoke(outline_state)
-            outline_text = outline_result.get("outline", "")
-            
-            if not outline_text:
-                raise HTTPException(status_code=500, detail="Failed to generate outline")
-            
-            print(f"✓ Outline generated successfully ({len(outline_text)} chars)")
-        
-        # STEP 2: Generate script from outline
-        print(f"📝 Step 2: Generating script from outline...")
+        print(f"📝 Generating script from outline...")
         
         initial_state = {
-            "outline": outline_text,
+            "outline": request.outline,
             "mode": getattr(request, 'mode', 'script_only'),
-            "target_audience": request.target_audience,
             "evaluation_iteration": 0,
             "evaluation_passed": False,
-            "evaluation_feedback": None
+            "evaluation_feedback": None,
         }
         
         result = await graph.ainvoke(initial_state)
@@ -163,8 +146,6 @@ async def generate_script(request: GenerateScriptRequest):
         json_script = result.get("json_script")
         
         if script_pdf_path:
-            # Generate simple project ID
-            import time
             project_id = int(time.time())
             
             # Save JSON script
@@ -177,7 +158,7 @@ async def generate_script(request: GenerateScriptRequest):
             return JSONResponse({
                 "script_pdf_url": f"/static/{os.path.basename(script_pdf_path)}",
                 "json_script": json_script,
-                "outline": outline_text
+                "outline": request.outline
             })
         else:
             raise HTTPException(status_code=500, detail="Failed to generate script PDF")
@@ -223,13 +204,16 @@ async def generate_slides(request: GenerateSlidesRequest):
 async def generate_video(request: GenerateVideoRequest):
     """Generates the final video from the approved JSON script and existing PDF."""
     try:
+        import time
         # Pass pdf_path to the state
         initial_state = {
             "json_script": request.json_script, 
             "mode": "video_production",
             "pdf_path": request.pdf_path or "output.pdf"
         }
-        result = await graph.ainvoke(initial_state)
+        # Checkpointer requires thread_id
+        config = {"configurable": {"thread_id": f"video_{int(time.time())}"}}
+        result = await graph.ainvoke(initial_state, config)
         
         video_path = result.get("video_path")
         

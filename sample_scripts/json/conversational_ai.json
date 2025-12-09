@@ -1,0 +1,330 @@
+{
+  "presentation_title": "Introduction to Conversational AI",
+  "module": "AI",
+  "episode": "Introduction",
+  "learning_objectives": [
+    "Introduction to conversational AI tools",
+    "How AI tools work",
+    "Customizing ChatGPT"
+  ],
+  "duration": null,
+  "outline": [
+    "Introduction to conversational AI tools",
+    "How AI tools work",
+    "Customizing ChatGPT",
+    "Asking a question to ChatGPT"
+  ],
+  "meta_tags": [
+    "chatgpt",
+    "Ilms",
+    "ai",
+    "static",
+    "dynamic",
+    "prompt",
+    "video tutorial"
+  ],
+  "prerequisites": "Basics of using internet, and How to frame simple sentences in English",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this spoken tutorial on\nIntroduction to Conversational AI.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [],
+      "narration": "In this tutorial, we will learn about:\nIntroduction to conversational Al tools\nHow Al tools work\nCustomizing ChatGPT",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "To record this tutorial, I am using\nUbuntu Linux OS v22.04\nFirefox web browser v141.0.4",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Pre-requisites",
+      "content": [],
+      "narration": "To follow this tutorial, learners should know\nBasics of using internet, and\nHow to frame simple sentences in English",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Conversational Al Tools",
+      "content": [],
+      "narration": "Conversational Al software tools:\nThey interact with users using natural language through text or voice\nUnderstanding its intent and give the response\nAl tools are powered and rely on Large Language Models as its core technology",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Al Tools",
+      "content": [],
+      "narration": "We will focus on using conversational Al tools to code efficiently.\nI will use ChatGPT throughout this series.\nLearners are welcome to explore other Al tools as well.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us explore the web interface of ChatGPT.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Open a browser on your computer.\nI am using Firefox web browser.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "In the address bar, type chatgpt.com and press Enter.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Log in by entering the required credentials if not done before.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I am already logged in.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Once I am logged in, various options are available to use.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "For example, on the left side panel, options such as New chat, Search chats, Library, and Projects are available.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "This is the interface of ChatGPT as of October 2025.\nHowever, it may change in the near future.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "At the bottom left, my username appears, and it says Free as of now.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "It means that I am using the Free version of ChatGPT.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "I will use the Free version throughout this series.\nNote that the free version may have certain limitations, such as message usage caps.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on the username to view additional options, including Help, Settings, Personalization, etc.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on Settings to view the various options available.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us click on Personalization.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Here, I can share details like my nickname, occupation, and more.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Pause the tutorial and enter the details as shown.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on Save.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Once I do, ChatGPT uses them to personalize its responses for future conversations.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Scroll down to see the Advanced option.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on the dropdown to see the various fields.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "By default, web search is enabled.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "This lets ChatGPT automatically search the web for answers.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us ask a few questions to see when ChatGPT searches the web.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Close the Personalization tab.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Type the following prompt:\nWho is the current prime minister of India?\nAnd, press Enter.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Since web search is on, ChatGPT performs a live search while drafting the response.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "In its response, it says that\nThe current Prime Minister of India is Narendra Modi.\nNote that the content of the response may differ, even if you repeat the same questions.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "ChatGPT also provides link to the websites from which it retrieved this information.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Let us ask something related to C++ programming.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "Click on New chat. A new chat window opens.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "My previous chat appears here at the bottom left corner.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "In the new chat, type the following.\nExplain the difference between std::vector and std::array in C++ with examples.\nPress Enter.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "ChatGPT will not search the web for this.\nSo, web search is not needed for static knowledge.\nFor example, programming concepts, historical facts, etc.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": null,
+      "content": [],
+      "narration": "On the other hand, web search is needed for dynamic knowledge.\nFor example, news, stock prices, etc.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [],
+      "narration": "To know more about Al tools and ChatGPT, refer to the Additional Material available on this tutorial page.\nWith this, we come to the end of this tutorial.\nLet us summarise.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "As an assignment, please do the following.\nTry a few prompts that require dynamic knowledge, with web search on and off.\nObserve the difference in the responses.",
+      "image_prompt": null,
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank you",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited, SINE, IIT Bombay.\nThank you for joining.",
+      "image_prompt": null,
+      "is_video_slide": false
+    }
+  ]
+}
