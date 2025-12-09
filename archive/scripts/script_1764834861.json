@@ -1,0 +1,440 @@
+{
+  "presentation_title": "Advanced Prompting Techniques",
+  "module": "Artificial Intelligence Essentials \nPrompting Skills",
+  "episode": "6. Advanced Prompting Techniques",
+  "learning_objectives": [
+    "Define the 3 Cs of prompting (Clarity, Context, Constraints).",
+    "Explain the role of persona and examples (Zero, One, Few-Shot) in prompting.",
+    "Apply advanced techniques like Chain-of-Thought and structured output.",
+    "Practice iterative prompting for refined AI responses.",
+    "Create effective text and image prompts using learned principles."
+  ],
+  "duration": "5-6 min",
+  "outline": [
+    "Introduction to Prompting",
+    "The Anatomy of a Good Prompt (The 3 C's)",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "Bonus Tip: Provide a Persona",
+    "Giving Examples: Zero, One, and Few-Shot Prompting",
+    "Advanced Prompting Techniques",
+    "Chain-of-Thought (CoT)",
+    "Structuring the Output",
+    "Iterative Prompting",
+    "Practical Lab: Your Turn!",
+    "Text Generation Challenge",
+    "Image Prompting Introduction & Challenge"
+  ],
+  "meta_tags": [
+    "Prompting",
+    "Generative AI",
+    "Clear Instructions",
+    "AI Tools",
+    "Prompt Engineering",
+    "Artificial Intelligence",
+    "AI Education",
+    "AI Literacy",
+    "Communication with AI",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "Persona",
+    "Zero-shot",
+    "One-shot",
+    "Few-shot",
+    "Chain-of-Thought",
+    "CoT",
+    "Structured Output",
+    "Iterative Prompting",
+    "Image Prompting",
+    "DALL-E",
+    "Midjourney",
+    "ChatGPT",
+    "Gemini",
+    "Claude",
+    "Spoken Tutorial",
+    "EduPyramids"
+  ],
+  "prerequisites": "Introduction to Prompting, The 3 Cs of Prompting",
+  "slides": [
+    {
+      "title": "Title Slide: Advanced Prompting Techniques",
+      "content": [
+        "Spoken Tutorial Series \nAdvanced Prompting Techniques"
+      ],
+      "narration": [
+        "Welcome to this Spoken Tutorial on Advanced Prompting Techniques."
+      ],
+      "image_prompt": "Futuristic digital interface with AI brain graphic and floating text bubbles, representing advanced communication with AI.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "At the end of this tutorial, you will be able to:",
+        "1. Define the 3 Cs of prompting (Clarity, Context, Constraints).",
+        "2. Explain the role of persona and examples (Zero, One, Few-Shot) in prompting.",
+        "3. Apply advanced techniques like Chain-of-Thought and structured output.",
+        "4. Practice iterative prompting for refined AI responses.",
+        "5. Create effective text and image prompts using learned principles."
+      ],
+      "narration": [
+        "In this tutorial, you will learn to define the 3 Cs of prompting.",
+        "You will explain the role of personas and examples.",
+        "You will apply advanced techniques.",
+        "You will practice iterative prompting.",
+        "Finally, you will create effective text and image prompts."
+      ],
+      "image_prompt": "A graphic of a roadmap with milestones, each representing a learning objective, with a magnifying glass over 'advanced techniques'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Introduction: Why Advanced Prompting?",
+      "content": [
+        "If you're not a coder, this is your single most important skill for using AI.",
+        "Think of an AI model like an incredibly smart, fast, and knowledgeable intern.",
+        "It can do amazing things, but it needs very specific instructions.",
+        "Prompting is the art and science of giving those instructions to get the high-quality results you want."
+      ],
+      "narration": [
+        "Welcome!",
+        "If you are not a coder, advanced prompting is vital.",
+        "It is your most important skill for using AI.",
+        "Think of an AI model as a smart, fast, and knowledgeable intern.",
+        "It can do amazing things for you.",
+        "However, it needs very specific instructions.",
+        "Prompting is the art of giving those instructions.",
+        "It is a science to get the high-quality results you want.",
+        "Let's dive in!"
+      ],
+      "image_prompt": "An enthusiastic intern with a graduation cap, sitting at a desk with a computer showing AI symbols, ready to receive instructions.",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Anatomy of a Good Prompt: The 3 C's Revisited",
+      "content": [
+        "A weak prompt gets a weak answer. A great prompt gets a great answer.",
+        "The best prompts almost always include three key ingredients: Clarity, Context, and Constraints."
+      ],
+      "narration": [
+        "We have previously introduced the 3 Cs.",
+        "Let's quickly revisit them now.",
+        "They form the foundation for good prompts.",
+        "Remember, a weak prompt gets a weak answer.",
+        "A great prompt will get a great answer.",
+        "The best prompts include three key ingredients.",
+        "These are Clarity, Context, and Constraints."
+      ],
+      "image_prompt": "A graphic showcasing three interlocking gears labeled 'Clarity', 'Context', and 'Constraints', with 'Great Output' as the result.",
+      "is_video_slide": false
+    },
+    {
+      "title": "C1: Clarity - Be Specific!",
+      "content": [
+        "The AI doesn't know what you're thinking. Vague prompts lead to generic, unhelpful answers.",
+        "Weak Prompt: 'Write about electric cars.'",
+        "Good Prompt (Clear): 'Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.'"
+      ],
+      "narration": [
+        "First, Clarity. Be specific!",
+        "The AI cannot read your mind.",
+        "Vague prompts lead to generic, unhelpful answers.",
+        "For example, 'Write about electric cars' is a weak prompt.",
+        "A clear prompt is: 'Write a short blog post.",
+        "Explain the top 3 benefits of owning an electric car.",
+        "Target someone living in a city.'"
+      ],
+      "image_prompt": "Split screen: left shows a person with a confused expression next to a generic AI response; right shows a person smiling with a focused, helpful AI response.",
+      "is_video_slide": false
+    },
+    {
+      "title": "C2: Context - Give it Background!",
+      "content": [
+        "Context tells the AI why you're asking and who the audience is. It helps the AI adopt the right perspective.",
+        "Good Prompt: 'Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.'",
+        "Better Prompt (with Context): 'Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.'"
+      ],
+      "narration": [
+        "Next, Context. Give the AI background information!",
+        "Context tells the AI why you are asking.",
+        "It also reveals who the audience is.",
+        "This helps the AI adopt the correct perspective.",
+        "Our previous good prompt was: 'Write a short blog post.",
+        "Explain the top 3 benefits of owning an electric car.",
+        "Target someone living in a city.'",
+        "With context, it becomes: 'Write a short blog post for a lifestyle blog.",
+        "This blog focuses on sustainable living.",
+        "Explain the top 3 benefits of owning an electric car.",
+        "Target someone living in a city.'"
+      ],
+      "image_prompt": "Side-by-side comparison of two AI outputs: one generic, one tailored to 'sustainable living lifestyle blog'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "C3: Constraints - Set the Rules!",
+      "content": [
+        "Constraints are boundaries that shape the output. Tell the AI the length, format, and style you need.",
+        "Better Prompt: 'Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.'",
+        "Excellent Prompt (with Constraints): 'Write a short blog post, under 400 words, for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city. Use a friendly and enthusiastic tone and end with a question to encourage comments.'"
+      ],
+      "narration": [
+        "Finally, Constraints. Set the rules for the AI!",
+        "Constraints are boundaries that shape the output.",
+        "Tell the AI the length, format, and style you need.",
+        "Our better prompt was: 'Write a short blog post for a lifestyle blog.",
+        "This blog focuses on sustainable living.",
+        "Explain the top 3 benefits of owning an electric car.",
+        "Target someone living in a city.'",
+        "An excellent prompt with constraints adds more rules.",
+        "It becomes: 'Write a short blog post, under 400 words.",
+        "Target a lifestyle blog focused on sustainable living.",
+        "Explain the top 3 benefits of owning an electric car.",
+        "Target someone living in a city.",
+        "Use a friendly and enthusiastic tone.",
+        "End with a question to encourage comments.'"
+      ],
+      "image_prompt": "A graphic representation of a prompt with various 'rule' icons (word count, tone, call to action) around it, leading to a perfectly shaped output.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Bonus Tip: Provide a Persona",
+      "content": [
+        "This is a super-powerful trick. Tell the AI who to be.",
+        "Prompt: 'Act as an expert travel agent specializing in budget travel. Create a 5-day itinerary for a trip to Rome for a solo traveler who loves history and food.'"
+      ],
+      "narration": [
+        "Here is a bonus tip: provide a persona!",
+        "This is a super-powerful trick.",
+        "Tell the AI who to be.",
+        "For instance: 'Act as an expert travel agent.",
+        "Specialize in budget travel.",
+        "Create a 5-day itinerary for a trip to Rome.",
+        "It is for a solo traveler who loves history and food.'",
+        "This helps the AI tailor its response.",
+        "It will use a specific voice and knowledge."
+      ],
+      "image_prompt": "An AI robot wearing a detective hat, then a chef's hat, then a doctor's coat, showing its ability to adopt different personas.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Giving Examples: Zero, One, and Few-Shot Prompting",
+      "content": [
+        "This sounds technical, but it's simple. It's about whether you give the AI an example to follow.",
+        "Zero-Shot: You give zero examples. Most prompts are like this. You just ask for what you want. (All our examples above are zero-shot).",
+        "One-Shot: You give one example to show the AI the pattern you want. This is great for specific formatting.",
+        "Few-Shot: You give a few examples to teach the AI a more complex pattern."
+      ],
+      "narration": [
+        "Now, let's talk about giving examples.",
+        "These are Zero, One, and Few-Shot Prompting.",
+        "This sounds technical, but it is simple.",
+        "It is about whether you give the AI an example to follow.",
+        "Zero-shot means you give zero examples.",
+        "Most prompts are like this.",
+        "One-shot means you give one example.",
+        "This shows the AI a specific pattern.",
+        "It is great for formatting.",
+        "Few-shot means you give a few examples.",
+        "This teaches the AI a more complex pattern."
+      ],
+      "image_prompt": "A visual metaphor: three distinct paths \n one with no guide (zero-shot), one with a single signpost (one-shot), and one with multiple guideposts (few-shot).",
+      "is_video_slide": false
+    },
+    {
+      "title": "One-Shot Prompting Example",
+      "content": [
+        "Summarize text into key points like this:",
+        "Text: 'The sun is a star, and it's the center of our solar system.'",
+        "Output: 'Primary celestial body: Sun'",
+        "Now, use this format for the following text: [insert long article here]"
+      ],
+      "narration": [
+        "Here is an example of one-shot prompting.",
+        "You would tell the AI: 'Summarize text into key points like this:",
+        "Text: 'The sun is a star, and it is the center of our solar system.'",
+        "Output: 'Primary celestial body: Sun'.",
+        "Now, use this format for the following text: [insert long article here].",
+        "This clearly demonstrates the desired output format."
+      ],
+      "image_prompt": "Screenshot of an AI chat interface showing the one-shot prompt and its expected formatted output.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Advanced Prompting Techniques",
+      "content": [
+        "Ready to elevate your prompting game? Let's explore some advanced techniques.",
+        "1. Chain-of-Thought (CoT): Asking the AI to 'Think Step-by-Step'",
+        "2. Structuring the Output: Tell it the Format You Need",
+        "3. Iterative Prompting: It's a Conversation!"
+      ],
+      "narration": [
+        "Ready to elevate your prompting game?",
+        "Let's explore some truly advanced techniques.",
+        "We will cover Chain-of-Thought prompting.",
+        "We will also discuss structuring the output to your exact needs.",
+        "Finally, we will explore the powerful concept of iterative prompting."
+      ],
+      "image_prompt": "A graphic of a complex brain-like network with glowing connections, indicating advanced thought processes and structured output.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Chain-of-Thought (CoT): 'Think Step-by-Step'",
+      "content": [
+        "For problems involving logic, math, or reasoning, this technique is magical.",
+        "By simply adding the phrase 'think step-by-step' or 'show your reasoning,' you force the model to lay out its logic, which dramatically reduces errors.",
+        "Prompt: 'I have 5 boxes of apples. Each box has 12 apples. I eat 3 apples and give away one full box. How many apples are left? Think step-by-step.'"
+      ],
+      "narration": [
+        "First, Chain-of-Thought, or CoT.",
+        "This is magical for problems involving logic, math, or reasoning.",
+        "By adding phrases like 'think step-by-step' or 'show your reasoning,' you help the model.",
+        "It forces the model to lay out its logic.",
+        "This dramatically reduces errors.",
+        "For example: 'I have 5 boxes of apples.",
+        "Each box has 12 apples.",
+        "I eat 3 apples and give away one full box.",
+        "How many apples are left? Think step-by-step.'"
+      ],
+      "image_prompt": "A flowchart graphic illustrating a problem-solving process with decision points and a final correct answer, emphasizing 'step-by-step' thinking.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Structuring the Output: Tell it the Format You Need",
+      "content": [
+        "Don't just ask for information; tell the AI how to organize it. This saves you tons of time.",
+        "Prompt: 'List the pros and cons of remote work. Provide the output as a Markdown table with two columns: 'Pros' and 'Cons'.'",
+        "You can ask for formats like: A numbered list, HTML code, JSON, A simple comma-separated list."
+      ],
+      "narration": [
+        "Next, structuring the output.",
+        "Do not just ask for information.",
+        "Tell the AI exactly how to organize it.",
+        "This saves you tons of time.",
+        "For example: 'List the pros and cons of remote work.",
+        "Provide the output as a Markdown table.",
+        "Use two columns: 'Pros' and 'Cons'.'",
+        "You can ask for various formats.",
+        "These include numbered lists, HTML code, or JSON.",
+        "You can also ask for a simple comma-separated list."
+      ],
+      "image_prompt": "A digital screen showing a clear, well-formatted Markdown table generated by AI, contrasting with a messy, unformatted text block.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterative Prompting: It's a Conversation!",
+      "content": [
+        "Your first prompt is rarely your last. The real skill is in refining your prompts based on the AI's output. Treat it like a conversation.",
+        "You: 'Write a slogan for my new coffee shop.'",
+        "AI: 'Brewing Happiness, One Cup at a Time.'",
+        "You: 'That's good, but can you make it shorter and more modern?'",
+        "AI: 'Urban Brews. Your Daily Grind.'",
+        "You: 'Perfect!'"
+      ],
+      "narration": [
+        "Finally, iterative prompting.",
+        "Remember, your first prompt is rarely your last.",
+        "The real skill is refining your prompts.",
+        "Base this on the AI's output.",
+        "Treat it like a conversation.",
+        "You might start with: 'Write a slogan for my new coffee shop.'",
+        "The AI will respond.",
+        "Then you can refine: 'That is good, but can you make it shorter and more modern?'",
+        "The AI then provides an improved answer.",
+        "This back-and-forth interaction leads to the best results."
+      ],
+      "image_prompt": "Two cartoon characters (one human, one AI robot) having a friendly, collaborative chat bubble conversation, showing prompt and refinement.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practical Lab: Your Turn!",
+      "content": [
+        "Now it's time to practice. Open up a tool like Google Gemini, ChatGPT, or Claude.",
+        "Text Generation Challenge: Combine a Persona, the 3 C's, and a Structured Output.",
+        "Try this prompt:",
+        "'Act as a fitness coach. Create a simple 3-day workout plan for a beginner who wants to exercise at home with no equipment. The goal is a full-body workout. Present it in a table format with columns for 'Day', 'Exercise', and 'Duration'.'"
+      ],
+      "narration": [
+        "Now it is time to practice!",
+        "Open up a tool like Google Gemini, ChatGPT, or Claude.",
+        "Let's try a text generation challenge.",
+        "Combine a persona, the 3 Cs, and structured output.",
+        "Use this prompt: 'Act as a fitness coach.",
+        "Create a simple 3-day workout plan.",
+        "It is for a beginner who wants to exercise at home.",
+        "They should use no equipment.",
+        "The goal is a full-body workout.",
+        "Present it in a table format.",
+        "Use columns for 'Day', 'Exercise', and 'Duration'.'"
+      ],
+      "image_prompt": "A person sitting at a laptop, smiling, with various AI tool logos floating around them, emphasizing readiness to practice.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Image Prompting Introduction & Challenge",
+      "content": [
+        "Image tools like Midjourney or DALL-E 3 use the same principles but focus on visual details. Be descriptive! Think like an artist.",
+        "Image Prompt Challenge:",
+        "'A close-up, photorealistic image of a cat wearing a tiny detective hat and magnifying glass, sitting in a library. The lighting is warm and cinematic.'",
+        "Start experimenting! The more you practice, the better you'll get. You now have the fundamental skills to get amazing results from any AI tool."
+      ],
+      "narration": [
+        "Finally, an introduction to image prompting.",
+        "Tools like Midjourney or DALL-E 3 use the same principles.",
+        "However, they focus on visual details.",
+        "Be descriptive! Think like an artist.",
+        "Try this image prompt challenge.",
+        "Prompt: 'A close-up, photorealistic image of a cat.",
+        "The cat wears a tiny detective hat and magnifying glass.",
+        "It sits in a library.",
+        "The lighting is warm and cinematic.'",
+        "Start experimenting!",
+        "The more you practice, the better you will get.",
+        "You now have the fundamental skills.",
+        "You can get amazing results from any AI tool."
+      ],
+      "image_prompt": "A creative image of a cat wearing a tiny detective hat and magnifying glass, surrounded by books, rendered in a photorealistic, cinematic style.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "In this tutorial, we learned:",
+        "The 3 C's (Clarity, Context, Constraints) are crucial for good prompts.",
+        "Personas and examples (Zero, One, Few-Shot) enhance AI responses.",
+        "Advanced techniques like Chain-of-Thought and structured output refine results.",
+        "Iterative prompting is key to a conversational workflow.",
+        "Prompting skills apply to both text and image generation."
+      ],
+      "narration": [
+        "Let's summarize what we have learned.",
+        "In this tutorial, we learned about the 3 Cs.",
+        "Clarity, Context, and Constraints are crucial for good prompts.",
+        "Personas and examples, like Zero, One, and Few-Shot, enhance AI responses.",
+        "We also explored advanced techniques.",
+        "These include Chain-of-Thought and structuring output.",
+        "These techniques help to refine results.",
+        "Remember, iterative prompting is key.",
+        "It enables a conversational workflow.",
+        "These prompting skills apply to both text and image generation."
+      ],
+      "image_prompt": "A stylized infographic summarizing the key concepts: 3 C's, Persona, Examples, CoT, Structured Output, Iterative, and Text/Image icons.",
+      "is_video_slide": false
+    },
+    {
+      "title": "EduPyramids Logo & Thank You",
+      "content": [
+        "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited, SINE, IIT Bombay."
+      ],
+      "narration": [
+        "This brings us to the end of this tutorial.",
+        "This Spoken Tutorial is brought to you by EduPyramids.",
+        "It is from Educational Services Private Limited.",
+        "This is SINE, IIT Bombay.",
+        "Thank you for joining!"
+      ],
+      "image_prompt": "EduPyramids logo with SINE, IIT Bombay branding.",
+      "is_video_slide": false
+    }
+  ]
+}

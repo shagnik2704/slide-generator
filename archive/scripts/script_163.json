@@ -1,0 +1,230 @@
+{
+  "presentation_title": "The Art Of The Prompt - A Guide For Everyone",
+  "module": "Effective AI Prompting",
+  "episode": "Episode 1: The Art of the Prompt",
+  "learning_objectives": [
+    "Define what a prompt is and explain its importance for useful responses from AI tools.",
+    "Construct clear and specific prompts using essential details and relevant keywords.",
+    "Modify prompts to provide context, assign roles to the AI, and specify desired output formats.",
+    "Evaluate and improve initial AI responses by refining prompts for better and accurate results."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Prompts",
+    "Prerequisites for Using AI Tools",
+    "Core Concept 1: Be Clear and Specific",
+    "Core Concept 2: Add Context and Role",
+    "Core Concept 3: Specify Output Format",
+    "Practical Activity: Writing a Leave Application Prompt",
+    "Summary and Next Steps"
+  ],
+  "meta_tags": [
+    "AI prompting",
+    "chatgpt tutorial",
+    "bard tutorial",
+    "how to write prompts",
+    "AI instructions",
+    "spoken tutorial",
+    "IIT Bombay",
+    "EduPyramids"
+  ],
+  "prerequisites": "Basic computer or smartphone use, access to a basic AI chat tool.",
+  "slides": [
+    {
+      "title": "The Art Of The Prompt - A Guide For Everyone",
+      "content": [
+        "Welcome to this Spoken Tutorial.",
+        "Presented by: EduPyramids / FOSSEE, IIT Bombay."
+      ],
+      "narration": [
+        "Hello everyone.",
+        "Welcome to this Spoken Tutorial on The Art Of The Prompt.",
+        "My name is [Your Name / Instructor's Name]."
+      ],
+      "image_prompt": "Title slide with 'The Art of the Prompt - A Guide for Everyone', modern AI-themed background, subtle EduPyramids logo, FOSSEE IIT Bombay logo, professional and clean design.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "At the end of this tutorial, you will be able to:",
+        "1. Define what a prompt is.",
+        "2. Construct clear and specific prompts.",
+        "3. Modify prompts with context and roles.",
+        "4. Evaluate and improve AI responses."
+      ],
+      "narration": [
+        "At the end of this tutorial, you will be able to:",
+        "Define what a prompt is and why it is important for AI tools.",
+        "Construct clear and specific prompts by including essential details.",
+        "Modify prompts to provide necessary context, roles, and output formats.",
+        "And finally, evaluate and improve initial AI responses for better results."
+      ],
+      "image_prompt": "Graphic showing four learning objectives related to AI prompting, simple icons for each objective: a question mark for define, a builder for construct, a person in different roles for modify, a magnifying glass for evaluate.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "To follow this tutorial, you need:",
+        "Basic computer or smartphone use.",
+        "Access to a basic AI chat tool.",
+        "For example, chat.openai.com or bard.google.com."
+      ],
+      "narration": [
+        "Before we start, let us check the prerequisites.",
+        "You should know basic computer or smartphone use.",
+        "Also, you should have access to a basic AI chat tool.",
+        "For example, you can use `chat.openai.com` or `bard.google.com`.",
+        "Please keep your chosen AI chat tool ready to use."
+      ],
+      "image_prompt": "Person using a laptop and a smartphone, beside them a simple graphic of an AI chat interface on a browser window, indicating basic tech access.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "What Is A Prompt?",
+      "content": [
+        "A prompt is an instruction given to an AI.",
+        "It is like asking a smart helper for something.",
+        "Example: 'Bring a book' (Vague) versus 'Bring my red English storybook from the top shelf' (Clear Prompt)."
+      ],
+      "narration": [
+        "First, what is a prompt?",
+        "A prompt is a set of instructions you give to an AI program.",
+        "Think of it like asking a smart helper for something specific.",
+        "If you say 'Bring a book', they might bring any book. It is vague."
+      ],
+      "image_prompt": "Person speaking into a stylized AI interface, with a speech bubble saying 'prompt'. Next to it, a clear illustration of a person bringing a specific red book from a top shelf, contrasting with a person confused about 'any book'.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 1: Be Clear and Specific",
+      "content": [
+        "AI follows words exactly, does not guess.",
+        "Tell the AI: What you want, Who it is for, What details are important.",
+        "Example: 'Write 3 sentences about the rose flower, explaining its color and smell, for small children.'"
+      ],
+      "narration": [
+        "Our first core concept is: Be Clear and Specific.",
+        "AI tools do not guess what you mean. They follow your words exactly.",
+        "Tell the AI what you want, who it is for, and important details.",
+        "For example, 'Tell me about animals' is too broad."
+      ],
+      "image_prompt": "Image showing a magnifying glass focusing on a detailed instruction 'Write about rose for children', with a vague instruction 'Tell me about flowers' next to it appearing blurry and less effective.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 2: Add Context and Role",
+      "content": [
+        "Context: Gives AI background information.",
+        "Role: Helps AI respond in a specific style.",
+        "Example: 'You are a science teacher. Explain how planets go around the sun in simple words, like you are talking to a 7-year-old.'"
+      ],
+      "narration": [
+        "Next, let us learn to Add Context and Role.",
+        "Context gives the AI background, helping it understand your situation.",
+        "Role helps the AI respond in a specific style, like an expert.",
+        "Doctors give better advice if they know your health history."
+      ],
+      "image_prompt": "Two figures, one representing a user, asking a question to a robot. The robot has a thought bubble containing a teacher's cap and a context bubble indicating 'student's brother asking about solar system', showing understanding of role and context.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 3: Specify Output Format",
+      "content": [
+        "Tells AI how you want the answer (list, paragraph, table).",
+        "Saves time in organizing information later.",
+        "Example: 'Tell me about 4 healthy fruits. Present them as a numbered list, where each fruit has its name and one health benefit.'"
+      ],
+      "narration": [
+        "Our last core concept is: Specify Output Format.",
+        "You might need information presented in a specific way.",
+        "Telling the AI the format saves you time in organizing later.",
+        "For example: 'Tell me about healthy fruits.'"
+      ],
+      "image_prompt": "Computer screen showing different data formats: a bulleted list of items, a numbered list with descriptions, and a short, structured paragraph, emphasizing that the user can choose the output structure.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practical Activity: Leave Application",
+      "content": [
+        "Scenario: You need a leave application for school/college for one day.",
+        "Task: Create a prompt for an AI tool.",
+        "Combine: Specific request, context/role, and output format.",
+        "Example: 'You are a helpful assistant. I need to write a leave application to my class teacher for one day, tomorrow, for a doctor's appointment. Write it as a short, formal letter, including date, name, class, and roll number placeholders.'"
+      ],
+      "narration": [
+        "Now, let us do a practical activity.",
+        "Scenario: You need help writing a leave application for school or college.",
+        "Task: Create an AI prompt for a formal one-day leave application.",
+        "First, start with a clear request: 'I need a leave application.'",
+        "Next, add context and a role.",
+        "For instance, 'You are a helpful assistant,' and mention 'my class teacher.'"
+      ],
+      "image_prompt": "Student typing a complex, structured prompt into an AI chat window for a leave application, showing a draft application on the screen with placeholders, demonstrating the combination of learned concepts.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Key Takeaways:",
+        "1. Be Clear and Specific: Give enough details.",
+        "2. Add Context and Role: For relevant answers.",
+        "3. Specify Output Format: Get structured results."
+      ],
+      "narration": [
+        "Let us quickly summarize what we have learned.",
+        "Remember these three key takeaways for effective prompting:",
+        "First, always be clear and specific in your prompts.",
+        "Give enough details so the AI understands.",
+        "Second, provide context and assign a role to the AI."
+      ],
+      "image_prompt": "Infographic with three main points summarized: 'Clear & Specific' with a magnifying glass, 'Context & Role' with a persona icon, 'Output Format' with a structured document icon. Clean and minimalist design.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Use an AI tool to generate 5 tips for learning a new skill.",
+        "Ensure the AI acts as an expert mentor.",
+        "Present the tips as a bulleted list.",
+        "Each tip should include a one-sentence explanation."
+      ],
+      "narration": [
+        "Here is an assignment for you.",
+        "Use an AI tool to generate five tips for learning a new skill.",
+        "Ensure the AI acts as an expert mentor.",
+        "Present the tips as a bulleted list.",
+        "Each tip should include a one-sentence explanation."
+      ],
+      "image_prompt": "Person sitting at a desk with a notebook and a laptop, thinking about how to learn a new skill, a checklist graphic nearby. The scene conveys contemplation and active learning.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    },
+    {
+      "title": "Acknowledgement",
+      "content": [
+        "This Spoken Tutorial is brought to you by EduPyramids.",
+        "For more Spoken Tutorials, visit spoken-tutorial.org.",
+        "Thank you for watching."
+      ],
+      "narration": [
+        "This Spoken Tutorial is brought to you by EduPyramids.",
+        "For more such tutorials, please visit `spoken-tutorial.org`.",
+        "Thank you for watching this tutorial."
+      ],
+      "image_prompt": "EduPyramids and FOSSEE IIT Bombay logos prominently displayed, with text 'Thank You' and the website address 'spoken-tutorial.org'. Simple, professional background with a sense of completion.",
+      "video_prompt": "null",
+      "is_video_slide": false
+    }
+  ]
+}

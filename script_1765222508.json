@@ -1,0 +1,84 @@
+{
+  "presentation_title": "Bias in AI",
+  "module": "Ethics, Responsibility, and the Future",
+  "episode": "Bias in AI",
+  "learning_objectives": [
+    "Understand how human bias enters **AI** training data.",
+    "Identify how **AI** models learn and amplify existing patterns.",
+    "Recognize the importance of identifying and reducing bias."
+  ],
+  "duration": "2-3 min",
+  "outline": [
+    "Bias in **AI**: Where does it start?",
+    "**AI** Learning and Amplifying Patterns",
+    "Example: Gender Bias in Outputs",
+    "Identifying and Reducing Bias"
+  ],
+  "meta_tags": [
+    "AI bias",
+    "machine learning ethics",
+    "data bias",
+    "ethical AI",
+    "responsible AI",
+    "gender bias",
+    "AI training data"
+  ],
+  "prerequisites": "You should have a basic understanding of what **AI** is. Familiarity with machine learning concepts helps. No advanced technical knowledge is needed. We will explain all new terms simply.",
+  "slides": [
+    {
+      "title": "Welcome to Module 5: Bias in **AI**",
+      "narration": "Welcome to Module 5.\nWe will explore Ethics, Responsibility, and the Future of **AI**.\nOur episode today focuses on Bias in **AI**.\nThis is a very important topic.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "By the end of this episode, you will understand how human bias enters **AI** training data.\nYou will identify how **AI** models learn and amplify existing patterns.\nYou will also recognize the importance of identifying and reducing bias.",
+      "image_prompt": ""
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a device with internet access.\nA stable connection will help you.\nYou should have a quiet space to learn.\nPlease use headphones for better audio.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "You should have a basic understanding of what **AI** is.\nFamiliarity with machine learning concepts helps.\nNo advanced technical knowledge is needed.\nWe will explain all new terms simply.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Bias in **AI**: Where does it start?",
+      "narration": "Can an **AI** be fair if its data is not fair?\n**AI** learns from the data we give it.\nThis data comes from the real world.\nThe real world has human biases.\nThese biases enter the training data.\nLet us see how this happens.\nThink of a child learning from old books.\nThese books might show only men in certain jobs.\nThe child learns this pattern.\nSimilarly, **AI** learns from historical data.\nYou saw how data shapes learning.\nDid the **AI** create this bias itself?\nNow, we will explore how models use this data.",
+      "image_prompt": ""
+    },
+    {
+      "title": "**AI** Learning and Amplifying Patterns",
+      "narration": "How does an **AI** make bias bigger?\n**AI** models look for patterns in data.\nThey find connections between things.\nIf a pattern is biased, the **AI** will learn it.\nIt then uses this pattern to make decisions.\nLet us look at a common example.\nImagine an **AI** trained on job applications.\nHistorically, more men were hired for engineering roles.\nThe **AI** sees this pattern.\nWhen new applications come, it might favor male candidates.\nIt amplifies the existing bias.\nYou saw how patterns are learned.\nIs the **AI** being unfair deliberately?\nNext, we will see a specific output example.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Example: Gender Bias in Outputs",
+      "narration": "What happens when an **AI** creates images or text?\nIf the training data has gender bias, the **AI** output shows it.\nFor instance, asking for a 'doctor' might only show male images.\nAsking for a 'nurse' might only show female images.\nLet us view a clear scenario.\nWe ask an **AI** image generator: 'Show me a CEO.'\nOften, the **AI** generates images of men.\nThis is because most historical data shows male CEOs.\nThe **AI** simply reflects this.\nYou saw the output reflecting bias.\nDoes this output seem fair to everyone?\nNow, we understand the problem.\nWhat can we do?",
+      "image_prompt": ""
+    },
+    {
+      "title": "Identifying and Reducing Bias",
+      "narration": "Why is it important to fix **AI** bias?\nBiased **AI** can lead to unfair decisions.\nIt can harm people and groups.\nWe must ensure **AI** treats everyone fairly.\nIdentifying and reducing bias is crucial.\nLet us think about the steps.\nFirst, we can check our training data for balance.\nNext, we can use diverse datasets.\nFinally, we can also test **AI** outputs for bias.\nThis helps us to correct it.\nYou learned about checking for bias.\nHow can we make **AI** more inclusive?\nWe have covered the core ideas.\nLet us summarize our learning.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Summary",
+      "narration": "We learned that human biases enter **AI** data.\n**AI** models learn and amplify these patterns.\nWe saw how gender bias appears in **AI** outputs.\nIdentifying and reducing bias is very important for fair **AI**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Small Task for You",
+      "narration": "Think of an **AI** tool you use daily.\nHow might bias affect its outputs?\nWrite down one example.\nShare your thoughts in the comments.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Thank You",
+      "narration": "Thank you for joining this episode.\nThis module is brought to you by **EduPyramids**.\nWe are proud to be supported by **SINE**, **IIT Bombay**.\nWe hope you learned something new today.",
+      "image_prompt": ""
+    }
+  ]
+}

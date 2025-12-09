@@ -1,0 +1,226 @@
+{
+  "presentation_title": "How to Write Effective Prompts for AI",
+  "module": "AI Prompt Engineering",
+  "episode": "6. How to Write Effective Prompts for AI",
+  "learning_objectives": [
+    "Craft clear and specific AI prompts",
+    "Add context to AI prompts",
+    "Specify output formats for AI",
+    "Iterate and refine AI prompts",
+    "Generate improved AI outputs"
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to effective prompting",
+    "Key Principle 1: Clarity",
+    "Key Principle 2: Context",
+    "Key Principle 3: Format",
+    "Principle 4: Iterate and Refine",
+    "Summary",
+    "Assignment"
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "Prompt Engineering",
+    "Prompt Writing",
+    "ChatGPT",
+    "Large Language Models",
+    "LLM",
+    "Effective Prompts",
+    "AI Tools",
+    "FOSSEE",
+    "EduPyramids"
+  ],
+  "prerequisites": "Familiarity with basic AI tools like ChatGPT.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial.\nIt's on How to Write Effective Prompts for AI.",
+      "image_prompt": "Title slide: How to Write Effective Prompts for AI, with FOSSEE and IIT Bombay logos.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Craft clear and specific AI prompts",
+        "Add context to AI prompts",
+        "Specify output formats for AI",
+        "Iterate and refine AI prompts",
+        "Generate improved AI outputs"
+      ],
+      "narration": "In this tutorial, you'll learn to craft AI prompts.\nYou'll add context.\nYou'll specify output formats.\nYou'll also iterate and refine prompts.\nThis helps generate improved AI outputs.",
+      "image_prompt": "Standard learning objectives slide with bullet points.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Browser on a computer or mobile",
+        "Internet connection"
+      ],
+      "narration": "Here I'm using a browser.\nYou'll need a computer or mobile.\nYou'll also need internet access.",
+      "image_prompt": "Standard system requirements slide showing a laptop and a smartphone with browser icons.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Pre-requisites",
+      "content": [
+        "Familiarity with what a prompt is",
+        "Familiarity with basic AI tools (e.g., ChatGPT)"
+      ],
+      "narration": "To follow this tutorial, you should know what a prompt is.\nYou should also be familiar with basic AI tools.\nFor example, ChatGPT.",
+      "image_prompt": "Standard pre-requisites slide with icons for a brain (knowledge) and a computer (AI tool).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Effective Prompts?",
+      "content": [
+        "Weak prompts = Weak answers",
+        "Strong prompts = Smart answers"
+      ],
+      "narration": "Have you ever got a strange answer from an AI?\nThat's because of a weak prompt.\nA weak prompt gets a weak answer.\nA strong prompt gets a smart answer.",
+      "image_prompt": "Split screen: Left side shows a confused AI robot with a question mark, right side shows a happy, intelligent AI robot with a lightbulb.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Key Principle 1: Clarity",
+      "content": [
+        "Be specific",
+        "Avoid vague language"
+      ],
+      "narration": "First, let's talk about clarity.\nYour prompt must be specific.\nAvoid vague language.\nThe AI can't read your mind.",
+      "image_prompt": "A magnifying glass focusing on a single, clear word, surrounded by blurry, vague words.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Action: Try a Vague Prompt",
+      "content": [
+        "Prompt: \"Write something about dogs.\"",
+        "Observe the generic output."
+      ],
+      "narration": "Let's try a vague prompt.\nOpen your AI tool.\nType \"Write something about dogs.\"\nSubmit it.\nSee the generic output?\nIt's not very useful.",
+      "image_prompt": "Screen recording showing a user typing 'Write something about dogs' into ChatGPT and receiving a generic paragraph about dogs.",
+      "video_prompt": "Screen recording showing a user typing 'Write something about dogs' into ChatGPT and receiving a generic paragraph about dogs.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Action: Improve Clarity",
+      "content": [
+        "Prompt: \"Write a short, heartwarming story about a golden retriever puppy's first snow day.\"",
+        "Observe the specific, engaging output."
+      ],
+      "narration": "Now, let's make it clear.\nType \"Write a short, heartwarming story about a golden retriever puppy's first snow day.\"\nSubmit this one.\nSee the difference now?\nMuch better, right?",
+      "image_prompt": "Screen recording showing a user typing 'Write a short, heartwarming story about a golden retriever puppy's first snow day' into ChatGPT and receiving a well-structured, heartwarming story.",
+      "video_prompt": "Screen recording showing a user typing 'Write a short, heartwarming story about a golden retriever puppy's first snow day' into ChatGPT and receiving a well-structured, heartwarming story.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Key Principle 2: Context",
+      "content": [
+        "Give background information",
+        "Define roles or purpose"
+      ],
+      "narration": "Next, add context.\nTell the AI its role.\nGive it background information.\nThis helps the AI understand your needs.",
+      "image_prompt": "An AI robot listening intently to a person who is explaining something, with thought bubbles showing background details.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Action: Try Prompt without Context",
+      "content": [
+        "Prompt: \"Explain quantum physics.\"",
+        "Observe the complex, general explanation."
+      ],
+      "narration": "Let's try without context.\nType \"Explain quantum physics.\"\nSubmit it.\nYou'll likely get a complex answer.\nIt's hard to understand.",
+      "image_prompt": "Screen recording showing a user typing 'Explain quantum physics' into ChatGPT and receiving a highly technical, academic explanation.",
+      "video_prompt": "Screen recording showing a user typing 'Explain quantum physics' into ChatGPT and receiving a highly technical, academic explanation.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Action: Add Context to Prompt",
+      "content": [
+        "Prompt: \"Explain quantum physics to a 10-year-old using simple analogies.\"",
+        "Observe the simplified, targeted explanation."
+      ],
+      "narration": "Now, add context.\nType \"Explain quantum physics to a 10-year-old using simple analogies.\"\nSubmit it.\nThe explanation is much simpler now.\nIt's tailored to a specific audience.",
+      "image_prompt": "Screen recording showing a user typing 'Explain quantum physics to a 10-year-old using simple analogies' into ChatGPT and receiving a simplified explanation using relatable examples.",
+      "video_prompt": "Screen recording showing a user typing 'Explain quantum physics to a 10-year-old using simple analogies' into ChatGPT and receiving a simplified explanation using relatable examples.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Key Principle 3: Format",
+      "content": [
+        "Tell the AI how to structure the output",
+        "Use bullet points, paragraphs, code, tables, etc."
+      ],
+      "narration": "Finally, specify the format.\nTell the AI how to structure the output.\nDo you want bullet points?\nOr a poem?\nOr a table?",
+      "image_prompt": "Icons representing different output formats: bullet points, code block, paragraph text, table grid.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Action: Try Prompt without Format",
+      "content": [
+        "Prompt: \"List benefits of exercise.\"",
+        "Observe the default output format."
+      ],
+      "narration": "Let's try without format.\nType \"List benefits of exercise.\"\nSubmit it.\nIt might give you a paragraph.\nOr maybe simple bullet points.",
+      "image_prompt": "Screen recording showing a user typing 'List benefits of exercise' into ChatGPT and receiving a response that might be a paragraph or basic bullet points.",
+      "video_prompt": "Screen recording showing a user typing 'List benefits of exercise' into ChatGPT and receiving a response that might be a paragraph or basic bullet points.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Action: Specify Format",
+      "content": [
+        "Prompt: \"List 5 benefits of exercise in bullet points, with a short explanation for each.\"",
+        "Observe the structured, specific output."
+      ],
+      "narration": "Now, specify the format.\nType \"List 5 benefits of exercise in bullet points, with a short explanation for each.\"\nSubmit this.\nSee how structured it is?\nIt follows your instructions exactly.",
+      "image_prompt": "Screen recording showing a user typing 'List 5 benefits of exercise in bullet points, with a short explanation for each' into ChatGPT and receiving a perfectly formatted list.",
+      "video_prompt": "Screen recording showing a user typing 'List 5 benefits of exercise in bullet points, with a short explanation for each' into ChatGPT and receiving a perfectly formatted list.",
+      "is_video_slide": true
+    },
+    {
+      "title": "Principle 4: Iterate and Refine",
+      "content": [
+        "Don't stop at the first try",
+        "Adjust your prompt based on output",
+        "Improve AI's response over time"
+      ],
+      "narration": "Don't stop at one try.\nAI is a conversation.\nRefine your prompt.\nAdjust it based on the output.\nThis gets you even better results.",
+      "image_prompt": "A circular diagram showing 'Prompt' -> 'AI Output' -> 'Review' -> 'Refine Prompt' -> back to 'Prompt', depicting an iterative loop.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Learned to craft clear prompts",
+        "Learned to add context",
+        "Learned to specify output format",
+        "Learned to iterate and refine prompts"
+      ],
+      "narration": "We learned to write clear prompts.\nWe added context to them.\nWe specified output formats.\nAnd we learned to refine our prompts.\nThis helps you get better AI outputs.",
+      "image_prompt": "Summary slide with icons representing clarity, context, format, and iteration.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Use an AI tool (e.g., ChatGPT).",
+        "Write a prompt for a recipe.",
+        "Include clarity, context, and format.",
+        "Refine the prompt at least twice."
+      ],
+      "narration": "Here's an assignment for you.\nUse an AI tool.\nWrite a prompt for a recipe.\nInclude clarity, context, and format.\nThen, refine it twice.\nPractice makes perfect!",
+      "image_prompt": "Assignment slide with a notebook, pencil, and AI tool icon.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "Thank you for watching.\nThis Spoken Tutorial was brought to you by the FOSSEE project.\nIt's from IIT Bombay.",
+      "image_prompt": "Thank you slide with FOSSEE and IIT Bombay logos.",
+      "is_video_slide": false
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "presentation_title": "Understanding Retrieval-Augmented Generation (RAG)",
+  "module": "Advanced AI Concepts",
+  "episode": "Introduction to RAG",
+  "learning_objectives": [
+    "By the end of this tutorial, you will be able to explain what Retrieval-Augmented Generation (RAG) is and how it works."
+  ],
+  "duration": "10-12 minutes",
+  "outline": [
+    "Introduction to the 'closed-book' problem in AI",
+    "What is Retrieval-Augmented Generation (RAG)?",
+    "Understanding the 'Retrieval' component",
+    "Understanding the 'Generation' component",
+    "The 3-step RAG flow: Query, Retrieve, Generate",
+    "Benefits of using RAG for AI applications"
+  ],
+  "meta_tags": [
+    "RAG",
+    "Retrieval-Augmented Generation",
+    "LLM",
+    "Large Language Models",
+    "AI",
+    "Generative AI",
+    "Knowledge Base",
+    "Chat with your data",
+    "Spoken Tutorial"
+  ],
+  "prerequisites": "Basic understanding of Large Language Models (LLMs) and their working.",
+  "slides": [
+    {
+      "title": "Welcome to the Tutorial",
+      "content": [],
+      "narration": "Hello and welcome to this **Spoken Tutorial** on **Retrieval-Augmented Generation**, or **RAG**.\nHere, we will learn how **RAG** helps **AI** models give better answers.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Learning Objective",
+      "content": [],
+      "narration": "By the end of this tutorial, you will learn what **Retrieval-Augmented Generation**, or **RAG**, is.\nYou will also understand how **RAG** works.",
+      "image_prompt": ""
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "To follow this tutorial, you need a computer and good internet.\nYou do not need to install any special software for this lesson.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "Before you start, you should know what **Large Language Models**, or **LLMs**, are.\nYou should also know how they write text.\nThis will help you understand **RAG** better.",
+      "image_prompt": ""
+    },
+    {
+      "title": "The 'Closed-Book' Problem",
+      "content": [],
+      "narration": "Have you seen an **AI** give wrong answers, especially for new information?\nThis happens because the **AI** answers only from what it already knows.\nIt is like a student taking a 'closed-book' exam.",
+      "image_prompt": "An AI chatbot looking confused, with a thought bubble showing vague or incorrect information."
+    },
+    {
+      "title": "Introducing RAG: The Solution",
+      "content": [],
+      "narration": "**Retrieval-Augmented Generation**, or **RAG**, solves this 'closed-book' problem.\nIt is a simple idea that helps **AI** models give much better answers.\nThink of it like an 'open-book' exam.",
+      "image_prompt": "A student happily taking an exam with an open book next to them, contrasting with another student struggling with a closed book."
+    },
+    {
+      "title": "How RAG Works",
+      "content": [],
+      "narration": "**RAG** connects outside knowledge with the **AI** model.\nIt gives the **AI** new facts to read before it answers your question.\nThis helps the **AI** give correct and full answers.",
+      "image_prompt": "A large language model brain icon with arrows pointing to external knowledge sources like books and documents, showing integration."
+    },
+    {
+      "title": "The 'Retrieval' (R) Component",
+      "content": [],
+      "narration": "The 'Retrieval' part of **RAG** is like a smart Librarian.\nWhen you ask a question, it searches a special knowledge base.\nThis knowledge base can be your **PDF** files, company documents, or other papers.",
+      "image_prompt": "A friendly librarian character searching through a digital library database, with various documents and PDFs floating around."
+    },
+    {
+      "title": "The Librarian's Job",
+      "content": [],
+      "narration": "The Librarian finds the exact parts of documents that match your question.\nIt quickly gets the best information for the **AI**.\nThis is the first important step in **RAG**.",
+      "image_prompt": "A digital hand pointing to highlighted relevant paragraphs within a stack of documents, indicating precise retrieval."
+    },
+    {
+      "title": "The 'Generation' (G) Component",
+      "content": [],
+      "narration": "The 'Generation' part is the **AI** model itself, like an Expert.\nIt gets two things: your question and the useful documents from the Librarian.",
+      "image_prompt": "An AI chatbot character (Eloquent Expert) receiving two inputs: a speech bubble with a question and a stack of documents."
+    },
+    {
+      "title": "The Expert's New Job",
+      "content": [],
+      "narration": "Now, the Expert does not answer from its own memory.\nIt is told to answer your question by using only the documents given to it.\nThis makes sure the answer is based on facts.",
+      "image_prompt": "The AI chatbot character confidently answering a question while pointing to the provided documents as its source, not its head."
+    },
+    {
+      "title": "The 3-Step RAG Flow",
+      "content": [],
+      "narration": "**RAG** works in 3 simple steps.\nStep 1: You ask a question.\nStep 2: The system finds information.\nStep 3: The system gives you an answer.\nMany 'Chat with your data' apps use this method.",
+      "image_prompt": "A clear flowchart showing three connected boxes: 'Query' -> 'Retrieve' -> 'Generate', with an arrow looping back from 'Generate' to 'Query'."
+    },
+    {
+      "title": "Benefits of RAG",
+      "content": [],
+      "narration": "**RAG** makes the **AI** give true and clear answers.\nThe **AI** can now show its sources.\nThis helps you trust the **AI**'s answers more.\nIt gives better and more useful information.",
+      "image_prompt": "An AI chatbot providing an answer with a small citation icon or footnote, next to a checkmark indicating accuracy."
+    },
+    {
+      "title": "Summary",
+      "content": [],
+      "narration": "In this tutorial, we learned about **Retrieval-Augmented Generation**, or **RAG**.\n**RAG** helps **AI** models give better answers.\nIt does this by finding outside information and then creating a response.\nThis makes answers more correct and easy to check.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "For your assignment, find an example of a 'Chat with your data' app that uses **RAG**.\nTry to see how the finding and creating parts work in that app.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "This **Spoken Tutorial** is from **EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining us!",
+      "image_prompt": ""
+    }
+  ]
+}

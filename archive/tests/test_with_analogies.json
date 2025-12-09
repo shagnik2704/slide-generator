@@ -1,0 +1,213 @@
+{
+  "presentation_title": "Understanding Neural Networks for Beginners",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "1. Introduction to Neural Networks",
+  "learning_objectives": [
+    "Define a neural network and its purpose.",
+    "Identify the core components of a neuron.",
+    "Explain how layers connect to form a network.",
+    "Describe the basic learning process through weights.",
+    "Recognize common applications of neural networks."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What is a Neural Network?",
+    "The Neuron: Building Block",
+    "How Neurons Connect: Layers",
+    "How a Neuron Works: Inputs and Weights",
+    "How a Neuron Works: Activation",
+    "Learning from Data: Training",
+    "Analogy: Learning to Identify Fruit",
+    "What Can Neural Networks Do?",
+    "Summary",
+    "Assignment"
+  ],
+  "meta_tags": [
+    "Neural Network",
+    "AI",
+    "Machine Learning",
+    "Deep Learning",
+    "Beginner",
+    "Artificial Intelligence",
+    "Neurons",
+    "Weights",
+    "Training",
+    "FOSSEE"
+  ],
+  "prerequisites": "Basic computer literacy is helpful. No prior AI or programming knowledge is needed.",
+  "slides": [
+    {
+      "title": "Welcome",
+      "content": [
+        "Understanding Neural Networks for Beginners"
+      ],
+      "narration": "Welcome to this Spoken Tutorial. Today, we will learn about Neural Networks.",
+      "image_prompt": "A friendly welcome screen with the tutorial title.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Define a neural network and its purpose.",
+        "Identify the core components of a neuron.",
+        "Explain how layers connect to form a network.",
+        "Describe the basic learning process through weights.",
+        "Recognize common applications of neural networks."
+      ],
+      "narration": "In this tutorial, you will learn to: Define what a neural network is. Identify its basic components. Explain how it learns from data. Recognize its everyday applications.",
+      "image_prompt": "List of learning objectives clearly displayed.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Computer or smartphone",
+        "Internet connection"
+      ],
+      "narration": "You will need a computer or smartphone. An internet connection is also required. No special software is needed for this tutorial.",
+      "image_prompt": "Icons representing a laptop, a smartphone, and a Wi-Fi signal.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer literacy",
+        "No prior AI or programming knowledge"
+      ],
+      "narration": "This tutorial is for beginners. Some basic understanding of computers is helpful. No prior knowledge of AI or programming is needed.",
+      "image_prompt": "A graphic showing a person comfortably using a computer, implying ease of use.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "What is a Neural Network?",
+      "content": [
+        "Inspired by the human brain.",
+        "A powerful tool for AI."
+      ],
+      "narration": "Have you heard of Artificial Intelligence? Neural Networks are a core part of AI. They are inspired by how our brains work. Think of them as a brain for computers. They help computers learn and make decisions.",
+      "image_prompt": "Stylized graphic of a human brain next to a simplified network of interconnected nodes.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Neuron: Building Block",
+      "content": [
+        "Basic unit of a neural network.",
+        "Receives input, processes it, produces output."
+      ],
+      "narration": "Our brain has billions of neurons. Neural networks have artificial neurons. Each artificial neuron is a simple processor. It takes information in. It processes this information. Then it sends out a new signal.",
+      "image_prompt": "Simple illustration of a single artificial neuron with multiple inputs, a processing unit, and a single output. Arrows showing input flow to output.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "How Neurons Connect: Layers",
+      "content": [
+        "Input Layer",
+        "Hidden Layers",
+        "Output Layer"
+      ],
+      "narration": "These neurons connect in layers. First, we have an Input Layer. This is where data enters the network. Then come one or more Hidden Layers. These layers do the main processing. Finally, there is an Output Layer. This layer gives the network's final answer.",
+      "image_prompt": "Diagram showing three distinct layers of artificial neurons: an input layer (left), one hidden layer (middle), and an output layer (right), with lines connecting neurons between adjacent layers.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "How a Neuron Works: Inputs & Weights",
+      "content": [
+        "Inputs are data points.",
+        "Weights show importance."
+      ],
+      "narration": "Let's look closer at one neuron. It receives several inputs. Think of these as pieces of information. Each input has a 'weight'. Weights decide how important each input is. A higher weight means more importance.",
+      "image_prompt": "Close-up of a single artificial neuron. Multiple input lines (with small numbers representing weights on each line) converging into the neuron.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "How a Neuron Works: Activation",
+      "content": [
+        "Sums inputs * weights.",
+        "Applies Activation Function.",
+        "Decides to \"fire\" or not."
+      ],
+      "narration": "The neuron adds up all its inputs. It multiplies each input by its weight first. Then it applies an 'activation function'. This function decides if the neuron should 'fire'. Firing means sending a signal to the next layer. It's like deciding if enough evidence is present.",
+      "image_prompt": "Illustration of a single artificial neuron. Inputs with weights entering. A sum symbol inside the neuron. An arrow pointing to an \"Activation Function\" box, then an output line.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning from Data: Training",
+      "content": [
+        "Neural networks learn from data.",
+        "They adjust weights.",
+        "They get better over time."
+      ],
+      "narration": "So, how do they learn? We 'train' them with lots of data. Think of data as examples. The network makes a guess or prediction. We compare its guess to the correct answer. If it's wrong, it adjusts its weights slightly. It keeps adjusting until its guesses are good.",
+      "image_prompt": "Graphic showing a cycle: Data input -> Neural Network (making prediction) -> Comparison with actual answer -> Feedback loop to \"Adjust Weights\" in the network.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Analogy: Identifying Fruit",
+      "content": [
+        "Input: Color, Shape, Size.",
+        "Output: Apple, Banana, Orange."
+      ],
+      "narration": "Let's use an analogy. Imagine teaching a child to identify fruit. You show them an apple. You say, \"This is an apple.\" The child learns features: red, round, small stem. Next time, they see a red, round fruit. They guess \"apple\". If wrong, you correct them. They adjust their 'internal rules'.",
+      "image_prompt": "Split screen: A human teaching a child to identify fruits (pointing at an apple). On the other side, a diagram of a neural network with inputs like \"red\", \"round\", \"small\" and outputs like \"apple\", \"banana\".",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "What Can Neural Networks Do?",
+      "content": [
+        "Image recognition.",
+        "Natural Language Processing.",
+        "Predictions and Recommendations."
+      ],
+      "narration": "Neural networks are used everywhere. They recognize faces in photos. They understand your voice commands. They translate languages for you. They recommend movies or products. They power self-driving cars. They are very versatile.",
+      "image_prompt": "Collage of icons representing various AI applications: a camera with a face outline, a microphone icon, a speech bubble with different language flags, a \"recommended\" star icon, a car icon.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Neural networks mimic the brain.",
+        "Made of interconnected neurons in layers.",
+        "Learn by adjusting weights from data.",
+        "Used for many AI tasks."
+      ],
+      "narration": "In this tutorial, we learned about neural networks. They are inspired by the human brain. They consist of layers of artificial neurons. Each neuron processes inputs with weights. They learn by adjusting these weights. This happens during training with data. Neural networks power many AI applications.",
+      "image_prompt": "A summary slide with key points listed and a subtle background image of a neural network.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Reflect on an AI application you use daily.",
+        "How might a neural network be involved?",
+        "Think about its inputs and outputs."
+      ],
+      "narration": "Now for a practice task. Think of an AI application you use every day. For example, a voice assistant or a recommendation system. Consider how a neural network might work inside it. What kind of data would be its inputs? What kind of output would it produce? Share your thoughts with a friend.",
+      "image_prompt": "An icon of a thought bubble with a question mark, representing reflection and critical thinking.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "For more information, visit spoken-tutorial.org"
+      ],
+      "narration": "Thank you for watching this Spoken Tutorial. It is brought to you by the FOSSEE project. FOSSEE is part of the National Mission on Education. This mission is supported by MHRD, Government of India. More information is available at spoken-tutorial.org.",
+      "image_prompt": "The FOSSEE and IIT Bombay logos with the Spoken Tutorial website URL.",
+      "video_prompt": "",
+      "is_video_slide": false
+    }
+  ]
+}

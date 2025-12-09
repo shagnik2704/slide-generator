@@ -1,0 +1,112 @@
+{
+  "presentation_title": "Automating vs. Augmenting Tasks with AI",
+  "module": "Introduction to AI Applications",
+  "episode": "Automating vs. Augmenting Tasks",
+  "learning_objectives": [
+    "Understand the definition of **AI** automation.",
+    "Identify examples of **AI** augmentation.",
+    "Compare the benefits of automating versus augmenting tasks.",
+    "Apply the concepts to choose the right **AI** approach for a task."
+  ],
+  "duration": "2-3 minutes",
+  "outline": [
+    "Introduction to Automating vs. Augmenting Tasks",
+    "Learning Objectives",
+    "System Requirements",
+    "Prerequisites",
+    "What is **AI** Automation?",
+    "Example: Email Sorting with **AI**",
+    "What is **AI** Augmentation?",
+    "Example: Marketing Brainstorming with **AI**",
+    "Comparing Automation and Augmentation",
+    "Benefits of Augmentation",
+    "Summary",
+    "Assignment",
+    "**EduPyramids** Credit",
+    "Thank You"
+  ],
+  "meta_tags": [
+    "AI",
+    "Automation",
+    "Augmentation",
+    "Artificial Intelligence",
+    "Task Management",
+    "Efficiency",
+    "Productivity",
+    "Machine Learning",
+    "EduPyramids"
+  ],
+  "prerequisites": "To follow this tutorial, you must be connected to the internet.\nYou should also have a basic understanding of what **AI** is.\nNo coding is needed.",
+  "slides": [
+    {
+      "title": "Slide 1: Title Slide: Automating vs. Augmenting Tasks with AI",
+      "narration": "Welcome to this Spoken Tutorial on Automating versus Augmenting Tasks with **AI**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 2: Learning Objectives",
+      "narration": "In this tutorial, you will first learn the definition of **AI** automation.\nNext, you will identify examples of **AI** augmentation.\nThen, you will compare the benefits of automating versus augmenting tasks.\nFinally, you will apply these concepts to choose the right **AI** approach.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 3: System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 4: Prerequisites",
+      "narration": "To follow this tutorial, you must be connected to the internet.\nYou should also have a basic understanding of what **AI** is.\nNo coding is needed.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 5: What is AI Automation?",
+      "narration": "Can an **AI** complete a task entirely on its own?\nYes, this is called automation.\n**AI** automation means the **AI** takes over a repetitive task completely.\nIt performs the task without human intervention.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 6: Example: Email Sorting with AI",
+      "narration": "Let us look at an example.\nImagine an **AI** system that sorts customer support emails.\nIt automatically categorizes emails into 'Billing' or 'Technical Issue'.\nThis **AI** does the sorting task independently.\nThink about other repetitive tasks that **AI** could do.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 7: What is AI Augmentation?",
+      "narration": "How can **AI** help us do our jobs better or faster?\nThis is called augmentation.\n**AI** augmentation means **AI** acts as a partner.\nIt helps a human perform their job more effectively.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 8: Example: Marketing Brainstorming with AI",
+      "narration": "Let us see a practical example.\nA marketing professional needs 20 different headlines for an ad campaign.\nThey use an **AI** tool to brainstorm these ideas.\nThe **AI** generates many options quickly.\nThe human then selects and refines the best headlines.\nConsider how **AI** can be your creative partner.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 9: Comparing Automation and Augmentation",
+      "narration": "What is the main difference between these two approaches?\nAutomation replaces human effort for specific tasks.\nAugmentation assists and enhances human capabilities.\nAutomation focuses on efficiency in repetitive tasks.\nAugmentation focuses on boosting human creativity and speed.\nWhich approach suits your current task best?",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 10: Benefits of Augmentation",
+      "narration": "Augmentation often has the biggest immediate impact.\nIt allows humans to focus on complex and creative work.\n**AI** handles the routine or generates initial ideas.\nThis leads to greater innovation and job satisfaction.\nWe combine human intelligence with **AI**'s speed.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 11: Summary",
+      "narration": "Let us summarize what we learned in this tutorial.\nFirst, **AI** automation means **AI** completes tasks independently.\nNext, **AI** augmentation means **AI** partners with humans to enhance their work.\nThird, augmentation often provides significant immediate benefits.\nFinally, choosing the right approach depends on the specific task at hand.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 12: Assignment",
+      "narration": "Now, let us do a small activity.\nThink of a task you do regularly at work or home.\nConsider how **AI** could either automate or augment this task.\nWrite down one example for automation and one for augmentation.\nExplain why you chose each approach.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 13: EduPyramids logo",
+      "narration": "This brings us to the end of this tutorial.\nThis Spoken Tutorial is brought to you by **EduPyramids** Educational Services.\nIt is a Private Limited company, supported by **SINE** and **IIT Bombay**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 14: Closing slide",
+      "narration": "Thank you for joining!",
+      "image_prompt": ""
+    }
+  ]
+}

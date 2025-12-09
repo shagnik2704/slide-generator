@@ -1,0 +1,191 @@
+{
+  "presentation_title": "The Anatomy of a Good Prompt (The 3 C's)",
+  "module": "Introduction to AI Prompt Engineering",
+  "episode": "2.1: The Anatomy of a Good Prompt (The 3 C's)",
+  "learning_objectives": [
+    "Identify the three key ingredients of an effective prompt.",
+    "Explain the importance of Clarity, Context, and Constraints in prompt writing.",
+    "Construct improved prompts by applying the 3 C's and persona technique."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Good Prompts",
+    "Clarity: Being Specific",
+    "Context: Providing Background",
+    "Constraints: Setting Rules",
+    "Bonus: Using a Persona",
+    "Summary of Key Concepts",
+    "Assignment for Practice",
+    "Acknowledgement and Closing"
+  ],
+  "meta_tags": [
+    "prompt engineering",
+    "AI prompts",
+    "good prompts",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "persona",
+    "ChatGPT",
+    "LLM",
+    "FOSSEE"
+  ],
+  "prerequisites": "Basic understanding of AI tools and Large Language Models (LLMs).",
+  "slides": [
+    {
+      "title": "Welcome: The Anatomy of a Good Prompt (The 3 C's)",
+      "content": [
+        "Module 2.1: The 3 C's of Prompt Engineering"
+      ],
+      "narration": "Hello and welcome to Module 2.1 of our Prompt Engineering series. Today, we will learn about the anatomy of a good prompt. Specifically, we will explore the 3 C's: Clarity, Context, and Constraints.",
+      "image_prompt": "A visual representation of three intertwined 'C' letters, symbolizing Clarity, Context, and Constraints, against a tech-themed background.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify three key ingredients of an effective prompt.",
+        "Explain the importance of Clarity, Context, and Constraints.",
+        "Construct improved prompts using the 3 C's and persona."
+      ],
+      "narration": "At the end of this tutorial, you will be able to: Identify the three key ingredients of an effective prompt. Explain the importance of Clarity, Context, and Constraints in prompt writing. And construct improved prompts by applying the 3 C's and persona technique.",
+      "image_prompt": "A digital checklist with three items being checked, symbolizing learning objectives.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Icon"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of AI tools.",
+        "Familiarity with Large Language Models (LLMs)."
+      ],
+      "narration": "To follow this tutorial, you should have a basic understanding of AI tools. Also, familiarity with Large Language Models, or LLMs, will be helpful. If you need a refresher, please review our previous modules.",
+      "image_prompt": "A stack of books with a glowing brain icon on top, representing prior knowledge.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Icon"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A web browser.",
+        "Access to any Large Language Model (e.g., ChatGPT, Bard)."
+      ],
+      "narration": "You will need a web browser and access to any Large Language Model. For example, you can use ChatGPT or Bard. No special software installation is required for this module.",
+      "image_prompt": "A laptop screen displaying a web browser with a generic AI chat interface.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Icon"
+    },
+    {
+      "title": "Introduction: The 3 C's of Good Prompts",
+      "content": [
+        "Weak prompts give weak answers.",
+        "Great prompts give great answers.",
+        "Best prompts include Clarity, Context, and Constraints."
+      ],
+      "narration": "Think of a good prompt like a precise cooking recipe. A vague recipe leads to a bad dish. Similarly, a weak prompt gets a weak answer from the AI. But a great prompt gives a great answer. The best prompts almost always include three key ingredients: Clarity, Context, and Constraints. We call them the 3 C's.",
+      "image_prompt": "A chef looking at a detailed recipe book, with a thought bubble showing a perfectly cooked, delicious meal.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Analogy and Text"
+    },
+    {
+      "title": "Clarity: Be Specific!",
+      "content": [
+        "**Analogy**: Giving directions to a new place.",
+        "**Weak Prompt**: \"Write about electric cars.\"",
+        "**Good Prompt (Clear)**: \"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "First, let's talk about **Clarity**. This means being specific. Imagine you ask for directions. 'Go somewhere nice' is unclear. 'Go to the nearest coffee shop on Main Street' is clear. The AI does not know what you are thinking. Vague prompts give generic answers. Look at this weak prompt: 'Write about electric cars.' The AI might write anything. Now, let's make it clear. We add specific details. See the improved prompt on screen. It asks for a short blog post, top 3 benefits, for a city resident. This is much clearer.",
+      "image_prompt": "Side-by-side comparison: On one side, a blurry road sign saying 'Anywhere'. On the other, a clear road sign pointing to 'City Coffee Shop, 2km'. Below, a generic car vs. a distinct electric car.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Concept with Before/After"
+    },
+    {
+      "title": "Context: Give it Background!",
+      "content": [
+        "**Analogy**: Telling a story to different age groups.",
+        "**Good Prompt**: \"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "**Better Prompt (with Context)**: \"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "Next, we have **Context**. This means giving background information. Think of telling a story. You tell it differently to a child versus an adult. Context tells the AI why you are asking. It also tells who the audience is. This helps the AI adopt the right perspective. Let's take our clear prompt. It asks for benefits of electric cars. Now, let's add context. We specify it's for a lifestyle blog focusing on sustainable living. See the difference? The AI now understands the perspective needed. It will tailor the content better.",
+      "image_prompt": "A person telling a story: on one side, a child listening intently. On the other, an adult listening thoughtfully. Below, a blog header with 'Sustainable Living' prominently displayed.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Concept with Before/After"
+    },
+    {
+      "title": "Constraints: Set the Rules!",
+      "content": [
+        "**Analogy**: Building with a specific blueprint.",
+        "**Better Prompt**: \"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "**Excellent Prompt (with Constraints)**: \"Write a short blog post, under 400 words, for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city. Use a friendly and enthusiastic tone and end with a question to encourage comments.\""
+      ],
+      "narration": "Finally, let's discuss **Constraints**. These are the rules or boundaries. Imagine you are building a house. You need a blueprint for its size, rooms, and style. Constraints shape the AI's output. Tell the AI the length, format, and style you need. Our prompt is good with clarity and context. Now, let's add constraints. We specify 'under 400 words', 'friendly and enthusiastic tone', and 'end with a question'. This provides clear boundaries. The AI knows exactly what kind of output to generate. It will follow these rules precisely.",
+      "image_prompt": "A blueprint of a house next to a completed, well-structured house. Below, digital sliders for 'Word Count' and 'Tone' on a screen.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Concept with Before/After"
+    },
+    {
+      "title": "Bonus Tip: Provide a Persona",
+      "content": [
+        "This is a super-powerful trick.",
+        "Tell the AI who to be.",
+        "**Example Prompt**: \"Act as an expert travel agent specializing in budget travel. Create a 5-day itinerary for a trip to Rome for a solo traveler who loves history and food.\""
+      ],
+      "narration": "Here is a bonus tip for even better prompts: Provide a **Persona**. This is a very powerful trick. You simply tell the AI who to be. For example, you can tell it to 'Act as an expert travel agent'. This helps the AI adopt a specific voice and knowledge base. Look at the example prompt on screen. The AI will now generate an itinerary as if it were a budget travel expert. It will think like that expert. This leads to highly tailored and relevant outputs.",
+      "image_prompt": "A person wearing a travel agent's uniform and hat, holding a map of Rome. A thought bubble shows a detailed itinerary.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Concept and Example"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "A good prompt needs Clarity, Context, and Constraints.",
+        "**Clarity**: Be specific, avoid vague language.",
+        "**Context**: Give background, define audience.",
+        "**Constraints**: Set rules for length, format, tone.",
+        "**Bonus**: Assign a Persona to the AI."
+      ],
+      "narration": "Let us summarize what we learned today. A good prompt needs three key elements: Clarity, Context, and Constraints. Clarity means being specific and avoiding vague language. Context means giving background and defining the audience. Constraints mean setting rules for length, format, and tone. And as a bonus, assigning a Persona to the AI can greatly improve the output. Remember these 3 C's for effective prompt engineering.",
+      "image_prompt": "A mind map visually connecting the 3 C's (Clarity, Context, Constraints) with 'Persona' as an enhancing node, all leading to 'Effective Prompts'.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Summary List"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "**Task**: Write an excellent prompt for an AI.",
+        "**Scenario**: You want a recipe for a healthy Indian dinner.",
+        "**Include**: Clarity, Context, and Constraints.",
+        "**Bonus**: Add a Persona (e.g., 'Act as an expert chef')."
+      ],
+      "narration": "Now for a small assignment. Your task is to write an excellent prompt for an AI. The scenario is: you want a recipe for a healthy Indian dinner. Your prompt must include Clarity, Context, and Constraints. For a bonus, try adding a Persona to your prompt. For example, 'Act as an expert chef.' This will help you practice the 3 C's.",
+      "image_prompt": "A notebook with a pen, next to a thought bubble showing a vibrant, healthy Indian dinner dish.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Assignment Details"
+    },
+    {
+      "title": "Acknowledgement & Closing",
+      "content": [
+        "Thank you for watching.",
+        "More information at spoken-tutorial.org.",
+        "This content is brought to you by FOSSEE, IIT Bombay."
+      ],
+      "narration": "Thank you for watching this Spoken Tutorial on the Anatomy of a Good Prompt. For more information, please visit spoken-tutorial.org. This content is part of the FOSSEE project, IIT Bombay. We hope you found this tutorial helpful. Happy prompting!",
+      "image_prompt": "Logos of IIT Bombay and FOSSEE, with 'Spoken Tutorial Project' text.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Logos and Text"
+    }
+  ]
+}

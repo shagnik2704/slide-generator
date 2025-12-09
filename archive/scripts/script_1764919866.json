@@ -1,0 +1,201 @@
+{
+  "presentation_title": "Advanced Prompting Techniques",
+  "module": "Artificial Intelligence Essentials \b Prompting Skills",
+  "episode": "2.2 Advanced Prompting Techniques",
+  "learning_objectives": [
+    "Apply advanced prompting techniques like Chain-of-Thought, structured output, and iterative refinement to enhance AI responses."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Advanced Prompting Techniques.",
+    "Using Chain-of-Thought (CoT) for complex problems.",
+    "Structuring AI output with specific formats.",
+    "Employing Iterative Prompting for refinement.",
+    "Summary and Assignment."
+  ],
+  "meta_tags": [
+    "AI prompting",
+    "advanced AI",
+    "Chain-of-Thought",
+    "CoT",
+    "structured output",
+    "iterative prompting",
+    "prompt engineering",
+    "ChatGPT",
+    "AI skills"
+  ],
+  "prerequisites": "Introduction to Prompting",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial.\nIt covers Advanced Prompting Techniques.",
+      "image_prompt": "Title slide with 'Advanced Prompting Techniques' as the main title, featuring abstract AI-themed graphics.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [],
+      "narration": "In this tutorial, you will learn to apply advanced prompting techniques.\nThese include Chain-of-Thought.\nYou will also learn about structured output.\nFinally, you will explore iterative refinement.",
+      "image_prompt": "Learning Objectives slide with bullet points for Chain-of-Thought, Structured Output, and Iterative Prompting.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "Here, I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements slide showing a generic web browser window on a laptop.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "To follow this tutorial, you must be familiar with the basics of prompting.",
+      "image_prompt": "Prerequisites slide with text 'Familiarity with basic AI prompting'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Introduction to Advanced Prompting",
+      "content": [],
+      "narration": "We have learned about clear and concise prompts.",
+      "image_prompt": "Person at laptop, looking thoughtful, with complex AI response on screen. Represents going beyond basic prompts.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Chain-of-Thought (CoT)",
+      "content": [],
+      "narration": "First, let's explore Chain-of-Thought, or CoT.",
+      "image_prompt": "Graphic: 'Chain-of-Thought' title with gears and thought bubbles, 'Think Step-by-Step' highlighted.",
+      "is_video_slide": false
+    },
+    {
+      "title": "CoT - Example Problem",
+      "content": [
+        "Prompt: \"I have 5 boxes of apples. Each box has 12 apples. I eat 3 apples and give away one full box. How many apples are left?\""
+      ],
+      "narration": "Let's try a math problem without CoT.",
+      "image_prompt": "ChatGPT interface, user typing the math problem prompt.",
+      "is_video_slide": false
+    },
+    {
+      "title": "CoT - Vague Output",
+      "content": [],
+      "narration": "The AI tool might give a direct answer.\nHowever, it might be incomplete or incorrect.",
+      "image_prompt": "ChatGPT response to the math problem, showing a single numerical answer or a slightly incorrect one.",
+      "is_video_slide": false
+    },
+    {
+      "title": "CoT - The Magic Phrase",
+      "content": [],
+      "narration": "Now, let's add a special phrase.\nThis phrase helps the AI think.",
+      "image_prompt": "Highlighting the phrase 'Think step-by-step' being added to a prompt.",
+      "is_video_slide": false
+    },
+    {
+      "title": "CoT - Improved Prompt",
+      "content": [
+        "Prompt: \"I have 5 boxes of apples. Each box has 12 apples. I eat 3 apples and give away one full box. How many apples are left? Think step-by-step.\""
+      ],
+      "narration": "Type this improved prompt into the AI tool.\nThen, press enter to see the result.",
+      "image_prompt": "ChatGPT interface, user typing the improved math problem prompt with 'Think step-by-step'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "CoT - Step-by-Step Output",
+      "content": [],
+      "narration": "Observe the AI's response now.\nNotice the detailed steps.",
+      "image_prompt": "ChatGPT response showing the step-by-step reasoning for the apple problem.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Structuring Output",
+      "content": [],
+      "narration": "Next, let's learn to structure the AI's output.",
+      "image_prompt": "Graphic: Icons for different output formats (table, list, code, JSON) with a blueprint icon, symbolizing organization.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Structuring Output - Markdown Table",
+      "content": [
+        "Prompt: \"List the pros and cons of remote work. Provide the output as a Markdown table with two columns: 'Pros' and 'Cons'.\""
+      ],
+      "narration": "Let's ask for pros and cons of remote work.",
+      "image_prompt": "ChatGPT interface, user typing the prompt for a Markdown table.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Structured Output - Result",
+      "content": [],
+      "narration": "See how the AI provides a clean table.",
+      "image_prompt": "ChatGPT output showing the pros and cons of remote work in a Markdown table.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Structuring Output - Other Formats",
+      "content": [
+        "Numbered list",
+        "HTML code",
+        "JSON",
+        "Comma-separated list"
+      ],
+      "narration": "You can ask for other formats too.\nFor example, try a numbered list or JSON.",
+      "image_prompt": "Examples of different output formats (numbered list, HTML snippet, JSON object, comma-separated list) on screen.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterative Prompting",
+      "content": [],
+      "narration": "Finally, let's talk about Iterative Prompting.",
+      "image_prompt": "Two people conversing, with speech bubbles showing back-and-forth refinement, symbolizing iterative prompting.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterative Prompting - First Attempt",
+      "content": [
+        "User: \"Write a slogan for my new coffee shop.\"",
+        "AI: \"Brewing Happiness, One Cup at a Time.\""
+      ],
+      "narration": "Let's try to get a slogan for a coffee shop.",
+      "image_prompt": "ChatGPT interface, user typing the first slogan prompt and AI responding.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterative Prompting - Refinement",
+      "content": [
+        "User: \"That's good, but can you make it shorter and more modern?\"",
+        "AI: \"Urban Brews. Your Daily Grind.\""
+      ],
+      "narration": "That's a good start.\nHowever, we can improve it further.",
+      "image_prompt": "ChatGPT interface, user typing the follow-up prompt and AI responding with the refined slogan.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterative Prompting - Perfect!",
+      "content": [],
+      "narration": "This response is perfect!\nIt meets all our requirements.",
+      "image_prompt": "User smiling at the screen, showing the final refined slogan 'Urban Brews. Your Daily Grind.'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [],
+      "narration": "With this, we come to the end of this tutorial.\nLet us summarise the key points covered.\nWe learned about Chain-of-Thought for complex reasoning.\nWe explored structuring AI output into specific formats.\nAnd we understood the power of iterative prompting to refine results.",
+      "image_prompt": "Summary slide with icons representing CoT, structured output, and iterative prompting.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "As an assignment, please do the following.\nFind a complex problem online to solve.\nTry solving it with an AI tool of your choice.\nFirst, use a simple prompt for the problem.\nThen, add \"Think step-by-step\" and compare the results.\nAlso, try asking the AI to summarize an article as a JSON object.",
+      "image_prompt": "Assignment slide, person working on a laptop, with text overlay of assignment instructions.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited, SINE, IIT Bombay.\nWe appreciate your participation in this tutorial.",
+      "image_prompt": "EduPyramids logo with SINE IIT Bombay affiliation.",
+      "is_video_slide": false
+    }
+  ]
+}

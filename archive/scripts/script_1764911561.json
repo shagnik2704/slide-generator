@@ -1,0 +1,211 @@
+{
+  "presentation_title": "Understanding Tokens",
+  "module": "LLM Fundamentals",
+  "episode": "1. Understanding Tokens",
+  "learning_objectives": [
+    "Explain what tokens are, how tokenization works, and why they are crucial for LLM performance, cost, and data processing."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Tokens",
+    "What is a Tokenizer?",
+    "How Tokens impact Context Windows",
+    "How Tokens affect API Cost",
+    "The role of Tokens in Chunking",
+    "Summary",
+    "Assignment"
+  ],
+  "meta_tags": [
+    "LLM",
+    "tokens",
+    "tokenization",
+    "tokenizer",
+    "context window",
+    "API cost",
+    "RAG",
+    "chunking",
+    "AI",
+    "large language models"
+  ],
+  "prerequisites": "Basic understanding of LLMs.",
+  "slides": [
+    {
+      "title": "Title Slide: Understanding Tokens",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial on Understanding **Tokens**.",
+      "image_prompt": "Title slide with 'Understanding Tokens' prominently displayed, with subtle background graphics related to data processing or AI.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Explain what **tokens** are.",
+        "Understand how **tokenization** works.",
+        "See why **tokens** are crucial for **LLM** performance."
+      ],
+      "narration": "In this tutorial, you will learn what **tokens** are.\nYou will understand how **tokenization** works.\nYou will also see why **tokens** are crucial for **LLM** performance.\nThis includes **context windows**, cost, and **chunking**.",
+      "image_prompt": "Learning objectives slide with bullet points and icons representing learning (lightbulb), understanding (brain), and importance (exclamation mark).",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Learning Objectives Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of **LLMs**."
+      ],
+      "narration": "To follow this tutorial, you should have a basic understanding of **LLMs**.",
+      "image_prompt": "Prerequisites slide with text 'Basic understanding of LLMs' and an icon of a person thinking or studying.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Pre-requisite Slide"
+    },
+    {
+      "title": "LLMs and Tokens",
+      "content": [
+        "**LLMs** process text differently than humans.",
+        "They break text into smaller pieces called **tokens**."
+      ],
+      "narration": "Have you ever wondered how an **LLM** reads text?\nIt doesn't read words like we do.\nInstead, it breaks text into smaller pieces.\nThese pieces are called **tokens**.",
+      "image_prompt": "Illustration showing a human reading a book with words, contrasted with an AI brain processing abstract data blocks labeled 'tokens' from text input.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "What is a Tokenizer?",
+      "content": [
+        "A **tokenizer** is an **LLM's** 'dictionary'.",
+        "It splits raw text into sub-word **tokens**."
+      ],
+      "narration": "A **tokenizer** is a special tool.\nThink of it as the **LLM's** dictionary.\nIt splits your raw text into these sub-word **tokens**.\nThis is what the model truly understands.",
+      "image_prompt": "Diagram showing an input text box, an arrow pointing to a 'Tokenizer' machine icon, and then multiple smaller blocks labeled 'tokens' as output. A dictionary icon can be nearby.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokenization Example: Simple Word",
+      "content": [
+        "Simple words can be one **token**.",
+        "Example: \"The\" -> [\"The\"]"
+      ],
+      "narration": "Let's see an example of **tokenization**.\nA simple word like \"**The**\" might be one **token**.\nThe **tokenizer** keeps it as a single unit.\nObserve this on the screen.",
+      "image_prompt": "Screen showing an input box with 'The' and an output box showing a single block labeled 'The' as a token.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokenization Example: Complex Word",
+      "content": [
+        "Complex words can be multiple **tokens**.",
+        "Example: \"Tokenization\" -> [\"Token\", \"iz\", \"ation\"]"
+      ],
+      "narration": "But a complex word is different.\nTake \"**Tokenization**\" for instance.\nIt might be broken into three **tokens**.\nLike \"Token\", \"iz\", and \"ation\".\nThis is how **LLMs** process complex words.",
+      "image_prompt": "Screen showing an input box with 'Tokenization' and an output box showing three separate blocks labeled 'Token', 'iz', and 'ation' as tokens.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Why Tokens Matter",
+      "content": [
+        "**Tokens** are crucial for **LLM** performance.",
+        "They impact **context windows**, cost, and **chunking**."
+      ],
+      "narration": "So, why should you care about **tokens**?\nThey are very important for many reasons.\nThey impact how **LLMs** work.\nLet's explore some key areas.",
+      "image_prompt": "A large question mark icon surrounded by smaller icons representing memory (brain), money (coin stack), and data processing (gears).",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokens and Context Windows",
+      "content": [
+        "An **LLM's** 'short-term memory' is its **Context Window**.",
+        "It's measured in a fixed number of **tokens** (e.g., 8,192).",
+        "This is the limit for your **prompt** and retrieved documents."
+      ],
+      "narration": "First, consider **Context Windows**.\nThis is like an **LLM's** short-term memory.\nIt is measured in a fixed number of **tokens**.\nFor example, 8,192 **tokens**.\nThis is the maximum \"context\" you can give it.\nThis includes your **prompt** and any retrieved documents.",
+      "image_prompt": "Graphic of a computer monitor displaying a window. Inside the window are multiple small, identical slots or blocks, with a counter showing '8,192 tokens' and an arrow pointing to 'Context Window'.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokens and Cost",
+      "content": [
+        "**API** providers charge per **token**.",
+        "Fewer **tokens** mean lower costs.",
+        "Efficient systems save money."
+      ],
+      "narration": "Next, let's talk about cost.\n**API** providers charge you per **token**.\nSo, more **tokens** mean higher costs.\nAn efficient system uses fewer **tokens**.\nThis saves you money.",
+      "image_prompt": "A calculator or billing interface showing 'Cost per token' and a graph illustrating cost increasing with the number of tokens. A money bag icon is also visible.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokens and RAG Efficiency",
+      "content": [
+        "**GraphRAG** required 26% to 97% fewer **tokens**.",
+        "This makes **RAG** systems dramatically cheaper to run."
+      ],
+      "narration": "For example, systems like **GraphRAG** are efficient.\nThey required 26% to 97% fewer **tokens**.\nThis makes them much cheaper to run.\nIt's a big saving.",
+      "image_prompt": "Bar chart comparing 'Standard RAG' vs 'GraphRAG' with 'Token Usage' on the Y-axis, showing GraphRAG's bar significantly lower. A dollar sign or cost reduction icon can be included.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Tokens and Chunking",
+      "content": [
+        "**Tokens** guide how we 'chunk' documents.",
+        "Breaking documents into smaller pieces is essential for **LLMs**."
+      ],
+      "narration": "Finally, **tokens** are key for **chunking**.\nWhen we process long documents, we \"chunk\" them.\nWe break them into smaller, manageable pieces.\nThese pieces are then sent to the **LLM**.\n**Token** count helps define these chunks.",
+      "image_prompt": "An icon of a large document breaking into several smaller, uniform blocks labeled 'chunks' or 'token chunks', with arrows pointing towards an LLM icon.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "**Tokens** are the building blocks **LLMs** use.",
+        "**Tokenization** is the process of splitting text.",
+        "**Tokens** impact **Context Windows**, **API** cost, and **chunking**."
+      ],
+      "narration": "With this, we come to the end of this tutorial.\nLet us summarise.\nWe learned what **tokens** are.\nAnd how **tokenization** works.\nWe also saw why **tokens** are important for **LLM** performance.\nThey impact **context windows**, cost, and **chunking**.",
+      "image_prompt": "Summary slide with key takeaways presented as bullet points, possibly with a checkmark icon next to each.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Find an online **tokenizer** tool.",
+        "Type a short sentence and observe **tokenization**.",
+        "Type a long, complex word and see how it breaks into multiple **tokens**."
+      ],
+      "narration": "As an assignment, please do the following.\nFind an online **tokenizer** tool.\nType a short sentence like \"Hello, how are you today?\".\nObserve how it splits into **tokens**.\nThen type a long, complex word.\nSee how it breaks into multiple **tokens**.",
+      "image_prompt": "Assignment slide with instructions, an icon of a computer screen, and a hand typing.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you by **EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "Thank you slide with EduPyramids Educational Services Private Limited, SINE, and IIT Bombay logos.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Thank you Slide"
+    }
+  ]
+}

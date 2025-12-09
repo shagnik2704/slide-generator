@@ -1,0 +1,319 @@
+{
+  "presentation_title": "Mastering the 3 Cs of Prompting",
+  "module": "Artificial Intelligence Essentials - Prompting Skills",
+  "episode": "6. Mastering the 3 Cs of Prompting",
+  "learning_objectives": [
+    "Identify the key ingredients of effective prompts.",
+    "Differentiate between weak and strong prompts.",
+    "Apply Clarity, Context, and Constraints to improve prompts.",
+    "Utilize persona and examples in prompting.",
+    "Create well-structured prompts for AI tools."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to effective prompting.",
+    "Understanding Clarity in prompts.",
+    "Adding Context to your prompts.",
+    "Setting Constraints for AI outputs.",
+    "Using a Persona for better results.",
+    "Applying Zero, One, and Few-Shot prompting."
+  ],
+  "meta_tags": [
+    "AI",
+    "Prompting",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "Persona",
+    "Zero-Shot",
+    "One-Shot",
+    "Few-Shot",
+    "AI skills",
+    "effective prompts"
+  ],
+  "prerequisites": "You should be familiar with what a prompt is. You must be connected to the internet.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [
+        "Mastering the 3 Cs of Prompting"
+      ],
+      "narration": "Welcome to this Spoken Tutorial on Mastering the 3 Cs of Prompting.",
+      "image_prompt": "Title Slide: 'Mastering the 3 Cs of Prompting' with a creative AI-themed background.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify key ingredients of effective prompts.",
+        "Differentiate weak and strong prompts.",
+        "Apply Clarity, Context, Constraints to improve prompts.",
+        "Utilize persona and examples in prompting.",
+        "Create well-structured prompts for AI tools."
+      ],
+      "narration": "In this tutorial, you will learn to identify, differentiate, apply, utilize, and create effective prompts.",
+      "image_prompt": "Learning Objectives Slide: List of objectives clearly displayed.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A computer or mobile device with a web browser.",
+        "Internet connection."
+      ],
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide: Icons of a laptop, smartphone, and Wi-Fi symbol.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Familiarity with AI prompts.",
+        "Internet connection."
+      ],
+      "narration": "To follow this tutorial, you must be connected to the internet.\nYou should also be familiar with what a prompt is.\nNo coding needed.",
+      "image_prompt": "Prerequisites Slide: Person using a computer, with thought bubble 'What is a prompt?'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Weak vs. Great Prompts",
+      "content": [
+        "A weak prompt gets a weak answer.",
+        "A great prompt gets a great answer."
+      ],
+      "narration": "Have you ever got an unhelpful answer from an AI?\nThat's often from a weak prompt.\nA weak prompt gets a weak answer.\nA great prompt gets a great answer.",
+      "image_prompt": "Side-by-side: Left: Person looking confused at AI output. Right: Person smiling with a helpful AI output.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Three Key Ingredients",
+      "content": [
+        "Clarity",
+        "Context",
+        "Constraints"
+      ],
+      "narration": "The best prompts have three key ingredients.\nThese are Clarity, Context, and Constraints.\nLet's explore each one.",
+      "image_prompt": "Graphic with three interconnected circles labeled 'Clarity', 'Context', 'Constraints'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "1. Clarity: Be Specific!",
+      "content": [
+        "The AI doesn't know what you're thinking.",
+        "Vague prompts lead to generic answers."
+      ],
+      "narration": "First, let's understand Clarity.\nClarity means being specific.\nThe AI doesn't know what you're thinking.\nVague prompts give generic answers.",
+      "image_prompt": "Section Header: '1. Clarity'. A magnifying glass icon over a question mark.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity: Weak Prompt Example",
+      "content": [
+        "Weak Prompt: \"Write about electric cars.\""
+      ],
+      "narration": "For example, a weak prompt is: 'Write about electric cars.'\nThis is too broad.\nThe AI won't know what angle to take.",
+      "image_prompt": "Screen recording: User types 'Write about electric cars' into ChatGPT. AI generates a generic overview.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Clarity: Good Prompt Example",
+      "content": [
+        "Good Prompt (Clear): \"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "Let's make it clear.\nA good prompt is: 'Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.'\nSee how specific this is?",
+      "image_prompt": "Screen recording: User types the clear prompt. AI generates relevant benefits for city dwellers. Side-by-side comparison of outputs from weak vs. good prompt.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "2. Context: Give Background!",
+      "content": [
+        "Context tells the AI why you're asking.",
+        "Helps AI adopt the right perspective."
+      ],
+      "narration": "Next, let's add Context.\nContext gives background to the AI.\nIt tells the AI why you're asking.\nIt helps the AI choose the right perspective.",
+      "image_prompt": "Section Header: '2. Context'. A thought bubble with background information inside.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context: Better Prompt Example",
+      "content": [
+        "Good Prompt: \"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "Let's take our good prompt.\n'Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.'\nNow, let's add context for the audience.",
+      "image_prompt": "Screen recording: User displays the 'Good Prompt' from the previous slide.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Context: Improved Prompt",
+      "content": [
+        "Better Prompt (with Context): \"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "We have an improved prompt now.\nIt is for a lifestyle blog.\nThe blog focuses on sustainable living.\nIt asks for the top 3 benefits of electric cars.\nThis is for city dwellers.\nThe AI now knows the audience.",
+      "image_prompt": "Screen recording: User modifies the prompt on screen by adding context. AI output is tailored to sustainable living.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "3. Constraints: Set the Rules!",
+      "content": [
+        "Constraints are boundaries that shape the output.",
+        "Tell AI the length, format, and style you need."
+      ],
+      "narration": "Finally, let's add Constraints.\nConstraints set rules for the output.\nThey define length, format, and style.\nThis shapes the AI's response precisely.",
+      "image_prompt": "Section Header: '3. Constraints'. A ruler icon with boundary lines.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Constraints: Excellent Prompt Example",
+      "content": [
+        "Better Prompt: \"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\""
+      ],
+      "narration": "We have our better prompt.\nIt is about a lifestyle blog on sustainable living.\nIt explains the top 3 benefits of electric cars.\nThis is for city residents.\nNow, let's add some rules.",
+      "image_prompt": "Screen recording: User displays the 'Better Prompt' from the previous slide.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Constraints: Fully Improved Prompt",
+      "content": [
+        "Excellent Prompt (with Constraints): \"Write a short blog post, under 400 words, for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city. Use a friendly and enthusiastic tone and end with a question to encourage comments.\""
+      ],
+      "narration": "We now have an excellent prompt.\nIt asks for a short blog post, under 400 words.\nIt targets a lifestyle blog on sustainable living.\nIt details the top 3 benefits of electric cars for city dwellers.\nThe tone should be friendly and enthusiastic.\nIt must end with a question to encourage comments.\nThe AI knows exactly what to do.",
+      "image_prompt": "Screen recording: User adds constraints to the prompt. AI output is under 400 words, friendly, enthusiastic, and ends with a question. Side-by-side comparison of outputs from better vs. excellent prompt.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Bonus Tip: Provide a Persona",
+      "content": [
+        "Tell the AI who to be.",
+        "This is a super-powerful trick."
+      ],
+      "narration": "Here's a bonus tip: provide a Persona.\nTell the AI who to be.\nThis is a super powerful trick.",
+      "image_prompt": "Section Header: 'Bonus Tip: Persona'. An icon of a person wearing different hats (e.g., chef, doctor, engineer).",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Persona Example",
+      "content": [
+        "Prompt: \"Act as an expert travel agent specializing in budget travel. Create a 5-day itinerary for a trip to Rome for a solo traveler who loves history and food.\""
+      ],
+      "narration": "Let's try a persona prompt.\nIt asks the AI to act as an expert travel agent.\nThis agent specializes in budget travel.\nIt creates a 5-day Rome itinerary.\nThis is for a solo traveler who loves history and food.\nThe AI will now think like a travel agent.",
+      "image_prompt": "Screen recording: User types the persona prompt into ChatGPT. AI generates an itinerary from a travel agent's perspective.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Bonus Tip: Giving Examples",
+      "content": [
+        "Zero-Shot: You give zero examples.",
+        "One-Shot: You give one example.",
+        "Few-Shot: You give a few examples."
+      ],
+      "narration": "Another bonus tip: give Examples.\nThis is called Zero, One, or Few-Shot prompting.\nIt helps the AI follow a pattern.",
+      "image_prompt": "Section Header: 'Bonus Tip: Giving Examples'. Icons for 0, 1, and 3 shots, representing examples.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Zero-Shot Prompting",
+      "content": [
+        "You give zero examples.",
+        "Most prompts are like this.",
+        "You just ask for what you want."
+      ],
+      "narration": "Zero-Shot means you give zero examples.\nMost prompts are like this.\nYou just ask for what you want directly.\nOur previous examples were all Zero-Shot.",
+      "image_prompt": "Simple direct prompt example: 'Tell me a joke.' AI gives a joke.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "One-Shot Prompting",
+      "content": [
+        "You give one example to show the AI the pattern you want.",
+        "Great for specific formatting."
+      ],
+      "narration": "One-Shot means you give one example.\nThis shows the AI the pattern you want.\nIt's great for specific formatting.",
+      "image_prompt": "Illustration of a prompt structure with one input-output example.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "One-Shot Example",
+      "content": [
+        "Prompt: \"Summarize text into key points like this: Text: 'The sun is a star, and it's the center of our solar system.' Output: 'Primary celestial body: Sun' Now, use this format for the following text: [insert long article here]\""
+      ],
+      "narration": "Let's try a One-Shot example.\nWe ask the AI to summarize text into key points.\nWe give an example of the desired format.\nText: 'The sun is a star, and it's the center of our solar system.'\nOutput: 'Primary celestial body: Sun'\nThen, we ask it to use this format for new text.\nThe AI will follow this exact format.",
+      "image_prompt": "Screen recording: User types the one-shot prompt, showing the example and then the request for a long article. AI outputs in the specified format.",
+      "video_prompt": "",
+      "is_video_slide": true
+    },
+    {
+      "title": "Few-Shot Prompting",
+      "content": [
+        "You give a few examples to teach the AI a more complex pattern."
+      ],
+      "narration": "Few-Shot means you give a few examples.\nThis teaches the AI a more complex pattern.\nIt's useful for intricate tasks.",
+      "image_prompt": "Illustration showing multiple input-output examples to define a pattern.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Clarity: Be specific.",
+        "Context: Give background.",
+        "Constraints: Set rules.",
+        "Bonus Tips: Persona, Examples."
+      ],
+      "narration": "In summary, we learned about the 3 Cs.\nClarity means being specific.\nContext provides background.\nConstraints set the rules.\nWe also covered Persona and Example prompting.",
+      "image_prompt": "Summary slide with icons for Clarity, Context, Constraints, Persona, and Examples.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Open your favorite AI tool.",
+        "Write a prompt about 'healthy eating' using all 3 Cs.",
+        "Add a persona and a one-shot example.",
+        "Compare the AI's output with a simple 'healthy eating' prompt."
+      ],
+      "narration": "Here's a practice assignment for you.\nOpen your favorite AI tool.\nWrite a prompt about 'healthy eating' using all 3 Cs.\nAdd a persona and a one-shot example.\nCompare the AI's output with a simple 'healthy eating' prompt.",
+      "image_prompt": "Person at laptop, thinking, with a checklist icon. Text: 'Assignment: Practice Prompting'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "For more information, visit our website."
+      ],
+      "narration": "Thank you for joining this Spoken Tutorial.\nThis tutorial is brought to you by the FOSSEE project, IIT Bombay.\nFor more information, visit our website.",
+      "image_prompt": "EduPyramids / FOSSEE / IIT Bombay logo with a 'Thank You' message.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "FOSSEE / EduPyramids Logo",
+      "content": [],
+      "narration": "",
+      "image_prompt": "Large display of FOSSEE / EduPyramids Logo.",
+      "video_prompt": "",
+      "is_video_slide": false
+    }
+  ]
+}

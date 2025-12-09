@@ -1,0 +1,203 @@
+{
+  "module": "Artificial Intelligence Essentials \u2013 Prompting Skills",
+  "episode": "2.2: Advanced Prompting Techniques",
+  "learning_objectives": [
+    "Apply advanced prompting techniques like Chain-of-Thought, output structuring, and iterative prompting to get better AI results."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Advanced Prompting",
+    "Understanding Chain-of-Thought (**CoT**) Prompting",
+    "Structuring **AI** Output for Desired Formats",
+    "Practicing Iterative Prompting for Refined Results"
+  ],
+  "meta_tags": [
+    "advanced prompting",
+    "Chain-of-Thought",
+    "CoT",
+    "AI",
+    "LLM",
+    "structured output",
+    "iterative prompting",
+    "prompt engineering",
+    "ChatGPT"
+  ],
+  "prerequisites": "Introduction to Prompting",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial on Advanced **Prompting** Techniques.",
+      "image_prompt": "Title slide: 'Advanced Prompting Techniques' with gears and lightbulb icons",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [],
+      "narration": "In this tutorial, you will learn to apply advanced **prompting** techniques.",
+      "image_prompt": "Learning objectives slide with bullet points and a checkmark icon",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System requirements slide showing a laptop, tablet, and smartphone with a browser icon",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "To follow this tutorial, you must be connected to the **internet**.",
+      "image_prompt": "Prerequisites slide with icons for internet connection and a brain thinking",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Introduction",
+      "content": [],
+      "narration": "Sometimes, a basic **prompt** is not enough.",
+      "image_prompt": "Person looking at a complex AI output, then a lightbulb moment, showing advanced techniques",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "**Chain-of-Thought (CoT)**",
+      "content": [],
+      "narration": "First, let's look at **Chain-of-Thought** **prompting**.",
+      "image_prompt": "Flowchart diagram showing steps, interconnected thoughts, and a question mark leading to an answer",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "**CoT** in Action",
+      "content": [],
+      "narration": "This forces the **AI** to show its reasoning.",
+      "image_prompt": "Person typing on a laptop, a thought bubble above the AI chat window showing gears turning",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "The Apple Problem",
+      "content": [
+        "I have 5 boxes of apples. Each box has 12 apples. I eat 3 apples and give away one full box. How many apples are left? Think step-by-step."
+      ],
+      "narration": "Type this **prompt** into your **AI** tool:",
+      "image_prompt": "Screenshot of **ChatGPT** interface with the apple problem prompt typed in the input box",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "**AI**'s Reasoning",
+      "content": [],
+      "narration": "Observe how the **AI** breaks down the problem.",
+      "image_prompt": "Screenshot of **ChatGPT** output showing the step-by-step calculation for the apple problem",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Structuring the Output",
+      "content": [],
+      "narration": "Next, let's learn to structure the **AI**'s **output**.",
+      "image_prompt": "Blueprint or architectural drawing icon, symbolizing structured design, with different format icons around it",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "**Markdown** Table Example",
+      "content": [
+        "List the pros and cons of remote work. Provide the output as a Markdown table with two columns: 'Pros' and 'Cons'."
+      ],
+      "narration": "Let's ask for pros and cons of remote work.",
+      "image_prompt": "Screenshot of **ChatGPT** interface with the remote work prompt typed, specifying **Markdown** table",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Formatted **Output**",
+      "content": [],
+      "narration": "The **AI** will generate a neat **Markdown** table.",
+      "image_prompt": "Screenshot of **ChatGPT** output showing a perfectly formatted **Markdown** table for pros and cons of remote work",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Other Formats",
+      "content": [],
+      "narration": "You can ask for many other formats.",
+      "image_prompt": "Icons representing different data formats: numbered list, curly braces for **JSON**, angle brackets for **HTML**, comma-separated items",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Iterative Prompting",
+      "content": [],
+      "narration": "Finally, let's explore **Iterative Prompting**.",
+      "image_prompt": "Two speech bubbles, one with a question, the other with an answer, and then another question, showing a back-and-forth conversation",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Refining with Conversation",
+      "content": [],
+      "narration": "You refine your **prompts** based on the **AI**'s **output**.",
+      "image_prompt": "Person looking at **AI** output, then typing a follow-up question, showing thought process",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Slogan Example",
+      "content": [],
+      "narration": "You ask: 'Write a slogan for my new coffee shop.'",
+      "image_prompt": "Screenshot of a **ChatGPT** conversation showing the slogan refinement example, with user and **AI** turns",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Summary",
+      "content": [],
+      "narration": "With this, we come to the end of this tutorial.",
+      "image_prompt": "Summary slide with key concepts highlighted using icons for thought, structure, and conversation",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "As an assignment, please do the following.",
+      "image_prompt": "Assignment slide with a lightbulb and gears icon, suggesting critical thinking and practice",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    },
+    {
+      "title": "Thank you",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you by **EduPyramids Educational Services Private Limited SINE IIT Bombay**.",
+      "image_prompt": "**EduPyramids** logo.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": ""
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "presentation_title": "Implementing HNSW with Vector Databases",
+  "module": "Vector Search Technologies",
+  "episode": "Episode 5: Hands-on with FAISS",
+  "learning_objectives": [
+    "Compare types of Vector Databases",
+    "Install and configure the FAISS library",
+    "Implement HNSW index parameters in Python",
+    "Perform vector searches using FAISS"
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Vector Databases",
+    "Overview of FAISS, Open-Source, and Managed tools",
+    "Hands-on installation of FAISS",
+    "Configuring HNSW parameters (d, M, efSearch)",
+    "Running a vector search query"
+  ],
+  "meta_tags": [
+    "HNSW",
+    "FAISS",
+    "Vector Database",
+    "Python",
+    "Search Algorithms",
+    "Chroma",
+    "Pinecone"
+  ],
+  "prerequisites": "Basic knowledge of Python programming and the HNSW algorithm concepts.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [
+        "Implementing HNSW with Vector Databases"
+      ],
+      "narration": "Welcome to this Spoken Tutorial on Implementing HNSW with Vector Databases.\nIn this session, we will move from theory to practice.",
+      "image_prompt": "Title text on a clean background with vector network illustrations",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Compare Vector Database types",
+        "Install FAISS library",
+        "Configure HNSW parameters",
+        "Perform vector searches"
+      ],
+      "narration": "In this tutorial, we will learn how to compare different Vector Database tools.\nWe will install the FAISS library.\nWe will configure HNSW parameters like M and efSearch.\nFinally, we will perform vector searches in Python.",
+      "image_prompt": "List of learning objectives",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "OS: Windows, Linux, or Mac",
+        "Software: Python 3.8 or higher",
+        "Editor: Jupyter Notebook or VS Code",
+        "Internet connection"
+      ],
+      "narration": "To record this tutorial, I am using a standard Python environment.\nEnsure you have Python 3.8 or higher installed.\nI recommend using Jupyter Notebook for this exercise.\nYou will need an internet connection to install packages.",
+      "image_prompt": "Icons of Python, Jupyter, and operating systems",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "What is a Vector Database?",
+      "content": [
+        "Optimized 'address book' for vectors",
+        "Converts query to vector",
+        "Uses HNSW to find closest neighbors"
+      ],
+      "narration": "We store our meaning coordinates, or vectors, in a Vector Database.\nThink of this as a highly optimized address book for vectors.\nWhen a new query comes in, the database converts it into a vector.\nIt then uses the internal HNSW algorithm to instantly find the closest matches.",
+      "image_prompt": "Diagram showing a query entering a database and highlighting a specific vector cluster",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Choosing Your Library Tool",
+      "content": [
+        "1. In-Memory Libraries (FAISS)",
+        "2. Open-Source Databases (Chroma, Weaviate)",
+        "3. Managed Services (Pinecone)"
+      ],
+      "narration": "You have three main choices for your library tool.\nFirst, In-Memory Libraries like FAISS from Meta.\nSecond, Open-Source Databases like Chroma, Weaviate, or Qdrant.\nThird, Managed Services like Pinecone.",
+      "image_prompt": "Three columns comparing FAISS, Open Source DBs, and Managed Services",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Tool Comparison",
+      "content": [
+        "FAISS: Fast, local, no persistence",
+        "Open-Source: Powerful, scalable, self-managed",
+        "Managed: Easy, scalable, paid"
+      ],
+      "narration": "FAISS is blazing fast and runs in your Python script.\nIt is not a full database.\nOpen-Source databases handle billions of vectors.\nThey require server maintenance.\nManaged services are easy to use.\nThey cost money and hold your data remotely.\nWe will start with FAISS to learn the core parameters.",
+      "image_prompt": "Comparison chart showing pros and cons",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Installing FAISS",
+      "content": [
+        "Step 1: Open terminal or command prompt",
+        "Step 2: Run installation command"
+      ],
+      "narration": "Let's begin the hands-on practice.\nStep 1: Open your terminal or command prompt.\nStep 2: Type pip install faiss-cpu numpy.\nThen press Enter.\nStep 3: Wait for the installation to complete.\nWe use the CPU version for simplicity in this demo.",
+      "image_prompt": "Screenshot of terminal executing pip install faiss-cpu numpy",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Importing Libraries",
+      "content": [
+        "Step 1: Open Python editor",
+        "Step 2: Import faiss and numpy"
+      ],
+      "narration": "Now, let's write the code.\nStep 1: Open your Python editor or Jupyter Notebook.\nStep 2: Type import numpy as np.\nStep 3: On a new line, type import faiss.\nStep 4: Run the cell to verify imports work.",
+      "image_prompt": "Screenshot of Jupyter notebook with import statements",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Setting Dimensions",
+      "content": [
+        "Define vector dimension (d)",
+        "Create dummy data"
+      ],
+      "narration": "We need some data to work with.\nStep 1: Type d = 64 to set the vector dimension.\nStep 2: Create a random dataset.\nType xb = np.random.random((1000, d)).astype('float32').\nStep 3: Press Enter to run.\nFAISS requires float32 data types.",
+      "image_prompt": "Code snippet defining d=64 and creating random numpy array",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Creating HNSW Index",
+      "content": [
+        "Configure M (neighbors)",
+        "Initialize IndexHNSWFlat"
+      ],
+      "narration": "Now we create the HNSW index.\nStep 1: Set the number of neighbors.\nType M = 32.\nThis M parameter controls the connections per node.\nStep 2: Initialize the index.\nType index = faiss.IndexHNSWFlat(d, M).\nStep 3: Run this line to build the empty structure.",
+      "image_prompt": "Code snippet showing index initialization with M parameter",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Adding Data",
+      "content": [
+        "Add vectors to index",
+        "Verify count"
+      ],
+      "narration": "Let's populate our address book.\nStep 1: Type index.add(xb) to add our random vectors.\nStep 2: Check if it worked by typing print(index.ntotal).\nStep 3: Run the code.\nYou should see the number 1000 printed on the screen.",
+      "image_prompt": "Code snippet adding data and printing total count",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Configuring Search Parameters",
+      "content": [
+        "Set efSearch",
+        "Trade-off: Speed vs Accuracy"
+      ],
+      "narration": "We can tune the search accuracy.\nStep 1: Type index.hnsw.efSearch = 64.\nThis parameter controls how deep we search the graph.\nA higher number is more accurate but slower.\nA lower number is faster but less accurate.",
+      "image_prompt": "Code snippet setting efSearch parameter",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Performing a Search",
+      "content": [
+        "Create query vector",
+        "Search for k nearest neighbors"
+      ],
+      "narration": "Finally, let's search for the nearest neighbors.\nStep 1: Create a query vector.\nType xq = np.random.random((1, d)).astype('float32').\nStep 2: Decide how many results we want.\nType k = 4.\nStep 3: Search by typing D, I = index.search(xq, k).\nStep 4: Print the results with print(I).",
+      "image_prompt": "Code snippet performing search and printing indices",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "FAISS for fast prototyping",
+        "Key parameters: d, M, efSearch",
+        "Trade-offs in vector search"
+      ],
+      "narration": "Let's summarize what we learned.\nFAISS is a powerful tool for research and prototyping.\nWe configured d for dimensions.\nWe configured M for graph connections.\nWe also adjusted efSearch to balance speed and accuracy.",
+      "image_prompt": "Summary points bulleted list",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Experiment with M values",
+        "Compare search results"
+      ],
+      "narration": "Here is your assignment.\nCreate a new index with a different M value.\nFor example, use M = 4.\nPerform the same search with the same query vector.\nCompare the results with the previous index.\nObserve how the connectivity affects the search output.",
+      "image_prompt": "Assignment text asking to change M value",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "EduPyramids Educational Services Private Limited",
+        "SINE, IIT Bombay"
+      ],
+      "narration": "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited.\nIt is also brought to you by SINE, IIT Bombay.\nThank you for joining!",
+      "image_prompt": "Logos of EduPyramids and IIT Bombay",
+      "video_prompt": "",
+      "is_video_slide": false
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "presentation_title": "Deep Learning through cartoonish examples",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "7. Deep Learning Explained",
+  "learning_objectives": [
+    "Explain core Deep Learning concepts.",
+    "Identify key components of a neural network.",
+    "Compare different layers in a network.",
+    "Apply cartoon analogies to grasp complex ideas."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What is Deep Learning?",
+    "The Cartoon Detective Agency Analogy",
+    "Neurons: The Detectives",
+    "Layers: Teams of Detectives",
+    "Input Layer: The Eyes",
+    "Hidden Layers: The Thinkers",
+    "Output Layer: The Decision Makers",
+    "Learning Process: Training and Backpropagation",
+    "Activation Functions: The Spark",
+    "Deep Learning in Action"
+  ],
+  "meta_tags": [
+    "Deep Learning",
+    "AI",
+    "Neural Networks",
+    "Machine Learning",
+    "Cartoons",
+    "Examples",
+    "Analogy",
+    "Beginner AI"
+  ],
+  "prerequisites": "Basic understanding of Artificial Intelligence concepts.",
+  "slides": [
+    {
+      "title": "Welcome",
+      "content": [
+        "Deep Learning through cartoonish examples"
+      ],
+      "narration": "Hello, everyone!\nWelcome to this tutorial.\nToday, we'll explore Deep Learning.\nWe will use fun cartoon examples.",
+      "image_prompt": "A friendly cartoon robot waving, with various cartoon characters representing data and neurons in the background.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "In this tutorial, you will learn to:",
+        "Explain core Deep Learning concepts.",
+        "Identify key components of a neural network.",
+        "Compare different layers in a network.",
+        "Apply cartoon analogies to grasp complex ideas."
+      ],
+      "narration": "In this tutorial, you will learn to explain core Deep Learning concepts.\nYou will identify key components of a neural network.\nWe will compare different layers.\nYou will apply cartoon analogies to grasp complex ideas.",
+      "image_prompt": "A cartoon character (student) looking at a blackboard with a list of objectives, a lightbulb above their head.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A web browser.",
+        "An internet connection."
+      ],
+      "narration": "To follow this tutorial, you will need a web browser.\nAn internet connection is also required.\nNo special software is needed for this conceptual tutorial.",
+      "image_prompt": "A cartoon laptop or tablet showing a browser window with a Wi-Fi signal icon.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of Artificial Intelligence concepts."
+      ],
+      "narration": "Before starting, you should have a basic understanding of Artificial Intelligence.\nFamiliarity with Machine Learning concepts is helpful.\nIf not, don't worry.\nWe will simplify everything.",
+      "image_prompt": "A cartoon character with a thought bubble showing simple AI icons like a robot face or a gear.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "What is Deep Learning?",
+      "content": [
+        "AI that learns like humans.",
+        "Uses Neural Networks.",
+        "Finds complex patterns."
+      ],
+      "narration": "So, what is Deep Learning?\nIt's a powerful part of AI.\nIt helps computers learn like humans.\nDeep Learning uses special structures called Neural Networks.\nThese networks find very complex patterns in data.",
+      "image_prompt": "A cartoon brain with gears, surrounded by data bits (like 0s and 1s), a lightbulb above it, signifying intelligence.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "The Cartoon Detective Agency",
+      "content": [
+        "Imagine a super-smart detective agency.",
+        "It solves tough mysteries.",
+        "Each detective is a 'neuron'."
+      ],
+      "narration": "Let's imagine Deep Learning as a super-smart detective agency.\nThis agency solves tough mysteries.\nEach little detective in the agency is like a 'neuron'.\nThey work together to find clues.",
+      "image_prompt": "A whimsical cartoon detective agency building, with tiny cartoon detectives peeking out windows, some with magnifying glasses.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Meet the Neurons (Detectives)",
+      "content": [
+        "A neuron is a tiny processing unit.",
+        "Receives information.",
+        "Processes it.",
+        "Passes it on."
+      ],
+      "narration": "Each neuron is a tiny, specialized cartoon character.\nThey receive information.\nThen they process it.\nFinally, they pass it on to others.\nThink of them as busy little workers.",
+      "image_prompt": "A single, friendly cartoon character detective with a magnifying glass, wearing a trench coat and hat, looking thoughtful.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Layers of Detectives",
+      "content": [
+        "Neurons are organized in layers.",
+        "Input Layer: Receives raw data.",
+        "Hidden Layers: Process and find patterns.",
+        "Output Layer: Gives the final answer."
+      ],
+      "narration": "These detectives are not alone.\nThey are organized into teams, or 'layers'.\nEach layer has a special job.\nThey pass clues from one team to the next.",
+      "image_prompt": "Three distinct groups (layers) of cartoon detectives, arranged vertically, with arrows showing information flow between layers. Each layer has a slightly different look to signify its role.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "The Input Layer (The 'Eyes')",
+      "content": [
+        "First layer of neurons.",
+        "Receives raw data (clues).",
+        "No processing, just observation."
+      ],
+      "narration": "The first layer is the Input Layer.\nThink of them as the 'eyes' of our agency.\nThey receive raw data or initial clues.\nThey don't process much.\nThey just observe and pass on.",
+      "image_prompt": "A row of cartoon detectives with exaggerated big eyes, holding a magnifying glass to raw, unorganized data, like a blurry photograph or jumbled letters.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Hidden Layers (The 'Thinkers')",
+      "content": [
+        "Intermediate layers.",
+        "Perform complex calculations.",
+        "Extract features and patterns.",
+        "Multiple hidden layers mean 'deep'."
+      ],
+      "narration": "Next come the Hidden Layers.\nThese are the 'thinkers' of our agency.\nThey perform complex analysis.\nThey extract features and find hidden patterns.\nMany hidden layers make it 'deep' learning.",
+      "image_prompt": "Multiple rows of cartoon detectives wearing thinking caps, some pointing at boards with equations, others discussing clues. Arrows show data moving between rows.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "The Output Layer (The 'Decision Makers')",
+      "content": [
+        "Final layer of neurons.",
+        "Generates the prediction or decision.",
+        "The agency's conclusion."
+      ],
+      "narration": "Finally, we have the Output Layer.\nThese are the 'decision-makers'.\nThey give the final answer or prediction.\nThis is the agency's conclusion.\nThey present the solved mystery.",
+      "image_prompt": "A single cartoon detective at a desk, stamping a 'Solved!' document, with a clear answer displayed (e.g., 'This is a Cat' or 'This is a Dog').",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "How They Learn (Training)",
+      "content": [
+        "Training with examples.",
+        "Adjusting connections (weights).",
+        "Reducing errors."
+      ],
+      "narration": "How do these detectives get so smart?\nThey learn through training.\nWe give them many examples of solved cases.\nThey adjust their methods.\nThey learn from their mistakes.",
+      "image_prompt": "A wise cartoon mentor detective teaching a group of younger detective characters, pointing to 'case files' (data with labels like 'cat photo' labeled 'cat').",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "The Learning Process (Backpropagation)",
+      "content": [
+        "Forward pass: make a guess.",
+        "Backward pass: check for errors.",
+        "Adjust weights to improve."
+      ],
+      "narration": "This learning involves two steps.\nFirst, they make a guess, this is the forward pass.\nThen, they check if their guess was right.\nIf not, they find out where they went wrong.\nThis error correction is called backpropagation.\nThey adjust their connections to improve.",
+      "image_prompt": "Cartoon detectives passing a 'guess' forward (green arrow), then a 'correction' signal (red 'X' or red arrow) moving backward through the layers, causing characters to adjust their thinking caps.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Activation Functions (The 'Spark')",
+      "content": [
+        "Decides if a neuron 'fires'.",
+        "Adds non-linearity.",
+        "Crucial for learning complex patterns."
+      ],
+      "narration": "Each detective also has a 'spark'.\nThis spark decides if they should pass information.\nIt's called an activation function.\nIt adds complexity to their thinking.\nThis helps them learn very complex patterns.",
+      "image_prompt": "A cartoon detective with a lightbulb above its head, showing a 'spark' or 'activation' when a certain threshold is met, indicating it's passing information.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Deep Learning in Action",
+      "content": [
+        "Image recognition.",
+        "Natural Language Processing.",
+        "Self-driving cars.",
+        "Medical diagnosis."
+      ],
+      "narration": "Deep Learning solves many real-world problems.\nIt helps with image recognition.\nIt powers natural language processing.\nSelf-driving cars use it.\nIt even aids medical diagnosis.\nIt's everywhere!",
+      "image_prompt": "A collage of cartoon icons representing: a camera recognizing a cat, a speech bubble translating languages, a self-driving car on a road, and a doctor looking at an X-ray with an AI overlay.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Deep Learning uses layered Neural Networks.",
+        "Neurons process information.",
+        "Input, Hidden, Output layers.",
+        "Learns through training and backpropagation."
+      ],
+      "narration": "In summary, Deep Learning uses layered Neural Networks.\nTiny neurons process information.\nThey work in Input, Hidden, and Output layers.\nThe network learns through training.\nBackpropagation helps correct errors.\nThis makes AI very smart.",
+      "image_prompt": "A simplified cartoon diagram of a neural network showing input, hidden, and output layers, with arrows indicating data flow and learning.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Imagine a new cartoon analogy for Deep Learning.",
+        "Describe its neurons, layers, and learning process.",
+        "Share your analogy with a friend."
+      ],
+      "narration": "Here is a small assignment for you.\nImagine a new cartoon analogy for Deep Learning.\nDescribe its neurons, layers, and learning process.\nHow would your cartoon characters learn and improve?\nShare your creative analogy with a friend.",
+      "image_prompt": "A cartoon character (student) thinking creatively, with thought bubbles showing different whimsical ideas for analogies.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text and Image"
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "For more details, visit spoken-tutorial.org.",
+        "This tutorial is brought to you by the FOSSEE project.",
+        "It is funded by MHRD, Government of India."
+      ],
+      "narration": "Thank you for watching.\nFor more details, please visit spoken-tutorial.org.\nThis tutorial is brought to you by the FOSSEE project.\nIt is funded by MHRD, Government of India.\nStay tuned for more tutorials!",
+      "image_prompt": "The FOSSEE and IIT Bombay logos, with a 'Thank You' message in a friendly cartoon style.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title"
+    }
+  ]
+}

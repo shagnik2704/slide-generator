@@ -1,0 +1,243 @@
+{
+  "presentation_title": "The 3 Cs of Prompting: Clarity, Context, and Constraints",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "6. The 3 Cs of Prompting: Clarity, Context, and Constraints",
+  "learning_objectives": [
+    "Define Clarity, Context, and Constraints in prompting.",
+    "Explain how each C improves AI outputs.",
+    "Apply the 3 Cs to write effective prompts."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Welcome",
+    "Learning Objectives",
+    "System Requirements",
+    "Prerequisites",
+    "What is a Prompt?",
+    "The 3 Cs of Prompting",
+    "Clarity: Definition and Example",
+    "Context: Definition and Example",
+    "Constraints: Definition and Example",
+    "Combining the 3 Cs",
+    "Summary",
+    "Assignment",
+    "Thank You"
+  ],
+  "meta_tags": [
+    "AI prompting",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "prompt engineering",
+    "AI outputs",
+    "effective prompts",
+    "ChatGPT",
+    "large language models",
+    "LLM"
+  ],
+  "prerequisites": "To follow this tutorial, you must be connected to the internet. You should also be familiar with what a prompt is.",
+  "slides": [
+    {
+      "title": "The 3 Cs of Prompting: Clarity, Context, and Constraints",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial.\nIt's about The 3 Cs of Prompting.\nWe'll cover Clarity, Context, and Constraints.",
+      "image_prompt": "Title slide with 'The 3 Cs of Prompting: Clarity, Context, and Constraints'",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [],
+      "narration": "In this tutorial, you'll learn to define Clarity, Context, and Constraints.\nYou'll explain how each C improves AI outputs.\nAnd you'll apply them to write effective prompts.",
+      "image_prompt": "Learning Objectives slide with bullet points",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "Here I'm using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements slide",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "To follow this tutorial, you must be connected to the internet.\nYou should also be familiar with what a prompt is.\nNo coding needed.",
+      "image_prompt": "Prerequisites slide",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "What is a Prompt?",
+      "content": [
+        "It's your instruction to an AI.",
+        "It tells the AI what to do.",
+        "A weak prompt gets a weak answer.",
+        "A strong prompt gets a smart answer."
+      ],
+      "narration": "Remember, a prompt is your instruction to an AI.\nIt tells the AI exactly what to do.\nA weak prompt gets a weak answer.\nBut a strong prompt gets a smart answer.",
+      "image_prompt": "Person sitting at a laptop, thinking before typing, with a thought bubble above their head",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The 3 Cs of Prompting",
+      "content": [
+        "Clarity",
+        "Context",
+        "Constraints"
+      ],
+      "narration": "So, how do we write strong prompts?\nWe use the 3 Cs.\nThey are Clarity, Context, and Constraints.\nThese Cs help you get better AI results.",
+      "image_prompt": "Infographic showing three interconnected circles labeled 'Clarity', 'Context', 'Constraints'",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity: What is it?",
+      "content": [
+        "Be specific and direct.",
+        "Avoid vague language.",
+        "Use simple words."
+      ],
+      "narration": "Let's start with Clarity.\nClarity means being specific and direct.\nAvoid vague language.\nUse simple words.\nThe AI can't read your mind.",
+      "image_prompt": "Magnifying glass over text, showing a clear, focused word next to a blurry, vague word",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity Example: Vague",
+      "content": [
+        "Prompt: 'Tell me about climate change.'"
+      ],
+      "narration": "Here's a vague prompt: 'Tell me about climate change.'\nThis is too broad.\nThe AI doesn't know what to focus on.",
+      "image_prompt": "On ChatGPT. User types 'Tell me about climate change.' AI output shows a very general, long text.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clarity Example: Improved",
+      "content": [
+        "Prompt: 'Explain the main causes of climate change for a 10-year-old.'"
+      ],
+      "narration": "Now, let's improve it.\nTry: 'Explain the main causes of climate change for a 10-year-old.'\nSee the difference?\nIt's specific and has a target audience.",
+      "image_prompt": "On ChatGPT. User types 'Explain the main causes of climate change for a 10-year-old.' AI output shows a clear, concise explanation. Side-by-side comparison of vague vs improved outputs.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context: What is it?",
+      "content": [
+        "Give the AI background information.",
+        "Tell it what it needs to know.",
+        "Set the scene for the AI."
+      ],
+      "narration": "Now, let's move to Context.\nContext means giving the AI background information.\nTell it what it needs to know.\nSet the scene for the AI.\nThis helps it understand your request better.",
+      "image_prompt": "A person giving instructions to another person, pointing to a background scene or specific details.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context Example: Missing",
+      "content": [
+        "Prompt: 'Write a short story about a dog.'"
+      ],
+      "narration": "Here's a prompt missing context: 'Write a short story about a dog.'\nWhat kind of dog?\nWhat's the genre?\nThe AI has to guess.",
+      "image_prompt": "On ChatGPT. User types 'Write a short story about a dog.' AI output is a generic story.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context Example: With Context",
+      "content": [
+        "Prompt: 'You are a dog trainer. Write a short, funny story about a clumsy golden retriever puppy's first day at obedience school.'"
+      ],
+      "narration": "Let's add some context.\nTry: 'You are a dog trainer. Write a short, funny story about a clumsy golden retriever puppy's first day at obedience school.'\nWe gave it a role and more details.",
+      "image_prompt": "On ChatGPT. User types the improved prompt. AI output is a specific, funny story. Side-by-side comparison of missing context vs with context outputs.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Constraints: What are they?",
+      "content": [
+        "Set boundaries for the AI.",
+        "Specify length, format, or style.",
+        "Tell the AI what NOT to do."
+      ],
+      "narration": "Finally, let's look at Constraints.\nConstraints set boundaries for the AI.\nSpecify things like length, format, or style.\nYou can also tell the AI what NOT to do.\nThis guides its output.",
+      "image_prompt": "A person drawing a box or boundary around a task, with text inside like 'Max 200 words', 'Bullet points only'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Constraints Example: Unconstrained",
+      "content": [
+        "Prompt: 'Give me a recipe for chocolate cake.'"
+      ],
+      "narration": "Here's an unconstrained prompt: 'Give me a recipe for chocolate cake.'\nThe AI might give a very long, complex recipe.\nOr maybe a simple one.\nWe don't know.",
+      "image_prompt": "On ChatGPT. User types 'Give me a recipe for chocolate cake.' AI output is a standard recipe, but could be too long or too short for the user's need.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Constraints Example: With Constraints",
+      "content": [
+        "Prompt: 'Give me a simple recipe for chocolate cake, using only common ingredients. List steps in bullet points, max 5 ingredients.'"
+      ],
+      "narration": "Let's add some constraints.\nTry: 'Give me a simple recipe for chocolate cake, using only common ingredients. List steps in bullet points, max 5 ingredients.'\nNow the AI knows exactly what's needed.",
+      "image_prompt": "On ChatGPT. User types the improved prompt. AI output is a short, bulleted recipe with few ingredients. Side-by-side comparison of unconstrained vs with constraints outputs.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Combining the 3 Cs",
+      "content": [
+        "Clarity: What exactly do you want?",
+        "Context: What background information is needed?",
+        "Constraints: What are the rules and limits?"
+      ],
+      "narration": "We've seen each C.\nNow, let's combine them.\nAsk yourself: What exactly do you want?\nThat's Clarity.\nWhat background information is needed?\nThat's Context.\nWhat are the rules and limits?\nThose are Constraints.",
+      "image_prompt": "Infographic showing the three interconnected circles (Clarity, Context, Constraints) with arrows pointing to a central 'Effective Prompt' text.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "The 3 Cs make prompts effective.",
+        "Clarity: Be specific.",
+        "Context: Provide background.",
+        "Constraints: Set boundaries."
+      ],
+      "narration": "In this tutorial, you learned about the 3 Cs of prompting.\nClarity means being specific.\nContext means providing background.\nAnd Constraints mean setting boundaries.\nUse them for better AI outputs.",
+      "image_prompt": "Summary slide with bullet points summarizing the 3 Cs.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Write a prompt for an AI to generate a short poem.",
+        "Apply Clarity, Context, and Constraints.",
+        "Share it with a friend."
+      ],
+      "narration": "Here's an assignment for you.\nWrite a prompt for an AI to generate a short poem.\nApply Clarity, Context, and Constraints.\nThen, share it with a friend.\nSee what results you get!",
+      "image_prompt": "Person working on a laptop, with a thought bubble showing a poem.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "For more details, visit our website.",
+        "These tutorials are from EduPyramids.",
+        "Supported by FOSSEE, IIT Bombay."
+      ],
+      "narration": "Thank you for watching this Spoken Tutorial.\nFor more details, visit our website.\nThese tutorials are from EduPyramids.\nThey are supported by FOSSEE, IIT Bombay.",
+      "image_prompt": "EduPyramids and FOSSEE, IIT Bombay logos.",
+      "video_prompt": "",
+      "is_video_slide": false
+    }
+  ]
+}

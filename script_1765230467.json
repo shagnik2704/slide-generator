@@ -1,0 +1,114 @@
+{
+  "presentation_title": "The 3 C's of Effective Prompts",
+  "module": "Prompt Engineering Basics",
+  "episode": "Crafting Clear Prompts",
+  "learning_objectives": [
+    "Understand the importance of the 3 C's in prompt engineering.",
+    "Identify how Clarity reduces ambiguity in **AI** interactions.",
+    "Apply Context to guide **AI** responses for specific needs.",
+    "Compare the impact of adding Constraints on **AI** output."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to the 3 C\u2019s of Prompting",
+    "Clarity: Reducing Ambiguity",
+    "Context: Guiding Tone and Purpose",
+    "Constraints: Defining Length and Format",
+    "Crafting Effective Prompts: A Step-by-Step Example",
+    "Refining Prompts with the 3 C's"
+  ],
+  "meta_tags": [
+    "prompt engineering",
+    "AI",
+    "LLM",
+    "ChatGPT",
+    "Gemini",
+    "prompt",
+    "clarity",
+    "context",
+    "constraints"
+  ],
+  "prerequisites": "Basic understanding of what **AI** chatbots like **ChatGPT** or **Gemini** are and how to interact with them.",
+  "slides": [
+    {
+      "title": "Welcome to The 3 C's of Effective Prompts",
+      "narration": "Welcome to this Spoken Tutorial on The 3 C's of Effective Prompts.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to understand the importance of the 3 C's in prompt engineering, identify how Clarity reduces ambiguity in **AI** interactions, apply Context to guide **AI** responses for specific needs, and compare the impact of adding Constraints on **AI** output.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a device with internet access.\nAccess to any **AI** chatbot, such as **ChatGPT** or **Gemini**, is recommended for practice.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "Familiarity with basic computer operations is helpful.\nA general idea of how to type and submit text to an **AI** is sufficient.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "Introduction to the 3 C's",
+      "narration": "What makes an **AI** give a perfect answer? \nIt is all about how you ask the question. \nWe use the 3 C's for effective **prompts**. \nThese are Clarity, Context, and Constraints. \nNext, let us explore Clarity.",
+      "image_prompt": "A person thinking about how to ask a question to an AI chatbot"
+    },
+    {
+      "title": "Clarity: Reducing Ambiguity",
+      "narration": "Why is Clarity important? \nAn **AI** follows instructions literally. \nVague instructions lead to vague answers. \nClarity means being specific and direct. \nIt removes any confusion for the **AI**. \nLet's see an example.",
+      "image_prompt": "A magnifying glass highlighting a clear, concise sentence"
+    },
+    {
+      "title": "Clarity: An Example",
+      "narration": "Open any **AI** tool. \nType: 'Write about dogs.' \nPress **Enter** or **Submit**. \nNotice the general output. \nNow, type: 'Write a short paragraph about the benefits of owning a Labrador dog for families.' \nPress **Enter** or **Submit**. \nSee the difference in specificity? \nThis is the power of Clarity.",
+      "image_prompt": "Two AI chatbot screens, one with a vague prompt and a general answer, the other with a clear prompt and a specific answer"
+    },
+    {
+      "title": "Context: Guiding Tone and Purpose",
+      "narration": "How does the **AI** know what kind of answer you need? \nThis is where Context comes in. \nContext sets the scene for the **AI**. \nIt tells the **AI** about the purpose and audience. \nIt helps the **AI** choose the right tone. \nLet's look at Context with an example.",
+      "image_prompt": "A person giving directions to another person, showing the importance of context"
+    },
+    {
+      "title": "Context: An Example",
+      "narration": "Think of a simple **prompt**: 'Explain photosynthesis.' \nThe **AI** might give a scientific explanation. \nNow, add Context: 'Explain photosynthesis to a five-year-old child.' \nType this into your **AI** tool. \nPress **Enter** or **Submit**. \nObserve how the language simplifies. \nThis shows how Context guides the **AI**'s response.",
+      "image_prompt": "An AI chatbot explaining photosynthesis in two different ways, one complex, one simple for a child"
+    },
+    {
+      "title": "Constraints: Defining Length and Format",
+      "narration": "What if you need a specific type of answer? \nThis is when Constraints are useful. \nConstraints define the boundaries of the answer. \nThey specify length, format, or style. \nFor instance, you can ask for a bulleted list. \nLet us try adding Constraints.",
+      "image_prompt": "A ruler and a pen, symbolizing limits and structure"
+    },
+    {
+      "title": "Constraints: An Example",
+      "narration": "Take our previous **prompt**: 'Explain photosynthesis to a five-year-old child.' \nNow, add a Constraint: 'Explain photosynthesis to a five-year-old child in three bullet points.' \nType this into your **AI** tool. \nPress **Enter** or **Submit**. \nNotice the structured output. \nConstraints shape the output precisely.",
+      "image_prompt": "An AI chatbot outputting a bulleted list explaining photosynthesis to a child"
+    },
+    {
+      "title": "Crafting Effective Prompts: A Step-by-Step Example",
+      "narration": "Let us combine all three C's. \nStart with a vague **prompt**: 'Write about fruits.' \nThis lacks Clarity, Context, and Constraints. \nIt will give a very general answer. \nNow, we will make it better, step by step.",
+      "image_prompt": "A person writing a prompt on a piece of paper, starting with a simple idea"
+    },
+    {
+      "title": "Refining Prompts with the 3 C's",
+      "narration": "First, add Clarity: 'Write about the health benefits of apples.' \nNext, add Context: 'Write about the health benefits of apples for an article in a health magazine.' \nFinally, add Constraints. \nPrompt: 'Write a 100-word paragraph on apple health benefits for a health magazine.' \nType this complete **prompt** into your **AI** tool. \nPress **Enter** or **Submit**. \nCompare this output to our first vague **prompt**. \nThe difference is significant.",
+      "image_prompt": "A series of three AI chatbot inputs, showing the prompt evolving from vague to clear, with context and constraints"
+    },
+    {
+      "title": "Summary",
+      "narration": "In this tutorial, you learned about the 3 C's of effective **prompts**. \nClarity makes your instructions specific. \nContext guides the **AI**'s tone and purpose. \nConstraints define the output's format and length. \nUsing all three C's improves **AI** responses greatly.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Your task is to choose a simple topic. \nWrite three different **prompts** for it. \nOne with only Clarity. \nOne with Clarity and Context. \nOne with Clarity, Context, and Constraints. \nCompare the **AI** outputs and reflect on the differences.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "Thank you for watching this Spoken Tutorial. \nFor more details, visit our website. \nThis content is brought to you by **EduPyramids**, in collaboration with **SINE**, **IIT Bombay**.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

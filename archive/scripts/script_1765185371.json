@@ -1,0 +1,117 @@
+{
+  "presentation_title": "Introduction to AI, ML, and Deep Learning",
+  "module": "Foundations of AI",
+  "episode": "1",
+  "learning_objectives": [
+    "Understand the fundamental definition and goal of Artificial Intelligence.",
+    "Explain the core concept of Machine Learning and how it differs from traditional programming.",
+    "Compare the approaches of traditional programming and Machine Learning using a practical example.",
+    "Define Deep Learning and its relationship to Machine Learning.",
+    "Identify real-world applications of Deep Learning.",
+    "Describe the basic structure of a neural network in Deep Learning."
+  ],
+  "duration": "5-7 minutes",
+  "outline": [
+    "Introduction to Artificial Intelligence",
+    "Understanding Machine Learning",
+    "Machine Learning vs. Traditional Programming",
+    "Introduction to Deep Learning",
+    "Deep Learning and Neural Networks",
+    "Real-world Applications of Deep Learning"
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "ML",
+    "Machine Learning",
+    "Deep Learning",
+    "Neural Networks",
+    "Generative AI",
+    "Spoken Tutorial",
+    "Computer Science",
+    "Technology"
+  ],
+  "prerequisites": "Basic computer literacy",
+  "slides": [
+    {
+      "title": "Introduction to AI, ML, and Deep Learning",
+      "narration": "Welcome to this Spoken Tutorial on Artificial Intelligence, Machine Learning, and Deep Learning. In this tutorial, we will understand what these terms mean. We will also see how they are changing our world.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "By the end of this tutorial, you will learn many things. You will understand what Artificial Intelligence is. You will also learn about Machine Learning and Deep Learning. We will see how they are used in daily life.",
+      "image_prompt": ""
+    },
+    {
+      "title": "System Requirements",
+      "narration": "To follow this tutorial, you need a computer. It should have an internet connection. This will help you see any websites we talk about. You do not need to install any special software.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "You should know how to use a computer. You do not need to know about Artificial Intelligence or programming before this. We will start from the very beginning.",
+      "image_prompt": ""
+    },
+    {
+      "title": "What is Artificial Intelligence?",
+      "narration": "Have you seen self-driving cars or talked to a voice assistant? These use Artificial Intelligence. AI is a big part of computer science. It helps us make smart machines that can do human-like tasks.",
+      "image_prompt": "A futuristic car driving itself on a road, a smartphone with a voice assistant icon, and a robot interacting with a human, all representing smart machines."
+    },
+    {
+      "title": "AI's Broad Scope",
+      "narration": "AI can help computers understand language or recognize pictures. It can also solve difficult problems. Scientists have thought about AI since the 1950s. They asked, 'Can machines think?' AI is all about making computers smart.",
+      "image_prompt": "A diverse collage of AI applications: text bubbles for language understanding, a camera lens for image recognition, a chessboard with AI making a move, and a thought bubble with a question mark over a computer chip."
+    },
+    {
+      "title": "Introducing Machine Learning",
+      "narration": "Now, let's learn about Machine Learning, or ML. ML is a part of AI. In normal programming, we give rules to the computer. But in ML, we give it a lot of information, called data.",
+      "image_prompt": "A computer screen showing a dataset with many rows and columns, a magnifying glass hovering over it, and a thought bubble with 'learning rules' emerging from the computer."
+    },
+    {
+      "title": "ML: Learning from Data",
+      "narration": "Using Machine Learning, the computer learns its own rules. It finds patterns from many examples. Think of it like teaching a child. You show them many things, instead of giving a rulebook. Let's see an example.",
+      "image_prompt": "A simplified diagram showing 'Input Data' flowing into a 'Machine Learning Model' box, with 'Learned Rules' emerging as output, contrasting with 'Explicit Rules' as input for 'Traditional Program'."
+    },
+    {
+      "title": "Traditional Programming: Cat ID",
+      "narration": "Let's say you want to make a computer find a cat. In normal programming, you write rules. For example: 'IF it has pointy ears, AND whiskers, AND fur, AND four legs, THEN it is a cat.' But what if the cat's ears are folded? This method might not work then.",
+      "image_prompt": "A flowchart with rigid 'IF-THEN' rules for identifying a cat, showing specific features like 'pointy ears', 'whiskers', 'fur', 'four legs', and an image of a cat with folded ears highlighted, indicating a failure point."
+    },
+    {
+      "title": "Machine Learning: Cat ID",
+      "narration": "With Machine Learning, you show the computer thousands of cat pictures. The computer looks at all these pictures. It learns what a cat looks like by itself. This way, the computer makes its own rules, which are better.",
+      "image_prompt": "A grid of various cat pictures, some labeled 'cat', feeding into a 'Machine Learning Model' box, with a flexible, abstract representation of 'internal rules' emerging, and a diverse set of cat images being correctly identified."
+    },
+    {
+      "title": "What is Deep Learning?",
+      "narration": "Now, let's talk about Deep Learning. Deep Learning is a very strong and advanced type of Machine Learning. It uses a special way to work. This helps it do very difficult tasks well.",
+      "image_prompt": "A visual representation of an advanced, multi-layered network structure, distinct from a simpler machine learning model, with data flowing through it."
+    },
+    {
+      "title": "Deep Learning: Neural Networks",
+      "narration": "Deep Learning uses something called a neural network. This network works like our human brain. It has many layers of 'neurons' one after another. Because of these many layers, we call it 'deep.' This helps it learn very complex things from data.",
+      "image_prompt": "A simplified diagram of a neural network with multiple input, hidden (many layers), and output layers. Each layer consists of interconnected 'neurons' (nodes), resembling a brain-like structure."
+    },
+    {
+      "title": "Deep Learning Applications",
+      "narration": "Deep Learning helps self-driving cars see people. It also helps voice assistants understand what you say. It is also used in generative AI. Deep Learning can work with a lot of data. It learns difficult patterns and has changed many fields.",
+      "image_prompt": "A self-driving car detecting pedestrians and traffic signs, a person speaking into a smartphone activating a voice assistant, and an abstract representation of generative AI creating new images or text."
+    },
+    {
+      "title": "Summary",
+      "narration": "In this tutorial, we learned that Artificial Intelligence makes machines smart. Machine Learning is a part of AI, where machines learn from data. Deep Learning is an advanced type of ML. It uses many-layered neural networks to learn complex patterns.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Assignment",
+      "narration": "Here is a small assignment for you. Think of a daily task that needs human thinking. How can AI, Machine Learning, or Deep Learning help with this task? Write down your ideas. Then, share them with your friends or colleagues.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is from EduPyramids Educational Services Private Limited, SINE, IIT Bombay. Thank you for watching!",
+      "image_prompt": ""
+    }
+  ]
+}

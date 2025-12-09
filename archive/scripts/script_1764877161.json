@@ -1,0 +1,245 @@
+{
+  "presentation_title": "Neural Networks: The Basics",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "6. Neural Networks: The Basics",
+  "learning_objectives": [
+    "Identify the inspiration behind neural networks.",
+    "Describe the basic components of a neural network (nodes, layers, connections).",
+    "Explain the function of a single node.",
+    "Relate neural network learning to adjusting connections.",
+    "Distinguish between input, hidden, and output layers."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Neural Networks",
+    "Inspiration from the Human Brain",
+    "Basic Structure: Layers",
+    "Function of a Single Node",
+    "Learning through Weight Adjustment",
+    "Analogy for Learning",
+    "Summary and Assignment"
+  ],
+  "meta_tags": [
+    "Neural Network",
+    "AI",
+    "Machine Learning",
+    "Deep Learning",
+    "Perceptron",
+    "Nodes",
+    "Layers",
+    "Weights",
+    "Artificial Intelligence"
+  ],
+  "prerequisites": "Basic understanding of data and how computers process information.",
+  "slides": [
+    {
+      "title": "Welcome",
+      "content": [
+        "Neural Networks: The Basics",
+        "EduPyramids",
+        "FOSSEE, IIT Bombay"
+      ],
+      "narration": "Welcome to this Spoken Tutorial.\nToday, we explore Neural Networks.",
+      "image_prompt": "EduPyramids and FOSSEE IIT Bombay logos with title text 'Neural Networks: The Basics'",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify the inspiration for neural networks.",
+        "Describe their basic components.",
+        "Explain how a single node works.",
+        "Relate neural network learning to adjusting connections.",
+        "Distinguish between input, hidden, and output layers."
+      ],
+      "narration": "In this tutorial, you will learn to:\nIdentify the inspiration for neural networks.\nDescribe their basic components.\nExplain how a single node works.\nRelate neural network learning to adjusting connections.\nAnd distinguish between input, hidden, and output layers.",
+      "image_prompt": "Bullet points listing the learning objectives clearly on screen.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "No special software needed."
+      ],
+      "narration": "To follow this tutorial, no special software is needed.\nJust pay close attention.",
+      "image_prompt": "Simple graphic indicating 'No software needed', perhaps a brain icon or a person listening.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of data.",
+        "How computers process information."
+      ],
+      "narration": "Before we begin, you should have a basic idea of data.\nAnd how computers process information.",
+      "image_prompt": "Icons representing data (e.g., spreadsheet, database) and a computer processing information.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "What are Neural Networks?",
+      "content": [
+        "Powerful computing systems.",
+        "Inspired by the human brain."
+      ],
+      "narration": "Have you heard of AI learning?\nNeural Networks are key to this.\nThey are computer systems.\nThey learn like our brains do.\nThey find patterns in data.\nThen they make predictions.",
+      "image_prompt": "Abstract representation of a brain connected to a computer system, showing data flow.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Inspiration: The Human Brain",
+      "content": [
+        "Billions of neurons.",
+        "Connected and communicating."
+      ],
+      "narration": "But how do they learn?\nOur brains are amazing learners.\nThey have billions of tiny cells.\nThese are called neurons.\nNeurons connect and talk to each other.\nThey form a complex network.",
+      "image_prompt": "Microscopic view of interconnected neurons in the human brain, highlighting connections.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Mimicking the Brain",
+      "content": [
+        "Neural networks mimic this structure.",
+        "They have artificial 'neurons' called nodes."
+      ],
+      "narration": "Neural networks try to copy this.\nThey use artificial 'neurons'.\nThese are called nodes.\nNodes are connected digitally.\nThese connections allow learning.",
+      "image_prompt": "Diagram showing a simplified brain neuron next to a simplified artificial neuron (node) with lines connecting them, showing the analogy.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Basic Structure: Layers",
+      "content": [
+        "Input Layer",
+        "Hidden Layers",
+        "Output Layer"
+      ],
+      "narration": "To understand this network better, let's look at its basic structure.\nA neural network has layers.\nThink of them as processing stages.\nFirst is the Input Layer.\nThen come one or more Hidden Layers.\nFinally, there is the Output Layer.",
+      "image_prompt": "Simple diagram of a neural network with three distinct vertical layers labeled 'Input', 'Hidden', 'Output', with lines connecting nodes between layers.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Input Layer",
+      "content": [
+        "Receives raw data.",
+        "Each node represents a feature."
+      ],
+      "narration": "The Input Layer takes in data.\nEach node here is a piece of information.\nFor example, a picture's pixels.\nOr a house's size and location.",
+      "image_prompt": "Input layer nodes receiving arrows representing different types of data, with small icons for 'pixel' and 'house size'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Hidden Layers",
+      "content": [
+        "Process and transform data.",
+        "Extract complex patterns."
+      ],
+      "narration": "Hidden Layers do the hard work.\nThey process the input data.\nThey find complex patterns.\nThese patterns are then passed on.",
+      "image_prompt": "Animated diagram showing data flowing through nodes in a hidden layer, with complex calculations or transformations happening within the nodes.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "The Output Layer",
+      "content": [
+        "Provides the final result.",
+        "The network's prediction."
+      ],
+      "narration": "Finally, the Output Layer.\nIt gives the network's answer.\nThis could be a prediction.\nLike 'cat' or 'dog' for an image.\nOr a price for a house.",
+      "image_prompt": "Output layer with a single node showing a 'YES/NO' or 'CAT/DOG' or 'PRICE' label as the final prediction.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "How a Node Works (The Perceptron)",
+      "content": [
+        "Receives inputs.",
+        "Applies weights.",
+        "Sums them up.",
+        "Activates if strong enough."
+      ],
+      "narration": "Let's look at one node closely.\nIt receives inputs from other nodes.\nEach input has a 'weight'.\nWeights show importance.\nThe node sums up these weighted inputs.\nIf the sum is strong enough, it 'activates' and sends a signal.",
+      "image_prompt": "Detailed diagram of a single artificial neuron (perceptron): multiple input lines with weights, a summing function, and an activation function leading to a single output line.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning: Adjusting Weights",
+      "content": [
+        "Starts with random weights.",
+        "Adjusts weights based on errors.",
+        "Finds the best connections."
+      ],
+      "narration": "So, how does it learn?\nInitially, weights are random.\nThe network makes guesses.\nIt compares guesses to correct answers.\nIf wrong, it adjusts the weights.\nThis process repeats many times.\nIt finds the best weights for accuracy.",
+      "image_prompt": "Animated diagram showing weights on connections changing (getting thicker/thinner or changing color) as an arrow indicates 'learning' or 'feedback loop'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Analogy: Learning to Ride a Bike",
+      "content": [
+        "Start wobbly.",
+        "Adjust balance and steering.",
+        "Practice makes perfect."
+      ],
+      "narration": "Think of learning to ride a bike.\nAt first, you are wobbly.\nYou fall, you learn.\nYou adjust your balance.\nYou adjust your steering.\nWith practice, you get better.\nNeural networks learn like this.",
+      "image_prompt": "Child learning to ride a bicycle, looking wobbly, then gradually gaining balance and riding smoothly.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Neural Networks are Powerful",
+      "content": [
+        "Handle complex data.",
+        "Learn from experience.",
+        "Automate tasks."
+      ],
+      "narration": "Neural networks are powerful.\nThey can handle huge amounts of data.\nThey learn from experience.\nThey can recognize images.\nThey can understand speech.\nThey can even generate text.",
+      "image_prompt": "Icons representing image recognition, speech recognition, and text generation, showcasing various applications.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Inspired by the brain.",
+        "Layers of interconnected nodes.",
+        "Nodes process data using weights.",
+        "Learn by adjusting weights."
+      ],
+      "narration": "In this tutorial, we learned:\nNeural networks are brain-inspired.\nThey have input, hidden, and output layers.\nNodes process data with weights.\nThey learn by adjusting these weights.\nThis helps them make predictions.",
+      "image_prompt": "Key summary points displayed as bullet points or a concise infographic.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Research an application of neural networks.",
+        "Identify its input, hidden, and output data."
+      ],
+      "narration": "Here is a small assignment.\nResearch a real-world use of neural networks.\nFor example, in healthcare or finance.\nTry to identify its input data.\nWhat might be processed in hidden layers?\nWhat would be its final output?\nShare your findings.",
+      "image_prompt": "Person at a computer researching, with thought bubbles showing different applications like medical imaging, stock charts.",
+      "video_prompt": "",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "For more details, visit:",
+        "spoken-tutorial.org"
+      ],
+      "narration": "This Spoken Tutorial was brought to you by the FOSSEE project, IIT Bombay.\nFor more information, visit the Spoken Tutorial website.\nspoken-tutorial.org.\nThank you for watching.",
+      "image_prompt": "FOSSEE and IIT Bombay logos. Text 'For more details, visit: spoken-tutorial.org'.",
+      "video_prompt": "",
+      "is_video_slide": false
+    }
+  ]
+}

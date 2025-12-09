@@ -1,0 +1,265 @@
+{
+  "presentation_title": "Introduction to Neural Networks",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "6. Introduction to Neural Networks",
+  "learning_objectives": [
+    "Define what a Neural Network is.",
+    "Explain the basic components of a Neural Network.",
+    "Describe how Neural Networks learn.",
+    "Identify common applications of Neural Networks."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What is a Neural Network?",
+    "Brain Inspiration",
+    "Neural Network Structure",
+    "Nodes and Connections",
+    "How Neural Networks Learn",
+    "Applications of Neural Networks"
+  ],
+  "meta_tags": [
+    "Neural Networks",
+    "AI",
+    "Machine Learning",
+    "Deep Learning",
+    "Artificial Intelligence",
+    "Neurons",
+    "Machine Learning Basics"
+  ],
+  "prerequisites": "You should be familiar with basic computer concepts.\nNo prior coding knowledge is needed.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [
+        "Welcome to this tutorial!"
+      ],
+      "narration": "Welcome to this Spoken Tutorial.\nIt's on Introduction to Neural Networks.",
+      "image_prompt": "Title slide: Introduction to Neural Networks",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Define Neural Network",
+        "Explain components",
+        "Describe learning process",
+        "Identify applications"
+      ],
+      "narration": "In this tutorial, you'll learn to define what a Neural Network is.\nYou'll explain its basic parts.\nThen you'll describe how they learn.\nAnd you'll identify their uses.",
+      "image_prompt": "Learning objectives slide",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Browser",
+        "Internet connection"
+      ],
+      "narration": "Here I'm using a browser.\nIt's on a computer or mobile.\nYou'll need an internet connection too.",
+      "image_prompt": "System requirements slide",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer knowledge",
+        "No coding needed"
+      ],
+      "narration": "To follow this tutorial, you need basic computer knowledge.\nNo coding experience is required.\nIt's easy to follow along.",
+      "image_prompt": "Prerequisites slide",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Prerequisites Slide"
+    },
+    {
+      "title": "What is a Neural Network?",
+      "content": [
+        "Inspired by the human brain",
+        "Learns from data",
+        "Makes predictions"
+      ],
+      "narration": "Have you ever wondered how computers learn?\nNeural Networks help them do this.\nThey're inspired by our own brains.\nThey learn from huge amounts of data.\nThen they make smart predictions.",
+      "image_prompt": "Stylized human brain next to a complex, interconnected digital network, representing AI learning",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "The Brain Inspiration",
+      "content": [
+        "Biological neurons",
+        "Process information",
+        "Form connections"
+      ],
+      "narration": "Our brains have billions of tiny cells.\nWe call them neurons.\nThese neurons connect and pass messages.\nThis is how we think and learn.\nNeural Networks mimic this process.",
+      "image_prompt": "Detailed diagram of a biological neuron with dendrites, cell body, axon, and synapse clearly labeled",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Artificial Neurons (Nodes)",
+      "content": [
+        "Basic processing unit",
+        "Receives input",
+        "Performs calculation",
+        "Sends output"
+      ],
+      "narration": "So, an Artificial Neural Network has artificial neurons.\nWe call them nodes.\nEach node takes in some input.\nIt does a simple calculation.\nThen it sends out a new signal.",
+      "image_prompt": "Simple diagram of a single artificial neuron (node) showing multiple input lines converging, a central circle representing the node, and a single output line diverging",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Layers of a Neural Network",
+      "content": [
+        "Input Layer",
+        "Hidden Layer(s)",
+        "Output Layer"
+      ],
+      "narration": "Neural Networks are organized in layers.\nFirst, there's an Input Layer.\nIt gets the raw data.\nThen come one or more Hidden Layers.\nThese do the main processing.\nFinally, there's an Output Layer.\nIt gives the final result.",
+      "image_prompt": "Simplified diagram showing three distinct vertical layers: an 'Input Layer' (left), one 'Hidden Layer' (middle), and an 'Output Layer' (right), with multiple nodes in each layer connected by lines",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Connections and Weights",
+      "content": [
+        "Nodes are connected",
+        "Connections have weights",
+        "Weights determine importance"
+      ],
+      "narration": "Nodes in different layers are connected.\nEach connection has a 'weight'.\nThink of weights as importance scores.\nA higher weight means a stronger influence.\nThey help the network learn patterns.",
+      "image_prompt": "Diagram of two layers of nodes, with lines connecting each node from the first layer to each node in the second layer. Each connecting line has a small numerical value (e.g., 0.7, -0.2) labeled as a 'weight'",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "How They Learn: Training Data",
+      "content": [
+        "Give examples to network",
+        "Network makes guesses",
+        "Compares guesses to correct answers"
+      ],
+      "narration": "How does a network learn?\nWe show it many examples.\nThis is called training data.\nIt makes a guess based on the data.\nThen it checks if its guess is right.",
+      "image_prompt": "Illustration of a stream of diverse training data (e.g., images of cats and dogs, text documents, numerical tables) flowing into the input layer of a neural network diagram",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Learning Process: Adjusting Weights",
+      "content": [
+        "Error calculation",
+        "Backpropagation",
+        "Weights updated"
+      ],
+      "narration": "If the guess is wrong, it calculates the 'error'.\nThis error helps it learn.\nIt adjusts the weights of its connections.\nThis process is called 'backpropagation'.\nIt's like fine-tuning its understanding.",
+      "image_prompt": "Diagram showing a neural network. An arrow points from the output layer back through the hidden layers towards the input, labeled 'Backpropagation'. Text highlights 'Error calculation' and 'Weights updated'",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Iterative Learning",
+      "content": [
+        "Repeated many times",
+        "Network gets better",
+        "Finds complex patterns"
+      ],
+      "narration": "This learning cycle repeats many times.\nThe network sees millions of examples.\nIt keeps adjusting its weights.\nSlowly, it gets very good at its task.\nIt learns to find complex patterns.",
+      "image_prompt": "A graph showing a descending curve titled 'Error Rate Over Epochs', illustrating that the error decreases as the network trains more. A small animation of weights on connections subtly changing over time",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Applications: Image Recognition",
+      "content": [
+        "Identify objects",
+        "Facial recognition",
+        "Self-driving cars"
+      ],
+      "narration": "Neural Networks are everywhere today.\nThey're great at image recognition.\nThey can identify objects in photos.\nThink of facial recognition on your phone.\nOr self-driving cars seeing the road.",
+      "image_prompt": "Image of a self-driving car on a road, with overlaid graphics showing bounding boxes identifying pedestrians, other vehicles, and traffic signs detected by its AI system",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Applications: Natural Language Processing",
+      "content": [
+        "Understand human language",
+        "Translate languages",
+        "Chatbots"
+      ],
+      "narration": "They also understand human language.\nThis is Natural Language Processing.\nThey can translate languages instantly.\nThey power chatbots and virtual assistants.\nIt's how your phone understands you.",
+      "image_prompt": "Illustration of a person interacting with a smartphone, showing speech bubbles with text being translated or a chatbot interface providing conversational responses",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Applications: Recommendations",
+      "content": [
+        "Predict user preferences",
+        "Suggest products, movies, music",
+        "Personalized experience"
+      ],
+      "narration": "Ever wonder how Netflix knows what you like?\nNeural Networks predict your preferences.\nThey recommend movies, music, or products.\nThis gives you a personalized experience.\nIt helps you discover new things.",
+      "image_prompt": "Screenshot of a streaming service (like Netflix) or an e-commerce website (like Amazon) displaying a highly personalized 'Recommended for You' section with various movie, show, or product suggestions",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Neural Networks mimic the brain",
+        "Have layers of nodes and weighted connections",
+        "Learn through training and adjusting weights",
+        "Used in image, language, recommendations"
+      ],
+      "narration": "Let's quickly recap what we've learned.\nNeural Networks mimic the human brain.\nThey have layers of nodes.\nThese nodes connect with 'weights'.\nThey learn by adjusting these weights.\nAnd they're used in many AI tasks.",
+      "image_prompt": "Summary slide with key points listed clearly, possibly with small icons representing brain, layers, learning loop, and application examples",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Research an application of Neural Networks not covered",
+        "Describe its use",
+        "Explain how it benefits people"
+      ],
+      "narration": "Here's a small assignment for you.\nFind another use of Neural Networks.\nSomething we didn't cover today.\nDescribe how it works.\nAnd explain its benefits to people.",
+      "image_prompt": "Assignment slide with a magnifying glass icon over a stylized neural network diagram, representing research and discovery",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "EduPyramids",
+        "IIT Bombay",
+        "spoken-tutorial.org"
+      ],
+      "narration": "Thank you for watching this tutorial.\nIt's from EduPyramids.\nThis initiative is by IIT Bombay.\nFind more at spoken-tutorial.org.",
+      "image_prompt": "Thank you slide with logos for EduPyramids and IIT Bombay, and the website spoken-tutorial.org",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Thank You Slide"
+    }
+  ]
+}

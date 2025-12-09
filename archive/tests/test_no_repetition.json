@@ -1,0 +1,266 @@
+{
+  "presentation_title": "How to Write Better Prompts for ChatGPT",
+  "module": "Artificial Intelligence Essentials - Prompting Skills",
+  "episode": "6. Writing Better Prompts for ChatGPT",
+  "learning_objectives": [
+    "Identify key elements of effective prompts.",
+    "Apply structured instructions to AI tools.",
+    "Refine vague prompts into clear ones.",
+    "Create detailed and specific prompts for ChatGPT."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Better Prompts",
+    "Why Specificity Matters",
+    "Key Elements: Task, Role, Context, Format",
+    "Applying Task (Instruction)",
+    "Applying Role (Persona)",
+    "Applying Context (Background)",
+    "Applying Format (Output Structure)",
+    "Summary of Best Practices",
+    "Practice Assignment"
+  ],
+  "meta_tags": [
+    "ChatGPT",
+    "AI prompts",
+    "prompt engineering",
+    "better AI output",
+    "prompt writing",
+    "AI skills",
+    "conversational AI"
+  ],
+  "prerequisites": "To follow this tutorial, you must be connected to the internet. You should also be familiar with what a prompt is.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial on How to Write Better Prompts for ChatGPT.",
+      "image_prompt": "Title Slide: How to Write Better Prompts for ChatGPT with EduPyramids and FOSSEE logos.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify key elements of effective prompts.",
+        "Apply structured instructions to AI tools.",
+        "Refine vague prompts into clear ones.",
+        "Create detailed and specific prompts for ChatGPT."
+      ],
+      "narration": "In this tutorial, you will learn to identify, apply, refine, and create better prompts for ChatGPT.",
+      "image_prompt": "Learning Objectives Slide.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A web browser (Chrome, Firefox, Edge)",
+        "Internet connection",
+        "ChatGPT account (optional, but recommended for practice)"
+      ],
+      "narration": "Here I am using a browser on a computer or mobile. An internet connection is required. Having a ChatGPT account is recommended for practice.",
+      "image_prompt": "System Requirements Slide showing a laptop with a browser open.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List"
+    },
+    {
+      "title": "Pre-requisites",
+      "content": [
+        "Familiarity with what a prompt is.",
+        "Basic understanding of AI tools like ChatGPT."
+      ],
+      "narration": "To follow this tutorial, you must be familiar with what a prompt is. You should also have a basic understanding of AI tools like ChatGPT.",
+      "image_prompt": "Pre-requisite Slide showing a person thinking about AI and prompts.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List"
+    },
+    {
+      "title": "Why Better Prompts?",
+      "content": [
+        "Vague prompts lead to vague answers.",
+        "Specific prompts yield precise, useful results.",
+        "Unlock AI's full potential."
+      ],
+      "narration": "Have you ever got a generic answer from ChatGPT? That's because of a weak prompt. A weak prompt gets a weak answer. A strong prompt gets a smart answer. Better prompts unlock AI's full potential.",
+      "image_prompt": "Split screen: Left shows a person looking confused at a generic AI response. Right shows a person smiling at a precise AI response.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Two Column"
+    },
+    {
+      "title": "The Core Idea: Specificity",
+      "content": [
+        "AI needs clear, direct instructions.",
+        "Don't assume AI knows your intent.",
+        "Be as specific as possible."
+      ],
+      "narration": "ChatGPT cannot read your mind. It needs clear and direct instructions. Don't assume it knows your intent. You need to be as specific as possible.",
+      "image_prompt": "Illustration of a funnel. Wide top labeled 'Vague Prompt' narrowing to a small opening labeled 'Specific Output'.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image with Text"
+    },
+    {
+      "title": "Key Elements of a Good Prompt",
+      "content": [
+        "Task: What do you want it to do?",
+        "Role: Who should AI act as?",
+        "Context: What background information is relevant?",
+        "Format: How should the output be structured?"
+      ],
+      "narration": "Best prompts include four key ingredients. These are: Task, Role, Context, and Format. Let's look at each one.",
+      "image_prompt": "Infographic showing four interconnected circles: Task, Role, Context, Format.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List with Icons"
+    },
+    {
+      "title": "1. Task: What to do?",
+      "content": [
+        "Clearly define the action.",
+        "Use strong verbs: 'Write', 'Summarize', 'Explain', 'Generate'."
+      ],
+      "narration": "First, let's look at Task. This defines the main action you want ChatGPT to perform. Use strong, clear verbs. For example, 'Write', 'Summarize', 'Explain', or 'Generate'.",
+      "image_prompt": "Section header: '1. Task'. Icon of a checklist or a 'to-do' list.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text with Icon"
+    },
+    {
+      "title": "Task Example: Vague",
+      "content": [
+        "Vague: 'Tell me about climate change.'"
+      ],
+      "narration": "Let's try a vague task. Open ChatGPT now. Type: 'Tell me about climate change.' Submit this prompt. See the broad and general answer? It lacks focus.",
+      "image_prompt": "Screen recording of ChatGPT. User types 'Tell me about climate change.' and submits. A general, lengthy response appears.",
+      "video_prompt": "Screen recording of user typing 'Tell me about climate change.' in ChatGPT and showing the generic output.",
+      "is_video_slide": true,
+      "layout": "Demo"
+    },
+    {
+      "title": "Task Example: Clear",
+      "content": [
+        "Clear: 'Explain climate change to a 10-year-old.'"
+      ],
+      "narration": "Now, let's make the task clearer. Type: 'Explain climate change to a 10-year-old.' Submit this. Notice the difference? The answer is now much simpler and targeted.",
+      "image_prompt": "Screen recording of ChatGPT. User types 'Explain climate change to a 10-year-old.' and submits. A simplified, easy-to-understand response appears.",
+      "video_prompt": "Screen recording of user typing 'Explain climate change to a 10-year-old.' in ChatGPT and showing the simplified output.",
+      "is_video_slide": true,
+      "layout": "Demo"
+    },
+    {
+      "title": "2. Role: Who should AI act as?",
+      "content": [
+        "Assign a persona to AI.",
+        "Helps tailor tone and style.",
+        "Examples: 'Act as a scientist', 'You are a marketing expert'."
+      ],
+      "narration": "Next, consider the Role. Give ChatGPT a persona to adopt. This helps it tailor its tone and style. For example, say 'Act as a science teacher'.",
+      "image_prompt": "Section header: '2. Role'. Icon of a person wearing different hats or a stage actor.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text with Icon"
+    },
+    {
+      "title": "Role Example",
+      "content": [
+        "Prompt: 'Act as a science teacher. Explain climate change to a 10-year-old.'"
+      ],
+      "narration": "Let's add a role to our previous prompt. Type: 'Act as a science teacher. Explain climate change to a 10-year-old.' Submit this. The explanation now sounds more like a teacher explaining. See the change in tone?",
+      "image_prompt": "Screen recording of ChatGPT. User types 'Act as a science teacher. Explain climate change to a 10-year-old.' and submits. The response shows a more pedagogical tone.",
+      "video_prompt": "Screen recording of user typing 'Act as a science teacher. Explain climate change to a 10-year-old.' in ChatGPT and showing the teacher-like output.",
+      "is_video_slide": true,
+      "layout": "Demo"
+    },
+    {
+      "title": "3. Context: Background Info",
+      "content": [
+        "Provide relevant background details.",
+        "Helps AI understand the situation.",
+        "Examples: 'Focus on renewable energy', 'Assume a business setting'."
+      ],
+      "narration": "Now, let's add Context. Give ChatGPT any relevant background information. This helps it understand the situation better. For instance, 'Focus on renewable energy solutions'.",
+      "image_prompt": "Section header: '3. Context'. Icon of a map or a background scene.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text with Icon"
+    },
+    {
+      "title": "Context Example",
+      "content": [
+        "Prompt: 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions.'"
+      ],
+      "narration": "Let's add context to our prompt. Type: 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions.' Submit this. The answer now includes details about renewable energy. It is more targeted.",
+      "image_prompt": "Screen recording of ChatGPT. User types 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions.' and submits. The response now includes details about solar, wind, etc.",
+      "video_prompt": "Screen recording of user typing 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions.' in ChatGPT and showing the output with renewable energy info.",
+      "is_video_slide": true,
+      "layout": "Demo"
+    },
+    {
+      "title": "4. Format: Output Structure",
+      "content": [
+        "Specify how the answer should be presented.",
+        "Examples: 'Use bullet points', 'In a table', 'As a short paragraph'."
+      ],
+      "narration": "Finally, let's define the Format. Tell ChatGPT how you want the answer structured. Do you want bullet points? A table? A short paragraph? Be specific.",
+      "image_prompt": "Section header: '4. Format'. Icon of a document with bullet points or a table.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text with Icon"
+    },
+    {
+      "title": "Format Example",
+      "content": [
+        "Prompt: 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions. Use bullet points.'"
+      ],
+      "narration": "Now, let's add the format. Type: 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions. Use bullet points.' Submit this. The output is now neatly organized with bullet points. This is a much better prompt!",
+      "image_prompt": "Screen recording of ChatGPT. User types 'Act as a science teacher. Explain climate change to a 10-year-old. Focus on renewable energy solutions. Use bullet points.' and submits. The response is structured in bullet points.",
+      "video_prompt": "Screen recording of user typing the full improved prompt in ChatGPT and showing the final, well-formatted output.",
+      "is_video_slide": true,
+      "layout": "Demo"
+    },
+    {
+      "title": "Summary: Better Prompts",
+      "content": [
+        "**Task:** What to do?",
+        "**Role:** Who is AI acting as?",
+        "**Context:** What background info?",
+        "**Format:** How should it look?"
+      ],
+      "narration": "In summary, remember the four key elements for better prompts. Define the Task. Assign a Role. Provide Context. Specify the Format. Use all of these for best results.",
+      "image_prompt": "Infographic summarizing the four elements: Task, Role, Context, Format with short descriptions.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List with Icons"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Practice writing a prompt for ChatGPT.",
+        "Task: Write a short story.",
+        "Role: Act as a children's book author.",
+        "Context: Story about a brave squirrel finding nuts.",
+        "Format: Max 100 words, simple language."
+      ],
+      "narration": "Now for an assignment. Practice writing a prompt for ChatGPT. Your task is to write a short story. The role is a children's book author. The context is a brave squirrel finding nuts. The format should be max 100 words, using simple language. Try it yourself!",
+      "image_prompt": "Person sitting at a laptop, thoughtfully typing a prompt into a ChatGPT-like interface. A squirrel illustration is in the background.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Text with Image"
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "Thank you for watching. This tutorial is presented by EduPyramids. It is a FOSSEE project. FOSSEE is funded by the Ministry of Education, Government of India. For more information, visit spoken-tutorial.org.",
+      "image_prompt": "Thank You Slide with EduPyramids, FOSSEE, and IIT Bombay logos.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Thank You"
+    }
+  ]
+}

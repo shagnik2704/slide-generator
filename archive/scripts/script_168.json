@@ -1,0 +1,256 @@
+{
+  "presentation_title": "The Art of the Prompt - A Guide for Everyone",
+  "module": "AI and Digital Literacy",
+  "episode": "The Art of the Prompt - A Guide for Everyone",
+  "learning_objectives": [
+    "Identify the essential components of a well-structured and effective AI prompt.",
+    "Apply techniques such as specificity, context, and role-playing to enhance prompt clarity and desired outcomes.",
+    "Construct multi-part prompts to generate targeted and useful responses from AI tools.",
+    "Evaluate and refine initial AI responses by iteratively modifying and improving prompts."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction: Why Effective Prompting Matters?",
+    "Prerequisites: Getting Ready to Prompt",
+    "Core Concept 1: The Power of Clarity and Specificity",
+    "Core Concept 2: Adding Context and Constraints",
+    "Core Concept 3: Leveraging Roles and Examples",
+    "Practical Activity: Crafting a Multi-Part Prompt",
+    "Summary and Next Steps"
+  ],
+  "meta_tags": [
+    "AI prompting",
+    "effective prompts",
+    "AI tools",
+    "ChatGPT",
+    "Bard",
+    "Copilot",
+    "prompt engineering",
+    "digital literacy"
+  ],
+  "prerequisites": "Basic computer literacy and optional familiarity with an AI chat tool like ChatGPT.",
+  "slides": [
+    {
+      "title": "The Art of the Prompt - A Guide for Everyone",
+      "content": [
+        "Presented by: EduPyramids / FOSSEE, IIT Bombay"
+      ],
+      "narration": [
+        "Welcome to this Spoken Tutorial.",
+        "This session is about 'The Art of the Prompt - A Guide for Everyone'."
+      ],
+      "image_prompt": "Illustration of a person talking to a stylized AI chatbot interface, with thought bubbles showing clear and vague questions.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify the essential components of a well-structured and effective AI prompt.",
+        "Apply techniques such as specificity, context, and role-playing to enhance prompt clarity and desired outcomes.",
+        "Construct multi-part prompts to generate targeted and useful responses from AI tools.",
+        "Evaluate and refine initial AI responses by iteratively modifying and improving prompts."
+      ],
+      "narration": [
+        "At the end of this tutorial, you will be able to:",
+        "Identify the main parts of a good AI prompt.",
+        "Apply techniques like being specific, giving context, and role-playing.",
+        "Construct detailed prompts for useful AI responses.",
+        "Evaluate and improve AI answers by changing your prompts.",
+        "Before we begin, let's look at what you need to get started with this tutorial."
+      ],
+      "image_prompt": "An icon with a checklist or a lightbulb, representing learning and ideas.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic computer literacy",
+        "Familiarity with a web browser",
+        "Ability to type and click",
+        "Optional: Basic experience with an AI chat tool (e.g., ChatGPT)"
+      ],
+      "narration": [
+        "To follow this tutorial, you should have basic computer skills.",
+        "You should know how to use a web browser.",
+        "Also, you need to be able to type and click buttons.",
+        "It is helpful if you have tried an AI chat tool before, but it is not mandatory.",
+        "Now, let's check the system requirements for this tutorial."
+      ],
+      "image_prompt": "A simple icon showing a computer mouse and keyboard.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A computer or smartphone",
+        "Internet connection",
+        "A web browser (e.g., Chrome, Firefox)",
+        "Access to a free AI chat tool (e.g., ChatGPT, Google Bard)"
+      ],
+      "narration": [
+        "For this tutorial, you need a computer or smartphone.",
+        "You also need an internet connection.",
+        "Please use a web browser like Chrome or Firefox.",
+        "Make sure you can access a free AI chat tool.",
+        "For example, you can use ChatGPT or Google Bard.",
+        "But why is learning effective prompting so important?"
+      ],
+      "image_prompt": "Icons representing a laptop, a smartphone, Wi-Fi signal, and a web browser logo.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Effective Prompting Matters",
+      "content": [
+        "The power of AI tools",
+        "The challenge of clear interaction",
+        "Vague questions lead to vague answers",
+        "Real-world relevance: daily tasks to creative work"
+      ],
+      "narration": [
+        "AI tools are becoming very common.",
+        "They are powerful, but need clear instructions.",
+        "Think of AI as a very smart assistant.",
+        "It only understands exactly what you say.",
+        "If your question is vague, the answer will also be vague."
+      ],
+      "image_prompt": "An illustration of a person interacting with an AI interface, showing a thought bubble with a clear question leading to a useful response, and a vague question leading to a confused response.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 1: Clarity and Specificity",
+      "content": [
+        "Be Clear: Avoid Ambiguity",
+        "Example 1: Vague vs. Clear dog facts",
+        "Be Specific: Define Your Needs",
+        "Example 2: General vs. Specific recipe request"
+      ],
+      "narration": [
+        "Our first core concept is about being clear and specific.",
+        "Avoid unclear language. Let's look at an example.",
+        "If you ask 'Tell me about dogs,' the AI might give a very general answer.",
+        "Instead, try 'Tell me three surprising facts about Golden Retrievers and their average lifespan.'",
+        "This will get you a more specific and useful response.",
+        "This shows the power of being precise. Consider a recipe request.",
+        "Instead of a general one, try this:",
+        "'Give me a simple recipe for vegetarian pasta.'",
+        "It should take less than 30 minutes to cook.",
+        "Use ingredients commonly found in an Indian kitchen."
+      ],
+      "image_prompt": "Two contrasting thought bubbles: one with a messy, tangled question mark and a generic image; another with a clear, focused question mark and a detailed image.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 2: Context and Constraints",
+      "content": [
+        "Providing Context: Give background information",
+        "Example 1: Simple vs. Contextual gravity explanation",
+        "Setting Constraints: Guide output format and length",
+        "Example 2: General vs. Constrained email request"
+      ],
+      "narration": [
+        "Let's move to our second concept: adding context and constraints.",
+        "Context means giving background information.",
+        "Instead of just 'Explain gravity,' you could say this:",
+        "'Explain gravity to a 10-year-old.'",
+        "'Use a simple analogy, like an apple falling from a tree.'",
+        "This provides context about your target audience.",
+        "Constraints guide the output format and length.",
+        "For an email, don't just say 'Write an email.'",
+        "Try this: 'Write a formal email to a client.'",
+        "'Apologise for a missed deadline, keeping it under 100 words.'",
+        "'Suggest a new delivery date of next Tuesday.'"
+      ],
+      "image_prompt": "An illustration showing a spotlight illuminating specific details (context) and a boundary box defining the shape and size of an object (constraints).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Core Concept 3: Roles and Examples",
+      "content": [
+        "Role-Playing: Ask AI to adopt a persona",
+        "Example 1: General vs. Role-played Ancient Rome",
+        "Providing Examples (Few-Shot Prompting): Show what you want",
+        "Example 2: Translation with examples"
+      ],
+      "narration": [
+        "Our third concept is about leveraging roles and examples.",
+        "Role-playing means asking AI to act as someone.",
+        "Instead of 'Tell me about Ancient Rome,' try this:",
+        "'Act as a Roman historian.'",
+        "'Describe a typical day in Ancient Rome, focusing on daily life and social structures.'",
+        "This frames the AI's response in a particular style and perspective.",
+        "Providing examples is also called Few-Shot Prompting.",
+        "It shows the AI what you want.",
+        "For a translation, don't just say 'Translate this to Hindi: Hello.'",
+        "You can provide pairs, like 'English: Goodbye -> Hindi: Alvida.'",
+        "Then ask: 'Now translate: English: How are you?'",
+        "This guides the AI to match your desired translation style."
+      ],
+      "image_prompt": "An illustration showing a small human figure wearing different hats (roles) and then a set of aligned input-output pairs (examples) guiding a larger AI brain.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary: The ABCs of Prompting",
+      "content": [
+        "Clarity and Specificity avoid vague responses.",
+        "Context and Constraints tailor outputs.",
+        "Role-Playing and Examples offer advanced control.",
+        "Prompting is an iterative process; always refine!"
+      ],
+      "narration": [
+        "Let us quickly recap what we learned.",
+        "Remember that Clarity and Specificity are key.",
+        "These help you avoid vague responses.",
+        "Provide Context and set Constraints for tailored outputs.",
+        "Use Role-Playing and Examples for advanced control."
+      ],
+      "image_prompt": "A graphic displaying three main points with icons: a magnifying glass for specificity, a thought bubble for context, and a stage mask for role-playing.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment: Plan a Local Getaway",
+      "content": [
+        "Your Task: Use an AI chat tool to plan a local getaway.",
+        "Scenario: You want to plan a one-day trip for your family (4 people) to a picnic spot near your city. Your budget is low, and you prefer a place with natural beauty.",
+        "Prompt Construction Steps:",
+        "1. Start with a basic request.",
+        "2. Add Specificity (e.g., location type, number of people).",
+        "3. Add Context (e.g., low budget, preference for nature).",
+        "4. Add Constraints (e.g., suggest 2-3 places, include activities, food ideas, travel time, bullet points format).",
+        "5. Add Role-Playing (e.g., 'Act as a local travel expert').",
+        "Submit your complete prompt to the AI and analyze the response."
+      ],
+      "narration": [
+        "Here is a small assignment for you.",
+        "Your task is to use an AI chat tool to plan a local getaway.",
+        "Imagine you need to plan a one-day trip for your family of four.",
+        "You want a picnic spot near your city, with a low budget and natural beauty.",
+        "First, start with a basic request.",
+        "Then, add specificity.",
+        "Next, add context about your budget and preferences.",
+        "After that, add constraints like number of places and format.",
+        "Finally, add role-playing, for example, 'Act as a local travel expert'.",
+        "Submit your full prompt to the AI."
+      ],
+      "image_prompt": "An illustration of a family on a picnic in a scenic natural spot, with a speech bubble showing a complex, multi-part prompt.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You!",
+      "content": [
+        "For more Spoken Tutorials, visit: spoken-tutorial.org",
+        "This tutorial is brought to you by EduPyramids / FOSSEE, IIT Bombay",
+        "Funded by N.M.E.I.C.T., M.H.R.D., Government of India"
+      ],
+      "narration": [
+        "Thank you for watching this Spoken Tutorial.",
+        "For more such tutorials, please visit our website spoken-tutorial.org.",
+        "This tutorial is brought to you by EduPyramids and the FOSSEE Project.",
+        "These projects are from IIT Bombay.",
+        "They are funded by the National Mission on Education through ICT.",
+        "This is an initiative of M.H.R.D., Government of India."
+      ],
+      "image_prompt": "The FOSSEE and IIT Bombay logos, along with the Spoken Tutorial Project logo and the MHRD logo.",
+      "is_video_slide": false
+    }
+  ]
+}

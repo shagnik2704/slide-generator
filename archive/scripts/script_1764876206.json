@@ -1,0 +1,252 @@
+{
+  "presentation_title": "AI APIs: The Waiter Analogy",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "6. AI APIs: The Waiter Analogy",
+  "learning_objectives": [
+    "Define what an AI API is.",
+    "Explain the waiter analogy for APIs.",
+    "Understand the purpose of API Keys.",
+    "Describe how to make an API Request.",
+    "Apply knowledge to understand AI interaction."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to AI APIs",
+    "The Restaurant Waiter Analogy",
+    "What is an API?",
+    "Understanding API Keys",
+    "Making an API Request"
+  ],
+  "meta_tags": [
+    "AI",
+    "API",
+    "Application Programming Interface",
+    "AI model",
+    "API key",
+    "request",
+    "prompt",
+    "AI interaction"
+  ],
+  "prerequisites": "Basic understanding of Artificial Intelligence, familiarity with web applications.",
+  "slides": [
+    {
+      "title": "AI APIs: The Waiter Analogy",
+      "content": [
+        "Connecting your applications to AI"
+      ],
+      "narration": "Welcome to this tutorial.\nWe will explore AI APIs today.\nThis is a key concept.",
+      "image_prompt": "A title slide with \"AI APIs: The Waiter Analogy\" and a subtle background image representing interconnected digital systems or a waiter serving a robot.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Define what an AI API is.",
+        "Explain the waiter analogy for APIs.",
+        "Understand the purpose of API Keys.",
+        "Describe how to make an API Request."
+      ],
+      "narration": "In this tutorial, you will learn to:\nDefine what an AI API is.\nExplain the waiter analogy for APIs.\nUnderstand the purpose of API Keys.\nDescribe how to make an API Request.",
+      "image_prompt": "A slide with a bulleted list of learning objectives, perhaps with an icon of a lightbulb or a checklist.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Computer with internet access",
+        "Web browser (Chrome, Firefox, Edge, etc.)"
+      ],
+      "narration": "To follow this tutorial, you will need:\nA computer with internet access.\nAnd a web browser.\nFor example, Chrome or Firefox.",
+      "image_prompt": "A slide showing icons for a computer, internet connection, and common web browsers (Chrome, Firefox, Edge).",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List with Icons"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of Artificial Intelligence.",
+        "Familiarity with web applications."
+      ],
+      "narration": "Before starting, ensure you have:\nA basic understanding of Artificial Intelligence.\nAnd familiarity with web applications.",
+      "image_prompt": "A slide with text 'Prerequisites' and icons representing a brain (for AI) and a web browser or app screen (for web applications).",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List with Icons"
+    },
+    {
+      "title": "Introduction to AI APIs",
+      "content": [
+        "The most important concept for understanding how AI is used."
+      ],
+      "narration": "Let's start with AI APIs.\nThis is a crucial concept.\nIt helps us understand how AI is used.\nIt connects your apps to powerful AI models.",
+      "image_prompt": "A diagram showing a user application connecting to a cloud service labeled \"AI Model\" via a layer labeled \"API\". Arrows show data flow between them.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Diagram"
+    },
+    {
+      "title": "Analogy: Restaurant Waiter",
+      "content": [
+        "An API is like a Restaurant Waiter"
+      ],
+      "narration": "Imagine you're at a restaurant.\nYou want a hamburger.\nYou are like your application.",
+      "image_prompt": "Illustration of a person sitting at a restaurant table, looking at a menu. A thought bubble above their head shows a hamburger.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "The Kitchen (AI Model)",
+      "content": [
+        "You don't go into the kitchen to cook it yourself."
+      ],
+      "narration": "You don't cook it yourself.\nThe kitchen is the complex AI model.\nIt does the heavy lifting.",
+      "image_prompt": "Illustration of a bustling restaurant kitchen with chefs cooking, representing the complex inner workings of an AI model.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "The Waiter (The API)",
+      "content": [
+        "You give your order (a prompt) to a waiter (the API)."
+      ],
+      "narration": "Instead, you give your order.\nThis is your prompt.\nYou give it to a waiter.\nThe waiter is the API.",
+      "image_prompt": "Illustration of a waiter taking an order from a customer at a restaurant table. The customer is holding a smartphone labeled 'Application' and the waiter has 'API' on their uniform.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "The Order Process",
+      "content": [
+        "The waiter takes your order to the kitchen, which prepares your food."
+      ],
+      "narration": "The waiter takes your order.\nThey go to the kitchen.\nThe kitchen prepares your food.",
+      "image_prompt": "Illustration of a waiter walking from a customer's table towards a kitchen door, holding a notepad with the order.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "The Delivery (AI Response)",
+      "content": [
+        "The waiter then brings the finished dish (the AI's response) back to your table."
+      ],
+      "narration": "Then the waiter brings it back.\nThe finished dish is the AI's response.\nIt comes back to your table.",
+      "image_prompt": "Illustration of a waiter serving a finished dish (e.g., a hamburger) to the customer, who looks pleased. The dish has a label 'AI Response'.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "What is an API?",
+      "content": [
+        "An API (Application Programming Interface) is that waiter."
+      ],
+      "narration": "So, what is an API?\nIt is the Application Programming Interface.\nIt acts as that waiter.\nIt's a messenger.",
+      "image_prompt": "Graphic showing \"Application\" -> \"API (Messenger)\" -> \"AI Model\" with arrows indicating flow. The API icon is highlighted.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Diagram"
+    },
+    {
+      "title": "API as a Messenger",
+      "content": [
+        "It takes a request from your application, sends it to the AI model, and returns the model's response."
+      ],
+      "narration": "It takes your request.\nIt sends it to the AI model.\nThen it returns the model's response.\nThink about it.\nIt connects your app to powerful AI.",
+      "image_prompt": "Animated graphic: an arrow from 'App' to 'API', then 'API' to 'AI Model', then 'AI Model' to 'API', then 'API' to 'App'. Each step is clearly shown.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Animated Diagram"
+    },
+    {
+      "title": "API Keys & Requests",
+      "content": [
+        "Understanding how to interact with AI services."
+      ],
+      "narration": "Now let's discuss API Keys.\nAnd also API Requests.\nThese are important for interaction.",
+      "image_prompt": "Section header: 'API Keys & Requests' with icons for a digital key and a message bubble or an envelope, symbolizing communication.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Section Header"
+    },
+    {
+      "title": "API Key Explained",
+      "content": [
+        "This is a secret password. It\u2019s like your unique ID card."
+      ],
+      "narration": "An API Key is a secret password.\nIt's like your unique ID card.\nIt proves your permission.\nTo the restaurant, like Google or OpenAI.\nYou can place an order.",
+      "image_prompt": "Illustration of a digital key icon with 'API Key' text, next to a padlock or a secure ID card.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "Keeping API Keys Private",
+      "content": [
+        "You must always keep your API key private!"
+      ],
+      "narration": "You must keep your API key private.\nAlways protect it.\nSharing it can be risky.",
+      "image_prompt": "Illustration of a locked safe or a shielded key icon, with a prominent 'Do Not Share' sign, emphasizing privacy and security.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "What is a Request?",
+      "content": [
+        "This is the act of placing your order."
+      ],
+      "narration": "A Request is placing your order.\nIn code, you send your API key.\nAnd also your prompt.\nTo the AI service.",
+      "image_prompt": "Illustration of a person holding a smartphone or computer, sending a message labeled 'Request' which includes a key icon and a text prompt.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Image and Text"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "An API is a messenger for AI.",
+        "Analogy: Waiter in a restaurant.",
+        "API Key: Your secret ID.",
+        "Request: Sending your prompt and key."
+      ],
+      "narration": "In summary, we learned:\nAn API is an AI messenger.\nIt's like a waiter.\nAn API Key is your secret ID.\nA Request sends your prompt and key.\nThese connect your apps to AI.",
+      "image_prompt": "A slide with a bulleted list summarizing the key concepts, perhaps with small illustrative icons next to each point.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Think of an app you use.",
+        "How might it use an API to connect to an AI?",
+        "Write down your idea."
+      ],
+      "narration": "Now for an assignment.\nThink of an app you use daily.\nHow might it use an API?\nTo connect to an AI service?\nWrite down your idea.\nShare it with a friend.",
+      "image_prompt": "A slide with text 'Assignment' and an illustration of a person thinking, with thought bubbles showing various app icons and a connection to a cloud AI.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "List with Image"
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "Thank you for joining this Spoken Tutorial!"
+      ],
+      "narration": "Thank you for joining this Spoken Tutorial.\nThis was on AI APIs.\nWe hope you enjoyed it.\nFor more information, visit EduPyramids.\nOr FOSSEE, IIT Bombay.\nHappy learning!",
+      "image_prompt": "A 'Thank You' slide with EduPyramids and FOSSEE IIT Bombay logos prominently displayed.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Logos and Text"
+    }
+  ]
+}

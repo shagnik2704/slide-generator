@@ -1,0 +1,256 @@
+{
+  "presentation_title": "How to Write Effective Prompts for AI",
+  "module": "Artificial Intelligence Essentials",
+  "episode": "6. How to Write Effective Prompts for AI",
+  "learning_objectives": [
+    "Identify key components of an effective AI prompt.",
+    "Apply techniques to add clarity and context to prompts.",
+    "Structure prompts for better AI responses.",
+    "Evaluate and refine AI outputs."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to effective prompting.",
+    "Understanding prompt components: Role, Task, Format, Context, Constraints.",
+    "Step-by-step prompt construction.",
+    "Adding clarity and specificity.",
+    "Providing context and constraints.",
+    "Structuring your prompt for optimal results.",
+    "Iterating and refining prompts based on AI output."
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "Prompt Engineering",
+    "Prompt Writing",
+    "ChatGPT",
+    "Generative AI",
+    "Effective Prompts",
+    "AI output",
+    "clarity",
+    "context",
+    "constraints",
+    "iteration"
+  ],
+  "prerequisites": "To follow this tutorial, you should be familiar with basic AI tools like ChatGPT. You must also be connected to the internet.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [
+        "How to Write Effective Prompts for AI"
+      ],
+      "narration": "Welcome to this Spoken Tutorial on How to Write Effective Prompts for AI.",
+      "image_prompt": "Title slide: 'How to Write Effective Prompts for AI' with a stylized image of a person interacting with an AI interface, showing a thought bubble turning into clear text.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives Slide",
+      "content": [
+        "Identify key components of an effective AI prompt.",
+        "Apply techniques to add clarity and context to prompts.",
+        "Structure prompts for better AI responses.",
+        "Evaluate and refine AI outputs."
+      ],
+      "narration": "In this tutorial, you will learn to identify, apply, structure, and evaluate prompts.",
+      "image_prompt": "Learning Objectives slide with bullet points listed.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements Slide",
+      "content": [
+        "Browser on a computer or mobile.",
+        "Internet connection."
+      ],
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements slide showing a laptop and a mobile phone, both connected to the internet icon.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Pre-requisite Slide",
+      "content": [
+        "Familiarity with basic AI tools like ChatGPT.",
+        "Connected to the internet."
+      ],
+      "narration": "To follow this tutorial, you must be connected to the internet.",
+      "image_prompt": "Pre-requisite slide showing a user interacting with a generic AI chat interface.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Effective Prompts?",
+      "content": [
+        "Weak prompts get weak answers.",
+        "Strong prompts get smart answers.",
+        "Effective prompts guide AI precisely."
+      ],
+      "narration": "Have you ever received a strange answer from an AI?",
+      "image_prompt": "Person at laptop, looking confused at AI output. Next to it, a thought bubble showing a vague prompt and a confusing response.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Key Prompt Components",
+      "content": [
+        "Role: Who the AI should be.",
+        "Task: What the AI should do.",
+        "Format: How the output should look.",
+        "Context: Background information.",
+        "Constraints: Rules and limitations."
+      ],
+      "narration": "An effective prompt has five key parts.",
+      "image_prompt": "Infographic showing five interconnected circles, each labeled with one of the key components: Role, Task, Format, Context, Constraints.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Step 1: Define the Role",
+      "content": [
+        "Tell the AI who it is.",
+        "This sets the perspective.",
+        "It influences the tone and style."
+      ],
+      "narration": "Let's start by defining the AI's role.",
+      "image_prompt": "An AI chatbot icon with a thought bubble above it, showing different hats or roles (e.g., 'teacher', 'marketing expert', 'poet').",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practice: Role",
+      "content": [
+        "Example prompt:",
+        "\"You are a seasoned travel blogger.\""
+      ],
+      "narration": "Open your AI tool now.",
+      "image_prompt": "Screen recording: User opens ChatGPT. User types 'You are a seasoned travel blogger.' into the input box.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Step 2: State the Task",
+      "content": [
+        "Clearly state what you want.",
+        "Use action verbs.",
+        "Avoid ambiguity."
+      ],
+      "narration": "Next, tell the AI what to do.",
+      "image_prompt": "Illustration of a clear instruction or command being given to a robot, with a green checkmark.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practice: Task",
+      "content": [
+        "Adding to previous prompt:",
+        "\"...Write a short blog post about exploring local cafes in your city.\""
+      ],
+      "narration": "Now, let's add the task to our prompt.",
+      "image_prompt": "Screen recording: User adds 'Write a short blog post about exploring local cafes in your city.' to the previous prompt in ChatGPT.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Step 3: Specify the Format",
+      "content": [
+        "How should the output look?",
+        "Is it a list, paragraph, or table?",
+        "This ensures readability."
+      ],
+      "narration": "Then, specify how you want the output formatted.",
+      "image_prompt": "Different document icons: a paragraph, a bulleted list, a table, indicating various output formats.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practice: Format",
+      "content": [
+        "Adding to previous prompt:",
+        "\"...The blog post should have a catchy title and three paragraphs.\""
+      ],
+      "narration": "Let's refine our prompt with a format.",
+      "image_prompt": "Screen recording: User adds 'The blog post should have a catchy title and three paragraphs.' to the prompt in ChatGPT.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Step 4: Provide Context",
+      "content": [
+        "Give background information.",
+        "This helps the AI understand.",
+        "It leads to more relevant responses."
+      ],
+      "narration": "Now, add some helpful context.",
+      "image_prompt": "Image of a puzzle piece being added to a larger, incomplete puzzle, symbolizing adding missing information.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practice: Context",
+      "content": [
+        "Adding to previous prompt:",
+        "\"...Focus on unique, hidden gems, not popular chains.\""
+      ],
+      "narration": "Let's provide context for our blog post.",
+      "image_prompt": "Screen recording: User adds 'Focus on unique, hidden gems, not popular chains.' to the prompt in ChatGPT.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Step 5: Include Constraints",
+      "content": [
+        "Set boundaries for the AI.",
+        "This can be length, tone, or keywords.",
+        "It prevents unwanted output."
+      ],
+      "narration": "Finally, add any necessary constraints.",
+      "image_prompt": "Image of a fence or boundary line, with labels like 'Word Limit', 'Specific Tone', 'Keywords'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Practice: Constraints",
+      "content": [
+        "Adding to previous prompt:",
+        "\"...Keep the tone enthusiastic and under 250 words.\""
+      ],
+      "narration": "Let's add a word count and tone constraint.",
+      "image_prompt": "Screen recording: User adds 'Keep the tone enthusiastic and under 250 words.' to the prompt in ChatGPT and submits it. Shows the AI generating the blog post.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Iterate and Refine",
+      "content": [
+        "Review the AI's output.",
+        "Is it what you expected?",
+        "Adjust your prompt if needed.",
+        "Small changes can make a big difference."
+      ],
+      "narration": "Once you get an output, review it.",
+      "image_prompt": "Side-by-side comparison: first AI output (slightly off-topic) and second, refined AI output (perfect). Arrows show refinement process.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Defined Role, Task, Format, Context, Constraints.",
+        "Applied these steps to build a prompt.",
+        "Learned to iterate for better results."
+      ],
+      "narration": "In this tutorial, we learned about the five key components of a prompt.",
+      "image_prompt": "Summary slide with bullet points. A visual representation of the five prompt components forming a complete, effective prompt.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Write a prompt to generate a recipe.",
+        "Define the AI's role as a chef.",
+        "Specify the task: a vegetarian dinner recipe.",
+        "Choose a format: ingredients list and steps.",
+        "Add context: for a busy weeknight.",
+        "Include constraints: under 30 minutes prep, minimal ingredients."
+      ],
+      "narration": "Here is an assignment for you.",
+      "image_prompt": "Assignment slide with bullet points. An illustration of a chef's hat and cooking utensils.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "This Spoken Tutorial was created by EduPyramids.",
+        "It is supported by FOSSEE, IIT Bombay.",
+        "Visit spoken-tutorial.org for more information."
+      ],
+      "narration": "Thank you for watching.",
+      "image_prompt": "Thank you slide with EduPyramids and FOSSEE, IIT Bombay logos.",
+      "is_video_slide": false
+    }
+  ]
+}

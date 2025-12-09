@@ -1,0 +1,118 @@
+{
+  "presentation_title": "Understanding AI, Machine Learning, and Deep Learning",
+  "module": "Introduction to AI Concepts",
+  "episode": "AI, ML, and Deep Learning Explained",
+  "learning_objectives": [
+    "Differentiate between Artificial Intelligence, Machine Learning, and Deep Learning."
+  ],
+  "duration": "10 minutes",
+  "outline": [
+    "What is Artificial Intelligence (AI)?",
+    "Understanding Machine Learning (ML)",
+    "Exploring Deep Learning",
+    "Key Differences"
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "Machine Learning",
+    "ML",
+    "Deep Learning",
+    "DL",
+    "Neural Networks",
+    "Introduction to AI"
+  ],
+  "prerequisites": "Basic computer literacy.",
+  "slides": [
+    {
+      "title": "Welcome to the Spoken Tutorial on Artificial Intelligence, Machine Learning, and Deep Learning",
+      "content": [],
+      "narration": "Welcome to this **Spoken Tutorial**.\nWe will learn about **Artificial Intelligence**.\nWe will also learn about **Machine Learning**.\nFinally, we will cover **Deep Learning**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Learning Objective",
+      "content": [],
+      "narration": "After this **tutorial**, you will know the difference.\nYou will understand **Artificial Intelligence**.\nYou will also understand **Machine Learning**.\nAnd you will understand **Deep Learning**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "To follow this **tutorial**, you need a computer.\nYou also need an internet connection.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "You should know basic computer use.\nYou do not need to know **AI** or programming.",
+      "image_prompt": ""
+    },
+    {
+      "title": "What is Artificial Intelligence (AI)?",
+      "content": [],
+      "narration": "Have you seen how your phone suggests words?\nHow do apps recommend movies?\nThis is **Artificial Intelligence**, or **AI**.\n**AI** is about making computers smart.\nThey do tasks like humans.",
+      "image_prompt": "A futuristic robot brain with gears and light, representing intelligence and complex thinking."
+    },
+    {
+      "title": "AI: Making Computers Intelligent",
+      "content": [],
+      "narration": "**AI** makes computers intelligent.\nFor example, computers can understand language.\nThey can recognize faces.\nThey can solve hard math problems.\nThis means machines can think.\nThey can act like humans.",
+      "image_prompt": "A human brain connected with circuits and digital patterns, showing various intelligent tasks like language, vision, and problem-solving icons around it."
+    },
+    {
+      "title": "What is Machine Learning (ML)?",
+      "content": [],
+      "narration": "Next, let's learn about **Machine Learning**, or **ML**.\n**ML** is a part of **AI**.\nHere, computers learn from data.\nThey find patterns.\nWe do not tell them every rule.",
+      "image_prompt": "A robot hand pointing to a chart with data points, showing a learning curve, representing pattern recognition."
+    },
+    {
+      "title": "ML vs. Traditional Programming",
+      "content": [],
+      "narration": "Let's see an example.\nIn normal programming, you give exact rules.\nFor a cat, you might say: 'IF pointy ears AND whiskers, THEN it is a cat'.\nYou write every rule yourself.",
+      "image_prompt": "A programmer typing IF-THEN rules on a screen, with a simple illustration of a cat next to it, showing explicit instructions."
+    },
+    {
+      "title": "ML: Learning from Data",
+      "content": [],
+      "narration": "But in **Machine Learning**, it is different.\nYou show the computer many pictures of 'cats' and 'not cats'.\nThe computer then learns what a cat looks like by itself.\nIt finds the rules from the data.",
+      "image_prompt": "A computer screen displaying many diverse images of cats and non-cats, with a progress bar indicating the machine learning process."
+    },
+    {
+      "title": "What is Deep Learning?",
+      "content": [],
+      "narration": "Now, let's look at **Deep Learning**.\nIt is a special type of **Machine Learning**.\n**Deep Learning** uses **neural networks** like our brain.\nThese **networks** have many layers.\nSo they are called 'deep'.",
+      "image_prompt": "A complex neural network diagram with multiple layers of interconnected nodes, resembling brain cells, glowing with data flow."
+    },
+    {
+      "title": "Deep Learning in Action",
+      "content": [],
+      "narration": "**Deep Learning** helps computers learn very complex things.\nIt learns from a lot of data.\nFor example, self-driving cars use it to see people.\nVoice assistants use it to understand what you say.\nEven **AI** that makes images uses **Deep Learning**.",
+      "image_prompt": "A futuristic car driving autonomously on a city street, with overlay graphics showing object recognition (pedestrians, traffic lights), and a voice assistant icon."
+    },
+    {
+      "title": "Summarizing the Differences",
+      "content": [],
+      "narration": "Let's quickly review.\n**AI** is the main idea of making machines smart.\n**Machine Learning** is a part of **AI**.\nMachines learn from data in **Machine Learning**.\n**Deep Learning** is a special part of **ML**.\nIt uses deep **networks** to find complex patterns.",
+      "image_prompt": "A Venn diagram showing three concentric circles: the largest labeled 'AI', the middle labeled 'Machine Learning', and the innermost labeled 'Deep Learning'."
+    },
+    {
+      "title": "Summary",
+      "content": [],
+      "narration": "In this **tutorial**, you learned the difference.\nWe discussed **Artificial Intelligence**.\nWe also discussed **Machine Learning**.\nAnd we discussed **Deep Learning**.\nWe saw their meanings.\nWe also saw examples.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "Your assignment is to find one more real-world example.\nThis applies to **AI**, **Machine Learning**, and **Deep Learning**.\nTalk about these examples with a friend.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "This **Spoken Tutorial** is from **EduPyramids Educational Services Private Limited**.\nIt is from **SINE**, **IIT Bombay**.\nThank you for watching!",
+      "image_prompt": ""
+    }
+  ]
+}

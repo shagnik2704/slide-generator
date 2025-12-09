@@ -1,0 +1,225 @@
+{
+  "presentation_title": "Introduction to Prompting: Your Key AI Skill",
+  "module": "Module 1: Introduction to AI Prompting",
+  "episode": "Episode 2.1: The 3 C's of Good Prompts",
+  "learning_objectives": [
+    "Identify the three key components of an effective prompt: Clarity, Context, and Constraints.",
+    "Apply these components to create clear and focused prompts.",
+    "Refine prompts through iterative conversation for better results."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Welcome to Prompting",
+    "What You Will Learn",
+    "What You Need",
+    "System Requirements",
+    "Understanding Prompting: Your AI Intern",
+    "The 3 C's of a Good Prompt: Clarity",
+    "The 3 C's: Context and Constraints",
+    "Prompting is a Conversation",
+    "Key Takeaways",
+    "Your Assignment",
+    "Thank You"
+  ],
+  "meta_tags": [
+    "AI",
+    "Prompting",
+    "ChatGPT",
+    "Gemini",
+    "DALL-E",
+    "Artificial Intelligence",
+    "Instructions",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "Iterative Prompting",
+    "AI tools",
+    "No-code AI"
+  ],
+  "prerequisites": "Basic computer literacy and access to any AI chatbot like Google Gemini or ChatGPT.",
+  "slides": [
+    {
+      "title": "Welcome to Prompting: Your Key AI Skill",
+      "content": [
+        "Welcome to this tutorial on AI Prompting.",
+        "Learn how to get the best results from Artificial Intelligence tools."
+      ],
+      "narration": [
+        "Namaste and welcome to this Spoken Tutorial on AI Prompting.",
+        "In today's world, AI tools can do amazing things.",
+        "To get the best from them, you need to give clear instructions."
+      ],
+      "image_prompt": "An animated graphic with various AI icons like a robot brain, a chatbot speech bubble, and a creative artist's palette, all centered around a friendly 'Welcome!' message.",
+      "is_video_slide": false
+    },
+    {
+      "title": "What You Will Learn",
+      "content": [
+        "Identify the three key components of an effective prompt: Clarity, Context, and Constraints.",
+        "Apply these components to create clear and focused prompts.",
+        "Refine prompts through iterative conversation for better results."
+      ],
+      "narration": [
+        "By the end of this tutorial, you will be able to:",
+        "First, identify the three key components of a good prompt.",
+        "These are Clarity, Context, and Constraints.",
+        "Second, you will apply these ideas to write clear and focused prompts."
+      ],
+      "image_prompt": "A stylized list showing three bullet points with icons representing 'Clarity' (a lightbulb), 'Context' (a speech bubble with background details), and 'Constraints' (a ruler or boundary).",
+      "is_video_slide": false
+    },
+    {
+      "title": "What You Need",
+      "content": [
+        "Basic computer literacy.",
+        "Access to any AI chatbot (like Google Gemini, ChatGPT, or Claude).",
+        "Readiness to experiment and practice."
+      ],
+      "narration": [
+        "To get the most out of this tutorial, you should have basic computer skills.",
+        "You will also need access to an AI chatbot.",
+        "Tools like Google Gemini, ChatGPT, or Claude are good choices.",
+        "Most importantly, be ready to practice and experiment with what you learn."
+      ],
+      "image_prompt": "Icons representing a computer, an internet cloud, and a thought bubble with a question mark, symbolizing basic literacy and curiosity.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A desktop or laptop computer.",
+        "A stable internet connection.",
+        "A web browser (Chrome, Firefox, Edge, etc.)."
+      ],
+      "narration": [
+        "For this tutorial, you will need a desktop or a laptop computer.",
+        "Ensure you have a stable internet connection.",
+        "Any standard web browser like Chrome, Firefox, or Edge will work.",
+        "No complex software installations are needed."
+      ],
+      "image_prompt": "A simple diagram showing a desktop computer connected to the internet via a Wi-Fi symbol, with a web browser icon on the screen.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Understanding Prompting: Your AI Intern",
+      "content": [
+        "Think of an AI like a very smart intern.",
+        "It can do amazing things but needs clear instructions.",
+        "Prompting is giving those specific instructions."
+      ],
+      "narration": [
+        "Imagine an AI model as an incredibly smart and fast intern.",
+        "This intern can do many tasks, but needs very specific instructions.",
+        "Prompting is simply giving these clear instructions.",
+        "A good prompt helps the AI understand exactly what you want."
+      ],
+      "image_prompt": "A friendly, cartoon intern character sitting at a desk, surrounded by thought bubbles showing complex tasks being processed quickly. A speech bubble above their head says 'What can I do for you?'",
+      "is_video_slide": false
+    },
+    {
+      "title": "The 3 C's of a Good Prompt: Clarity",
+      "content": [
+        "Clarity: Be specific, not vague.",
+        "Weak Prompt: 'Write about electric cars.'",
+        "Clear Prompt: 'Write a short blog post on top 3 benefits of electric cars for city dwellers.'"
+      ],
+      "narration": [
+        "A weak prompt gives a weak answer.",
+        "A great prompt uses three key ingredients, our 3 C's.",
+        "The first 'C' is Clarity.",
+        "Be specific with your instructions."
+      ],
+      "image_prompt": "A magnifying glass highlighting a section of text that is clear and concise, contrasting with blurry text in the background. Shows 'Clarity' as a keyword.",
+      "is_video_slide": false
+    },
+    {
+      "title": "The 3 C's: Context and Constraints",
+      "content": [
+        "Context: Give background and audience information.",
+        "Example Context: 'For a lifestyle blog on sustainable living.'",
+        "Constraints: Set rules for length, format, and tone.",
+        "Example Constraints: 'Under 400 words, friendly tone, end with a question.'"
+      ],
+      "narration": [
+        "The second 'C' is Context.",
+        "Tell the AI why you are asking and who the audience is.",
+        "Adding 'For a lifestyle blog on sustainable living' provides context.",
+        "The third 'C' is Constraints.",
+        "These are rules like length, format, or tone."
+      ],
+      "image_prompt": "A Venn diagram showing three overlapping circles labeled 'Clarity', 'Context', and 'Constraints'. The center overlap is labeled 'Excellent Prompt'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prompting is a Conversation",
+      "content": [
+        "Treat AI interaction as a conversation.",
+        "Refine your prompts based on the AI's output.",
+        "Example: Ask for a slogan, then ask to make it 'shorter and more modern'."
+      ],
+      "narration": [
+        "Remember, your first prompt is rarely your last.",
+        "Think of it as a conversation with the AI.",
+        "You can refine your prompts based on the AI's initial response.",
+        "For instance, you might ask for a slogan."
+      ],
+      "image_prompt": "Two speech bubbles showing a back-and-forth conversation, with the second speech bubble showing a refinement or improvement over the first. Illustrated with a person and a robot icon.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Key Takeaways",
+      "content": [
+        "Good prompts need Clarity, Context, and Constraints.",
+        "Clarity means being specific.",
+        "Context gives background and audience details.",
+        "Constraints set rules for the output.",
+        "Refine your prompts through conversation."
+      ],
+      "narration": [
+        "Let's quickly recap what we have learned.",
+        "To get good results from AI, your prompts need three things:",
+        "Clarity, meaning be specific.",
+        "Context, giving background and audience information.",
+        "And Constraints, setting rules for the output.",
+        "Also, remember to refine your prompts by having a conversation with the AI."
+      ],
+      "image_prompt": "A concise mind map connecting 'Good Prompt' to three branches: 'Clarity', 'Context', 'Constraints', and a separate branch for 'Iterative Prompting' with an arrow leading back to 'Good Prompt'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Your Assignment",
+      "content": [
+        "Open an AI chatbot (like Gemini or ChatGPT).",
+        "Create a prompt combining Clarity, Context, and Constraints.",
+        "Example: 'Act as a chef. Give a simple 3-step recipe for masala chai, for someone who is new to cooking. Present it as a numbered list.'",
+        "Experiment and refine your prompt until you get a good result."
+      ],
+      "narration": [
+        "Now for a small assignment to practice your new skills.",
+        "Open your chosen AI chatbot.",
+        "Your task is to create a prompt using Clarity, Context, and Constraints.",
+        "Here is a prompt example:",
+        "Instruct the AI to act as a chef.",
+        "Ask for a simple 3-step recipe for masala chai, aimed at new cooks.",
+        "Finally, request it as a numbered list.",
+        "Experiment and refine your prompt."
+      ],
+      "image_prompt": "A person looking at a laptop screen with an AI chatbot interface, a thought bubble above their head showing a recipe for masala chai. A checkmark indicates successful completion.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "Thank you for watching this Spoken Tutorial.",
+        "This project is supported by EduPyramids and IIT Bombay."
+      ],
+      "narration": [
+        "Thank you for watching this Spoken Tutorial.",
+        "We hope you now feel confident in crafting effective AI prompts.",
+        "This skill will help you use AI tools powerfully."
+      ],
+      "image_prompt": "A warm 'Thank You' message with logos of EduPyramids and IIT Bombay's FOSSEE project. A cheerful, diverse group of people learning from computers in the background.",
+      "is_video_slide": false
+    }
+  ]
+}

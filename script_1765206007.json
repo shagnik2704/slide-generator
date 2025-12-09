@@ -1,0 +1,122 @@
+{
+  "presentation_title": "AI in the Professional World: Automating, Augmenting, and New Roles",
+  "module": "AI for Professionals",
+  "episode": "Impact of AI on Careers",
+  "learning_objectives": [
+    "Understand the difference between **AI** automation and augmentation.",
+    "Identify emerging job roles created by **AI**.",
+    "Learn how to effectively showcase **AI** skills on a resume and in interviews."
+  ],
+  "duration": "2-3 minutes",
+  "outline": [
+    "Introduction to **AI**'s impact on the professional landscape.",
+    "Understanding automation versus augmentation with **AI**.",
+    "Exploring new job roles emerging due to **AI**.",
+    "Strategies for effectively communicating **AI** skills."
+  ],
+  "meta_tags": [
+    "**AI**",
+    "Artificial Intelligence",
+    "Career",
+    "Professional Skills",
+    "Job Market",
+    "Automation",
+    "Augmentation",
+    "Prompt Engineer",
+    "Skill Development",
+    "**EduPyramids**"
+  ],
+  "prerequisites": "Basic understanding of what **AI** is and how it functions at a high level. No coding skills are required.",
+  "slides": [
+    {
+      "title": "Slide 1: Title Slide: AI in the Professional World",
+      "narration": "Welcome to this Spoken Tutorial on **AI** in the Professional World: Automating, Augmenting, and New Roles.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 2: Learning Objectives",
+      "narration": "In this tutorial, you will learn the difference between **AI** automation. \nYou will also learn about **AI** augmentation. \nYou will also identify emerging job roles created by **AI**. \nFinally, you will learn how to showcase **AI** skills on a resume. \nYou will also learn how to showcase them in interviews.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 3: System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 4: Pre-requisites",
+      "narration": "To follow this tutorial, you should have a basic understanding of what **AI** is and how it functions at a high level.\nNo coding skills are required for this tutorial.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 5: AI's Impact on Professions",
+      "narration": "**AI** is not just a tool for fun; it is a major force changing the professional landscape across all industries.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 6: Automating vs. Augmenting Tasks",
+      "narration": "It is crucial to understand the difference between **AI** automation and augmentation.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 7: Automation",
+      "narration": "Automation means **AI** takes over a repetitive task completely.\nThink of it like a smart factory robot that does the same job perfectly every time.\nFor example, an **AI** system can automatically sort customer support emails.\nIt categorizes them into types like 'Billing' or 'Technical Issue'.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 8: Augmentation",
+      "narration": "Augmentation, on the other hand, means **AI** acts as a partner.\nIt helps a human do their job better or faster.\nThis is where the biggest immediate impact is.\nIt is like having a helpful assistant who prepares everything for you.\nFor example, a marketing professional can use **AI** to brainstorm headlines. \nThis can be done for an ad campaign in seconds. \nThis allows them to focus their time on choosing and refining the best one.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 9: The Rise of New Job Roles",
+      "narration": "**AI** is not just about changing old jobs; it is creating entirely new ones.\nLet's look at some examples.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 10: Prompt Engineer",
+      "narration": "One such new role is a **Prompt Engineer**. \nThis is an expert who specializes in crafting the perfect **prompts**. \nTheir goal is to get the most accurate results from **AI** models. \nThey also aim for high-quality results from these models. \nThese models include **ChatGPT** or **Gemini**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 11: AI Auditor",
+      "narration": "Another emerging role is an **AI Auditor**.\nThis professional tests and reviews **AI** systems to check for bias, ethical issues, and safety risks before they are released to the public.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 12: AI Content Manager",
+      "narration": "We also have the **AI Content Manager**.\nThis person oversees the use of **AI** in content creation, ensuring that the **AI**-generated first drafts are fact-checked, edited, and refined to meet quality standards.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 13: How to Talk About AI Skills",
+      "narration": "Simply listing '**ChatGPT**' on your resume is not enough.\nYou need to show how you use **AI** to create value.\nLet's see how.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 14: Resume Example",
+      "narration": "On your resume, focus on the results you achieved. \nInstead of writing: 'Proficient in **AI** tools.' \nWrite this: 'Utilized **Google Gemini** to summarize complex research. \nThis included various reports.' \nThis action reduced content analysis time by 40%. \nNotice how the second example clearly states the tool used. \nIt also states the task performed. \nIt also highlights the measurable impact.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 15: Interview Example",
+      "narration": "In an interview, frame **AI** as a productivity tool that enhances your skills. \nYou could say: 'I see **AI** as a powerful assistant. \nI use it to handle first drafts and brainstorm ideas. \nThis frees me up to spend more time on strategic thinking. \nIt also allows for more time on editing and creative problem-solving.' \nThis shows you understand **AI**'s role as an augmentation tool.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 16: Summary",
+      "narration": "Let's summarize. \nIn this tutorial, we learned that **AI** can automate repetitive tasks. \nIt also augments human capabilities. \nWe also learned that new job roles are emerging. \nExamples include **Prompt Engineer** and **AI Auditor**. \nFinally, we covered how to articulate **AI** skills on resumes. \nWe also covered how to articulate them in interviews. \nThis involves focusing on value and augmentation.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 17: Assignment",
+      "narration": "Now, for a small activity.\nThink of a task you do regularly at work or in your studies.\nDescribe how **AI** could either automate a part of it or augment your ability to perform it better.\nWrite down your thoughts.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 18: EduPyramids Logo",
+      "narration": "This brings us to the end of this tutorial.\nThis Spoken Tutorial is brought to you by **EduPyramids** Educational Services Private Limited.\nIt is also brought to you by **SINE**, **IIT Bombay**.\nThank you for joining!",
+      "image_prompt": ""
+    }
+  ]
+}

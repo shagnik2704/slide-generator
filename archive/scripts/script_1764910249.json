@@ -1,0 +1,183 @@
+{
+  "presentation_title": "Understanding Tokens in LLMs",
+  "module": "AI Essentials",
+  "episode": "6. Understanding Tokens",
+  "learning_objectives": [
+    "The learner will be able to define tokens and explain their importance in LLM context management and cost efficiency."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Welcome to Tokens in LLMs.",
+    "What are Tokens?",
+    "How Tokenizers work.",
+    "Token Examples.",
+    "Why Tokens matter for Context Windows.",
+    "Tokens and API Cost.",
+    "Tokens and Chunking.",
+    "Summary.",
+    "Assignment.",
+    "Thank You."
+  ],
+  "meta_tags": [
+    "LLM",
+    "Tokens",
+    "Tokenization",
+    "Context Window",
+    "RAG",
+    "API cost",
+    "Chunking",
+    "AI"
+  ],
+  "prerequisites": "Basic understanding of LLMs and prompting.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [],
+      "narration": "Welcome to this Spoken Tutorial on\nUnderstanding **Tokens** in **LLMs**.",
+      "image_prompt": "Title slide: 'Understanding Tokens in LLMs' with a graphic representing AI and text processing.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [],
+      "narration": "In this tutorial, you will learn to\ndefine **tokens**.\nYou will also explain their importance.\nThis includes **LLM** context management and cost efficiency.",
+      "image_prompt": "Learning objectives slide with bullet points: Define tokens, explain importance in LLM context, explain cost efficiency.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Pre-requisites",
+      "content": [],
+      "narration": "To follow this tutorial, you should have\na basic understanding of **LLMs**.\nYou should also know about **prompting**.",
+      "image_prompt": "Prerequisites slide listing: Basic understanding of LLMs, basic understanding of prompting.",
+      "is_video_slide": false
+    },
+    {
+      "title": "What do LLMs Read?",
+      "content": [
+        "**LLMs** don't read \"words\" like humans.",
+        "They read **tokens**."
+      ],
+      "narration": "Have you ever wondered how **LLMs** understand text?\nIt is not like humans reading words.\nInstead, they process something called **tokens**.",
+      "image_prompt": "Illustration: An LLM brain icon with text flowing in, then breaking into smaller, distinct blocks labeled 'token'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Introducing the Tokenizer",
+      "content": [
+        "A **Tokenizer** is like a special dictionary.",
+        "It splits raw text into sub-word pieces.",
+        "The **LLM** understands these pieces."
+      ],
+      "narration": "So, what creates these **tokens**?\nA tool called a **Tokenizer** does this job.\nThink of it as a special dictionary.\nIt breaks down your text into smaller parts.\nThese are the pieces the **LLM** truly understands.",
+      "image_prompt": "Graphic: A machine or tool labeled 'Tokenizer' taking a long string of text as input and outputting smaller, distinct blocks (tokens).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Token Examples",
+      "content": [
+        "A simple word like \"**The**\" might be one **token**.",
+        "A complex word like \"**Tokenization**\" might be broken into three **tokens**.",
+        "For example: \"**Token**\", \"**iz**\", \"**ation**\"."
+      ],
+      "narration": "Let's see some examples.\nA common word like \"**The**\" is often one **token**.\nBut a longer word like \"**Tokenization**\" is different.\nIt might split into multiple **tokens**.\nLike \"**Token**\", then \"**iz**\", and then \"**ation**\".",
+      "image_prompt": "Split screen: Left shows 'The' as one block. Right shows 'Tokenization' breaking into three smaller blocks: 'Token', 'iz', 'ation'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why should you care?",
+      "content": [
+        "Understanding **tokens** is very important.",
+        "It impacts how you use **LLMs**.",
+        "It also affects their cost."
+      ],
+      "narration": "So, why is this important for you?\nWhy should you care about **tokens**?\nKnowing about them changes how you work with **LLMs**.\nIt also impacts how much you pay for them.",
+      "image_prompt": "Illustration: A person with a thought bubble showing 'tokens', 'cost', and 'context' icons, looking intrigued.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context Windows",
+      "content": [
+        "An **LLM**'s \"short-term memory\" is its **Context Window**.",
+        "This window is measured in a fixed number of **tokens**.",
+        "For example, 8,192 **tokens**."
+      ],
+      "narration": "First, let's talk about **Context Windows**.\nThink of this as the **LLM**'s short-term memory.\nIt can only \"remember\" a certain amount of information.\nThis limit is set by a fixed number of **tokens**.\nFor example, it might be 8,192 **tokens**.",
+      "image_prompt": "Graphic: A brain icon or a memory bar with a number '8,192 tokens' indicating a limit. Text 'Context Window' prominently displayed.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Context Window Limits",
+      "content": [
+        "This is a hard limit.",
+        "It defines how much \"context\" you can send.",
+        "This includes retrieved documents and your **prompt**."
+      ],
+      "narration": "This **Context Window** is a hard limit.\nIt restricts the total information you send.\nThis includes your **prompt** itself.\nIt also includes any documents you provide.\nAll of it must fit within the **token** limit.",
+      "image_prompt": "Illustration: A funnel with text blocks (representing documents and prompts) going in, and a fixed-size container at the bottom labeled 'Context Window (max tokens)'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "API Cost",
+      "content": [
+        "**API** providers charge per **token**.",
+        "More **tokens** mean higher costs."
+      ],
+      "narration": "Next, consider the cost.\nWhen you use **LLM** services, you pay per **token**.\nSo, if you use more **tokens**, your cost will be higher.\nIt's like paying for data usage on your phone.",
+      "image_prompt": "Graphic: A calculator or bill showing 'cost per token' with an upward arrow for more tokens leading to higher cost.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Efficient RAG and Cost Savings",
+      "content": [
+        "An efficient **RAG** system uses fewer **tokens**.",
+        "This makes it dramatically cheaper.",
+        "**GraphRAG** reduced **tokens** by 26% to 97%."
+      ],
+      "narration": "But you can be smart about it.\nAn efficient **RAG** system uses fewer **tokens**.\nThis means it becomes much cheaper to run.\nFor example, **GraphRAG** reduced **token** usage significantly.\nIt saved between 26% and 97% of **tokens**.",
+      "image_prompt": "Infographic: Two bar charts side-by-side. One 'Traditional' with high token count/cost. One 'Efficient RAG' with significantly lower token count/cost.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Chunking Documents",
+      "content": [
+        "We often \"**chunk**\" our documents.",
+        "This means breaking them into smaller parts.",
+        "Each part fits within the **Context Window**."
+      ],
+      "narration": "Finally, let's look at **Chunking**.\nWhen we process large documents, we often \"**chunk**\" them.\nThis means splitting them into smaller, manageable pieces.\nEach of these pieces must fit into the **LLM**'s **Context Window**.\nThis helps the **LLM** process information effectively.",
+      "image_prompt": "Graphic: A large document icon being broken down into several smaller, numbered document pieces, each fitting into a small box representing a context window.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "We learned that **LLMs** use **tokens**.",
+        "**Tokenizers** split text into these **tokens**.",
+        "**Tokens** impact **Context Windows** and **API** costs."
+      ],
+      "narration": "With this, we come to the end of this tutorial.\nLet's summarise.\nWe learned that **LLMs** process **tokens**, not words.\nA **Tokenizer** breaks text into these **tokens**.\nUnderstanding **tokens** is crucial for **LLM** performance.\nIt affects both **Context Windows** and **API** costs.",
+      "image_prompt": "Summary slide with key takeaways as bullet points: LLMs use tokens, Tokenizers split text, Tokens impact Context Windows & API costs.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Find an online **token** counter tool.",
+        "Paste a paragraph of text into it.",
+        "Observe how many **tokens** it generates.",
+        "Try different words and phrases.",
+        "See how they are split into **tokens**."
+      ],
+      "narration": "As an assignment, please do the following.\nFind an online **token** counter tool.\nPaste a paragraph of text into it.\nObserve the number of **tokens** generated.\nNow, try different words and phrases.\nSee how they are split into individual **tokens**.",
+      "image_prompt": "Assignment slide: A computer screen showing a text box for input and a counter displaying 'X tokens'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank you",
+      "content": [],
+      "narration": "This Spoken Tutorial is brought to you by\nEduPyramids Educational Services Private Limited, SINE, IIT Bombay.\nThank you for joining!",
+      "image_prompt": "Thank you slide with EduPyramids Educational Services Private Limited, SINE, IIT Bombay logo.",
+      "is_video_slide": false
+    }
+  ]
+}

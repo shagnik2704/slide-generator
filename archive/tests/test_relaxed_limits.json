@@ -1,0 +1,312 @@
+{
+  "presentation_title": "How to Use ChatGPT Effectively",
+  "module": "AI Tools for Productivity",
+  "episode": "1. How to Use ChatGPT Effectively",
+  "learning_objectives": [
+    "Formulate clear and concise prompts for ChatGPT.",
+    "Provide essential context to ChatGPT for relevant responses.",
+    "Apply constraints to guide ChatGPT's output format and style.",
+    "Refine ChatGPT interactions through iterative prompting.",
+    "Utilize follow-up questions to enhance generated content."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Welcome to the tutorial.",
+    "Learning Objectives.",
+    "System Requirements.",
+    "Prerequisites.",
+    "What is ChatGPT?",
+    "Why effective prompting matters.",
+    "The 3 C's of Effective Prompting: Clarity.",
+    "The 3 C's of Effective Prompting: Context.",
+    "The 3 C's of Effective Prompting: Constraints.",
+    "Applying Clarity: Example 1 (Vague Prompt).",
+    "Applying Clarity: Example 1 (Clear Prompt).",
+    "Applying Context: Example 2 (No Context).",
+    "Applying Context: Example 2 (With Context).",
+    "Applying Constraints: Example 3 (No Constraints).",
+    "Applying Constraints: Example 3 (With Constraints).",
+    "Iterative Prompting: Refining your requests.",
+    "Using Follow-up Questions.",
+    "Asking for Specific Formats.",
+    "Summary of key learnings.",
+    "Assignment: Practice your skills.",
+    "Thank you."
+  ],
+  "meta_tags": [
+    "ChatGPT",
+    "AI",
+    "Prompt Engineering",
+    "Productivity",
+    "Large Language Model",
+    "LLM",
+    "Effective Prompting",
+    "AI Tools"
+  ],
+  "prerequisites": "You should have a basic understanding of what AI is. You should also have access to ChatGPT or a similar LLM.",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "content": [
+        "How to Use ChatGPT Effectively"
+      ],
+      "narration": "Welcome to this Spoken Tutorial on How to Use ChatGPT Effectively.",
+      "image_prompt": "Title Slide with 'How to Use ChatGPT Effectively' and FOSSEE/IIT Bombay logos.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Formulate clear and concise prompts for ChatGPT.",
+        "Provide essential context to ChatGPT for relevant responses.",
+        "Apply constraints to guide ChatGPT's output format and style.",
+        "Refine ChatGPT interactions through iterative prompting.",
+        "Utilize follow-up questions to enhance generated content."
+      ],
+      "narration": "In this tutorial, you will learn to formulate, provide, apply, refine, and utilize effective prompts.",
+      "image_prompt": "Learning Objectives Slide with bullet points listing the objectives.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "Browser on a computer or mobile device.",
+        "Internet connection."
+      ],
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide showing a laptop and a mobile phone with a browser icon.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of AI.",
+        "Access to ChatGPT or similar LLM."
+      ],
+      "narration": "To follow this tutorial, you must know what AI is.\nYou should also have access to ChatGPT.\nNo coding needed.",
+      "image_prompt": "Prerequisites Slide with icons for AI brain and ChatGPT logo.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Prerequisites Slide"
+    },
+    {
+      "title": "What is ChatGPT?",
+      "content": [
+        "An AI chatbot.",
+        "Understands natural language questions.",
+        "Generates human-like text responses."
+      ],
+      "narration": "Let's start with ChatGPT.\nIt's an AI chatbot.\nIt understands your questions.\nThen it generates human-like text responses.",
+      "image_prompt": "Animated graphic of a person typing into a chat interface, text bubbles appearing as AI response.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Why Effective Prompting Matters",
+      "content": [
+        "Good prompts yield great answers.",
+        "Weak prompts lead to vague outputs.",
+        "Clear communication is essential."
+      ],
+      "narration": "But why use it effectively?\nA good prompt gets a great answer.\nA weak prompt gets a vague answer.\nThink about it.\nClear communication is key.",
+      "image_prompt": "Side-by-side comparison. Left: person looking confused at a generic AI response. Right: person smiling at a helpful AI response.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Comparison Slide"
+    },
+    {
+      "title": "The 3 C's: Clarity",
+      "content": [
+        "Be precise in your request.",
+        "Avoid ambiguity.",
+        "State your intent clearly."
+      ],
+      "narration": "How do we get great answers?\nWe follow the 3 C's of prompting.\nFirst, Clarity.\nBe precise in your request.\nAvoid ambiguity.",
+      "image_prompt": "Text overlay: '1. Clarity: Be precise.' Icon: magnifying glass focusing on text.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "The 3 C's: Context",
+      "content": [
+        "Provide background information.",
+        "Tell ChatGPT what it needs to know.",
+        "Helps the AI understand your goal."
+      ],
+      "narration": "The second C is Context.\nGive background information.\nTell ChatGPT what it needs to know.\nThis helps it understand your goal.",
+      "image_prompt": "Text overlay: '2. Context: Provide background.' Icon: open book with information flowing out.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "The 3 C's: Constraints",
+      "content": [
+        "Set limits for the answer.",
+        "Specify format, length, or tone.",
+        "Guides the AI's output effectively."
+      ],
+      "narration": "Finally, Constraints.\nSet limits for the answer.\nSpecify format, length, or tone.\nThis guides the AI's output.",
+      "image_prompt": "Text overlay: '3. Constraints: Set limits.' Icon: ruler and pencil setting boundaries.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Applying Clarity: Example 1 (Vague Prompt)",
+      "content": [
+        "Prompt: \"Tell me about AI.\"",
+        "Result: Generic, broad information."
+      ],
+      "narration": "Let's apply Clarity.\nOpen ChatGPT.\nType: \"Tell me about AI.\"\nSubmit this vague prompt.\nSee the generic response.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types 'Tell me about AI' into ChatGPT, a broad and generic response appears. Highlight the vagueness of the prompt.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Applying Clarity: Example 1 (Clear Prompt)",
+      "content": [
+        "Prompt: \"Explain the basics of Artificial Intelligence for a 10-year-old.\"",
+        "Result: Focused, easy-to-understand explanation."
+      ],
+      "narration": "Now, let's improve it.\nType: \"Explain the basics of Artificial Intelligence for a 10-year-old.\"\nThis prompt is clear.\nIt specifies the audience.\nNotice the focused answer.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types 'Explain the basics of Artificial Intelligence for a 10-year-old' into ChatGPT, a clear, simple, and age-appropriate response appears. Highlight the clarity and target audience in the prompt.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Applying Context: Example 2 (No Context)",
+      "content": [
+        "Prompt: \"Write an email.\"",
+        "Result: Too broad, lacks purpose."
+      ],
+      "narration": "Next, let's add Context.\nType: \"Write an email.\"\nThis is too broad.\nThe AI won't know the purpose.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types 'Write an email' into ChatGPT, a generic email template or a prompt for more information appears. Highlight the lack of context.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Applying Context: Example 2 (With Context)",
+      "content": [
+        "Prompt: \"Write a polite email to my professor. I need to request an extension for my AI project. My reason is a family emergency.\"",
+        "Result: Relevant, specific email."
+      ],
+      "narration": "Let's give it context.\nType: \"Write a polite email to my professor.\nI need to request an extension for my AI project.\nMy reason is a family emergency.\"\nThe AI now understands the situation.\nIt generates a relevant email.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types the detailed email prompt into ChatGPT, a polite, specific email requesting an extension with the given reason appears. Highlight the context provided in the prompt.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Applying Constraints: Example 3 (No Constraints)",
+      "content": [
+        "Prompt: \"Give me ideas for a healthy dinner.\"",
+        "Result: Long, general list, may not fit needs."
+      ],
+      "narration": "Finally, let's use Constraints.\nType: \"Give me ideas for a healthy dinner.\"\nThe response might be long.\nIt may not fit your needs.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types 'Give me ideas for a healthy dinner' into ChatGPT, a long list of general healthy dinner ideas appears. Highlight the unconstrained nature of the output.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Applying Constraints: Example 3 (With Constraints)",
+      "content": [
+        "Prompt: \"List 5 healthy dinner ideas. They must be vegetarian. Each idea should be under 30 minutes to prepare.\"",
+        "Result: Concise, useful, and filtered list."
+      ],
+      "narration": "Let's add constraints.\nType: \"List 5 healthy dinner ideas.\nThey must be vegetarian.\nEach idea should be under 30 minutes to prepare.\"\nThis prompt sets limits.\nYou get a concise, useful list.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user types the constrained dinner prompt into ChatGPT, a short, specific list of 5 vegetarian dinner ideas, each under 30 minutes, appears. Highlight the constraints applied.",
+      "is_video_slide": true,
+      "layout": "Content Slide - Example"
+    },
+    {
+      "title": "Iterative Prompting",
+      "content": [
+        "Refine your original prompt.",
+        "Ask follow-up questions.",
+        "Adjust until satisfied."
+      ],
+      "narration": "What if the first answer isn't perfect?\nUse Iterative Prompting.\nRefine your original prompt.\nOr ask follow-up questions.\nDon't be afraid to adjust.",
+      "image_prompt": "Flowchart showing: Initial Prompt -> AI Response -> Review -> (If not satisfied) Refine Prompt / Follow-up Question -> AI Response.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Using Follow-up Questions",
+      "content": [
+        "\"Can you make it shorter?\"",
+        "\"Rephrase that in a more formal tone.\"",
+        "Guides the AI to refine its output."
+      ],
+      "narration": "Let's try follow-up questions.\nAfter getting a response, ask: \"Can you make it shorter?\"\nOr: \"Rephrase that in a more formal tone.\"\nThis guides the AI further.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user gets an AI response, then types a follow-up question like 'Make it more concise.' Show the AI refining its previous answer based on the follow-up.",
+      "is_video_slide": true,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Asking for Specific Formats",
+      "content": [
+        "Request lists, tables, or bullet points.",
+        "Example: \"Present this as a table.\"",
+        "Organizes the output clearly."
+      ],
+      "narration": "You can also request specific formats.\nAsk for a list, a table, or bullet points.\nFor example: \"Present this as a table.\"\nOr: \"Give me a bulleted summary.\"\nThis organizes the output.",
+      "image_prompt": "",
+      "video_prompt": "Screen recording: user asks for 'Present this as a table' on a previous AI response. The AI converts the text into a structured table format.",
+      "is_video_slide": true,
+      "layout": "Content Slide"
+    },
+    {
+      "title": "Summary",
+      "content": [
+        "Used Clarity, Context, and Constraints.",
+        "Explored iterative prompting.",
+        "Practiced specific format requests."
+      ],
+      "narration": "In summary, we learned to use ChatGPT effectively.\nWe focused on Clarity, Context, and Constraints.\nWe also explored iterative prompting.\nAnd using specific formats.",
+      "image_prompt": "Summary slide with icons for Clarity (magnifying glass), Context (open book), Constraints (ruler), and Iteration (refresh arrow).",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "Open ChatGPT.",
+        "Write a prompt for a recipe using 3 C's.",
+        "Refine with a follow-up question."
+      ],
+      "narration": "Now, for your assignment.\nOpen ChatGPT.\nWrite a prompt asking for a recipe.\nUse Clarity, Context, and Constraints.\nFor example, \"Give me a healthy dinner recipe for 4 people,\nusing chicken and vegetables,\nready in under 45 minutes,\npresented as a step-by-step list.\"\nRefine it with a follow-up question.",
+      "image_prompt": "Assignment slide with an example prompt for a recipe and a ChatGPT icon.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "content": [
+        "FOSSEE Project, IIT Bombay"
+      ],
+      "narration": "Thank you for watching this Spoken Tutorial.\nIt was brought to you by the FOSSEE project.\nFOSSEE is part of IIT Bombay.\nVisit our website for more information.",
+      "image_prompt": "Thank You slide with FOSSEE and IIT Bombay logos.",
+      "video_prompt": "",
+      "is_video_slide": false,
+      "layout": "Thank You Slide"
+    }
+  ]
+}

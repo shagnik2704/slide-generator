@@ -1,0 +1,90 @@
+{
+  "presentation_title": "The Rise of New Job Roles with AI",
+  "module": "AI and Future Careers",
+  "episode": "New Opportunities with AI",
+  "learning_objectives": [
+    "Understand how AI is creating new job roles.",
+    "Identify the responsibilities of a Prompt Engineer, AI Auditor, and AI Content Manager.",
+    "Appreciate the human element in AI-driven professions."
+  ],
+  "duration": "2-3 minutes",
+  "outline": [
+    "Introduction to AI and job creation.",
+    "Understanding the role of a Prompt Engineer.",
+    "Exploring the responsibilities of an AI Auditor.",
+    "Learning about the AI Content Manager role.",
+    "Summary of new AI jobs."
+  ],
+  "meta_tags": [
+    "AI jobs",
+    "future careers",
+    "prompt engineering",
+    "AI auditing",
+    "AI content management",
+    "EduPyramids",
+    "IIT Bombay"
+  ],
+  "prerequisites": "Basic understanding of what AI is and how it functions.",
+  "slides": [
+    {
+      "title": "Slide 1: Title Slide: The Rise of New Job Roles with AI",
+      "narration": "Welcome to this Spoken Tutorial on The Rise of New Job Roles with **AI**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 2: Learning Objectives",
+      "narration": "In this tutorial, you will understand how **AI** is creating new job roles.\nYou will learn about this.\nYou will identify the responsibilities of a **Prompt Engineer**.\nYou will also learn about the roles of an **AI Auditor**.\nAdditionally, you will learn about an **AI Content Manager**.\nYou will also appreciate the human element in **AI**-driven professions.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 3: System Requirements",
+      "narration": "Here, I am using a browser on a computer or mobile.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 4: Prerequisites",
+      "narration": "To follow this tutorial, you must be connected to the internet.\nYou should also have a basic understanding of what **AI** is and how it functions.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 5: AI isn't just changing jobs, it's creating them.",
+      "narration": "**AI** is not just about changing old jobs or automating tasks.\nIt is also creating entirely new and exciting job roles.\nThese roles combine human creativity and critical thinking.\nThey also leverage **AI**'s capabilities.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 6: Prompt Engineer",
+      "narration": "Let's look at the first new role: The **Prompt Engineer**.\nThis expert specializes in crafting the perfect instructions, or **prompts**.\nTheir goal is to get the most accurate and high-quality results from **AI** models.\nThink of it like giving directions to a friend who doesn't know the city.\nIf your directions are vague, your friend might get lost.\nHowever, if your directions are clear and specific, then they will reach their destination easily.\nSimilarly, a **Prompt Engineer** ensures the **AI** understands.\nThey make sure it knows exactly what is needed.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 7: AI Auditor",
+      "narration": "Moving on to the **AI Auditor**.\nThis professional tests and reviews **AI** systems.\nThey check for bias, ethical issues, and safety risks.\nThey ensure that **AI** systems are fair and responsible.\nThis happens before the systems are released to the public.\nImagine a quality control inspector checking products in a factory.\nAn **AI Auditor** does the same for **AI** systems.\nThey ensure the systems meet ethical and safety standards.\nWhat do you think would happen if an **AI** system with bias was used widely?\nTake a moment to consider this.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 8: AI Content Manager",
+      "narration": "Finally, we have the **AI Content Manager**.\nThis person oversees the use of **AI** in content creation.\nThey ensure that **AI**-generated first drafts are fact-checked.\nThese drafts are then edited and refined.\nThis process ensures the content meets quality standards.\nFor example, an **AI** might write an initial news report.\nThe **AI Content Manager** then reviews it and adds human insights.\nThey also ensure accuracy and tone.\nIt's like a news editor who refines raw information into a polished story.\nAs you can see, human oversight remains crucial even with **AI** assistance.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 9: Summary",
+      "narration": "Let's summarize.\nIn this tutorial, we learned several key points.\nFirst, **AI** is creating new job roles.\nNext, the **Prompt Engineer** crafts effective **prompts**.\nThen, the **AI Auditor** checks **AI** for ethics and safety.\nFinally, the **AI Content Manager** refines **AI**-generated content.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 10: Assignment",
+      "narration": "Now, let's do a small activity.\nImagine you are an **AI Content Manager** for a travel blog.\nAn **AI** has generated a draft article about 'Top 5 beaches in Goa'.\nWhat three things would you specifically check and refine in the **AI**'s draft?\nThis is to ensure both quality and accuracy.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 11: EduPyramids logo",
+      "narration": "This brings us to the end of this tutorial.\nThis Spoken Tutorial is brought to you by **EduPyramids** Educational Services.\nIt is a Private Limited company.\nIt is also brought to you by **SINE**, **IIT Bombay**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 12: Closing slide",
+      "narration": "Thank you for joining!",
+      "image_prompt": ""
+    }
+  ]
+}

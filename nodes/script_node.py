@@ -112,10 +112,17 @@ Title Slide MUST be exactly:
    "Welcome to this Spoken Tutorial on ..."
    (Just one sentence, nothing more)
 
-Learning Objectives Slide MUST be simple:
-   "In this tutorial, you will learn to ...."
-   Example: "In this tutorial, you will learn to define, explain, compare, and apply the 3 Cs of prompting."
-   (Just one sentence with action verbs, NOT detailed explanations)
+Learning Objectives Slide MUST use this bulleted format:
+   "In this tutorial, you will learn,
+      • Why prompting matters, and
+      • How clear instructions improve AI's outcomes."
+   
+   Rules:
+   - Start with "In this tutorial, you will learn,"
+   - Use bullet points (•) for each objective
+   - Add "and" after the second-to-last item
+   - End the last item with a period
+   - Keep each bullet SHORT (under 80 chars)
 
 System Requirements Slide:
     Keep it simple, whatever you think is required for the tutorial.
@@ -199,12 +206,16 @@ NOT passive descriptions:
 - ❌ "The AI might show different results."
 - ✅ "Notice how the AI shows different results."
 
-=== SENTENCE CRISPNESS ===
+=== SENTENCE LENGTH - HARD LIMIT (CRITICAL) ===
+EVERY sentence MUST be ≤ 80 characters. NO EXCEPTIONS.
+If a sentence is too long, SPLIT it into multiple shorter sentences.
+This applies to ALL slides including boilerplate slides.
+
 Write SHORT, PUNCHY sentences (5-10 words ideal):
-- ✅ "A weak prompt gets a weak answer."
-- ✅ "The AI can't read your mind."
-- ✅ "See the difference?"
-- ❌ "When you explain your thoughts clearly, the AI gives better results."
+- ✅ "A weak prompt gets a weak answer." (36 chars)
+- ✅ "The AI can't read your mind." (28 chars)
+- ✅ "See the difference?" (18 chars)
+- ❌ "When you explain your thoughts clearly, the AI gives better results." (69 chars - too long!)
 
 === WRITING STYLE ===
 - Simple Indian English (easy to translate)

@@ -1,0 +1,97 @@
+{
+  "presentation_title": "Persona Prompting: Crafting AI Responses",
+  "module": "Advanced Prompt Engineering",
+  "episode": "Persona Prompting",
+  "learning_objectives": [
+    "Learn to define persona prompting.",
+    "Understand how personas influence AI responses.",
+    "Identify practical persona examples.",
+    "Apply persona prompting effectively."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What is Persona Prompting?",
+    "How Personas Influence Responses",
+    "Example: Act as a Poet",
+    "Example: Act as a History Professor",
+    "Why is Persona Prompting Useful?",
+    "When to Apply Persona Prompting"
+  ],
+  "meta_tags": [
+    "AI",
+    "Prompt Engineering",
+    "Persona Prompting",
+    "ChatGPT",
+    "Gemini",
+    "Large Language Models",
+    "LLM"
+  ],
+  "prerequisites": "Basic understanding of AI prompts and interacting with AI tools.",
+  "slides": [
+    {
+      "title": "Persona Prompting: Crafting AI Responses",
+      "narration": "Welcome to this Spoken Tutorial on Persona Prompting.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to define **persona** **prompting**, understand how **personas** influence **AI** responses, identify practical **persona** examples, and apply **persona** **prompting** effectively.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a computer with internet access.\nAccess to any **AI** chatbot like **ChatGPT** or **Gemini** is also required.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "Basic understanding of what a **prompt** is will be helpful.\nFamiliarity with giving instructions to **AI** tools is also beneficial.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is Persona Prompting?",
+      "narration": "Have you ever wished your **AI** could speak like an expert?\n**Persona** **prompting** assigns a role to the **AI**.\nIt tells the **AI** to 'Act as...' a specific character.\nThis changes how the **AI** thinks and responds.",
+      "image_prompt": "AI chatbot wearing different hats representing roles"
+    },
+    {
+      "title": "How Personas Influence Responses",
+      "narration": "Think of it like an actor playing a role.\nThe actor changes their voice, manner, and knowledge.\nSimilarly, the **AI** adjusts its tone and expertise.\nNext, let's see how this shapes the output.",
+      "image_prompt": "AI chatbot changing its appearance based on a role"
+    },
+    {
+      "title": "Example: Act as a Poet",
+      "narration": "Open your **AI** tool now.\nType: 'Act as a poet. Write a short poem about rain.'\n**Click** **Submit**.\nNotice the creative language and imagery.\nHow is this different from a normal response?",
+      "image_prompt": "Screenshot of an AI prompt: 'Act as a poet. Write a short poem about rain.'"
+    },
+    {
+      "title": "Example: Act as a History Professor",
+      "narration": "Now, try this **prompt**: 'Act as a history professor. Explain the causes of World War 1.'\nObserve the formal tone and detailed explanation.\nThis shows the **AI** adopting a knowledgeable **persona**.\nYou can use this for any expert field.",
+      "image_prompt": "Screenshot of an AI prompt: 'Act as a history professor. Explain the causes of World War 1.'"
+    },
+    {
+      "title": "Why is Persona Prompting Useful?",
+      "narration": "Why bother with assigning roles?\n**Personas** provide context and focus.\nThey help the **AI** give more relevant and accurate answers.\nThis makes your **AI** interactions much more effective.",
+      "image_prompt": "Person thinking about different AI responses, one generic, one specific."
+    },
+    {
+      "title": "When to Apply Persona Prompting",
+      "narration": "Use **personas** when you need specific expertise.\nApply them for different writing styles.\nThey are great for creative tasks or problem-solving.\nNow, let's summarize what we have learned.",
+      "image_prompt": "Flowchart showing use cases for persona prompting"
+    },
+    {
+      "title": "Summary",
+      "narration": "In this tutorial, we learned about **persona** **prompting**.\nWe saw how assigning roles changes **AI** responses.\nWe also explored examples of practical **personas**.\nFinally, we understood when to use this technique.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Experiment with your **AI** tool.\nAsk it to 'Act as a travel agent.'\nThen ask: 'Plan a 3-day trip to Goa.'\nCompare this with a normal **prompt** without a **persona**.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids** Educational Services Private Limited, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

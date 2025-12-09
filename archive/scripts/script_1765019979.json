@@ -1,0 +1,141 @@
+{
+  "presentation_title": "Understanding the 3Cs of Prompting",
+  "module": "Introduction to AI Prompting",
+  "episode": "The 3Cs of Prompting",
+  "learning_objectives": [
+    "By the end of this tutorial, you will be able to apply the 3Cs - Clarity, Conciseness, and Context - to write effective prompts for AI tools."
+  ],
+  "duration": "7-9 minutes",
+  "outline": [
+    "Welcome to the 3Cs of Prompting Tutorial",
+    "Learning Objective",
+    "System Requirements",
+    "Prerequisites",
+    "What are the 3Cs of Prompting?",
+    "C1: Clarity - Explanation",
+    "Clarity Example: Bad Prompt",
+    "Clarity Example: Good Prompt",
+    "C2: Conciseness - Explanation",
+    "Conciseness Example: Bad Prompt",
+    "Conciseness Example: Good Prompt",
+    "C3: Context - Explanation",
+    "Context Example: Bad Prompt",
+    "Context Example: Good Prompt",
+    "Summary of 3Cs",
+    "Assignment",
+    "Thank You"
+  ],
+  "meta_tags": [
+    "prompting",
+    "AI",
+    "ChatGPT",
+    "effective prompts",
+    "3Cs",
+    "AI tools"
+  ],
+  "prerequisites": "This tutorial assumes you have a basic understanding of using a web browser and accessing online tools. No prior knowledge of AI prompting is required.",
+  "slides": [
+    {
+      "title": "Welcome to the 3Cs of Prompting Tutorial",
+      "content": [],
+      "narration": "Hello.\nWelcome to this Spoken Tutorial on the 3 Cs of Prompting.\nHere, we will learn to write good prompts for **AI** tools.\nThis will help you get correct and useful answers.",
+      "image_prompt": "Welcome screen for a tutorial on 'The 3Cs of Prompting', featuring a friendly AI assistant character and three distinct icons representing Clarity, Conciseness, and Context."
+    },
+    {
+      "title": "Learning Objective",
+      "content": [],
+      "narration": "After this tutorial, you will know how to use the 3 Cs.\nThese are Clarity, Conciseness, and Context.\nYou can use them to write good prompts for **AI** tools like **ChatGPT**.",
+      "image_prompt": "A modern graphic displaying 'Learning Objective' with bullet points: 'Apply 3Cs', 'Write Effective Prompts', 'Understand AI Tools'. Stylized icons for each point."
+    },
+    {
+      "title": "System Requirements",
+      "content": [],
+      "narration": "To follow this tutorial, you need a computer.\nIt should have an internet connection.\nPlease use a web browser like **Chrome** or **Firefox**.\nWe will use **ChatGPT** for examples, so open chatgpt.com.",
+      "image_prompt": "Illustration of a desktop computer with a web browser open to chatgpt.com. Icons for Chrome and Firefox are visible, representing system requirements."
+    },
+    {
+      "title": "Prerequisites",
+      "content": [],
+      "narration": "You should know how to use a web browser.\nYou should also know how to open online tools.\nYou do not need to know anything about **AI** prompting before this tutorial.",
+      "image_prompt": "A simple graphic showing a user effortlessly navigating a web browser, implying basic computer literacy. A thought bubble says 'No AI prompting knowledge needed!'"
+    },
+    {
+      "title": "What are the 3Cs of Prompting?",
+      "content": [],
+      "narration": "The 3 Cs of Prompting are Clarity, Conciseness, and Context.\nThese three ideas help us write **prompts**.\nGood **prompts** give the best answers from **AI**.\nLet us learn about each one.",
+      "image_prompt": "A visual representation of the '3Cs of Prompting' (Clarity, Conciseness, Context) as three interconnected pillars or gears, leading to an output from an AI model."
+    },
+    {
+      "title": "C1: Clarity",
+      "content": [],
+      "narration": "Clarity means your **prompt** should be easy to understand.\nDo not use unclear words or difficult terms.\nTell the **AI** exactly what you want it to do.\nAlso, tell what kind of answer you expect.",
+      "image_prompt": "An illustration of a clear, sparkling magnifying glass focusing on a piece of text that says 'Clear Prompt'. Background is blurred jargon."
+    },
+    {
+      "title": "Clarity Example: Bad Prompt",
+      "content": [],
+      "narration": "Let us see an example for Clarity.\nHere is a bad **prompt**: 'Tell me about India.'\nThis is too general.\nThe **AI** will give a very broad or not useful answer.",
+      "image_prompt": "A thought bubble from an AI showing a very vague, scattered, and overwhelming array of images related to 'India' (e.g., map, food, culture, history, economy all jumbled together), illustrating a broad and unhelpful response."
+    },
+    {
+      "title": "Clarity Example: Good Prompt",
+      "content": [],
+      "narration": "Now, see a good **prompt**: 'Summarize the main economic challenges facing India in 2023.'\nThis is very clear.\nIt asks for specific information.\nYou will get a focused answer.",
+      "image_prompt": "A thought bubble from an AI showing a focused and organized summary about 'Economic Challenges in India 2023', with clear headings and concise points. The AI looks pleased."
+    },
+    {
+      "title": "C2: Conciseness",
+      "content": [],
+      "narration": "Conciseness means using few words to give your message.\nRemove words that are not needed.\nGo straight to the main point.\nThis helps the **AI** understand without confusion.",
+      "image_prompt": "An image of a pair of scissors trimming a long, winding piece of text into a short, straight, and impactful phrase, symbolizing conciseness."
+    },
+    {
+      "title": "Conciseness Example: Bad Prompt",
+      "content": [],
+      "narration": "Here is a **prompt** that is not concise.\nIt is: 'Generate a long story about a knight, a quest, a princess, and a dragon.'\nThis **prompt** has many extra words.\nThe **AI** may get confused.",
+      "image_prompt": "A visually cluttered AI screen showing a very long, convoluted prompt. The AI character looks confused, scratching its head amidst too many words."
+    },
+    {
+      "title": "Conciseness Example: Good Prompt",
+      "content": [],
+      "narration": "A concise **prompt** is: 'Write about a knight saving a princess from a dragon.'\nIt gives the same message.\nIt uses fewer words.\nThe **AI** can process it easily.",
+      "image_prompt": "A clean AI interface showing a short, impactful prompt. The AI character looks focused and ready to respond efficiently."
+    },
+    {
+      "title": "C3: Context",
+      "content": [],
+      "narration": "Context means giving background information to the **AI**.\nThis helps the **AI** understand the situation well.\nIt gives a more correct answer.\nTell the **AI** its role, how the answer should look, or who it is for.",
+      "image_prompt": "An illustration of an AI model being given a pair of glasses or a headset labeled 'Context', allowing it to see and understand a scene more clearly, moving from a blurry image to a sharp one."
+    },
+    {
+      "title": "Context Example: Bad Prompt",
+      "content": [],
+      "narration": "See this **prompt** without context: 'Give five tips for learning a language.'\nThe **AI** does not know who needs the tips.\nIt also does not know what kind of tips are needed.\nThe answer may be too general.",
+      "image_prompt": "An AI character shrugging, holding a generic list of '5 Tips for Learning a Language' that could apply to anyone. It looks unsure about the target audience or specific needs."
+    },
+    {
+      "title": "Context Example: Good Prompt",
+      "content": [],
+      "narration": "With context, the **prompt** is: 'As tutor, give five tips for Spanish beginners.'\nNow, the **AI** knows its role.\nIt also knows who the tips are for.\nThis gives better advice.",
+      "image_prompt": "An AI character wearing a 'language tutor' badge, confidently presenting a tailored list of '5 Practical Tips for Beginner Spanish Learners'. It looks knowledgeable and helpful."
+    },
+    {
+      "title": "Summary of 3Cs",
+      "content": [],
+      "narration": "In this tutorial, we learned about the **3 Cs of Prompting**.\nThey are Clarity, Conciseness, and Context.\nWe saw how these ideas help us write good **prompts** for **AI** tools.\nRemember to make your **prompts** clear, short, and give enough background.",
+      "image_prompt": "A summary infographic showing Clarity, Conciseness, and Context in a clean, professional design, with small icons and keywords for each 'C', leading to a larger icon representing 'Effective AI Prompts'."
+    },
+    {
+      "title": "Assignment",
+      "content": [],
+      "narration": "Here is your assignment.\nGo to chatgpt.com.\nTry to write three different **prompts** for a short story.\nFor each **prompt**, use Clarity, Conciseness, and Context.\nSee how the **AI**'s answer changes when your **prompts** are better.",
+      "image_prompt": "A notepad with 'Assignment' written at the top, showing three blank lines for 'Prompt 1', 'Prompt 2', 'Prompt 3'. A pencil and an AI assistant encouraging the user."
+    },
+    {
+      "title": "Thank You",
+      "content": [],
+      "narration": "This Spoken Tutorial is from **EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining us!",
+      "image_prompt": "A 'Thank You' slide with logos of EduPyramids Educational Services Private Limited, SINE, and IIT Bombay prominently displayed, against a professional background."
+    }
+  ]
+}

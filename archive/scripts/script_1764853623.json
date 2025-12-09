@@ -1,0 +1,333 @@
+{
+  "presentation_title": "The Anatomy of a Good Prompt (The 3 C's)",
+  "module": "Prompt Engineering Basics",
+  "episode": "2.1: The Anatomy of a Good Prompt (The 3 C's)",
+  "learning_objectives": [
+    "Identify the three key ingredients of an effective prompt: Clarity, Context, and Constraints.",
+    "Apply Clarity, Context, and Constraints to transform weak prompts into strong ones.",
+    "Evaluate prompts to improve their effectiveness using the 3 C's framework."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Introduction to Good Prompts",
+    "Clarity: Being Specific",
+    "Context: Giving Background",
+    "Constraints: Setting Rules",
+    "Bonus Tip: Providing a Persona",
+    "Summary and Assignment"
+  ],
+  "meta_tags": [
+    "Prompt Engineering",
+    "AI",
+    "ChatGPT",
+    "Good Prompts",
+    "Clarity",
+    "Context",
+    "Constraints",
+    "AI interaction"
+  ],
+  "prerequisites": "Basic understanding of how to interact with AI models or chatbots.",
+  "slides": [
+    {
+      "title": "Welcome to The Anatomy of a Good Prompt",
+      "content": [
+        "Hello everyone!",
+        "Today, we explore creating effective AI prompts.",
+        "Learn the 3 C's: Clarity, Context, and Constraints."
+      ],
+      "narration": "Hello everyone, and welcome to this Spoken Tutorial.\nToday, we will learn how to write effective prompts for AI models.\nWe will focus on the three key ingredients: Clarity, Context, and Constraints.",
+      "image_prompt": "Cartoon illustration of a person warmly greeting viewers, with a whiteboard in the background showing 'Prompt Engineering'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Learning Objectives",
+      "content": [
+        "Identify the 3 C's: Clarity, Context, Constraints.",
+        "Apply these C's to improve your prompts.",
+        "Evaluate prompts for better AI interactions."
+      ],
+      "narration": "At the end of this tutorial, you will identify Clarity, Context, and Constraints.\nThis applies to prompts.\nYou will also learn to apply these principles to enhance your prompts.\nFinally, you can evaluate prompts.\nThis leads to more effective AI interactions.",
+      "image_prompt": "Three distinct icons representing 'Clarity' (a lightbulb), 'Context' (a speech bubble with background info), and 'Constraints' (a ruler or boundary line).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prerequisites",
+      "content": [
+        "Basic understanding of AI tools.",
+        "Familiarity with asking questions to chatbots."
+      ],
+      "narration": "To get the most from this tutorial, understand how AI tools work.\nFamiliarity with asking questions to chatbots is also helpful.\nThis will make learning about prompt writing easier for you.",
+      "image_prompt": "Cartoon illustration of a person sitting at a computer, typing into a chat interface with a simple AI bot icon.",
+      "is_video_slide": false
+    },
+    {
+      "title": "System Requirements",
+      "content": [
+        "A computer or smartphone.",
+        "Internet connection.",
+        "Access to any AI chatbot (e.g., ChatGPT, Bard)."
+      ],
+      "narration": "For this tutorial, you need a computer or a smartphone.\nAn internet connection is also required.\nAccess to an AI chatbot, like ChatGPT or Bard, is needed.\nThis will let you practice what you learn.",
+      "image_prompt": "Cartoon illustration of a laptop, smartphone, and Wi-Fi symbol, with a generic AI chatbot logo.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Weak Prompts Get Weak Answers",
+      "content": [
+        "Have you ever asked an AI a question?",
+        "Did the answer feel vague or unhelpful?",
+        "A weak prompt often leads to a weak answer."
+      ],
+      "narration": "Have you asked an AI a question?\nDid you get a vague or unhelpful answer?\nThis often happens when our prompts are not clear enough.\nA weak prompt will almost always give you a weak answer.",
+      "image_prompt": "Cartoon of a person scratching their head, looking confused at a computer screen showing generic text. A question mark thought bubble above their head.",
+      "is_video_slide": false
+    },
+    {
+      "title": "The 3 C's of a Good Prompt",
+      "content": [
+        "Good prompts have three key ingredients:",
+        "1. Clarity: Be specific.",
+        "2. Context: Give background.",
+        "3. Constraints: Set rules."
+      ],
+      "narration": "The best prompts, however, almost always include three key ingredients.\nWe call these the 3 C's: Clarity, Context, and Constraints.\nLet's explore each of these in detail.",
+      "image_prompt": "A graphic showing three interconnected circles, each labeled with one of the '3 C's': Clarity, Context, Constraints. A central 'Good Prompt' icon.",
+      "is_video_slide": false
+    },
+    {
+      "title": "1. Clarity: Be Specific!",
+      "content": [
+        "First, let's talk about Clarity.",
+        "Being specific helps the AI understand your needs.",
+        "Vague prompts give generic, unhelpful answers."
+      ],
+      "narration": "Let's start with Clarity.\nClarity means being specific in your request.\nThe AI cannot read your mind.\nVague prompts lead to generic and unhelpful answers.",
+      "image_prompt": "Cartoon illustration of a person holding a magnifying glass, looking closely at a clear, bright lightbulb.",
+      "is_video_slide": false
+    },
+    {
+      "title": "AI Can't Read Your Mind",
+      "content": [
+        "Imagine talking to a new friend.",
+        "If you are vague, they won't understand.",
+        "The AI is similar; it needs clear instructions."
+      ],
+      "narration": "Think about it like this:\nIf you ask a new friend a vague question, they might not understand.\nThe AI is similar.\nIt needs clear, precise instructions to give you the best response.",
+      "image_prompt": "Cartoon of two friends talking, one looking confused with a question mark, the other pointing clearly at something. Speech bubbles show clear vs. vague communication.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Weak Prompt Example",
+      "content": [
+        "Let's see a weak prompt:",
+        "\"Write about electric cars.\"",
+        "What do you think the AI will write?"
+      ],
+      "narration": "Let's look at a weak prompt example.\nIf you simply type, 'Write about electric cars,' what kind of output do you expect?\nIt's very broad, isn't it?",
+      "image_prompt": "A cartoon person typing 'Write about electric cars.' into a chatbot interface. The chatbot's reply area shows a generic, long block of text.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Reflection: What's Missing?",
+      "content": [
+        "Pause and think.",
+        "What information is missing here?",
+        "What should the AI focus on?"
+      ],
+      "narration": "Pause and think about this prompt.\nWhat information is missing?\nWhat specific aspect of electric cars should the AI focus on?\nThis vagueness makes it hard for the AI to give you a useful answer.",
+      "image_prompt": "Cartoon of a person with a thought bubble showing '?' and '...' over their head, looking contemplatively at a screen.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Improving with Clarity",
+      "content": [
+        "Now, let's make it clear.",
+        "Add specific details to your request.",
+        "Tell the AI exactly what you need."
+      ],
+      "narration": "Now, let's improve this prompt by adding clarity.\nYou need to tell the AI exactly what you need.\nAlso, state what details it should include.\nThis makes your request precise.",
+      "image_prompt": "Close-up cartoon of hands typing on a keyboard, with a screen showing a new, more detailed prompt being written.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Clear Prompt Example",
+      "content": [
+        "Here is a clear prompt:",
+        "\"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "See the difference? Much clearer now!"
+      ],
+      "narration": "Here is a clear prompt.\nIt asks to write a short blog post.\nThis post should explain the top 3 benefits of owning an electric car.\nIt is for someone living in a city.\nSee the difference?\nThis prompt is much clearer.\nIt guides the AI to a specific topic and audience.",
+      "image_prompt": "Side-by-side comparison. Left: Weak prompt and generic output. Right: Clear prompt and a focused, bulleted output about electric car benefits in a city.",
+      "is_video_slide": false
+    },
+    {
+      "title": "2. Context: Give Background!",
+      "content": [
+        "Next, let's add Context.",
+        "Context tells the AI why you are asking.",
+        "It also defines the audience and perspective."
+      ],
+      "narration": "Next, let's add Context.\nContext tells the AI why you are asking this question.\nIt helps the AI adopt the right perspective.\nIt also helps understand who the audience is.",
+      "image_prompt": "Cartoon illustration of a person pointing to a background scene or a timeline, indicating 'background information'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Context Matters",
+      "content": [
+        "Imagine asking for directions.",
+        "Knowing your destination (context) helps.",
+        "AI also needs this background information."
+      ],
+      "narration": "Think about asking for directions.\nIf you just say 'Go straight,' it is not helpful.\nInstead, say 'Go straight towards the market from the bus stop.'\nThat provides context.\nAI needs this background to give relevant answers.",
+      "image_prompt": "Cartoon of a person giving directions to another, pointing down a path. Thought bubble above the recipient shows a map with a clear destination.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prompt Without Context",
+      "content": [
+        "Recall our clear prompt:",
+        "\"Write a short blog post explaining the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "This is good, but can be better."
+      ],
+      "narration": "Let's recall our clear prompt.\nIt asks to write a short blog post.\nThis post explains the top 3 benefits of owning an electric car.\nIt is for someone living in a city.\nThis is good, but we can make it even better.\nWe can do this by adding context.",
+      "image_prompt": "Screenshot of the previous clear prompt, with a subtle 'Can be improved' overlay.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Adding Context",
+      "content": [
+        "Let's add context to the prompt.",
+        "Who is the audience? What is the purpose?",
+        "This helps the AI choose the right tone."
+      ],
+      "narration": "Now, let's add some context to this prompt.\nWe need to tell the AI who the audience is.\nWe also need to state the purpose of the blog post.\nThis helps the AI choose the right tone and style.",
+      "image_prompt": "A cartoon person adding sticky notes with 'Audience: Sustainable Living Blog' and 'Purpose: Inform' around the original prompt.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prompt With Context",
+      "content": [
+        "Here's the prompt with context:",
+        "\"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "Now the AI knows the audience!"
+      ],
+      "narration": "Here is the prompt with added context.\nIt asks for a short blog post.\nIt is for a lifestyle blog focusing on sustainable living.\nIt should explain the top 3 benefits of owning an electric car.\nThis is for someone living in a city.\nNow the AI knows the specific audience.\nIt can tailor its response better.",
+      "image_prompt": "Side-by-side comparison. Left: Clear prompt output. Right: Prompt with context, showing output with a more 'sustainable living' focus.",
+      "is_video_slide": false
+    },
+    {
+      "title": "3. Constraints: Set the Rules!",
+      "content": [
+        "Finally, let's add Constraints.",
+        "Constraints are boundaries for the output.",
+        "Tell the AI the length, format, and style."
+      ],
+      "narration": "Finally, let's look at Constraints.\nConstraints are like setting rules or boundaries for the AI's output.\nYou tell the AI the desired length, format, and style of the response.",
+      "image_prompt": "Cartoon illustration of a person holding a ruler and a stopwatch, indicating 'length' and 'time/format' constraints.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Why Constraints are Important",
+      "content": [
+        "Think of a recipe.",
+        "It tells you exact measurements and steps.",
+        "Constraints guide the AI for precise results."
+      ],
+      "narration": "Imagine following a recipe.\nIt gives you exact measurements and steps to get the perfect dish.\nConstraints do the same for the AI.\nThey guide it to produce precise and desired results.",
+      "image_prompt": "Cartoon of a chef following a recipe book with clear instructions (measurements, steps).",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prompt Without Constraints",
+      "content": [
+        "Our prompt with context is good:",
+        "\"Write a short blog post for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city.\"",
+        "But how long is 'short'?"
+      ],
+      "narration": "Our prompt with context is already good.\nBut, how long should 'short' be?\nWhat about the tone or format?\nThese are aspects we can control with constraints.",
+      "image_prompt": "Screenshot of the prompt with context, with a question mark over the word 'short'.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Adding Constraints",
+      "content": [
+        "Let's add specific constraints.",
+        "Define word count, tone, and ending.",
+        "This makes the output highly specific."
+      ],
+      "narration": "Let's add specific constraints.\nWe can define the word count, the tone, and how the post should end.\nThis makes the AI's output highly specific.\nIt is tailored to your exact needs.",
+      "image_prompt": "A cartoon person drawing a box around the prompt, and writing '400 words', 'friendly tone', 'end with question' inside.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Prompt With Constraints (Excellent Prompt)",
+      "content": [
+        "Here is an excellent prompt:",
+        "\"Write a short blog post, under 400 words, for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city. Use a friendly and enthusiastic tone and end with a question to encourage comments.\"",
+        "This prompt is complete and powerful!"
+      ],
+      "narration": "Here is an excellent prompt that includes all three C's.\nIt asks for a short blog post, under 400 words.\nThis is for a lifestyle blog focusing on sustainable living.\nIt should explain the top 3 benefits of owning an electric car.\nThis is for someone living in a city.\nUse a friendly and enthusiastic tone.\nEnd with a question to encourage comments.\nThis prompt is now complete and powerful!",
+      "image_prompt": "Side-by-side comparison of the prompt with context output vs. the excellent prompt output, highlighting word count, tone, and concluding question in the latter.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Bonus Tip: Provide a Persona",
+      "content": [
+        "Here's a super-powerful trick: use a Persona.",
+        "Tell the AI who to be.",
+        "It helps the AI adopt a specific role and voice."
+      ],
+      "narration": "Here is a bonus, super-powerful trick: provide a Persona.\nTell the AI who to be.\nThis helps the AI adopt a specific role and voice.\nIts response becomes more targeted and authentic.",
+      "image_prompt": "Cartoon illustration of a chameleon changing its color to match its surroundings, symbolizing the AI adopting a persona.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Persona Example",
+      "content": [
+        "\"Act as an expert travel agent specializing in budget travel. Create a 5-day itinerary for a trip to Rome for a solo traveler who loves history and food.\"",
+        "The AI now acts as an expert!",
+        "This ensures a tailored, helpful response."
+      ],
+      "narration": "For example, you can use a persona.\nSay: 'Act as an expert travel agent specializing in budget travel.'\nThen: 'Create a 5-day itinerary for a trip to Rome.'\nThis is for a solo traveler who loves history and food.\nThe AI now acts as an expert travel agent.\nThis ensures a tailored and helpful response.",
+      "image_prompt": "Cartoon of a person in a travel agent's uniform, holding a map of Rome and a brochure, smiling confidently.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Summary of Good Prompts",
+      "content": [
+        "Remember the 3 C's:",
+        "Clarity: Be specific in your request.",
+        "Context: Provide background and audience info.",
+        "Constraints: Set rules for length, format, and style.",
+        "Bonus: Use a Persona for specific roles."
+      ],
+      "narration": "To summarize, always remember the 3 C's for good prompts.\nThese are Clarity, Context, and Constraints.\nClarity means being specific.\nContext means providing background.\nConstraints mean setting rules.\nDon't forget the bonus tip.\nUse a Persona for more tailored responses.",
+      "image_prompt": "A visual summary graphic with three large icons for C's (Clarity, Context, Constraints) and a smaller icon for Persona. Each with a short descriptive text.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Assignment",
+      "content": [
+        "\nPick a simple topic you know well.",
+        "\nFirst, write a weak prompt for it.",
+        "\nThen, apply Clarity, Context, and Constraints step-by-step to improve it.",
+        "\nCompare the weak and excellent prompt outputs.",
+        "\nNote which 'C' made the biggest difference for you."
+      ],
+      "narration": "Now as an assignment, pick a simple topic you know well.\nFirst, write a weak prompt for it.\nThen, apply Clarity, Context, and Constraints step-by-step to improve it.\nCompare the outputs of your weak and excellent prompts.\nFinally, note which of the 3 C's made the biggest difference in your results.",
+      "image_prompt": "Cartoon illustration of a person sitting at a desk, happily working on a laptop, with a checklist next to them.",
+      "is_video_slide": false
+    },
+    {
+      "title": "Thank You!",
+      "content": [
+        "This Spoken Tutorial was brought to you by the FOSSEE project, IIT Bombay.",
+        "It is supported by the Ministry of Education, Government of India.",
+        "For more information, visit spoken-tutorial.org."
+      ],
+      "narration": "Thank you for watching this Spoken Tutorial.\nThis tutorial was brought to you by the FOSSEE project, IIT Bombay.\nIt is supported by the Ministry of Education, Government of India.\nFor more information, please visit spoken-tutorial.org.",
+      "image_prompt": "IIT Bombay logo, FOSSEE logo, and EduPyramids logo displayed prominently, with the spoken-tutorial.org website address.",
+      "is_video_slide": false
+    }
+  ]
+}

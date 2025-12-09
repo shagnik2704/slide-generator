@@ -1,0 +1,124 @@
+{
+  "presentation_title": "Chain-of-Thought (CoT): Asking the AI to \"Think Step-by-Step\"",
+  "module": "Effective Prompt Engineering",
+  "episode": "Chain-of-Thought (CoT)",
+  "learning_objectives": [
+    "By the end of this tutorial, you will be able to use Chain-of-Thought prompting to get better responses from AI models."
+  ],
+  "duration": "6 minutes",
+  "outline": [
+    "Introduction to Chain-of-Thought (CoT) prompting",
+    "Understanding the problem of brief AI responses",
+    "What is Chain-of-Thought prompting?",
+    "Example 1: Prompt without CoT and its result",
+    "Example 2: Prompt with CoT and its detailed result",
+    "Why Chain-of-Thought prompting is effective",
+    "Other ways to ask for step-by-step thinking",
+    "When to use CoT prompting",
+    "Summary and Assignment"
+  ],
+  "meta_tags": [
+    "Chain-of-Thought",
+    "CoT",
+    "Prompt Engineering",
+    "AI",
+    "ChatGPT",
+    "LLM",
+    "Think Step-by-Step",
+    "Detailed Answers",
+    "AI Prompting"
+  ],
+  "prerequisites": "Basic understanding of AI chatbots and how to write simple prompts.",
+  "slides": [
+    {
+      "title": "Welcome",
+      "narration": "Welcome to this Spoken Tutorial on Chain-of-Thought, or CoT, prompting. Here, we will learn how to ask AI to 'Think Step-by-Step'. This helps AI give more detailed and correct answers.",
+      "image_prompt": "A welcome screen with 'Chain-of-Thought Prompting' title, gears turning, and a friendly AI icon."
+    },
+    {
+      "title": "Learning Objective",
+      "narration": "After this tutorial, you will be able to use Chain-of-Thought prompting. This will help you get detailed and correct answers from AI tools.",
+      "image_prompt": "A lightbulb icon with a checklist, representing learning and objectives."
+    },
+    {
+      "title": "System Requirements",
+      "narration": "To follow this tutorial, you need a web browser like Chrome or Firefox. You also need an active internet connection. Access to an AI chatbot like ChatGPT or Google Gemini will help you practice.",
+      "image_prompt": "Icons for a web browser, an internet connection, and a generic AI chatbot."
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "Before starting, you should know what AI chatbots are. You should also know how to write simple questions, called prompts, to get basic answers from these tools.",
+      "image_prompt": "A person thinking with question marks, leading to a simple AI chatbot icon."
+    },
+    {
+      "title": "Have you ever got a short or incomplete answer from an AI?",
+      "narration": "Have you ever asked an AI a question and got a very short or confusing answer? Sometimes, the AI gives only one line when you need a detailed explanation. This can be a problem.",
+      "image_prompt": "A person looking confused at a computer screen displaying a very short, unhelpful AI response."
+    },
+    {
+      "title": "Introducing Chain-of-Thought (CoT)",
+      "narration": "This happens because the AI does not understand that it needs to think step-by-step. Chain-of-Thought, or CoT, prompting helps the AI to 'think' before giving the final answer.",
+      "image_prompt": "A visual representation of a thought process, perhaps a brain icon with arrows showing steps."
+    },
+    {
+      "title": "What is Chain-of-Thought?",
+      "narration": "CoT means asking the AI to break down a problem and explain how it got the answer. It is like asking someone to show all steps in a math problem, not just the final answer.",
+      "image_prompt": "A flowchart diagram with 'Problem' -> 'Step 1' -> 'Step 2' -> 'Solution'."
+    },
+    {
+      "title": "Let's try an example (Bad Prompt)",
+      "narration": "Let's understand this with an example. Open your chatbot. Ask the AI: 'Explain the water cycle.' Type this prompt in the message box and submit it.",
+      "image_prompt": "A simple text prompt 'Explain the water cycle' displayed on a chat interface."
+    },
+    {
+      "title": "Bad Prompt - Result",
+      "narration": "The AI will give a very short answer. For example: 'The water cycle is the continuous movement of water on, above, and below the surface of the Earth.' This answer is correct, but it is not detailed.",
+      "image_prompt": "A chat interface showing the short AI response to 'Explain the water cycle'."
+    },
+    {
+      "title": "Now, let's use CoT (Good Prompt)",
+      "narration": "Now, let's add 'Think step-by-step' to our prompt. Ask the AI: 'Think step-by-step and explain the water cycle in detail.' Type this prompt in your chatbot and submit it.",
+      "image_prompt": "A chat interface showing the prompt 'Think step-by-step and explain the water cycle in detail'."
+    },
+    {
+      "title": "Good Prompt - Result (Part 1)",
+      "narration": "Notice the difference. The AI now gives a more structured and detailed answer. It starts by listing the main stages like Evaporation, Condensation, and Precipitation. Look at this result on your screen.",
+      "image_prompt": "A chat interface showing the start of a detailed AI response, listing stages of the water cycle."
+    },
+    {
+      "title": "Good Prompt - Result (Part 2)",
+      "narration": "The AI then explains each stage clearly. For example, 'Evaporation: The sun heats water in oceans, rivers, and lakes, turning it into vapor.' This makes the explanation easy to understand.",
+      "image_prompt": "A chat interface showing the detailed explanation of 'Evaporation' and 'Condensation' from the AI."
+    },
+    {
+      "title": "Why CoT works",
+      "narration": "CoT prompting works because it makes the AI process information in a logical way. It breaks down big tasks into smaller, easy steps. This gives us better quality answers.",
+      "image_prompt": "A visual metaphor of a complex puzzle being broken into smaller, solvable pieces."
+    },
+    {
+      "title": "Other ways to ask for CoT",
+      "narration": "You can use other phrases too, not just 'Think step-by-step'. Try 'Walk me through your reasoning', 'Explain your thought process', or 'Break this down for me'. You can try these different options.",
+      "image_prompt": "A list of alternative phrases for CoT prompting, like a bulleted list on a whiteboard."
+    },
+    {
+      "title": "When to use CoT",
+      "narration": "Use CoT when you need detailed explanations or logical thinking. It is very useful for coding, finding errors, or understanding difficult topics.",
+      "image_prompt": "Icons representing coding, problem-solving, and learning."
+    },
+    {
+      "title": "Summary",
+      "narration": "In this tutorial, we learned about Chain-of-Thought, or CoT, prompting. We saw how adding 'Think step-by-step' helps AI give detailed and logical answers. This makes AI responses better.",
+      "image_prompt": "A summary slide with key takeaways: 'CoT prompting', 'Think step-by-step', 'Detailed answers'."
+    },
+    {
+      "title": "Assignment",
+      "narration": "For your assignment, open an AI chatbot. First, ask it: 'Explain how a car engine works' without CoT. Then, ask the same question using 'Think step-by-step'. Compare the two answers and see the difference.",
+      "image_prompt": "A person using a laptop, with a thought bubble showing a car engine and 'Think step-by-step'."
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private Limited, SINE, IIT Bombay. Thank you for joining us!",
+      "image_prompt": "Logos of EduPyramids, SINE, IIT Bombay, with a 'Thank You' message."
+    }
+  ]
+}

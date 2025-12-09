@@ -46,12 +46,10 @@ def evaluate_quality(state: AgentState):
 
 === FORMATTING RULES ===
 
-1. SENTENCE LENGTH: Sentences in narration should generally be ≤ 80 characters
-   
-   EXCEPTIONS (RELAX the limit):
-   - Title Slide, Learning Objectives, System Requirements, Prerequisites: NO LIMIT
-   - Step-by-step examples: "Step 1: ... Step 2: ..." can be longer
-   - Technical terms or code examples: Allow up to 100 chars
+1. SENTENCE LENGTH - HARD LIMIT: Every sentence MUST be ≤ 80 characters.
+   - NO EXCEPTIONS. This applies to ALL slides including boilerplate.
+   - If ANY sentence exceeds 80 characters, the script FAILS.
+   - Count characters carefully for each sentence.
    
    
 
@@ -67,12 +65,8 @@ def evaluate_quality(state: AgentState):
 
 5. BOLD TERMS: Technical terms should be in **bold** (advisory only)
 
-=== SLIDES TO SKIP FOR LENGTH CHECK ===
-Do NOT check sentence length for:
-- Title Slide / Welcome
-- Learning Objectives  
-- System Requirements
-- Prerequisites
+=== STRICT ENFORCEMENT ===
+Check EVERY slide. No slides are exempt from the 80-character rule.
 
 === SCRIPT TO CHECK ===
 {json.dumps(json_script, indent=2)}

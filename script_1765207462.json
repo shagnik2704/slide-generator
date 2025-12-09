@@ -1,0 +1,135 @@
+{
+  "presentation_title": "",
+  "module": "Future of Work",
+  "episode": "AI in the Professional Landscape",
+  "learning_objectives": [
+    "Understand the difference between AI automation and AI augmentation.",
+    "Identify new job roles emerging due to AI.",
+    "Demonstrate how to effectively communicate AI skills on a resume and in interviews."
+  ],
+  "duration": "2-3 minutes",
+  "outline": [
+    "Introduction to AI's impact on the professional landscape.",
+    "Differentiating between AI automation and AI augmentation.",
+    "Exploring new job roles created by AI.",
+    "Strategies for effectively discussing AI skills in career contexts."
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "Future of Work",
+    "Job Roles",
+    "Automation",
+    "Augmentation",
+    "Prompt Engineering",
+    "AI Auditor",
+    "AI Content Manager",
+    "Career Skills",
+    "Resume",
+    "Interview",
+    "Professional Development"
+  ],
+  "prerequisites": "To follow this tutorial, you should have a basic understanding of what Artificial Intelligence is.",
+  "slides": [
+    {
+      "title": "Slide 1: Title Slide: AI in the Professional Landscape",
+      "narration": "Welcome to this Spoken Tutorial on **AI** in the Professional Landscape.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 2: Learning Objectives",
+      "narration": "First, you will learn about **AI** automation. You will also learn about **AI** augmentation.\nNext, you will identify new job roles emerging due to **AI**.\nFinally, you will learn to communicate **AI** skills effectively.\nThis applies to resumes and interviews.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 3: System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 4: Prerequisites",
+      "narration": "A basic understanding of Artificial Intelligence is needed for this tutorial.\nNo prior coding knowledge is needed.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 5: AI's Impact",
+      "narration": "**AI** is not just a tool for fun.\nIt is a major force changing the professional landscape.\nIt is reshaping how we work and the types of jobs available.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 6: Automating vs. Augmenting Tasks",
+      "narration": "It is crucial to understand the difference between automation and augmentation.\nThis is important when discussing **AI**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 7: Automation",
+      "narration": "Automation is when **AI** takes over a repetitive task completely.\nFor example, an **AI** system can automatically sort customer support emails.\nIt categorizes them into groups like \"Billing\" or \"Technical Issue\".\nThis saves human effort on mundane tasks.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 8: Augmentation",
+      "narration": "Augmentation is when **AI** acts as a partner to help a human do their job.\nThis makes their work better or faster.\nThis is where the biggest immediate impact is.\nThink of **AI** as a co-pilot, not just an autopilot.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 9: Augmentation Example",
+      "narration": "A marketing professional uses **AI** to brainstorm 20 different headlines.\nThis is for an ad campaign and can be done in seconds.\nThis allows them to focus their time on choosing and refining the best one.\nNotice how **AI** enhances human creativity and efficiency.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 10: The Rise of New Job Roles",
+      "narration": "**AI** isn't just about changing old jobs.\nIt is creating entirely new ones.\nLet's look at some of these emerging roles.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 11: Prompt Engineer",
+      "narration": "A **Prompt Engineer** is an expert who specializes in crafting the perfect prompts.\nThese **prompts** are designed to get the most accurate and high-quality results.\nThis is from **AI** models.\nThis role requires understanding how **AI** thinks and responds.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 12: AI Auditor",
+      "narration": "An **AI Auditor** is a professional who tests and reviews **AI** systems.\nThey check for bias, ethical issues, and safety risks.\nThis is done before these systems are released to the public.\nThis ensures fairness and reliability in **AI** applications.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 13: AI Content Manager",
+      "narration": "An **AI Content Manager** oversees the use of **AI** in content creation.\nThey ensure **AI**-generated first drafts are fact-checked, edited, and refined.\nThis is done to meet quality standards.\nThis role combines human oversight with **AI** efficiency.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 14: How to Talk About AI Skills",
+      "narration": "Simply listing **ChatGPT** on your resume isn't enough.\nYou need to show how you use **AI** to create value.\nLet's see how to do this effectively.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 15: On Your Resume",
+      "narration": "On your resume, focus on results.\nInstead of writing, \"Proficient in **AI** tools,\" consider a more descriptive approach.\nFor example, write: \"Utilized **Google Gemini** to summarize research reports.\"\nThis reduced content analysis time by 40%.\nNotice the specific tool and the measurable outcome.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 16: In an Interview",
+      "narration": "In an interview, frame **AI** as a productivity tool that enhances your skills.\nYou could say, \"I see **AI** as a powerful assistant.\"\nI use it to handle first drafts and brainstorm ideas.\nThis frees me up to spend more time on higher-level strategic thinking.\nIt also allows for more time on editing and creative problem-solving.\nThis shows you leverage **AI** for higher value tasks.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 17: Summary Slide",
+      "narration": "Let's summarize.\nIn this tutorial, we learned the difference between **AI** automation and augmentation.\nWe also learned about new job roles like **Prompt Engineer** and **AI Auditor**.\nFinally, we covered how to effectively communicate **AI** skills.\nThis applies to resumes and in interviews.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 18: Assignment Slide",
+      "narration": "Now, let's do a small activity.\nThink of a task in your current or desired profession.\nFirst, describe how **AI** could automate a part of it.\nThen, describe how **AI** could augment your role in that task.\nFinally, write a sentence for your resume.\nThis should highlight your **AI** skill in this context.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 19: EduPyramids logo",
+      "narration": "This brings us to the end of this tutorial.\nThis Spoken Tutorial is brought to you by **EduPyramids** Educational Services.\nIt is also brought to you by **SINE**, **IIT Bombay**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Slide 20: Closing slide",
+      "narration": "Thank you for joining!",
+      "image_prompt": ""
+    }
+  ]
+}

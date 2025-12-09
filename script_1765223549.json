@@ -1,0 +1,126 @@
+{
+  "presentation_title": "Mastering AI Prompts: The 3 C's",
+  "module": "AI Fundamentals",
+  "episode": "Effective Prompt Engineering",
+  "learning_objectives": [
+    "Understand the importance of clear communication with **AI**.",
+    "Learn to apply **Clarity**, **Context**, and **Constraints** for better **AI** outputs.",
+    "Compare outputs from weak and strong **prompts**.",
+    "Identify opportunities to use the 3 C's in your daily **AI** interactions."
+  ],
+  "duration": "3-4 minutes",
+  "outline": [
+    "The 3 C\u2019s of Effective Prompts",
+    "Clarity for reducing ambiguity",
+    "Context to guide tone, purpose, and audience",
+    "Constraints for length, format, and style",
+    "Examples showing improvement through the 3 C\u2019s"
+  ],
+  "meta_tags": [
+    "AI",
+    "Prompt Engineering",
+    "ChatGPT",
+    "Gemini",
+    "LLM",
+    "AI Communication",
+    "Productivity"
+  ],
+  "prerequisites": "Basic understanding of what **AI** is and how to use common **AI** tools like **ChatGPT** or **Gemini**.",
+  "slides": [
+    {
+      "title": "Welcome to Effective Prompt Engineering",
+      "narration": "Welcome to our module on Effective **Prompt** Engineering. We are excited to have you here. Today, we will learn how to talk to **AI** better. This will help you get accurate results. Let us begin our learning journey.",
+      "image_prompt": ""
+    },
+    {
+      "title": "What We Will Learn Today",
+      "narration": "Today, we will understand clear **AI** communication. You will learn to apply the 3 C's for better **AI** outputs. We will compare weak versus strong **prompts**. You will identify chances to use the 3 C's daily.",
+      "image_prompt": ""
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a device with internet access. Any modern web browser will work. Please ensure you have a stable connection. This allows for smooth learning.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Prerequisites for This Module",
+      "narration": "You should know what **AI** is. A basic idea of using **AI** tools is helpful. Familiarity with **ChatGPT** or **Gemini** is a plus. No advanced technical skills are needed.",
+      "image_prompt": ""
+    },
+    {
+      "title": "The 3 C's of Effective Prompts",
+      "narration": "What makes an **AI prompt** effective? A good **prompt** gets good results. A weak **prompt** gives weak answers. We use the 3 C's: **Clarity**, **Context**, and **Constraints**. These help us talk to **AI** better. Let us explore each 'C' now.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Clarity: Reducing Ambiguity",
+      "narration": "Can an **AI** read your mind? No, it follows instructions literally. Vague instructions lead to vague answers. **Clarity** removes confusion. It tells the **AI** exactly what you want. Let us see how this works.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Clarity: An Example",
+      "narration": "Open any **AI** tool. Type 'Write something.' in the message box. Now **click Submit**. Notice the generic output. It is not very useful. This is due to lack of **Clarity**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Clarity: Improving the Prompt",
+      "narration": "Now, type 'Write a short email about a team meeting.' in the message box. **Click Submit**. See the difference? The output is more focused. We added **Clarity** to our **prompt**. Now, let us move to **Context**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Context: Guiding Tone and Purpose",
+      "narration": "Why is background information important? **Context** helps the **AI** understand your goal. It guides the tone, purpose, and audience. Think of it like giving directions to a friend. You tell them where you are going. Let us view an example.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Context: An Example",
+      "narration": "Let us use our improved email **prompt**. Type 'Write a short email for a client about a meeting, in a formal tone.' **Click Submit**. Observe how the tone changes. The **AI** now understands the audience. It also knows the desired tone. We will now add **Constraints**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Constraints: Length, Format, and Style",
+      "narration": "Why do we need limits? **Constraints** define the output's boundaries. They control length, format, and style. This prevents the **AI** from rambling. It keeps the answer focused. Let us add **Constraints** to our **prompt**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Constraints: An Example",
+      "narration": "Take our **prompt** with **Clarity** and **Context**. Type 'Write a short email for a client about a meeting, in a formal tone. Limit to 50 words.' **Click Submit**. See how the length is controlled. The **AI** follows our rules. We have used all 3 C's now.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Example: Poor Prompt",
+      "narration": "Let us start with a poor **prompt**. Open your **AI** tool. Type 'Tell me about India.' **Click Submit**. The **AI** gives a very broad overview. It is informative but not specific. This lacks all three C's.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Example: Adding Clarity",
+      "narration": "Now, let us add **Clarity**. Type 'Tell me about the history of **IIT Bombay**.' **Click Submit**. The **AI** now focuses on a specific topic. The output is much more relevant. We are getting closer to a good **prompt**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Example: Adding Context",
+      "narration": "Let us add **Context** now. Type 'Tell me about the history of **IIT Bombay** for a university student looking to apply there.' **Click Submit**. The **AI** tailors the information. It highlights aspects relevant to an applicant. This shows the power of **Context**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Example: Adding Constraints",
+      "narration": "Finally, let us add **Constraints**. Type 'Tell me about the history of **IIT Bombay** for a university student looking to apply there. Limit to 100 words and use bullet points.' **Click Submit**. The output is concise and structured. This is a powerful **prompt**. You can now make your own powerful **prompts**.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Summary of Our Learning",
+      "narration": "Today, we learned about the 3 C's. **Clarity** makes instructions clear. **Context** guides the **AI's** understanding. **Constraints** control the output's form. Using these makes your **AI** interactions effective. Practice these for better results.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Your Assignment",
+      "narration": "Think of a task you want an **AI** to do. Write three **prompts** for it. First, a weak **prompt**. Second, a **prompt** with **Clarity**. Third, a **prompt** with all 3 C's. Compare the outputs. Share your findings with a friend.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Thank You!",
+      "narration": "Thank you for joining this session. We hope you found it useful. This module was brought to you by **EduPyramids**. We empower learning with **AI** and technology. For more modules, visit **EduPyramids.com**.",
+      "image_prompt": ""
+    }
+  ]
+}

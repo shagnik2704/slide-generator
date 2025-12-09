@@ -1,0 +1,233 @@
+{
+  "presentation_title": "Welcome! Your Single Most Important AI Skill",
+  "module": "Module 1: Mastering AI Interactions",
+  "episode": "Episode 2.1: The Art of Prompting",
+  "learning_objectives": [
+    "Identify key components of effective AI prompts.",
+    "Apply advanced techniques for better AI output.",
+    "Practice prompt refinement through iteration."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Understanding the importance of prompting.",
+    "The 3 C's of a good prompt: Clarity, Context, Constraints.",
+    "Advanced prompting techniques: Persona, chain-of-thought, structuring.",
+    "Iterative prompting for refining results.",
+    "Practical application and challenges."
+  ],
+  "meta_tags": [
+    "AI",
+    "Artificial Intelligence",
+    "Prompting",
+    "Prompt Engineering",
+    "ChatGPT",
+    "Gemini",
+    "DALL-E",
+    "Midjourney",
+    "Conversational AI",
+    "Machine Learning"
+  ],
+  "prerequisites": "Basic computer literacy. Access to an AI chatbot (e.g., ChatGPT, Google Gemini, Claude) or an image generation tool (e.g., Midjourney, DALL-E 3).",
+  "slides": [
+    {
+      "title": "Welcome! Your Single Most Important AI Skill",
+      "content": [
+        "Mastering AI Interactions: The Art of Prompting"
+      ],
+      "narration": [
+        "Hello and welcome to this tutorial.",
+        "Today, we'll discover your most important AI skill.",
+        "This essential skill is called prompting."
+      ],
+      "image_prompt": "Illustration: A friendly robot hand shaking a human hand, surrounded by digital glowing lines representing AI interaction, with the title 'Welcome! Your Single Most Important AI Skill' clearly displayed."
+    },
+    {
+      "title": "What You Will Learn",
+      "content": [
+        "Identify key components of effective AI prompts.",
+        "Apply advanced techniques for better AI output.",
+        "Practice prompt refinement through iteration."
+      ],
+      "narration": [
+        "You will learn to identify key parts of effective AI prompts.",
+        "You will also learn to apply advanced techniques for better AI output.",
+        "Finally, you will refine prompts through AI conversation."
+      ],
+      "image_prompt": "Illustration: Three distinct icons representing 'Clarity and Structure', 'Advanced Techniques', and 'Iterative Refinement', with text bubbles around them, set against a background of gentle AI network lines."
+    },
+    {
+      "title": "AI: Your Smartest Intern",
+      "content": [
+        "AI is a powerful tool, like a very smart intern. It can do amazing things, but it needs clear instructions. Prompting is how you give those instructions to get the best results."
+      ],
+      "narration": [
+        "Imagine you have an incredibly smart, fast, and knowledgeable intern.",
+        "This intern, let's call it AI, can do amazing things for you.",
+        "But, just like any intern, it needs very specific instructions.",
+        "Prompting is simply how you give those instructions.",
+        "This helps you get the high quality results you want."
+      ],
+      "image_prompt": "Illustration: A futuristic, friendly AI robot assistant diligently working at a desk next to a human mentor, both focused on a digital screen, conveying intelligence and helpfulness."
+    },
+    {
+      "title": "What is a Prompt?",
+      "content": [
+        "A prompt is your instruction to the AI. A weak prompt gives a weak answer. A great prompt gives a great answer. The key is to be clear, give context, and set boundaries."
+      ],
+      "narration": [
+        "So, what exactly is a prompt?",
+        "It is your direct instruction or question to the AI.",
+        "Think of it as telling your smart intern exactly what you need.",
+        "A weak prompt will give you a weak or generic answer.",
+        "A great prompt gives you the exact answer you seek."
+      ],
+      "image_prompt": "Illustration: A user typing into a glowing text box labeled 'Prompt Input' with an arrow pointing to a thought bubble above a stylized AI head, showing generic output versus specific, desired output based on prompt quality."
+    },
+    {
+      "title": "AI: Your Eager New Intern",
+      "content": [
+        "Let's use our intern analogy. Your AI intern is brilliant and fast. But they are also very literal. They only do exactly what you tell them, not what you think you told them."
+      ],
+      "narration": [
+        "Let's go back to our intern analogy.",
+        "Your AI intern is brilliant and very eager to help.",
+        "They are super-fast and knowledgeable.",
+        "But here's the catch: they are also extremely literal.",
+        "They do exactly what you tell them, not what you thought you told them.",
+        "So, clear communication is vital."
+      ],
+      "image_prompt": "Illustration: A friendly, slightly robotic 'intern' character with a clipboard, looking bright-eyed and ready, but also showing a very literal expression, standing in a modern office environment."
+    },
+    {
+      "title": "Vague Instructions, Vague Results",
+      "content": [
+        "If you tell your intern, 'Write about electric cars,' what do you get? A general overview. They don't know the purpose, audience, or length.",
+        "Weak Prompt: \"Write about electric cars.\""
+      ],
+      "narration": [
+        "Imagine you tell your eager intern, 'Write about electric cars.'",
+        "They are very helpful.",
+        "They will write something.",
+        "But what will it be? A general overview, right?",
+        "They do not know the purpose, or audience, or length.",
+        "This is like a weak prompt.",
+        "It gives a weak, unhelpful answer."
+      ],
+      "image_prompt": "Scene: The eager AI intern character looking confused, holding a very generic, unhelpful report titled 'Electric Cars: A General Overview,' with question marks floating around their head. The prompt 'Write about electric cars.' is visible."
+    },
+    {
+      "title": "Clear Instructions, Clear Results (The 3 C's)",
+      "content": [
+        "Now, give them Clarity, Context, and Constraints.",
+        "Clarity: What exactly do you want? (blog post, top 3 benefits, city dwellers)",
+        "Context: Why are you asking? Who is the audience? (lifestyle blog, sustainable living)",
+        "Constraints: What are the rules? (under 400 words, friendly tone, end with question)",
+        "Excellent Prompt: \"Write a short blog post, under 400 words, for a lifestyle blog that focuses on sustainable living. Explain the top 3 benefits of owning an electric car for someone living in a city. Use a friendly and enthusiastic tone and end with a question to encourage comments.\""
+      ],
+      "narration": [
+        "Now, let's give our intern clear instructions.",
+        "Tell them the purpose: a blog post.",
+        "The audience: city dwellers for a sustainable living blog.",
+        "And the rules: under 400 words, friendly tone, with a question at the end.",
+        "Suddenly, your intern knows exactly what to write.",
+        "This is the power of Clarity, Context, and Constraints.",
+        "These are our three C's of prompting."
+      ],
+      "image_prompt": "Scene: The eager AI intern character confidently typing on a keyboard, producing a well-structured blog post. On screen, the 'Excellent Prompt' is highlighted, showing the 3 C's: Clarity, Context, Constraints, leading to a perfect output."
+    },
+    {
+      "title": "AI Works the Same Way",
+      "content": [
+        "Just like our intern, AI needs specific, guided instructions. By adding Clarity, Context, and Constraints, you transform generic requests into powerful commands. This is how you get quality results consistently."
+      ],
+      "narration": [
+        "So, you see, AI works exactly the same way.",
+        "It is a powerful tool, but it relies on your instructions.",
+        "By adding Clarity, Context, and Constraints to your prompts,",
+        "you transform vague requests into powerful commands.",
+        "This is how you get high quality and consistent results from any AI tool.",
+        "You will achieve this every time."
+      ],
+      "image_prompt": "Split screen: On one side, a cartoon intern looks confused with a vague request. On the other, the same intern smiles, efficiently working with a detailed instruction list. A 'before and after' comparison highlighting the difference in output quality."
+    },
+    {
+      "title": "Adding Power to Your Prompts",
+      "content": [
+        "Beyond the 3 C's, try these advanced techniques:",
+        "Persona: Tell AI who to 'be'. Example: 'Act as an expert travel agent...'",
+        "Chain-of-Thought: Ask AI to 'Think step-by-step'.",
+        "Structured Output: Ask for JSON, tables, or lists.",
+        "Iterative Prompting: Refine your prompt based on AI's replies. It's a conversation!"
+      ],
+      "narration": [
+        "Now that we understand the three C's.",
+        "Let's look at some advanced techniques.",
+        "These will make your prompts even more powerful.",
+        "First, give the AI a persona, like 'Act as an expert travel agent'.",
+        "Second, use 'Think step-by-step' for complex tasks.",
+        "Third, ask for structured output like a table or JSON.",
+        "And finally, remember iterative prompting.",
+        "This is like having a conversation.",
+        "You refine your prompt based on the AI's replies.",
+        "Each of these gives you more control and better results."
+      ],
+      "image_prompt": "Montage: Four distinct visual elements representing each advanced technique: a character wearing different 'persona' hats (e.g., chef, doctor), a thought bubble showing step-by-step logic, an icon of a structured table/JSON, and a two-way speech bubble representing conversation with AI."
+    },
+    {
+      "title": "Key Takeaways",
+      "content": [
+        "Prompting is your key AI skill.",
+        "Use the 3 C's: Clarity, Context, Constraints.",
+        "Employ advanced techniques like Persona and Chain-of-Thought.",
+        "Refine prompts through iterative conversation."
+      ],
+      "narration": [
+        "To summarize, prompting is your single most important skill.",
+        "It helps you use AI effectively.",
+        "Always remember the three C's: Clarity, Context, and Constraints.",
+        "Enhance your prompts further with techniques.",
+        "Assign a persona, or ask the AI to 'Think step-by-step'.",
+        "And most importantly, treat prompting as a conversation.",
+        "Refine your instructions until you get the perfect output."
+      ],
+      "image_prompt": "Infographic: A central brain or lightbulb icon radiating three arrows, each pointing to a symbol for Clarity, Context, and Constraints. Surrounding these are smaller icons for Persona (mask), Step-by-Step (gears), and Conversation (speech bubbles)."
+    },
+    {
+      "title": "Your Turn: Practice Prompting",
+      "content": [
+        "Using any AI chatbot (like ChatGPT, Gemini, or Claude), create a prompt for this task:",
+        "Task: Act as a travel guide for a 3-day trip to Agra.",
+        "Goal: Create a list of 5 must-visit historical places and 3 local food items.",
+        "Format: Present the output as a numbered list.",
+        "Hint: Combine a persona, the 3 C's, and structured output."
+      ],
+      "narration": [
+        "Now it is your turn to practice.",
+        "Open an AI chatbot like ChatGPT, Google Gemini, or Claude.",
+        "Create a prompt for a 3-day trip to Agra.",
+        "Have it act as a travel guide.",
+        "Your goal is to get a numbered list.",
+        "Include 5 must-visit historical places and 3 local food items.",
+        "Remember to use a persona, apply the three C's.",
+        "Also, ask for a structured output."
+      ],
+      "image_prompt": "Illustration: A stylized computer screen displaying a chat interface with a blinking cursor. On the side, a checklist icon for 'Persona', '3 C's', and 'Structured Output' is highlighted. A thought bubble shows a map of Agra with icons for historical sites and food."
+    },
+    {
+      "title": "Thank You!",
+      "content": [
+        "For more Spoken Tutorials, visit our website.",
+        "This Spoken Tutorial is brought to you by the FOSSEE project, IIT Bombay. This project is funded by the Ministry of Education, Government of India."
+      ],
+      "narration": [
+        "Thank you for watching this Spoken Tutorial.",
+        "We hope you found it useful.",
+        "For more such tutorials, please visit our website.",
+        "This tutorial is brought to you by the FOSSEE project, IIT Bombay.",
+        "It is funded by the Ministry of Education, Government of India.",
+        "Happy prompting!"
+      ],
+      "image_prompt": "Logo: 'Spoken Tutorial Project' and 'FOSSEE, IIT Bombay' logos prominently displayed, with 'Ministry of Education, Government of India' logo underneath. A simple 'Thank You!' message at the top."
+    }
+  ]
+}
