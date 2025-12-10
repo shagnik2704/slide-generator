@@ -76,8 +76,14 @@ BOILERPLATE (slide_type="boilerplate"):
 CONTENT (3-13 slides total):
 - Each topic = 1-2 slides MAX
 - Slide 1: What + Analogy (REQUIRED - every concept must have an analogy)
-- Slide 2: Demo/Application (only if needed)
+- Slide 2: Real-Life App Demo (REQUIRED - practical example)
 - ONE set of Vague → Improved → Compare for main concept
+
+REAL-LIFE APP DEMO SLIDE (when helpful):
+- Show how the concept works in everyday apps
+- Use generic app names: "any grocery app", "any food delivery app", "any music app"
+- Step-by-step walkthrough: Open app → Do action → See API in action
+- Example: "Open any grocery app. Search for tomato. The app sends a request to the API..."
 
 BOILERPLATE (ending):
 - Summary Slide

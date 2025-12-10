@@ -48,6 +48,8 @@ def evaluate_quality(state: AgentState):
 
 1. SENTENCE LENGTH: Every sentence MUST be ≤ 80 characters.
    - SKIP this check for Learning Objectives slide (uses bullet format).
+   - SKIP this check for Thank You Slide.
+   
 
 2. NEW LINES: Each sentence must start on a new line (\\n).
 

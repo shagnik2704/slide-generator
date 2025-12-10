@@ -161,6 +161,22 @@ It looks completely real, but it's entirely fake.
 This could happen to anyone, including you.
 That's why understanding **deepfakes** is so important."
 
+=== EXAMPLE OF REAL-LIFE APP DEMO (use for practical explanations) ===
+
+"Let's see how **APIs** work in real life.
+Open any grocery app on your phone.
+Tap the search bar and type tomato.
+The app sends a request to the **API**.
+The **API** searches for matching products.
+It sends back a list of tomato products.
+The app displays these products on your screen.
+That's an **API** working behind the scenes!"
+
+USE THIS PATTERN WHEN:
+- Explaining how a concept works in practice
+- Making abstract concepts tangible
+- Use generic app names: "any grocery app", "any music app", "any food delivery app"
+
 === EXAMPLE OF BAD NARRATION (too choppy, no flow) ===
 
 "What is a deepfake?
