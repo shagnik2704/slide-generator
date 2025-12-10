@@ -1,46 +1,46 @@
-# # Python
-# __pycache__/
-# *.py[cod]
-# *$py.class
-# *.so
-# .Python
-# venv/
-# env/
-# *.egg-info/
-# dist/
-# build/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
 
-# # Environment variables
-# .env
-# .env.local
+# Environment variables
+.env
+.env.local
 
-# # Generated files
-# script_*.json
-# static/outline_*.docx
-# static/outline_*.md
-# static/script_review_*.pdf
-# static/*.mp4
-# static/*.mp3
-# *.db
+# Generated files
+script_*.json
+static/outline_*.docx
+static/outline_*.md
+static/script_review_*.pdf
+static/*.mp4
+static/*.mp3
+*.db
 
-# # IDE
-# .vscode/
-# .idea/
-# *.swp
-# *.swo
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# # OS
-# .DS_Store
-# Thumbs.db
+# OS
+.DS_Store
+Thumbs.db
 
-# # Logs
-# *.log
+# Logs
+*.log
 
 
-# # Uploads
-# uploads/
+# Uploads
+uploads/
 
-# # Local Generated Data
-# archive/
-# generated_images/
+# Local Generated Data
+archive/
+generated_images/
 
