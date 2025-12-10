@@ -48,9 +48,10 @@ def generate_structure(state: AgentState):
 
 === LEAN CONTENT RULES ===
 
-1. ONE ANALOGY PER TOPIC
-   - Don't separate definition, explanation, and analogy into different slides
-   - Combine: "What is X? Think of it like Y..." in ONE slide
+1. ANALOGY REQUIRED FOR EVERY TOPIC
+   - EVERY content topic MUST include a relatable analogy
+   - Combine definition + analogy in ONE slide: "What is X? Think of it like Y..."
+   - Use everyday analogies: restaurant, library, traffic, school, etc.
 
 2. NO SEPARATE SECTION HEADERS
    - Blend topic intro into the first content slide
@@ -74,7 +75,7 @@ BOILERPLATE (slide_type="boilerplate"):
 
 CONTENT (3-13 slides total):
 - Each topic = 1-2 slides MAX
-- Slide 1: What + Analogy (combined)
+- Slide 1: What + Analogy (REQUIRED - every concept must have an analogy)
 - Slide 2: Demo/Application (only if needed)
 - ONE set of Vague → Improved → Compare for main concept
 

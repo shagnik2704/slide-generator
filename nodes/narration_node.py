@@ -49,21 +49,35 @@ def expand_narration(state: AgentState):
    - "Now, let's look at..." → Just start the content
    - "This is really important because..." → State it directly
 
-2. REMOVE REDUNDANCY
+2. REMOVE REDUNDANCY (CRITICAL)
    Don't repeat or over-explain:
    - "An API, or Application Programming Interface, is..." → "An API is..."
    - "They act like a digital key for authentication. This controls access." → "API keys control access."
    - Don't define acronyms if you've already used them
+   
+   AVOID these patterns:
+   - Saying the same thing twice: "X is for Y. It does Y." → Just say "X is for Y."
+   - Repeating a term 3+ times in one slide narration
+   - Restating what you just explained in different words
+   - "The API delivers to the model. The model processes..." → "The model receives and processes..."
+   
+   
 
 3. ONE IDEA PER SLIDE
    - Don't cram definition + example + analogy into one slide
    - If content feels long, the structure stage should have split it
 
-4. USE ACTIVE VOICE
+4. ANALOGY REQUIRED FOR EVERY CONTENT TOPIC
+   - Every content slide MUST include a relatable analogy
+   - Use everyday scenarios: restaurant, library, traffic, school, keys, etc.
+   - Pattern: "Think of X like Y..." or "Imagine X as Y..."
+   - Example: "API keys are like ID cards that let you into a building."
+
+5. USE ACTIVE VOICE
    - "The request is sent to the API" → "You send a request to the API"
    - "The data is processed" → "The API processes the data"
 
-5. AVOID META-EXPLANATIONS
+6. AVOID META-EXPLANATIONS
    - Don't say "Let me explain..." or "I will now show you..."
    - Just explain or show directly
 

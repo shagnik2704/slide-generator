@@ -1,0 +1,83 @@
+{
+  "presentation_title": "Spoken Tutorial on API",
+  "module": "Module 3: An introduction to Building",
+  "episode": "3. Understanding APIs",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API Key.",
+    "Identify components of an API Request."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "API Analogy",
+    "API Key",
+    "API Request"
+  ],
+  "meta_tags": [
+    "API",
+    "Application Programming Interface",
+    "AI",
+    "models",
+    "requests",
+    "API Key",
+    "authentication",
+    "programming",
+    "software",
+    "development",
+    "tutorial",
+    "spoken tutorial"
+  ],
+  "prerequisites": "Module 2:Art of the Prompt",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "narration": "Welcome to this Spoken Tutorial on **API**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\u2022 Define what an **API** is.\n\u2022 Explain the role of an **API Key**.\n\u2022 Identify components of an **API Request**.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have completed Module 2: Art of the **Prompt**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? (The Waiter Analogy)",
+      "narration": "What is an **API**?\nAn **API** is an **Application Programming Interface**.\nIt acts as a messenger for your applications.\nThink of an **API** like a waiter in a restaurant.\nYou give your order to the waiter.\nThe waiter takes it to the kitchen.\nThen, the waiter brings your food back to you.\nSimilarly, an **API** takes your request to a **model**.\nIt then brings the **model's** response back.\nThis response is delivered to your application.",
+      "image_prompt": "Illustration showing an API as a waiter taking orders to a kitchen (model) and bringing food (response) back to a customer (application)."
+    },
+    {
+      "title": "What is an API Key? (Your Restaurant ID)",
+      "narration": "Now, what is an **API Key**?\nAn **API Key** is a secret password.\nIt identifies you as an authorized user.\nImagine it like your restaurant ID card.\nThis card shows you are allowed to order food.\nYour **API Key** ensures only you can use the **API**.\nIt is very important to keep your **API Key** private.\nAlways keep it secure.",
+      "image_prompt": "Illustration showing a key unlocking a lock, with a person holding an ID card, representing an API Key for authentication."
+    },
+    {
+      "title": "Making an API Request (Placing Your Order)",
+      "narration": "How do you make an **API Request**?\nAn **API Request** is like placing your order at the restaurant.\nYou send your instructions to the **model**.\nThis request includes your **API Key**.\nThe **API Key** is for **authentication**.\nIt confirms you are the authorized user.\nYour **prompt** or instruction is also part of the request.\nThe **API** then delivers this to the **model**.\nThe **model** processes your instruction.\nIt then sends back the result.",
+      "image_prompt": "Illustration showing a user typing a request on a computer, with a key icon for authentication, sending it to a server (model) and receiving a response."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **APIs** as messengers.\nThey carry requests and responses.\n**API Keys** are identifiers.\nThey ensure secure access.\nWe also learned to make an **API Request**.\nThis involves sending your **API Key** and **prompt**.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now, for an assignment, think about other real-world scenarios.\nWhere might an **API**-like interaction be happening?\nShare your thoughts on this.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

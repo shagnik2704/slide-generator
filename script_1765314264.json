@@ -1,0 +1,90 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding APIs",
+  "module": "Module 3: An introduction to Building",
+  "episode": "2. Understanding APIs",
+  "learning_objectives": [
+    "Define what an API is in the context of AI.",
+    "Explain the role of APIs in connecting applications to AI models.",
+    "Identify the purpose of API keys for authentication.",
+    "Describe how applications interact with APIs to send prompts and receive responses."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What an API is and why it matters",
+    "Prompts as inputs sent through APIs",
+    "API keys for authentication and access control",
+    "How applications send requests and receive AI-generated responses"
+  ],
+  "meta_tags": [
+    "API",
+    "AI",
+    "Python",
+    "authentication",
+    "prompts",
+    "requests",
+    "responses",
+    "models",
+    "integration",
+    "development",
+    "application",
+    "interface"
+  ],
+  "prerequisites": "Basic understanding of Python for API interaction.",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Understanding APIs",
+      "narration": "Welcome to this Spoken Tutorial on **Understanding APIs**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\n\n\n\u2022 Define what an **API** is in the context of **AI**.\n\n\u2022 Explain the role of **APIs** in connecting applications to **AI** models.\n\n\u2022 Identify the purpose of **API** keys for authentication.\n\n\u2022 Describe how applications interact with **APIs** to send **prompts** and receive responses.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have a basic understanding of Python.\nThis includes familiarity with **API** interaction.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? The Connector",
+      "narration": "Imagine two different software programs needing to communicate.\nHow do they exchange information and requests?\nThis is where an **API** steps in.\nAn **API** acts as a messenger.\nIt allows different software programs to talk to each other.\nThink of a waiter in a restaurant.\nYou give your order, a request, to the waiter.\nThe waiter takes it to the kitchen, like an **AI** model.\nThen, the waiter brings back your food, the response.\nAn **API** ensures smooth communication between applications.",
+      "image_prompt": "Illustration showing API as a messenger between two software programs, with a waiter serving food between a customer and a kitchen."
+    },
+    {
+      "title": "Prompts: Your Input to AI",
+      "narration": "Now, let's look at how you give instructions to an **AI** model.\nIn **AI**, these instructions are called **prompts**.\nA **prompt** is a specific question or instruction you send.\nThese **prompts** are packaged as inputs.\nThey are then delivered to the **AI** model through an **API**.\nThe **API** acts as the channel for your **prompts** to reach the **AI**.",
+      "image_prompt": "Illustration showing a user typing a prompt into an application, with an arrow labeled 'API' connecting to an AI model icon."
+    },
+    {
+      "title": "API Keys: Your Digital ID",
+      "narration": "But how does an **API** know who is making a request?\nThis brings us to **API** keys.\nAn **API** key is a unique identifier.\nIt authenticates your application's requests to an **API**.\nConsider it your digital identity.\nThis key ensures only authorized users can access **AI** services.\n**API** keys control access and maintain security.",
+      "image_prompt": "Illustration showing a key icon unlocking a digital lock, symbolizing an API key providing access and authentication to AI services."
+    },
+    {
+      "title": "How Applications Talk to AI Models",
+      "narration": "Now, let's put it all together.\nHow do applications fully interact with **AI** models?\nApplications use **APIs** to send requests.\nThese requests contain your **prompts** for the **AI** model.\nThe **API** delivers these **prompts** to the **AI** model.\nThe **AI** model processes the **prompt** and generates a response.\nThen, the **API** relays this **AI**-generated response back.\nThis completes the entire communication cycle.\n**APIs** are key for this two-way conversation with **AI** models.",
+      "image_prompt": "Illustration showing a complete communication cycle: an application sending a request (prompt) via an API to an AI model, and the AI model sending a response back through the API to the application."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe discussed what **APIs** are and their role as messengers.\nWe saw how **prompts** are inputs sent to **AI** models via **APIs**.\nWe also understood the importance of **API** keys for authentication.\nFinally, we covered the full request-response cycle with **AI** models.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nResearch three real-world applications.\nList how they use **APIs** to interact with **AI** models.\nBriefly describe the benefits of **API** integration for each.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You!",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**.\n**SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

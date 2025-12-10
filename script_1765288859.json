@@ -1,0 +1,166 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding APIs",
+  "module": "AI Essentials",
+  "episode": "2. Understanding APIs",
+  "learning_objectives": [
+    "Define what an API is and its role in modern applications.",
+    "Explain how APIs facilitate communication between applications and AI models.",
+    "Identify the importance of API keys for authentication and access control.",
+    "Illustrate the end-to-end process of sending requests and receiving AI-generated responses via an API."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "API",
+    "Application Programming Interface",
+    "AI",
+    "Artificial Intelligence",
+    "Prompts",
+    "API Keys",
+    "Authentication",
+    "Request-Response",
+    "AI Models",
+    "Software Development",
+    "Integration",
+    "Spoken Tutorial"
+  ],
+  "prerequisites": "Basic understanding of how software applications interact and general computing concepts.",
+  "outline": [
+    "What an API is and why it matters",
+    "Analogy: API as a connector between requests and models",
+    "Prompts as inputs sent through APIs",
+    "API keys for authentication and access control",
+    "How applications send requests and receive AI-generated responses"
+  ],
+  "slides": [
+    {
+      "title": "Title Slide",
+      "narration": "Welcome to this Spoken Tutorial on Understanding **APIs**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives Slide",
+      "narration": "In this tutorial, you will learn,\n\n\u2022 Define what an **API** is and its role in modern applications.\n\u2022 Explain how **APIs** facilitate communication between applications and **AI** models.\n\u2022 Identify the importance of **API** keys for authentication and access control.\n\u2022 Illustrate the end-to-end process of sending requests and receiving **AI**-generated responses via an **API**.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements Slide",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisite Slide",
+      "narration": "To follow this tutorial, you should have a basic understanding of how software applications interact and general computing concepts.\nNo coding needed.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API?",
+      "narration": "Let's begin by understanding what an **API** is.\n**API** stands for Application Programming Interface.\nIt's a foundational concept in modern software.",
+      "image_prompt": "Section Header: What is an API?"
+    },
+    {
+      "title": "API: The Digital Messenger",
+      "narration": "Think of an **API** as a digital messenger.\nIt allows different software applications to talk to each other.\nIt acts as an intermediary, handling requests and responses.",
+      "image_prompt": "Illustration showing API as a digital messenger facilitating communication"
+    },
+    {
+      "title": "Why APIs are Essential",
+      "narration": "Why are **APIs** essential?\nThey enable seamless communication and integration.\nWithout them, different software systems would operate in isolation.\nThis means no sharing data or functionalities easily.",
+      "image_prompt": "Illustration showing interconnected software systems vs isolated ones"
+    },
+    {
+      "title": "API as a Connector",
+      "narration": "With that understanding, let's explore an analogy.\nImagine an **API** as a bridge or a connector.\nIt links various software components together.",
+      "image_prompt": "Section Header: API as a Connector"
+    },
+    {
+      "title": "The Request-Response Flow",
+      "narration": "An **API** works on a request-response flow.\nOne application sends a request to the **API**.\nThe **API** then delivers this request to another application.\nFinally, it brings the response back to the first application.",
+      "image_prompt": "Illustration showing request-response flow between two applications via an API"
+    },
+    {
+      "title": "Connecting Applications to AI Models",
+      "narration": "This request-response flow is crucial for **AI**.\n**APIs** are the conduit for applications to interact with powerful **AI** models.\nThey allow apps to send data to an **AI** model.\nAnd then receive the **AI**-generated output.",
+      "image_prompt": "Illustration showing application sending data to an AI model via an API and receiving output"
+    },
+    {
+      "title": "Prompts as API Inputs",
+      "narration": "Now, let's talk about **prompts**.\nHow do we tell an **AI** model what we want?\nWe send them as inputs through the **API**.",
+      "image_prompt": "Section Header: Prompts as API Inputs"
+    },
+    {
+      "title": "Understanding Prompts in API Calls",
+      "narration": "When you type a question for **ChatGPT** or **Gemini**,\nthat's a **prompt**.\nIn an **API** call, a **prompt** is part of the request payload.\nIt's the instruction or query for the **AI** model.",
+      "image_prompt": "Person at laptop, typing a prompt into a chat interface"
+    },
+    {
+      "title": "Basic API Call with a Simple Prompt",
+      "narration": "Let's see a basic example.\nImagine an application asking an **AI** model:\n'Tell me a fun fact about space.'\nThis simple sentence is the **prompt** in our **API** request.\nSee how direct and clear it is?",
+      "image_prompt": "Screen close-up: user typing 'Tell me a fun fact about space.'..."
+    },
+    {
+      "title": "API Call with a Structured Prompt",
+      "narration": "But we can make our **prompts** even better.\nLook at this improved example.\nHere, the **prompt** is structured with roles.\nFor instance, 'You are a helpful assistant. Explain **APIs** simply.'\nThis guides the **AI** for a more precise response.",
+      "image_prompt": "Screen close-up: user typing 'You are a helpful assistant. Explain APIs simply.'..."
+    },
+    {
+      "title": "Impact of Prompt Structure on API Responses",
+      "narration": "Now, let's compare the impact.\nA simple **prompt** might give a general answer.\nBut a structured **prompt** leads to a more relevant and specific **AI**-generated response.\nIt's like giving clear instructions versus vague ones.\nSee the difference in output quality?",
+      "image_prompt": "Side-by-side: vague prompt output vs improved prompt output"
+    },
+    {
+      "title": "API Keys and Security",
+      "narration": "Moving on, let's discuss security.\nHow do we ensure only authorized users access **APIs**?\nThis is where **API** keys come in.\nThey are a critical component for securing **API** services.",
+      "image_prompt": "Section Header: API Keys and Security"
+    },
+    {
+      "title": "What are API Keys?",
+      "narration": "What exactly are **API** keys?\nAn **API** key is a unique identifier.\nIt's a secret token that authenticates your application.\nIt tells the **API** server who is making the request.",
+      "image_prompt": "Illustration showing API key as a digital key or token"
+    },
+    {
+      "title": "Authentication and Access Control",
+      "narration": "**API** keys are crucial for authentication.\nThey verify your identity when you access an **API**.\nThey also control your access permissions.\nThis means you can only use the functionalities you are allowed to.",
+      "image_prompt": "Illustration showing lock and key icon representing authentication and access control"
+    },
+    {
+      "title": "Best Practices for API Key Management",
+      "narration": "Managing **API** keys securely is vital.\nAlways keep your **API** keys confidential.\nNever embed them directly in client-side code.\nUse environment variables or secure vaults for storage.\nThis prevents unauthorized access to your services.",
+      "image_prompt": "Person at laptop, securing a digital key or token"
+    },
+    {
+      "title": "The API Request-Response Lifecycle",
+      "narration": "Now, let's put it all together.\nWe will outline the complete **API** request-response lifecycle.\nThis shows the end-to-end interaction.",
+      "image_prompt": "Section Header: The API Request-Response Lifecycle"
+    },
+    {
+      "title": "Making an API Request",
+      "narration": "First, an application formulates a request.\nIt includes the **prompt** and your **API** key.\nThis request is sent to a specific **API** endpoint.\nThink of an endpoint as a specific address for a service.",
+      "image_prompt": "Illustration showing application sending a request with prompt and API key to an API endpoint"
+    },
+    {
+      "title": "Processing the AI Response",
+      "narration": "Once the **AI** model processes the request,\nit sends back a response.\nThe application receives this data through the **API**.\nIt then interprets and uses the **AI**-generated output.",
+      "image_prompt": "Illustration showing AI model processing request and sending response back to application via API"
+    },
+    {
+      "title": "End-to-End API Interaction Example",
+      "narration": "Let's walk through an end-to-end example.\nAn application wants to generate an image from text.\nIt sends a **prompt** like 'A cat in space' to an **AI** image generation **API**.\nWith the correct **API** key, the **AI** processes it.\nThen, the **API** returns the generated image to the application.\nThis completes the full interaction cycle.",
+      "image_prompt": "Screen close-up: user typing 'A cat in space'... AI generating response on screen"
+    },
+    {
+      "title": "Summary Slide",
+      "narration": "Let us summarize what we learned.\nWe defined what an **API** is and its role as a digital messenger.\nWe saw how **APIs** connect applications to **AI** models.\nWe understood that **prompts** are inputs sent through **APIs**.\nAnd we highlighted the importance of **API** keys for security and access.\nFinally, we outlined the complete request-response lifecycle.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment Slide",
+      "narration": "Now as an assignment,\nFind an example of a popular application that uses an **API** to connect to an **AI** model.\nDescribe how the **API** facilitates this interaction.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You Slide",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids** Educational Services Private Limited, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

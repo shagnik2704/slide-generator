@@ -1,0 +1,96 @@
+{
+  "presentation_title": "Misinformation and Deepfakes",
+  "module": "AI Ethics and Safety",
+  "episode": "03",
+  "learning_objectives": [
+    "Understand how AI creates fake content.",
+    "Identify risks of deepfake media.",
+    "Learn to verify digital sources, and",
+    "Apply media literacy skills."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What are deepfakes?",
+    "How AI generates fake content.",
+    "Risks of deepfake media.",
+    "Real-world deepfake examples.",
+    "Verifying digital sources.",
+    "Building media literacy."
+  ],
+  "meta_tags": [
+    "AI",
+    "Deepfakes",
+    "Misinformation",
+    "Media Literacy",
+    "Ethics",
+    "Safety"
+  ],
+  "prerequisites": "Basic understanding of AI concepts.",
+  "slides": [
+    {
+      "title": "Welcome to Misinformation and Deepfakes",
+      "narration": "Welcome to this Spoken Tutorial on Misinformation and Deepfakes.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to understand how **AI** creates fake content.\nNext, you will learn to identify risks of deepfake media.\nThen, you will learn to verify digital sources.\nFinally, you will apply media literacy skills.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a device with internet access.\nA web browser is also required.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "Basic understanding of **AI** concepts is helpful.\nFamiliarity with digital media is also useful.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What are Deepfakes?",
+      "narration": "What exactly are **deepfakes**?\nThey are synthetic media.\n**AI** generates them to look real.\nThey can be audio, video, or images.",
+      "image_prompt": "AI generated fake content"
+    },
+    {
+      "title": "How AI Creates Fakes",
+      "narration": "How does **AI** make these?\nIt uses special **ML** models.\nThese models learn from real data.\nThen they create new, fake content.",
+      "image_prompt": "Neural network creating deepfakes"
+    },
+    {
+      "title": "Risks of Deepfake Media",
+      "narration": "What are the dangers?\n**Deepfakes** can spread false news.\nThey can harm reputations.\nThey can even influence elections.\nThis poses a serious threat.",
+      "image_prompt": "People looking at fake news on screens"
+    },
+    {
+      "title": "Real-World Examples",
+      "narration": "Consider a fake speech.\nAn **AI** can mimic a voice perfectly.\nIt can also swap faces in videos.\nThis makes fake events seem real.\nRemember the recent fake news reports.",
+      "image_prompt": "Fake video of a public figure speaking"
+    },
+    {
+      "title": "Verifying Digital Sources",
+      "narration": "How can we check content?\nAlways question the source.\nLook for inconsistencies in media.\nCheck for strange movements or audio.\nUse reliable fact-checking websites.",
+      "image_prompt": "Magnifying glass over a digital screen"
+    },
+    {
+      "title": "Building Media Literacy",
+      "narration": "What is media literacy?\nIt is the ability to analyze media.\nYou learn to spot manipulation.\nThis skill protects you online.\nPractice critical thinking always.",
+      "image_prompt": "Person thinking critically about news"
+    },
+    {
+      "title": "Summary",
+      "narration": "We explored **deepfakes** and **AI**.\nWe saw how **AI** creates fake content.\nThe risks of misinformation are high.\nVerifying sources is very important.\nMedia literacy helps us stay safe.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Find a news article online.\nCheck its source carefully.\nIdentify three signs of credibility.\nShare your findings with a friend.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids** Educational Services Private Limited, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

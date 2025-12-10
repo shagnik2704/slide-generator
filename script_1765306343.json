@@ -1,0 +1,100 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding APIs",
+  "module": "Building with AI",
+  "episode": "2. Understanding APIs",
+  "learning_objectives": [
+    "Define what an API is in the context of AI.",
+    "Explain the role of API keys in secure API access.",
+    "Describe how applications send requests and receive AI-generated responses.",
+    "Apply the concept of prompts as inputs for AI models."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "API",
+    "AI",
+    "Artificial Intelligence",
+    "Spoken Tutorial",
+    "Python",
+    "Machine Learning",
+    "Development",
+    "Integration",
+    "Authentication",
+    "Prompts",
+    "Requests",
+    "Responses"
+  ],
+  "prerequisites": "Basics of Python",
+  "outline": [
+    "What an API is and why it matters",
+    "Prompts as inputs sent through APIs",
+    "API keys for authentication and access control",
+    "How applications send requests and receive AI-generated responses"
+  ],
+  "slides": [
+    {
+      "title": "Welcome to Understanding APIs",
+      "narration": "Welcome to this Spoken Tutorial on Understanding APIs.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn,\n\n\u2022 Define what an **API** is in the context of **AI**.\n\u2022 Explain the role of **API** keys in secure **API** access.\n\u2022 Describe how applications send requests and receive **AI**-generated responses.\n\u2022 Apply the concept of **prompts** as inputs for **AI** models.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "To follow this tutorial, you should have basics of **Python**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? Think of it like...",
+      "narration": "What if I told you different software applications can talk to each other?\nImagine you are at a restaurant.\nYou tell the waiter your order.\nThe waiter takes your order to the kitchen.\nThe kitchen prepares your food.\nThen, the waiter brings your food back to you.\nHere, the waiter is like an **API**.\nAn **API**, or **Application Programming Interface**, is a software intermediary.\nIt allows two applications to communicate.\nIt takes your request and delivers the response.\nWith that understanding, let's see how **APIs** work with **AI** models.",
+      "image_prompt": "Illustration showing API with simple icons, connecting two applications"
+    },
+    {
+      "title": "Prompts as Inputs to AI Models",
+      "narration": "How do you tell an **AI** model what you want it to do?\nYou send it a **prompt**.\nA **prompt** is your instruction or question.\nIt is the input you give to the **AI** model.\nYou send these **prompts** through an **API**.\nFor example, you might **prompt** an **AI** to 'Write a short story about a talking cat.'\nThe **API** delivers this **prompt** to the **AI** model.\nBut how do we ensure only authorized users send these **prompts**?",
+      "image_prompt": "Person at laptop, typing a prompt like 'Write a short story about a talking cat.'"
+    },
+    {
+      "title": "API Keys: Your Digital Credentials",
+      "narration": "To keep **APIs** secure, we use **API** keys.\nThink of an **API** key as your digital credential.\nIt is a unique code.\nYou send this key with your request.\n**API** keys authenticate your requests.\nThey control your access to **API** services.\nThis ensures only authorized users can interact with the **AI**.\nJust like a hotel key card lets you enter your room.\nYour **API** key grants you access to the **API**.\nNow, let's look at how applications actually send these requests.",
+      "image_prompt": "Illustration showing a digital key or a key card unlocking a service"
+    },
+    {
+      "title": "Sending Requests: A Vague Example",
+      "narration": "Let's see a simple, but not ideal, way to send a request.\nHere is a basic **Python** code snippet.\nNotice the **prompt** in this example is very general.\nIt just asks the **AI** to 'tell me something interesting'.\nWhat kind of response do you expect from such a vague **prompt**?\nIt might be too broad or unhelpful.\nThis request lacks clarity for the **AI**.\nNow, let's improve this request for better **AI** responses.",
+      "image_prompt": "Screen close-up: user typing 'tell me something interesting...'"
+    },
+    {
+      "title": "Sending Requests: An Improved Example",
+      "narration": "Here's an improved example of sending a request.\nWe will use a more specific **prompt**.\nSee how the **prompt** is now 'Explain quantum physics in simple terms.'\nThis provides clear instructions to the **AI** model.\nWe are also specifying the desired length of the response.\nA clear **prompt** helps the **AI** give a relevant answer.\nIt guides the **AI** to focus on your exact need.\nLet's compare these two methods side-by-side.",
+      "image_prompt": "Screen close-up: user typing 'Explain quantum physics in simple terms.'"
+    },
+    {
+      "title": "Comparing Request Methods",
+      "narration": "Look at the vague request on the left.\nNow, look at the improved request on the right.\nThe vague request gives the **AI** little direction.\nThe improved request gives clear, specific instructions.\nIt also sets expectations for the response.\nStructured **API** interactions lead to better **AI** responses.\nClear **prompts** save time and improve accuracy.\nThis is crucial when building **AI** applications.\nLet us summarize what we learned today.",
+      "image_prompt": "Side-by-side: vague prompt output vs improved prompt output"
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **APIs** as intermediaries for applications.\nWe saw how **prompts** are inputs for **AI** models.\n**API** keys secure access to **API** services.\nFinally, we learned to send effective requests to **AI**.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nCreate a simple **Python** script to send a basic text **prompt** to an **AI** model using a hypothetical **API**.\nEnsure your **prompt** is clear and specific.\nCompare the results of a vague versus a specific **prompt**.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

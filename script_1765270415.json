@@ -1,0 +1,109 @@
+{
+  "presentation_title": "Misinformation and Deepfakes",
+  "module": "AI Ethics",
+  "episode": "Misinformation and Deepfakes",
+  "learning_objectives": [
+    "Understand how AI creates fake content",
+    "Identify risks of deepfake media",
+    "Learn to verify sources",
+    "Recognize the impact of misinformation"
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "How AI can generate realistic fake content",
+    "Risks of deepfake audio, video, and images",
+    "Real-world examples and societal impact",
+    "Importance of source verification and media literacy"
+  ],
+  "meta_tags": [
+    "AI",
+    "Deepfakes",
+    "Misinformation",
+    "Ethics",
+    "Media Literacy",
+    "Source Verification"
+  ],
+  "prerequisites": "Basic understanding of AI concepts.",
+  "slides": [
+    {
+      "title": "Misinformation and Deepfakes",
+      "narration": "Welcome to this Spoken Tutorial on Misinformation and Deepfakes.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to understand how **AI** creates fake content.\nYou will also identify the risks of deepfake media.\nFurthermore, you will learn to verify sources.\nYou will also recognize the impact of misinformation.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "You will need a device with internet access.\nNo specific software is required for this tutorial.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "A basic understanding of what **AI** is will be helpful.\nNo prior technical knowledge is needed.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "AI and Fake Content",
+      "narration": "Can **AI** create things that are not real?\nYes, **AI** can generate very convincing fake content.\nThis includes fake audio, video, and images.\n**AI** learns patterns from vast amounts of data.",
+      "image_prompt": "AI generating fake images"
+    },
+    {
+      "title": "Deepfake Technology",
+      "narration": "This technology is often called **deepfake**.\nThink of it like an artist who learns to paint.\nThe artist can then create new, realistic paintings.\n**AI** does this with faces, voices, and actions.",
+      "image_prompt": "Deepfake creation process"
+    },
+    {
+      "title": "Risks of Deepfakes",
+      "narration": "What are the dangers of such fake content?\nDeepfakes can spread false information very quickly.\nThey can make someone appear to say or do anything.\nThis can harm reputations and cause confusion.",
+      "image_prompt": "Warning sign for deepfakes"
+    },
+    {
+      "title": "Audio and Video Risks",
+      "narration": "Imagine a fake video of a politician.\nIt shows them saying something they never said.\nThis can influence public opinion wrongly.\nYou saw the impact.\nNow reflect on this.",
+      "image_prompt": "Fake news headline, deepfake video"
+    },
+    {
+      "title": "Real-World Impact",
+      "narration": "Have deepfakes caused real problems?\nYes, deepfakes have been used in many hoaxes.\nThey have targeted public figures and common people.\nThis technology can even impact elections.",
+      "image_prompt": "Global impact of misinformation"
+    },
+    {
+      "title": "Societal Consequences",
+      "narration": "For example, a deepfake audio could mimic a CEO's voice.\nIt could then trick employees into transferring money.\nThis shows the financial and social dangers.\nNow we learn how to protect ourselves.",
+      "image_prompt": "Cybercrime, deepfake scam"
+    },
+    {
+      "title": "Verifying Sources",
+      "narration": "How can we tell if content is real or fake?\nAlways question the source of information.\nCheck if the content comes from a trusted channel.\nLook for official websites or news outlets.",
+      "image_prompt": "Magnifying glass checking news source"
+    },
+    {
+      "title": "Media Literacy",
+      "narration": "This skill is called media literacy.\nIt helps us critically evaluate what we see.\nLook for inconsistencies in lighting or sound.\nUnusual facial expressions can be a sign.",
+      "image_prompt": "Person evaluating digital content"
+    },
+    {
+      "title": "Critical Thinking",
+      "narration": "Does the story sound too good or too bad to be true?\nPause and think before you share anything.\nCross-check facts with multiple reliable sources.\nThis helps us fight the spread of misinformation.",
+      "image_prompt": "Brain thinking, critical evaluation"
+    },
+    {
+      "title": "Summary",
+      "narration": "In this tutorial, we understood how **AI** creates deepfakes.\nWe identified the risks of misinformation.\nWe learned the importance of source verification.\nWe also discussed media literacy skills.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Find a news article reporting a deepfake incident.\nAnalyze how the deepfake was detected.\nWrite a short paragraph on its impact.\nShare your findings with a friend.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "EduPyramids Educational Services Private Limited presents this Spoken Tutorial.\nIt is also supported by **SINE** and **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

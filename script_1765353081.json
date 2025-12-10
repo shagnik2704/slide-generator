@@ -1,0 +1,83 @@
+{
+  "presentation_title": "Spoken Tutorial on API Basics",
+  "module": "An introduction to Building",
+  "episode": "3. API Basics",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API key.",
+    "Identify components of an API request."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "API Analogy: Restaurant Waiter",
+    "API Key",
+    "API Request"
+  ],
+  "meta_tags": [
+    "API",
+    "API Key",
+    "API Request",
+    "AI",
+    "Spoken Tutorial",
+    "Programming",
+    "Development",
+    "Basics",
+    "Introduction",
+    "Messenger",
+    "Authentication",
+    "Building"
+  ],
+  "prerequisites": "Module 2:Art of the Prompt",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on API Basics",
+      "narration": "Welcome to this Spoken Tutorial on **API** Basics.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\u2022 Define what an **API** is.\n\u2022 Explain the role of an **API Key**.\n\u2022 Identify components of an **API Request**.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have completed Module 2.\nThis module is titled 'Art of the Prompt'.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? Your Restaurant Waiter",
+      "narration": "Have you ever wondered how your application talks to a complex **AI** model?\nThink of an **API** as a helpful messenger.\nImagine you are at a restaurant.\nThe waiter takes your order to the kitchen.\nThen, the waiter brings your food back to you.\nIn the same way, an **API** takes your request to the **AI** model.\nIt then brings the model's response back to your application.",
+      "image_prompt": "Illustration of a waiter serving a customer at a restaurant, symbolizing an API connecting an application to an AI model."
+    },
+    {
+      "title": "API Key: Your Restaurant ID Card",
+      "narration": "But how does the **AI** model know it's you making the request?\nThis is where an **API Key** comes in.\nAn **API Key** is like your secret ID card or password.\nIt tells the system that you are an authorized user.\nJust as an ID card allows you to order at a restaurant.\nYour **API Key** ensures only you can send requests to the **AI** model.\nIt keeps your interactions safe and secure.",
+      "image_prompt": "Illustration of a person showing an ID card to a bouncer at a restaurant entrance, symbolizing an API key for authentication."
+    },
+    {
+      "title": "API Request: Placing Your Order",
+      "narration": "Now that you have your **API Key**, how do you actually talk to the **AI** model?\nYou do this by sending an **API Request**.\nThink of it as placing your order with the waiter.\nYour **API Request** includes two main things.\nFirst, your **API Key** for authentication.\nThis proves who you are.\nSecond, your instruction or **prompt** for the **AI** model.\nThe **API** then delivers your order to the model.",
+      "image_prompt": "Illustration of a customer handing a menu with an order to a waiter, symbolizing an API request with an API key and prompt."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined an **API** as a messenger service.\nIt connects your application with an **AI** model.\nWe then discussed the **API Key**.\nThis acts as your unique identifier for access.\nFinally, we explored an **API Request**.\nIt is how you send instructions to the model.\nAll these concepts were explained using a restaurant analogy.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nThink of another everyday analogy for the **API**.\nDescribe how it connects your application and an **AI** model.\nCompare this new analogy to the restaurant example.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is from EduPyramids Educational Services Private Limited.\nIt is also supported by SINE and IIT Bombay.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}
