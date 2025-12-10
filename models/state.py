@@ -2,7 +2,7 @@
 Data models for the slide generator agent.
 Contains TypedDict and Pydantic model definitions.
 """
-from typing import TypedDict, Optional, List
+from typing import TypedDict, Optional, List, Literal
 from pydantic import BaseModel, Field
 
 
@@ -15,11 +15,61 @@ class Slide(TypedDict):
     image_path: Optional[str]
 
 
+# === INTERMEDIATE SCHEMAS FOR 4-NODE PIPELINE ===
+
+class SlideSkeleton(BaseModel):
+    """Stage 1 output: Slide skeleton with notes (no narration yet)."""
+    title: Optional[str] = Field(description="Slide title, or null for flow slides")
+    notes: str = Field(description="1-2 sentence content summary")
+    slide_type: Literal["boilerplate", "section_header", "content", "demo"] = Field(
+        description="Type of slide for routing logic"
+    )
+
+
+class StructuredOutline(BaseModel):
+    """Stage 1 output: Complete structured outline with metadata."""
+    presentation_title: str = Field(description="Title of the presentation")
+    module: str = Field(description="Module name")
+    episode: str = Field(description="Episode number/name")
+    learning_objectives: List[str] = Field(description="3-4 learning objectives")
+    duration: str = Field(default="3-4 min", description="Tutorial duration")
+    meta_tags: List[str] = Field(description="Keywords for searchability")
+    prerequisites: str = Field(description="Pre-requisite knowledge")
+    outline: List[str] = Field(description="Content topics only")
+    slides: List[SlideSkeleton] = Field(description="Slide skeleton list")
+
+
+class SlideWithNarration(BaseModel):
+    """Stage 2 output: Slide with narration but no visuals yet."""
+    title: Optional[str] = Field(description="Slide title")
+    narration: str = Field(description="Full narration text")
+    slide_type: str = Field(description="Type of slide")
+
+
+class NarrationScript(BaseModel):
+    """Stage 2 output: Script with narration for all slides."""
+    presentation_title: str
+    module: str
+    episode: str
+    learning_objectives: List[str]
+    duration: str
+    meta_tags: List[str]
+    prerequisites: str
+    outline: List[str]
+    slides: List[SlideWithNarration]
+
+
+# === AGENT STATE ===
+
 class AgentState(TypedDict):
     topic: str
     project_id: Optional[int]
     outline: Optional[str]
     mode: str
+    # Intermediate states for 4-node pipeline
+    structured_outline: Optional[dict]  # Stage 1 output
+    narration_script: Optional[dict]    # Stage 2 output
+    # Final output
     json_script: dict
     script_pdf_path: Optional[str]
     slides_pdf_path: Optional[str]
@@ -32,6 +82,8 @@ class AgentState(TypedDict):
     evaluation_passed: bool
     evaluation_feedback: Optional[str]
 
+
+# === FINAL OUTPUT SCHEMAS (existing) ===
 
 class SlideModel(BaseModel):
     type: str = Field(description="Type of slide: 'title_slide' or 'content_slide'")
@@ -53,3 +105,4 @@ class Presentation(BaseModel):
     meta_tags: List[str] = Field(description="Keywords/tags for searchability")
     prerequisites: str = Field(description="Pre-requisite tutorials or knowledge")
     slides: List[SlideModel] = Field(description="List of slides")
+

@@ -35,36 +35,36 @@ class Script(BaseModel):
     slides: List[Slide]
 
 
-def _load_sample_script(filename: str) -> dict:
-    """Load a sample script from the json folder."""
-    path = os.path.join(SAMPLE_SCRIPTS_DIR, filename)
-    try:
-        with open(path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"⚠️ Could not load sample script {filename}: {e}")
-        return {}
+# def _load_sample_script(filename: str) -> dict:
+#     """Load a sample script from the json folder."""
+#     path = os.path.join(SAMPLE_SCRIPTS_DIR, filename)
+#     try:
+#         with open(path, 'r') as f:
+#             return json.load(f)
+#     except Exception as e:
+#         print(f"⚠️ Could not load sample script {filename}: {e}")
+#         return {}
 
 
-def _format_sample_for_prompt(sample: dict) -> str:
-    """Format all slides for inclusion in the prompt."""
-    if not sample:
-        return ""
+# def _format_sample_for_prompt(sample: dict) -> str:
+#     """Format all slides for inclusion in the prompt."""
+#     if not sample:
+#         return ""
     
-    slides = sample.get("slides", [])
+#     slides = sample.get("slides", [])
     
-    # Extract all slides with title and narration
-    all_slides = [
-        {"title": s.get("title", ""), "narration": s.get("narration", "")}
-        for s in slides if s.get("narration")
-    ]
+#     # Extract all slides with title and narration
+#     all_slides = [
+#         {"title": s.get("title", ""), "narration": s.get("narration", "")}
+#         for s in slides if s.get("narration")
+#     ]
     
-    formatted = {
-        "title": sample.get("presentation_title", ""),
-        "slides": all_slides
-    }
+#     formatted = {
+#         "title": sample.get("presentation_title", ""),
+#         "slides": all_slides
+#     }
     
-    return json.dumps(formatted, indent=2)
+#     return json.dumps(formatted, indent=2)
 
 
 def generate_script(state: AgentState):
@@ -114,8 +114,8 @@ Title Slide MUST be exactly:
 
 Learning Objectives Slide MUST use this bulleted format:
    "In this tutorial, you will learn,
-      • Why prompting matters, and
-      • How clear instructions improve AI's outcomes."
+   • Why prompting matters, and
+   • How clear instructions improve AI's outcomes."
    
    Rules:
    - Start with "In this tutorial, you will learn,"
