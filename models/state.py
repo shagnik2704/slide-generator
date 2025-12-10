@@ -66,6 +66,7 @@ class AgentState(TypedDict):
     project_id: Optional[int]
     outline: Optional[str]
     mode: str
+    tutorial_type: Optional[str]  # "conceptual" or "demo"
     # Intermediate states for 4-node pipeline
     structured_outline: Optional[dict]  # Stage 1 output
     narration_script: Optional[dict]    # Stage 2 output

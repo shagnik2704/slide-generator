@@ -15,6 +15,7 @@ from models.state import AgentState
 from nodes.structure_node import generate_structure
 from nodes.narration_node import expand_narration
 from nodes.visuals_node import generate_visuals
+from nodes.type_detector import detect_tutorial_type
 
 # === QUALITY CONTROL ===
 from nodes.evaluator_node import evaluate_quality
@@ -35,7 +36,8 @@ from routing.router import route_step, route_evaluation
 # Build the graph
 builder = StateGraph(AgentState)
 
-# === 4-NODE SCRIPT GENERATION PIPELINE ===
+# === 5-NODE SCRIPT GENERATION PIPELINE ===
+builder.add_node("detect_type", detect_tutorial_type)         # Stage 0: Detect tutorial type
 builder.add_node("generate_structure", generate_structure)    # Stage 1
 builder.add_node("expand_narration", expand_narration)        # Stage 2
 builder.add_node("generate_visuals", generate_visuals)        # Stage 3
@@ -58,14 +60,15 @@ builder.add_node("create_video", create_video)
 
 # === ROUTING ===
 builder.add_conditional_edges(START, route_step, {
-    "script": "generate_structure",  # Changed: now starts with structure node
+    "script": "detect_type",  # Now starts with type detection
     "pdf": "generate_slide_content",
     "video": "generate_audio"
 })
 
 
-# === 4-NODE PIPELINE EDGES ===
-# Stage 1 -> Stage 2 -> Stage 3 -> Evaluator
+# === 5-NODE PIPELINE EDGES ===
+# Type Detection -> Stage 1 -> Stage 2 -> Stage 3 -> Evaluator
+builder.add_edge("detect_type", "generate_structure")
 builder.add_edge("generate_structure", "expand_narration")
 builder.add_edge("expand_narration", "generate_visuals")
 builder.add_edge("generate_visuals", "evaluator")

@@ -80,11 +80,11 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
         Paragraph(convert_bold_markdown(module), metadata_value_style)
     ])
     
-    # Episode
-    episode = json_data.get('episode', 'N/A')
+    # Tutorial (was Episode)
+    tutorial = json_data.get('episode', 'N/A')
     metadata_data.append([
-        Paragraph("<b>Episode</b>", metadata_label_style),
-        Paragraph(convert_bold_markdown(episode), metadata_value_style)
+        Paragraph("<b>Tutorial</b>", metadata_label_style),
+        Paragraph(convert_bold_markdown(tutorial), metadata_value_style)
     ])
     
     # Learning Objectives

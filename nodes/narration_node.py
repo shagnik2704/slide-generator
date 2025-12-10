@@ -14,12 +14,11 @@ load_dotenv()
 def expand_narration(state: AgentState):
     """
     Stage 2: Expand skeleton into full narration per slide.
-    
-    Input: StructuredOutline (from Stage 1)
-    Output: NarrationScript with full narration for each slide
+    Uses different styles for conceptual vs demo tutorials.
     """
     print("📝 Stage 2: Expanding narration...")
     structured_outline = state.get('structured_outline', {})
+    tutorial_type = state.get('tutorial_type', 'conceptual')
     
     if not structured_outline or not structured_outline.get('slides'):
         print("⚠️ No structured outline provided")
@@ -28,7 +27,31 @@ def expand_narration(state: AgentState):
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(NarrationScript)
     
-    prompt = f"""You are expanding a slide skeleton into FULL NARRATION for a Spoken Tutorial.
+    # Select prompt based on tutorial type
+    if tutorial_type == "demo":
+        prompt = get_demo_narration_prompt(structured_outline)
+    else:
+        prompt = get_conceptual_narration_prompt(structured_outline)
+    
+    try:
+        result = structured_llm.invoke(prompt)
+        narration_script = result.model_dump()
+        
+        slide_count = len(narration_script.get('slides', []))
+        print(f"✓ Stage 2 complete: {slide_count} slides with narration ({tutorial_type} mode)")
+        
+        return {"narration_script": narration_script}
+        
+    except Exception as e:
+        print(f"❌ Stage 2 failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"narration_script": {}}
+
+
+def get_conceptual_narration_prompt(structured_outline: dict) -> str:
+    """Prompt for conceptual tutorials - flowing narrative with analogies."""
+    return f"""You are expanding a slide skeleton into FULL NARRATION for a Spoken Tutorial.
 
 === INPUT: STRUCTURED OUTLINE ===
 {json.dumps(structured_outline, indent=2)}
@@ -47,164 +70,173 @@ def expand_narration(state: AgentState):
    - "So," / "Now," / "Well,"
    - "So, what exactly is..." → "What is..."
    - "Now, let's look at..." → Just start the content
-   - "This is really important because..." → State it directly
 
 2. REMOVE REDUNDANCY (CRITICAL)
-   Don't repeat or over-explain:
-   - "An API, or Application Programming Interface, is..." → "An API is..."
-   - "They act like a digital key for authentication. This controls access." → "API keys control access."
-   - Don't define acronyms if you've already used them
-   
-   AVOID these patterns:
-   - Saying the same thing twice: "X is for Y. It does Y." → Just say "X is for Y."
-   - Repeating a term 3+ times in one slide narration
-   - Restating what you just explained in different words
+   - Don't say the same thing twice: "X is for Y. It does Y." → Just say "X is for Y."
+   - Avoid repeating a term 3+ times in one slide
    - "The API delivers to the model. The model processes..." → "The model receives and processes..."
-   
-   
 
-3. ONE IDEA PER SLIDE
-   - Don't cram definition + example + analogy into one slide
-   - If content feels long, the structure stage should have split it
-
-4. ANALOGY REQUIRED FOR EVERY CONTENT TOPIC
+3. ANALOGY REQUIRED FOR EVERY CONTENT TOPIC
    - Every content slide MUST include a relatable analogy
-   - Use everyday scenarios: restaurant, library, traffic, school, keys, etc.
    - Pattern: "Think of X like Y..." or "Imagine X as Y..."
-   - Example: "API keys are like ID cards that let you into a building."
+   - Use everyday scenarios: restaurant, library, traffic, school, keys
 
-5. USE ACTIVE VOICE
+4. USE ACTIVE VOICE
    - "The request is sent to the API" → "You send a request to the API"
-   - "The data is processed" → "The API processes the data"
-
-6. AVOID META-EXPLANATIONS
-   - Don't say "Let me explain..." or "I will now show you..."
-   - Just explain or show directly
-
 
 === BOLD TERMS (for transliteration) ===
-If you are bolding a term,make sure you bold every occurrence of that term in the narration.    
-Use **bold** for technical terms:
-- AI tools: **AI**, **ChatGPT**, **Gemini**, **Claude**
-- Technical: **prompt**, **LLM**, **API**, **deepfake**
-- UI elements: **Enter**, **Submit**, **click**
-- Organizations: **EduPyramids**, **IIT Bombay**
+Use **bold** for technical terms: **AI**, **API**, **prompt**, **ChatGPT**, etc.
 
 === BOILERPLATE NARRATION ===
 
-Title Slide:
-"Welcome to this Spoken Tutorial on [presentation_title]."
+Title Slide: "Welcome to this Spoken Tutorial on [presentation_title]."
 
-Learning Objectives Slide (BULLETED FORMAT - EACH BULLET ≤80 CHARS):
-"In this tutorial, you will learn to,\\n• [short objective 1].\\n• [short objective 2].\\n• [short objective 3]."
-Each bullet must be SHORT and achievable. Example: "• Define what an API is."
+Learning Objectives Slide:
+"In this tutorial, you will learn to,\\n• [objective 1].\\n• [objective 2].\\n• [objective 3]."
 
-System Requirements Slide:
-"Here I am using a browser on a computer or mobile."
+System Requirements Slide: "Here I am using a browser on a computer or mobile."
 
-Pre-requisite Slide:
-"To follow this tutorial, you should [prerequisites].
-Summary Slide:
-"Let us summarize what we learned.\\n[brief conversational recap]"
+Pre-requisite Slide: "To follow this tutorial, you should [prerequisites]."
 
-Assignment Slide:
-"Now as an assignment,\\n[simple practice task].\\nCompare the results."
+Summary Slide: "Let us summarize what we learned.\\n[brief recap]"
 
-Thank You Slide:
-"This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
+Assignment Slide: "Now as an assignment,\\n[simple practice task].\\nCompare the results."
+
+Thank You Slide: "This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
+
+=== REAL-LIFE EXAMPLE SLIDE (REQUIRED) ===
+
+Include ONE slide showing an EVERYDAY SCENARIO that demonstrates the concept:
+
+PATTERN:
+1. Start with a relatable action: "Open any grocery app on your phone."
+2. Show user interaction: "Tap the search bar. Type 'tomato'."
+3. Explain what happens behind the scenes: "The app sends a request to the **API**."
+4. Describe the process: "The **API** searches for matching products."
+5. Show the result: "You see the tomato products on your screen."
+6. Optionally show edge case: "If no products are found, the **API** returns an empty list."
+
+EXAMPLE NARRATION:
+"Let's see how this works in real life.
+Open any grocery app on your phone.
+Tap the search bar at the top.
+Type 'tomato' and press search.
+Behind the scenes, the app sends a request to the **API**.
+The **API** searches for all matching products.
+The server sends back a list of results.
+You now see all tomato products on your screen.
+This is an **API** in action!"
+
+USE EVERYDAY APPS: grocery apps, food delivery, ride sharing, weather apps, etc.
 
 === NARRATIVE FLOW FOR CONTENT SLIDES ===
 
-Apply these 6 narrative patterns:
+1. BRIDGE SCENE ANTICIPATION - Build curiosity before explaining
+2. LINK ACTION TO REFLECTION - Prompt learner to think
+3. SMOOTH TRANSITIONS - Connect slides naturally
+4. BE SPECIFIC - Avoid vague statements
 
-1. BRIDGE SCENE ANTICIPATION
-   Build curiosity before explaining:
-   - "What if I told you AI can create a video of someone saying something they never said?"
-   - "Imagine watching a news clip that looks completely real, but isn't."
+Expand EVERY slide's 'notes' into full conversational 'narration' with analogies."""
+
+
+def get_demo_narration_prompt(structured_outline: dict) -> str:
+    """Prompt for demo tutorials - action-focused step-by-step instructions."""
+    return f"""You are expanding a slide skeleton into STEP-BY-STEP NARRATION for a Demo Tutorial.
+
+=== INPUT: STRUCTURED OUTLINE ===
+{json.dumps(structured_outline, indent=2)}
+
+=== DEMO WRITING STYLE ===
+- Write like you're GUIDING someone through a software task
+- Short, imperative sentences - one action at a time
+- Simple Indian English (easy to translate)
+- Each sentence on a NEW LINE (use \\n) for TTS
+- Sentences should be ≤ 80 characters
+
+=== SHARED QUALITY RULES (APPLY TO ALL TUTORIALS) ===
+
+1. CUT FILLER PHRASES
+   Remove these unnecessary starters:
+   - "So," / "Now," / "Well," / "Alright,"
+   - "Let's go ahead and..." → Just start the action
+   - "What we need to do is..." → Just state the action
+
+2. REMOVE REDUNDANCY (CRITICAL)
+   - Don't say the same thing twice
+   - Avoid repeating a term 3+ times in one slide
+   - "Click the button. The button will..." → "Click the button. It will..."
+
+3. USE ACTIVE VOICE
+   - "The button is clicked" → "Click the button"
+   - "The key will be generated" → "A new key appears"
+
+=== DEMO-SPECIFIC RULES ===
+
+1. USE ACTION VERBS (START EACH SENTENCE WITH)
+   - Open, Click, Type, Select, Navigate, Copy, Paste, Scroll
+   - Example: "Click on Get API Key."
+   - Example: "Type your project name in the text box."
+
+2. NO ANALOGIES NEEDED
+   - Demo tutorials focus on DOING, not explaining concepts
+   - Just tell them what to do, not why it works
+
+3. ONE ACTION = ONE SENTENCE
+   - "Open the browser. Go to aistudio.google.com."
+   - NOT: "Open the browser and navigate to the AI Studio website where you can create API keys."
+
+4. INCLUDE VERIFICATION CUES
+   - After key actions, tell them what they should see:
+   - "You will see a list of your API keys."
+   - "The key appears on the screen."
+
+5. BE SCREEN-CENTRIC WITH EXPLICIT LOCATIONS (CRITICAL)
+   Always describe WHERE elements are located on screen:
    
-2. LINK ACTION TO REFLECTION
-   After showing something, prompt the learner to think:
-   - "Watch closely. Can you spot what's fake here?"
-   - "Pause for a moment. What did you notice?"
-   - "Think about it. How would you feel if this happened to you?"
+   POSITIONS TO USE:
+   - "In the **top right corner**..."
+   - "On the **left panel**..." / "In the **left sidebar**..."
+   - "At the **bottom of the page**..."
+   - "In the **center of the screen**..."
+   - "Below the **search bar**..."
+   - "Next to the **profile icon**..."
+   
+   EXAMPLES:
+   - "In the **top right corner**, click **Sign In**."
+   - "On the **left panel**, click **Get API Key**."
+   - "At the **bottom of the dialog box**, click **Create**."
+   - "In the **text box** at the center, type your project name."
+   
+   BAD (no location):
+   - "Click Sign In." (WHERE is it?)
+   - "Click Settings." (WHERE on the screen?)
+   
+   GOOD (with location):
+   - "In the **top right corner**, click **Sign In**."
+   - "On the **left panel**, click **Settings**."
 
-3. CONNECT OBSERVATION TO TIMING
-   Point out WHEN and WHAT to notice:
-   - "Notice how the lips sync perfectly with the audio."
-   - "At this point, look at the edges of the face."
-   - "See what happens when I click Submit."
+=== BOLD TERMS ===
+Use **bold** for:
+- Button names: **Create API Key**, **Submit**, **Copy**
+- Menu items: **Settings**, **API Keys**
+- Important UI elements: **left panel**, **text box**
 
-4. TIE MOTIVATION TO ACTION
-   Explain WHY the learner should care:
-   - "This could happen to you or someone you know."
-   - "That's why learning to spot deepfakes matters."
-   - "Understanding this protects you from being fooled."
+=== BOILERPLATE NARRATION ===
 
-5. SMOOTH TRANSITION TO NEW ACTION
-   Connect slides naturally:
-   - "Now that we've seen the problem, let's look at solutions."
-   - "But here's where it gets interesting..."
-   - "With that in mind, let's move to..."
+Title Slide: "Welcome to this Spoken Tutorial on [presentation_title]."
 
-6. IMPROVE ACCURACY AND CLARITY
-   Be specific, not vague:
-   - Instead of "It looks real" → "The skin texture and lighting match perfectly."
-   - Instead of "This is dangerous" → "This can ruin someone's career in hours."
+Learning Objectives Slide:
+"In this tutorial, you will learn to,\\n• [action objective 1].\\n• [action objective 2]."
 
-=== EXAMPLE OF GOOD NARRATION ===
+System Requirements Slide: "Here I am using a browser on a computer.\\nYou will need [specific requirements]."
 
-"What if I told you that someone could create a video of you saying something you never said?
-That's exactly what **deepfakes** can do.
-Watch this example closely.
-Notice how the lips move perfectly with the audio.
-It looks completely real, but it's entirely fake.
-This could happen to anyone, including you.
-That's why understanding **deepfakes** is so important."
+Pre-requisite Slide: "To follow this tutorial, you should have [prerequisites]."
 
-=== EXAMPLE OF REAL-LIFE APP DEMO (use for practical explanations) ===
+Summary Slide: "Let us summarize what we did.\\n[recap of key actions]"
 
-"Let's see how **APIs** work in real life.
-Open any grocery app on your phone.
-Tap the search bar and type tomato.
-The app sends a request to the **API**.
-The **API** searches for matching products.
-It sends back a list of tomato products.
-The app displays these products on your screen.
-That's an **API** working behind the scenes!"
+Assignment Slide: "Now as an assignment,\\n[practice task].\\nCompare the results."
 
-USE THIS PATTERN WHEN:
-- Explaining how a concept works in practice
-- Making abstract concepts tangible
-- Use generic app names: "any grocery app", "any music app", "any food delivery app"
+Thank You Slide: "This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
 
-=== EXAMPLE OF BAD NARRATION (too choppy, no flow) ===
+Expand EVERY slide's 'notes' into clear action-focused narration."""
 
-"What is a deepfake?
-It is a fake video.
-AI creates it.
-It looks real.
-It is dangerous."
-
-=== TRANSITIONS ===
-Connect slides naturally,these are some examples:
-- "Now, let's move to..."
-- "But here's the problem..."
-- "With that understanding, let's see..."
-- "See the difference?"
-
-Expand EVERY slide's 'notes' into full conversational 'narration' using these patterns."""
-
-    try:
-        result = structured_llm.invoke(prompt)
-        narration_script = result.model_dump()
-        
-        slide_count = len(narration_script.get('slides', []))
-        print(f"✓ Stage 2 complete: {slide_count} slides with narration")
-        
-        return {"narration_script": narration_script}
-        
-    except Exception as e:
-        print(f"❌ Stage 2 failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"narration_script": {}}
