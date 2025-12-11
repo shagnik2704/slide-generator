@@ -1,0 +1,130 @@
+{
+  "presentation_title": "Spoken Tutorial on Your First AI Application",
+  "module": "Module 3: An introduction to Building",
+  "episode": "3.3: Hands-On Project: Your First AI Application",
+  "learning_objectives": [
+    "Explain what an API is.",
+    "Identify how to get a Google AI Studio API key.",
+    "Apply Python code to interact with the Gemini API.",
+    "Generate marketing slogans using an AI model."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Understanding APIs",
+    "Introduction to Gemini API",
+    "Getting your API Key",
+    "Setting up Google Colab",
+    "Installing and configuring the Gemini API",
+    "Initializing the AI model",
+    "Defining the product topic",
+    "Crafting effective prompts",
+    "Comparing prompt effectiveness",
+    "Running your AI application",
+    "Experimenting with challenges"
+  ],
+  "meta_tags": [
+    "AI application",
+    "Gemini API",
+    "Python",
+    "Google Colab",
+    "API key",
+    "marketing slogans",
+    "generative AI",
+    "hands-on project",
+    "AI Essentials",
+    "coding"
+  ],
+  "prerequisites": "Episode 1 and 2 of this Module",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Your First AI Application",
+      "narration": "Welcome to this Spoken Tutorial on **Your First AI Application**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Explain what an **API** is.\n\u2022 Identify how to get a **Google AI Studio API key**.\n\u2022 Apply **Python** code to interact with the **Gemini API**.\n\u2022 Generate marketing slogans using an **AI** model.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "To follow this tutorial, you should have watched **Episode 1**.\nAlso watch **Episode 2** of this **Module**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API?",
+      "narration": "What exactly is an **API**?\nThink of an **API**, or **Application Programming Interface**.\nIt is like a waiter in a restaurant.\nYou tell the waiter what you want.\nThe waiter then communicates with the kitchen to get it.\nYou don't need to know how the food is prepared.\nSimilarly, an **API** connects your application to a server.",
+      "image_prompt": "Illustration showing an API as a waiter connecting a customer (application) to a kitchen (server)"
+    },
+    {
+      "title": "Introducing the Gemini API",
+      "narration": "Now, let's introduce the **Gemini API**.\nContinuing our analogy, the **Gemini API** is like a specialized chef.\nThis chef can create unique dishes, such as marketing slogans.\nIt does this based on your specific requests.\nIt makes **Google's** powerful **AI** model accessible to developers.",
+      "image_prompt": "Illustration showing Gemini API as a specialized chef creating unique dishes like marketing slogans"
+    },
+    {
+      "title": "Step 1: Get Your API Key",
+      "narration": "First, navigate to **Google AI Studio**.\n**Sign in** with your **Google** account.\n**Click** on **Get API key**.\nThis creates a new **API key**.\nThen, **copy** this **API key**.\nRemember to keep your **API key** secure.",
+      "image_prompt": "Browser showing Google AI Studio interface with 'Get API key' button highlighted, user clicking it"
+    },
+    {
+      "title": "Step 2: Open Google Colab",
+      "narration": "Next, open a new **Google Colab** notebook.\nDo this directly in your browser.\n**Google Colab** provides a **Python** environment.\nHere you will write and run your code.",
+      "image_prompt": "Browser showing a new Google Colab notebook interface"
+    },
+    {
+      "title": "Step 3: Install & Configure Gemini API",
+      "narration": "In **Colab**, first install the generative **AI** package.\nUse `!pip install` for this.\nThen, **import** and configure it.\nUse your copied **API key** with `genai.configure`.",
+      "image_prompt": "Screen close-up: user typing '!pip install google-generativeai' and 'genai.configure(api_key=\"YOUR_API_KEY\")' in Google Colab"
+    },
+    {
+      "title": "Step 4: Initialize the Gemini Model",
+      "narration": "Now, initialize the **gemini-pro** model.\nCreate an instance of `genai.GenerativeModel`.\nThis prepares the model.\nIt will then receive your **prompts**.",
+      "image_prompt": "Screen close-up: user typing 'model = genai.GenerativeModel(\"gemini-pro\")' in Google Colab"
+    },
+    {
+      "title": "Vague Prompt Example: Defining Product",
+      "narration": "Let us define our product topic.\nStore it in a variable.\nFor example, `product_topic = 'a new brand of eco-friendly sneakers'`.\nThis will be the basis for our marketing slogans.",
+      "image_prompt": "Screen close-up: user typing 'product_topic = 'a new brand of eco-friendly sneakers'' in Google Colab"
+    },
+    {
+      "title": "Improved Prompt: Crafting Slogans",
+      "narration": "Now, let's craft an improved **prompt**.\nMake it clear and specific.\nFor example, `prompt = f\"Create 5 catchy marketing slogans for {product_topic}\"`.\nThis guides the **AI** model.\nIt generates relevant output.",
+      "image_prompt": "Screen close-up: user typing 'prompt = f\"Create 5 catchy marketing slogans for {product_topic}\"' in Google Colab"
+    },
+    {
+      "title": "Comparing Prompt Effectiveness",
+      "narration": "Let's compare **prompt** effectiveness.\nA vague **prompt**, like 'slogans for sneakers', gives generic results.\nBut a specific **prompt** directs the **AI**.\nFor example, a prompt can be crafted.\nUse 'Create 5 catchy marketing slogans for a new brand of eco-friendly sneakers'.\nThis produces targeted and useful output.",
+      "image_prompt": "Side-by-side: vague prompt 'slogans for sneakers' output vs improved prompt 'Create 5 catchy marketing slogans for a new brand of eco-friendly sneakers' output"
+    },
+    {
+      "title": "Step 5: Run Your AI Application",
+      "narration": "Now, run your **AI** application.\n**Press** the **play button** next to your code block in **Colab**.\nThe **AI** processes your **prompt**.\nIt will **print** the generated marketing slogans.\nThis happens in a few seconds.",
+      "image_prompt": "Google Colab screen showing code block with play button, AI generating response below"
+    },
+    {
+      "title": "Challenge: Experiment with Products",
+      "narration": "Here is a challenge for you.\nModify the `product_topic` variable.\nExplore different products, like 'a new spicy hot sauce'.\nOr try 'a productivity app'.\nObserve the **AI's** varied slogan creations.",
+      "image_prompt": "Screen close-up: user modifying 'product_topic' variable in Google Colab, with a thought bubble indicating experimentation"
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe learned about **APIs**.\nWe obtained an **API key**.\nWe set up **Google Colab**.\nFinally, we built our first **AI** application.\nThis generates marketing slogans using the **Gemini API**.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now, for an assignment, experiment with different product topics.\nAlso, try various **prompt** structures.\nGenerate diverse marketing slogans.\nTry to add constraints to your **prompt**.\nFor example, add constraints like 'slogans under 10 words'.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This tutorial is by **EduPyramids Educational Services Private Limited**.\nIt is also by **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

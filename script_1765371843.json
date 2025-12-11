@@ -1,0 +1,69 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding API",
+  "module": "Module 3: An Introduction to Building with AI",
+  "episode": "2. Understanding API",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API in AI applications.",
+    "Identify the components of an API interaction."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Understanding API: The Restaurant Waiter Analogy"
+  ],
+  "meta_tags": [
+    "API",
+    "Artificial Intelligence",
+    "AI development",
+    "prompt engineering",
+    "application programming interface",
+    "software integration",
+    "AI models",
+    "data exchange",
+    "programming",
+    "tutorial"
+  ],
+  "prerequisites": "Module 2: Art of the Prompt",
+  "slides": [
+    {
+      "title": "Title Slide",
+      "narration": "Welcome to this Spoken Tutorial on Understanding API.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\u2022 Define what an **API** is.\n\u2022 Explain the role of an **API** in **AI** applications.\n\u2022 Identify the components of an **API** interaction.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have completed Module 2: Art of the Prompt.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? The Restaurant Waiter Analogy",
+      "narration": "Have you ever wondered how different apps talk to each other?\nOr how an app gets information from a large **AI** model?\nImagine you are at a restaurant.\nYou want to order some food, right?\nYou don't go into the kitchen yourself to tell the chef.\nInstead, you tell the waiter what you want.\nThe waiter takes your order to the kitchen.\nThe chef prepares the food.\nThen, the waiter brings the food back to you.\nIn this scenario, the waiter is like an **API**.\nAn **API**, or **Application Programming Interface**, is a messenger.\nIt allows different software applications to communicate.\nIt takes your request and delivers it to another system.\nThen, it brings the response back to you.\nThis is how your apps can use powerful **AI** models.\nWithout an **API**, every app would need its own kitchen.",
+      "image_prompt": "Illustration showing API as a waiter in a restaurant, connecting a customer (app) to a kitchen (AI model)."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined what an **API** is.\nWe explained its role in **AI** applications.\nAnd we identified **API** interaction components.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now, for your assignment, consider this task:\nThink of an app you use daily.\nIdentify a possible **API** interaction within it.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is presented by **EduPyramids Educational Services Private Limited**.\nIt is also supported by **SINE** and **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

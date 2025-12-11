@@ -1,0 +1,102 @@
+{
+  "presentation_title": "Spoken Tutorial on Creating Your Own API Key",
+  "module": "Module 3: Gentle Introduction to Building with AI",
+  "episode": "2. Creating Your Own API Key",
+  "learning_objectives": [
+    "Navigate to Google AI Studio's API Key section.",
+    "Generate a new API key within a project.",
+    "Copy and verify the created API key."
+  ],
+  "duration": "3-5 min",
+  "outline": [
+    "Introduction to API Keys",
+    "Accessing Google AI Studio",
+    "Navigating to the API Key Section",
+    "Generating a New API Key",
+    "Copying the API Key",
+    "Verifying API Key Creation",
+    "Summary and Next Steps"
+  ],
+  "meta_tags": [
+    "API key",
+    "Gemini Studio",
+    "Google AI Studio",
+    "create API key",
+    "generate API key",
+    "developer access",
+    "authentication",
+    "AI tutorial",
+    "LLM access",
+    "setup",
+    "credentials",
+    "cloud"
+  ],
+  "prerequisites": "Module 2: Art of the Prompt, A Google account",
+  "slides": [
+    {
+      "title": "Spoken Tutorial: Creating Your Own API Key",
+      "narration": "Welcome to this Spoken Tutorial on Creating Your Own API Key.\nThis key is your gateway to interacting with powerful AI models.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Navigate to Google AI Studio's API Key section.\n\u2022 Generate a new API key within a project.\n\u2022 Copy and verify the created API key.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer.\nYou will need a web browser (Chrome, Firefox, Edge) and an active Google account.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "This tutorial requires Module 2: Art of the Prompt and a Google account.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "Open Google AI Studio Website",
+      "narration": "Open your web browser.\nGo to aistudio.google.com.",
+      "image_prompt": "Browser showing aistudio.google.com"
+    },
+    {
+      "title": "Sign In with Google Account",
+      "narration": "Sign in with your Google account.\nEnter your credentials.\nYou are now logged in to **Google AI Studio**.",
+      "image_prompt": "Screen close-up: Google sign-in page with credentials input fields"
+    },
+    {
+      "title": "Navigate to Get API Key",
+      "narration": "On the **left-hand navigation panel**, click **Get API Key**.\nThis section is where you manage your access credentials for Google AI services.\nYou will see the **API Key** section.",
+      "image_prompt": "Screen close-up: Google AI Studio dashboard with 'Get API Key' in left navigation panel highlighted"
+    },
+    {
+      "title": "Create a New API Key",
+      "narration": "Click **Create API Key in new project**.\nNotice how quickly the key is generated.\nA new **API key** will appear, allowing you to build your own intelligent applications.",
+      "image_prompt": "Screen close-up: Google AI Studio's API Key section, 'Create API Key in new project' button highlighted"
+    },
+    {
+      "title": "Copy the Generated API Key",
+      "narration": "Click the **copy icon** next to the **API key**.\nThink about why securely copying this key is important.\nThe **API key** is now copied to your clipboard.",
+      "image_prompt": "Screen close-up: Google AI Studio's API Key section, copy icon next to the newly generated API key highlighted"
+    },
+    {
+      "title": "Verify API Key Creation",
+      "narration": "At this point, observe the new **API key** appearing in your list.\nLook under the **Your API keys** section.\nThis confirms its successful creation and readiness for use.",
+      "image_prompt": "Screen close-up: Google AI Studio's API Key section, 'Your API keys' list showing the new API key"
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we did.\nWe navigated Google AI Studio.\nWe generated an API key.\nWe securely copied it for use in projects.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "For your assignment, create a new Python script.\nPaste your API key into it.\nMake a simple API call.\nVerify its functionality.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

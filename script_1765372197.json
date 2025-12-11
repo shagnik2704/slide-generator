@@ -1,0 +1,69 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding API",
+  "module": "Module 3: An Introduction to Building with AI",
+  "episode": "2. Understanding API",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API in AI applications.",
+    "Identify how an API facilitates interaction with AI models."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Understanding API"
+  ],
+  "meta_tags": [
+    "API",
+    "Application Programming Interface",
+    "AI",
+    "Artificial Intelligence",
+    "Spoken Tutorial",
+    "Programming",
+    "Development",
+    "AI Models",
+    "Integration",
+    "Software"
+  ],
+  "prerequisites": "Module 2: Art of the Prompt",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Understanding API",
+      "narration": "Welcome to this Spoken Tutorial on Understanding **API**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Define what an **API** is.\n\u2022 Explain the role of an **API** in **AI** applications.\n\u2022 Identify how an **API** facilitates interaction with **AI** models.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "To follow this tutorial, you should have completed Module 2: Art of the **Prompt**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? The Restaurant Waiter Analogy",
+      "narration": "What exactly is an **API**?\nAn **API** acts as a messenger.\nIt helps applications talk to **AI** models.\nImagine an **API** is like a restaurant waiter.\nYou give your order, which is a **prompt**.\nThe waiter takes it to the kitchen, the **AI** model.\nThe kitchen prepares your food, the **AI** response.\nThe waiter brings it back to you.\nYou don't need to know how the food is made.\nThe **API** handles all communication for you.",
+      "image_prompt": "Illustration showing a restaurant waiter taking an order from a customer and delivering it to the kitchen, representing an API connecting an application to an AI model."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe understood that an **API** acts as a messenger.\nIt connects applications with **AI** models.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now, here is an assignment for you. Think of another everyday analogy to explain how an **API** works. Compare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by **EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**. Thank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

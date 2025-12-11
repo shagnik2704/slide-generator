@@ -1,0 +1,111 @@
+{
+  "presentation_title": "Spoken Tutorial on First Project",
+  "module": "An introduction to Building",
+  "episode": "3. First Project",
+  "learning_objectives": [
+    "Define the purpose of a project setup.",
+    "Identify steps to set up a development environment.",
+    "Apply the Gemini API key for authentication.",
+    "Explain how to create and send an API request."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "Project Overview",
+    "Obtaining an API Key",
+    "Setting Up Google Colab and Dependencies",
+    "Configuring the Gemini API and Model",
+    "Crafting and Sending an API Request",
+    "Displaying AI Responses"
+  ],
+  "meta_tags": [
+    "Gemini API",
+    "Google Colab",
+    "AI Project",
+    "API Key",
+    "Prompt Engineering",
+    "Spoken Tutorial",
+    "AI Model",
+    "API Request",
+    "Python",
+    "Development Setup",
+    "Generative AI"
+  ],
+  "prerequisites": "Episode 1 and 2 of this Module",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on First Project",
+      "narration": "Welcome to this Spoken Tutorial on **First Project**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Define project setup.\n\u2022 Set up a development environment.\n\u2022 Apply the **Gemini API key**.\n\u2022 Create and send an **API** request.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "To follow this tutorial, you should have completed **Episode 1**.\nAlso, you should have completed **Episode 2 of this Module**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is a Project Overview?",
+      "narration": "What is a **project overview**?\nThink of it like a blueprint for building a house.\nIt outlines what you will build and why.\nIt also shows the main components involved.\nThis ensures everyone understands the goal.\nThis happens before you even start.",
+      "image_prompt": "Illustration showing project overview with blueprint and house icons"
+    },
+    {
+      "title": "How to Get Your Gemini API Key",
+      "narration": "First, navigate to the **Google AI Studio**.\nLocate the 'Get **API Key**' section there.\nThen, generate a new **API key**.\nThis **key** grants your project access to **Gemini's** features.\nIt is essential for authentication.",
+      "image_prompt": "Browser showing Google AI Studio interface with 'Get API Key' section highlighted"
+    },
+    {
+      "title": "Setting Up Your Development Environment",
+      "narration": "Next, open **Google Colab** in your browser.\nInstall necessary **Python** packages.\nFor example, use `pip install google-generativeai`.\nThis sets up your development environment.",
+      "image_prompt": "Screen close-up: user typing 'pip install google-generativeai...' in Google Colab"
+    },
+    {
+      "title": "Configuring Gemini API and Initializing the Model",
+      "narration": "Import the `google.generativeai` library.\nConfigure it with your **API key**.\nThen, initialize the **Gemini AI model** you want to use.\nThis prepares the **model** for interaction.",
+      "image_prompt": "Screen close-up: user typing 'import google.generativeai...' and configuring API key"
+    },
+    {
+      "title": "Crafting Your First Prompt: Vague Example",
+      "narration": "Now, let's craft your first **prompt**.\nDefine a product topic, like 'make a new product'.\nThen, create a simple, unspecific **prompt**.\nFor example, 'write a product description'.",
+      "image_prompt": "Screen close-up: user typing 'write a product description' into a prompt input field"
+    },
+    {
+      "title": "Crafting Your First Prompt: Improved Example",
+      "narration": "Let's improve this **prompt**.\nRefine your product topic to be specific.\nFor instance, choose 'a smart reusable coffee cup'.\nNow, create a detailed **prompt**.\nIt should ask for a compelling product description.\nRemember to highlight its eco-friendliness.\nAlso, include temperature control and app integration.",
+      "image_prompt": "Screen close-up: user typing 'Write a compelling product description for a smart reusable coffee cup...' into a prompt input field"
+    },
+    {
+      "title": "Comparing Vague vs. Improved Prompts",
+      "narration": "Compare the two **prompts**.\nNotice how the improved **prompt** yields a richer description.\nIt is also more relevant.\nThe vague one gives a general response.",
+      "image_prompt": "Side-by-side: vague prompt output vs improved prompt output"
+    },
+    {
+      "title": "Sending the Request and Displaying AI Response",
+      "narration": "Use the initialized **model** to send your **prompt**.\nThis goes as an **API request**.\nOnce the **request** is processed, display it.\nSee the generated **AI response**.",
+      "image_prompt": "AI generating response on screen, showing the output of the improved prompt"
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe set up a development environment.\nWe configured the **Gemini API**.\nThen, we crafted effective **prompts**.\nFinally, we retrieved **AI responses**.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Challenge Activity",
+      "narration": "Now, for an assignment, try creating a new product topic.\nDevelop a more detailed **prompt** for it.\nGenerate a unique description.\nExperiment with different **model** parameters.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is presented by **EduPyramids Educational Services Private Limited**.\nIt is also brought to you by **SINE**.\nAnd by **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

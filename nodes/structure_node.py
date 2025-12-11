@@ -60,9 +60,15 @@ def get_conceptual_prompt(outline: str) -> str:
 - learning_objectives: FEW SIMPLE objectives (each ≤80 chars, achievable by end of tutorial)
   - Use Bloom's verbs: Define, Explain, Identify, Apply
   - Keep SHORT: "Define what an API is." NOT "Define and explain the comprehensive role of APIs in modern software development."
-- prerequisites: Extract EXACTLY from outline if mentioned (e.g., "Episode 2: Basics of Python")
+- prerequisites: Based on the concept,add one line at the end "Please refer to our website for more detail"
 - meta_tags: 8-12 relevant keywords
-- outline: List ONLY content topics (not boilerplate slide names)
+- outline: Extract ONLY topics from the user's outline (DO NOT invent new topics)
+
+=== STRICT TOPIC RULE (CRITICAL) ===
+- Use ONLY topics provided in the user's outline
+- DO NOT add, invent, or infer new topics not explicitly mentioned
+- If the user lists 3 topics, create slides for those 3 topics only
+- The Vague → Improved → Compare demo should use the user's existing topics, not create new ones
 
 === SLIDE COUNT (STRICT) ===
 - TOTAL: 1-20 slides MAX
@@ -80,9 +86,10 @@ def get_conceptual_prompt(outline: str) -> str:
    - Blend topic intro into the first content slide
    - Skip slides that just say "Now let's look at..."
 
-3. VAGUE → IMPROVED → COMPARE: ONLY ONCE
-   - This 3-slide pattern should appear ONLY for the main demo
-   - Other topics: just explain without the full comparison flow
+3. VAGUE → IMPROVED → COMPARE: OPTIONAL
+   - Only include this pattern if the topic naturally involves comparison (e.g., prompting, writing, communication)
+   - Skip for purely definitional topics (e.g., "What is an API?")
+   - If included, use ONE set only for the main comparison point
 
 4. SKIP BENEFIT/DETAIL SLIDES
    - Don't create separate slides for "Why X matters" or "Benefits of X"
@@ -119,7 +126,7 @@ BOILERPLATE (ending):
 - Assignment Slide
 - Thank You Slide
 
-=== EXAMPLE STRUCTURE FOR 4-TOPIC OUTLINE ===
+=== EXAMPLE STRUCTURE FOR 3-TOPIC OUTLINE ===
 1. Title (boilerplate)
 2. LOs (boilerplate)
 3. SysReq (boilerplate)
@@ -128,12 +135,14 @@ BOILERPLATE (ending):
 6. Topic 2: What + Analogy (content)
 7. Real-Life Example: Everyday scenario (example)
 8. Topic 3: What + Analogy (content)
-9. Main Demo: Vague Example (demo)
-10. Main Demo: Improved Example (demo)
-11. Main Demo: Comparison (demo)
-12. Summary (boilerplate)
-13. Assignment (boilerplate)
-14. Thank You (boilerplate)
+9. Summary (boilerplate)
+10. Assignment (boilerplate)
+11. Thank You (boilerplate)
+
+NOTE: If topic involves comparison (prompting, writing), add:
+- Vague Example (demo)
+- Improved Example (demo)
+- Comparison (demo)
 
 === USER OUTLINE ===
 {outline}
@@ -153,9 +162,14 @@ def get_demo_prompt(outline: str) -> str:
 - learning_objectives: FEW ACTION-based objectives (each ≤80 chars)
   - Use action verbs: Create, Set up, Configure, Navigate, Generate
   - Example: "Create an API key in Google AI Studio."
-- prerequisites: Extract from outline (often includes account setup)
+- prerequisites: Based on the concept,add one line at the end "Please refer to our website for more detail"
 - meta_tags: 8-12 relevant keywords
-- outline: List each MAJOR ACTION step
+- outline: Extract ONLY action steps from the user's outline (DO NOT invent new steps)
+
+=== STRICT TOPIC RULE (CRITICAL) ===
+- Use ONLY action steps provided in the user's outline
+- DO NOT add, invent, or infer new steps not explicitly mentioned
+- If the user lists 5 steps, create slides for those 5 steps only
 
 === SLIDE COUNT (STRICT) ===
 - TOTAL: 10-18 slides MAX

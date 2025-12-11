@@ -1,0 +1,89 @@
+{
+  "presentation_title": "Spoken Tutorial on Building with AI",
+  "module": "AI Essentials",
+  "episode": "3. Introduction to APIs",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the purpose of an API key.",
+    "Identify components of an API request.",
+    "Apply the concept of API to real-world applications."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "API",
+    "API Key",
+    "API Request",
+    "AI",
+    "Building with AI",
+    "Spoken Tutorial",
+    "Programming",
+    "Integration",
+    "Software Development",
+    "Authentication",
+    "Prompting"
+  ],
+  "prerequisites": "Episode 2: Art of the Prompt",
+  "outline": [
+    "What is an API?",
+    "Understanding API Keys",
+    "Anatomy of an API Request",
+    "Real-world API Application"
+  ],
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Building with AI",
+      "narration": "Welcome to this Spoken Tutorial on Building with **AI**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\u2022 Define what an **API** is.\n\u2022 Explain the purpose of an **API key**.\n\u2022 Identify components of an **API request**.\n\u2022 Apply the concept of **API** to real-world applications.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have completed Episode 2: Art of the **Prompt**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? Your Restaurant Waiter",
+      "narration": "Have you ever wondered how different software talks to each other?\nAn **API** acts like a messenger.\nIt takes your request and tells a system what you want to do.\nThen, it brings back the response to you.\nThink of an **API** like a waiter at a restaurant.\nYou give your order to the waiter.\nThe waiter takes it to the kitchen, which is like an **AI** model.\nThen, the waiter brings your food back to you.\nThe **API** delivers the **AI** output.",
+      "image_prompt": "Illustration of a waiter taking an order from a customer and bringing food from a kitchen"
+    },
+    {
+      "title": "What is an API Key? Your Restaurant ID",
+      "narration": "Now, how does the system know it's you making the request?\nThis is where an **API key** comes in.\nAn **API key** is like your secret password or token.\nIt identifies you as an authorized user.\nImagine showing your ID card to order food at a restaurant.\nThe **API key** ensures only legitimate requests are processed.\nIt verifies that your request comes from a trusted source.\nThis protects the **AI** model from unauthorized access.",
+      "image_prompt": "Illustration of a person showing an ID card to a waiter at a restaurant"
+    },
+    {
+      "title": "What is an API Request? Placing Your Order",
+      "narration": "With your **API key** ready, you can now make an **API request**.\nAn **API request** is simply sending information to the **AI** model.\nYou send it through the **API**.\nThis request includes your **API key** for authentication.\nIt also contains your specific instruction or **prompt**.\nThink of this as placing your order with the waiter.\nThe **API** transmits this request to the **AI** model.\nThe model processes your instruction.\nThen, it sends back the desired output to you.",
+      "image_prompt": "Illustration of a person placing an order with a waiter"
+    },
+    {
+      "title": "API in Action: Food Delivery App",
+      "narration": "Let's see how **API** works in a real-world app.\nImagine you open a food delivery app on your phone.\nYou browse the menu and place an order.\nThe app does not directly talk to the restaurant.\nInstead, it sends an **API request** to the delivery platform's server.\nThis request has your order details and your **API key**.\nThe delivery platform's server then uses another **API**.\nIt communicates with the restaurant's system.\nIt relays your order to the restaurant.\nIt also receives status updates, like 'Order accepted.'\nAll this happens smoothly behind the scenes, thanks to **APIs**.",
+      "image_prompt": "Illustration of a person using a food delivery app on a smartphone"
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **APIs** as digital messengers.\nWe understood **API keys** as identification for access.\nWe learned that an **API request** is like placing an order.\nWe also saw how **APIs** power apps like food delivery.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nThink of another everyday application.\nDescribe how an **API** might work behind the scenes.\nShare your example with a friend or colleague.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

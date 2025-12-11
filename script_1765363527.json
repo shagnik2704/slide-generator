@@ -1,0 +1,83 @@
+{
+  "presentation_title": "Spoken Tutorial on An Introduction to Building with AI",
+  "module": "Module 3: An Introduction to Building with AI",
+  "episode": "3. Introduction to Building with AI",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the purpose of an API key.",
+    "Identify the components of an API request.",
+    "Apply APIs in a real-world scenario."
+  ],
+  "duration": "3-4 min",
+  "outline": [
+    "What is an API?",
+    "Understanding API Keys",
+    "Making an API Request",
+    "Real-Life API Application"
+  ],
+  "meta_tags": [
+    "API",
+    "AI",
+    "Artificial Intelligence",
+    "API Key",
+    "API Request",
+    "Building with AI",
+    "AI development",
+    "programming",
+    "integration",
+    "Spoken Tutorial"
+  ],
+  "prerequisites": "Module 2:Art of the Prompt",
+  "slides": [
+    {
+      "title": "Spoken Tutorial on An Introduction to Building with AI",
+      "narration": "Welcome to this Spoken Tutorial on An Introduction to Building with **AI**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": null,
+      "narration": "In this tutorial, you will learn to:\n\u2022 Define what an API is.\n\u2022 Explain the purpose of an API key.\n\u2022 Identify the components of an API request.\n\u2022 Apply APIs in a real-world scenario.",
+      "image_prompt": ""
+    },
+    {
+      "title": "Pre-requisite",
+      "narration": "To follow this tutorial, you should have completed 'Module 2:Art of the Prompt'.\nThis will help you understand interacting with **AI** models.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API?",
+      "narration": "What is an **API**?\nAn **API** acts as a messenger between software applications.\nIt helps them talk to each other.\nThink of an **API** like a restaurant waiter.\nYou give your order, the waiter takes it to the kitchen.\nThe kitchen is like an **AI** model.\nThen, the waiter brings your food, which is the **AI** response.",
+      "image_prompt": "Illustration of a waiter taking an order from a customer and delivering it to the kitchen, representing an API."
+    },
+    {
+      "title": "Understanding API Keys",
+      "narration": "How do you get access to an **API**?\nYou need an **API key**.\nAn **API key** is a unique secret password.\nIt identifies you and grants access to the **API**.\nImagine it like your restaurant ID card.\nIt proves you are allowed to place an order.\nThis ensures secure and authorized access.",
+      "image_prompt": "Illustration of a secure ID card with a key icon, representing an API key for access."
+    },
+    {
+      "title": "Making an API Request",
+      "narration": "Now, let's make an **API request**.\nAn **API request** is like placing an order with the **AI** model.\nYou send your **API key** for authentication.\nYou also send your **prompt** or instruction.\nThe **API** delivers this to the model.\nThe model processes it and returns an output.\nConsider a food delivery app.\nWhen you order a pizza, the app sends a request.\nThis request includes your order details and your ID.\nThe restaurant (model) gets it, prepares the pizza.\nThen, the app shows you that your order is being prepared.",
+      "image_prompt": "Illustration of a food delivery app sending a request with user details and order, and receiving a confirmation."
+    },
+    {
+      "title": "API in a Real-Life Application",
+      "narration": "Let's see an **API** in a real-life application.\nOpen any grocery app on your phone.\n**Click** the search bar at the top.\nType 'tomato' and press **Enter**.\nThe app sends an **API request** to the server.\nThe request says, 'Find products matching tomato.'\nThe server processes this request.\nIt finds all matching products.\nThe **API** sends back this product data.\nThe app reads this data.\nThen it displays the relevant results on your screen.\nIf no products are found, the **API** returns an empty list.\nThe app then shows, 'No products found.'",
+      "image_prompt": "Screen close-up: a grocery app showing search results for 'tomato' after a user query."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **APIs** as messengers between applications.\nWe understood **API keys** as secure identifiers.\nWe explored how **API requests** communicate with **AI** models.\nWe also saw their use in real-world applications.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now, as an assignment, identify another mobile application that uses an **API**.\nDescribe its interaction as a request and a response.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is presented by **EduPyramids Educational Services Private Limited**.\nIt is supported by **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

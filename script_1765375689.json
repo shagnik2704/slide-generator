@@ -1,0 +1,86 @@
+{
+  "presentation_title": "Spoken Tutorial on Introduction to Building with AI",
+  "module": "Module 3: An Introduction to Building with AI",
+  "episode": "3. Introduction to Building with AI",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the purpose of an API key.",
+    "Identify components of an API request."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "AI",
+    "API",
+    "API Key",
+    "API Request",
+    "Building with AI",
+    "Spoken Tutorial",
+    "AI Essentials",
+    "Application Programming Interface",
+    "AI Models",
+    "Authentication"
+  ],
+  "prerequisites": "Module 2: Introduction to Prompting",
+  "outline": [
+    "API Analogy",
+    "API Key",
+    "API Request"
+  ],
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Introduction to Building with AI",
+      "narration": "Welcome to this Spoken Tutorial on Introduction to Building with AI.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Define what an **API** is.\n\u2022 Explain the purpose of an **API** key.\n\u2022 Identify components of an **API** request.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisite",
+      "narration": "To follow this tutorial, you should have completed Module 2: Introduction to Prompting.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? The Restaurant Waiter",
+      "narration": "Have you ever wondered how apps talk to powerful **AI** models?\nThey use something called an **API**.\n**API** stands for **Application Programming Interface**.\nThink of an **API** like a restaurant waiter.\nYou give your order to the waiter.\nThe waiter takes your order to the kitchen.\nThe kitchen prepares your food.\nSimilarly, your application gives instructions to the **API**.\nThe **API** delivers these instructions to an **AI** model.\nThe **AI** model processes them and sends back a response.",
+      "image_prompt": "Illustration showing a restaurant waiter taking an order from a customer (application), carrying it to the kitchen (AI model), and bringing back food (response)."
+    },
+    {
+      "title": "What is an API Key? Your Restaurant ID Card",
+      "narration": "How does the **AI** model know who is sending the request?\nThis is where an **API key** comes in.\nAn **API key** is a secret password.\nIt identifies you as an authorized user.\nImagine it like your restaurant ID card.\nThis card proves you are allowed to order food.\nSimilarly, your **API key** authenticates your application.\nIt ensures only authorized users access the **AI** model.",
+      "image_prompt": "Illustration of a person showing an ID card to gain access, representing authentication, with a lock icon."
+    },
+    {
+      "title": "Real-Life Example: Searching in a Grocery App",
+      "narration": "Let's see how this works in real life.\nOpen any grocery app on your phone.\nTap the search bar at the top.\nType 'tomato' and press search.\nBehind the scenes, the app sends a request to the **API**.\nThe **API** searches for all matching products.\nThe server sends back a list of results.\nYou now see all tomato products on your screen.\nThis is an **API** in action!",
+      "image_prompt": "Screen close-up: user typing 'tomato' into the search bar of a grocery app on a smartphone."
+    },
+    {
+      "title": "What is an API Request? Placing Your Order",
+      "narration": "Now that we know about **API**s and **API key**s, what about the actual communication?\nThis communication is called an **API request**.\nAn **API request** is like placing your order at the restaurant.\nIt includes your **API key** for authentication.\nIt also contains your instructions for the **AI** model.\nThese instructions are often called a **prompt**.\nSo, you send a structured **API request**.\nThis request tells the **AI** model what to do.\nIt's how you ask the **AI** model for a specific task.",
+      "image_prompt": "Illustration showing a person (application) handing an order slip (API request) to a waiter, with a small key icon on the slip for authentication and text 'prompt' on the order."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **API**s as messengers.\nWe understood **API key**s as identification.\nWe learned about **API request**s as structured orders to **AI** models.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nIdentify other real-life applications using **API**s.\nConsider what information their **API request**s might include.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

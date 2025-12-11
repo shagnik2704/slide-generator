@@ -1,0 +1,81 @@
+{
+  "presentation_title": "Spoken Tutorial on API",
+  "module": "An Introduction to Building with AI",
+  "episode": "3. Understanding APIs",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API key.",
+    "Identify the components of an API request."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "API",
+    "API Key",
+    "API Request",
+    "AI",
+    "Application Programming Interface",
+    "Prompting",
+    "Development",
+    "AI Essentials",
+    "Messaging",
+    "Authentication"
+  ],
+  "prerequisites": "Module 2: Art of the Prompt",
+  "outline": [
+    "API Analogy: Restaurant Waiter",
+    "API Key",
+    "API Request"
+  ],
+  "slides": [
+    {
+      "title": "Spoken Tutorial on API",
+      "narration": "Welcome to this Spoken Tutorial on **API**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\n\u2022 Define what an **API** is.\n\u2022 Explain the role of an **API** key.\n\u2022 Identify the components of an **API** request.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Prerequisites",
+      "narration": "To follow this tutorial, you should have completed Module 2: Art of the **Prompt**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API?",
+      "narration": "What is an **API**?\nAn **API**, or **Application Programming Interface**, acts as a messenger.\nIt connects your application to a model.\nImagine an **API** as a restaurant waiter.\nYou give your order, a request, to the waiter.\nThe waiter takes it to the kitchen, the model.\nThen, the waiter brings your dish, the response, back to you.\nThis is how an **API** helps applications communicate.",
+      "image_prompt": "Illustration of a restaurant waiter connecting a customer (application) to a kitchen (model)."
+    },
+    {
+      "title": "What is an API Key?",
+      "narration": "But how does the **API** know who you are?\nThis is where an **API** key helps.\nAn **API** key is a unique, secret password.\nIt identifies you as an authorized user.\nThink of it like an ID card at a restaurant.\nIt proves you are allowed to place an order.\nThis key ensures only authorized users access the service.",
+      "image_prompt": "Illustration of an ID card or a secret key for authentication."
+    },
+    {
+      "title": "Understanding an API Request",
+      "narration": "With an **API** and an **API** key, you can make a request.\nAn **API** request is how you talk to the **AI** model.\nIt's like telling the chef exactly what you want.\nYour request always includes your **API** key.\nThis key authenticates you as an authorized user.\nThen, you add your specific **prompt** or instruction.\nFor example, 'Write a poem about a cat'.\nThe **API** delivers this entire request to the model.\nThe model processes it and gives you a response.",
+      "image_prompt": "Person at laptop, showing elements of an API request with an API key and a prompt."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined **APIs** as messengers between applications and models.\nWe understood **API** keys are for identification and authentication.\nFinally, we explored **API** requests as the way to interact with **AI** models.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nIdentify daily applications that use **APIs**.\nThink about how they send and receive information.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}

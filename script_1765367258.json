@@ -1,0 +1,89 @@
+{
+  "presentation_title": "Spoken Tutorial on Understanding API",
+  "module": "An Introduction to Building with AI",
+  "episode": "1. Understanding API",
+  "learning_objectives": [
+    "Define what an API is.",
+    "Explain the role of an API in AI applications.",
+    "Identify how an API acts as a messenger.",
+    "Apply the API concept to a food delivery app."
+  ],
+  "duration": "3-4 min",
+  "meta_tags": [
+    "API",
+    "Application Programming Interface",
+    "AI",
+    "Artificial Intelligence",
+    "Development",
+    "Messenger",
+    "Prompting",
+    "Food Delivery App",
+    "Software",
+    "Integration",
+    "System Integration",
+    "Communication"
+  ],
+  "prerequisites": "Module 2: Art of the Prompt",
+  "outline": [
+    "What is an API?",
+    "API as a Messenger",
+    "Food Delivery App using API"
+  ],
+  "slides": [
+    {
+      "title": "Spoken Tutorial on Understanding API",
+      "narration": "Welcome to this Spoken Tutorial on **Understanding API**.",
+      "image_prompt": "Title Slide"
+    },
+    {
+      "title": "Learning Objectives",
+      "narration": "In this tutorial, you will learn to,\n\u2022 Define what an **API** is.\n\u2022 Explain its role in **AI** applications.\n\u2022 Identify how an **API** acts as a messenger.\n\u2022 Apply the **API** concept to a food delivery app.",
+      "image_prompt": "Learning Objectives Slide"
+    },
+    {
+      "title": "System Requirements",
+      "narration": "Here I am using a browser on a computer or mobile.",
+      "image_prompt": "System Requirements Slide"
+    },
+    {
+      "title": "Pre-requisites",
+      "narration": "To follow this tutorial, you should have completed **Module 2: Art of the Prompt**.",
+      "image_prompt": "Pre-requisite Slide"
+    },
+    {
+      "title": "What is an API? The Restaurant Analogy",
+      "narration": "What exactly is an **API**?\nAn **API**, or **Application Programming Interface**, acts as a messenger.\nIt connects your application with an **AI model**.\nThink of it like a waiter in a restaurant.\nYou, the customer, give your order, or **prompt**, to the waiter, the **API**.\nThe waiter takes your order to the kitchen, which is the **AI model**.\nThe kitchen prepares your dish, the **AI response**.\nThe waiter then brings your dish back to you.\nYou don't need to know how the kitchen works.",
+      "image_prompt": "Illustration of a restaurant scene with a customer (application), a waiter (API), and a kitchen (AI model), showing the flow of order and food."
+    },
+    {
+      "title": "Demo: Food Delivery App - Vague Approach",
+      "narration": "Now, imagine building a food delivery app.\nWhat if you built it without an **API**?\nYou would need to connect directly to each restaurant's system.\nYou would have to understand their unique databases.\nYou would handle every communication detail yourself.\nThis would lead to a very complex and difficult system to manage.",
+      "image_prompt": "Illustration showing a food delivery app with multiple, direct, and complex connections to individual restaurant systems, indicating a tangled and inefficient process."
+    },
+    {
+      "title": "Demo: Food Delivery App - Improved with API",
+      "narration": "But here's where an **API** makes a difference.\nWith an **API**, your app sends a simple request to the restaurant's **API**.\nThis request specifies the order you want to place.\nThe restaurant's **API** then handles all communication with its internal system.\nIt retrieves menu items, places orders, and confirms delivery status.\nThis makes the entire process efficient and smooth.",
+      "image_prompt": "Illustration showing a food delivery app connecting to a single, standardized restaurant API, which then efficiently manages communication with the restaurant's internal system."
+    },
+    {
+      "title": "Demo: Food Delivery App - Vague vs. Improved",
+      "narration": "Let's compare the two approaches.\nThe vague approach needs direct, complex integration with each restaurant.\nThe **API** improved approach uses a standardized interface.\nThis simplifies development and ensures scalability.\nIt allows seamless interaction with multiple restaurants.\nAll this happens through a single connection.",
+      "image_prompt": "Side-by-side comparison: On the left, a tangled network representing the vague approach; on the right, a streamlined connection representing the API improved approach."
+    },
+    {
+      "title": "Summary",
+      "narration": "Let us summarize what we learned.\nWe defined an **API** as a messenger between applications and **AI models**.\nWe used the restaurant analogy to understand this concept.\nWe also saw how **APIs** simplify complex interactions.\nWe demonstrated this with a food delivery application example.",
+      "image_prompt": "Summary Slide"
+    },
+    {
+      "title": "Assignment",
+      "narration": "Now as an assignment,\nThink about a weather app or a travel booking site.\nDescribe how **APIs** might be used in these applications.\nExplain how they fetch and display information from various sources.\nCompare the results.",
+      "image_prompt": "Assignment Slide"
+    },
+    {
+      "title": "Thank You",
+      "narration": "This Spoken Tutorial is brought to you by\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\nThank you for joining.",
+      "image_prompt": "EduPyramids logo"
+    }
+  ]
+}
