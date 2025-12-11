@@ -32,6 +32,13 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
     
     # Main Title - Bold and larger
     title = json_data.get('presentation_title', 'Presentation Script')
+    
+    # Avoid duplication: only add prefix if title doesn't already start with "Spoken Tutorial"
+    if title.startswith("Spoken Tutorial"):
+        display_title = title
+    else:
+        display_title = f"Spoken Tutorial – {title}"
+    
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
@@ -40,25 +47,10 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
         alignment=TA_LEFT,
         spaceAfter=6
     )
-    story.append(Paragraph(f"<b>Spoken Tutorial – {title}</b>", title_style))
-    story.append(Spacer(1, 8))
-    
-    # Series and Title info (smaller text below main title)
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
-        parent=styles['Normal'],
-        fontSize=11,
-        spaceAfter=4
-    )
-    
-    # Add series info if available
-    series = json_data.get('series', '')
-    if series:
-        story.append(Paragraph(f"Series: {series}", subtitle_style))
-    
-    # Add title line
-    story.append(Paragraph(f"Title: {title}", subtitle_style))
+    story.append(Paragraph(f"<b>{display_title}</b>", title_style))
     story.append(Spacer(1, 12))
+    
+    # Removed redundant "Title:" line - already shown in header
     
     # === METADATA TABLE ===
     
@@ -88,11 +80,11 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
         Paragraph(convert_bold_markdown(module), metadata_value_style)
     ])
     
-    # Episode
-    episode = json_data.get('episode', 'N/A')
+    # Tutorial (was Episode)
+    tutorial = json_data.get('episode', 'N/A')
     metadata_data.append([
-        Paragraph("<b>Episode</b>", metadata_label_style),
-        Paragraph(convert_bold_markdown(episode), metadata_value_style)
+        Paragraph("<b>Tutorial</b>", metadata_label_style),
+        Paragraph(convert_bold_markdown(tutorial), metadata_value_style)
     ])
     
     # Learning Objectives
@@ -191,6 +183,10 @@ def create_script_pdf(json_data, output_filename="static/script_review.pdf"):
         else:
             # Convert \n to <br/> for PDF rendering
             narration_text = narration.replace('\n', '<br/>')
+        
+        # Convert bullet character to ensure it renders in PDF
+        # Replace unicode bullet (•) with a dash or HTML entity that ReportLab supports
+        narration_text = narration_text.replace('•', '&#8226;')
         
         # Convert **word** to <b>word</b> for non-translatable terms
         # These words will appear bold in the PDF to indicate "do not translate"
