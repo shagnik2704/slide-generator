@@ -1,0 +1,129 @@
+"""Generation route handlers (script, slides, video)."""
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
+from pathlib import Path
+import os
+import json
+import time
+import traceback
+
+from src.core.agent import graph
+from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest
+
+router = APIRouter(tags=["generation"])
+
+
+@router.post("/generate_script")
+async def generate_script(request: GenerateScriptRequest):
+    """Generates a presentation script from a user-provided outline."""
+    
+    print(f"Received request to generate script from outline ({len(request.outline)} chars)")
+
+    try:
+        # Get project root (3 levels up from src/api/routes/generation.py)
+        project_root = Path(__file__).parent.parent.parent
+        
+        print(f"📝 Generating script from outline...")
+        
+        initial_state = {
+            "outline": request.outline,
+            "mode": getattr(request, 'mode', 'script_only'),
+            "evaluation_iteration": 0,
+            "evaluation_passed": False,
+            "evaluation_feedback": None,
+        }
+        
+        result = await graph.ainvoke(initial_state)
+        
+        script_pdf_path = result.get("script_pdf_path")
+        json_script = result.get("json_script")
+        
+        if script_pdf_path:
+            project_id = int(time.time())
+            
+            # Save JSON script
+            output_dir = project_root / "output"
+            output_dir.mkdir(exist_ok=True)
+            json_path = output_dir / f"script_{project_id}.json"
+            with open(str(json_path), 'w') as f:
+                json.dump(json_script, f, indent=2)
+            
+            print(f"✅ Saved script PDF and JSON for project #{project_id}")
+            
+            return JSONResponse({
+                "script_pdf_url": f"/static/{os.path.basename(script_pdf_path)}",
+                "json_script": json_script,
+                "outline": request.outline
+            })
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate script PDF")
+            
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_script: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate_slides")
+async def generate_slides(request: GenerateSlidesRequest):
+    """Generates PDF slides from the approved JSON script."""
+    print(f"Received request to generate slides")
+
+    initial_state = {
+        "json_script": request.json_script, 
+        "mode": "slides_only"
+    }
+    
+    try:
+        result = await graph.ainvoke(initial_state)
+        
+        pdf_path = result.get("pdf_path")
+        if pdf_path and os.path.exists(pdf_path):
+            print(f"✅ Generated slides PDF")
+            
+            return JSONResponse({
+                "slides_pdf_url": f"http://127.0.0.1:8000/static/{os.path.basename(pdf_path)}",
+                "pdf_path": pdf_path,
+                "json_script": request.json_script
+            })
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate PDF slides")
+            
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_slides: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate_video")
+async def generate_video(request: GenerateVideoRequest):
+    """Generates the final video from the approved JSON script and existing PDF."""
+    try:
+        # Get project root (3 levels up from src/api/routes/generation.py)
+        project_root = Path(__file__).parent.parent.parent
+        
+        # Pass pdf_path to the state
+        initial_state = {
+            "json_script": request.json_script, 
+            "mode": "video_production",
+            "pdf_path": request.pdf_path or "output.pdf"
+        }
+        # Checkpointer requires thread_id
+        config = {"configurable": {"thread_id": f"video_{int(time.time())}"}}
+        result = await graph.ainvoke(initial_state, config)
+        
+        video_path = result.get("video_path")
+        
+        if video_path and os.path.exists(video_path):
+            video_filename = os.path.basename(video_path)
+            print(f"✅ Generated video: {video_filename}")
+            
+            return JSONResponse({
+                "video_url": f"http://127.0.0.1:8000/static/{video_filename}"
+            })
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate video")
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -103,4 +103,4 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nodes", "models", "routing", "utils"]
+packages = ["src"]
