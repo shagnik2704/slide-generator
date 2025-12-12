@@ -21,7 +21,11 @@ GOOGLE_API_KEY=your_key_here
 ```
 3) Run the API (reload enabled):
 ```
-uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload
+```
+Or use the entry point:
+```
+uv run python -m src.api
 ```
 Static assets are served from `static/` at `/static/*`.
 
@@ -39,9 +43,31 @@ uvx --from nodejs-bin@22 npm run build
 The build output lands in `chatbot-ui/dist/` (served statically in deployment).
 
 ## Running full stack locally
-- Start backend: `uv run uvicorn server:app --host 0.0.0.0 --port 8000 --reload`
+- Start backend: `uv run uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload`
 - Start frontend: `cd chatbot-ui && uvx --from nodejs-bin@22 npm run dev -- --host --port 5173`
 - The frontend expects the API at `http://localhost:8000`; CORS is open by default.
+
+## Project Structure
+```
+slide-generator/
+├── src/                    # Main application source code
+│   ├── api/               # FastAPI server and routes
+│   ├── core/              # Core business logic (agent, state)
+│   ├── nodes/             # Processing nodes
+│   ├── routing/            # Routing logic
+│   ├── services/          # Business services (PDF, LaTeX, outline)
+│   └── utils/             # Utility functions
+├── chatbot-ui/            # Frontend React application
+├── static/                # Static files served by API
+├── output/                # Generated files (PDFs, videos, images)
+│   ├── pdfs/
+│   ├── videos/
+│   └── images/
+├── uploads/               # User uploads
+├── data/                  # Sample data and templates
+│   └── sample_scripts/
+└── docs/                  # Documentation
+```
 
 ## Useful commands
 - Format/ruff-equivalent not configured; rely on uv sync for dependency locks.
@@ -49,5 +75,6 @@ The build output lands in `chatbot-ui/dist/` (served statically in deployment).
 - Clean installs: remove `.venv` and rerun `uv sync`
 
 ## Notes
-- Generated PDFs/videos are written under `static/` and `generated_images/`.
-- Sample outlines/scripts live under `sample_scripts/`.
+- Generated PDFs/videos are written under `static/` and `output/`.
+- Sample outlines/scripts live under `data/sample_scripts/`.
+- User uploads are stored in `uploads/`.
