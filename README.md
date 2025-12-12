@@ -48,6 +48,6 @@ The build output lands in `chatbot-ui/dist/` (served statically in deployment).
 - Regenerate lock after dependency changes: `uv lock`
 - Clean installs: remove `.venv` and rerun `uv sync`
 
-## Notes
+## Notesre
 - Generated PDFs/videos are written under `static/` and `generated_images/`.
 - Sample outlines/scripts live under `sample_scripts/`.

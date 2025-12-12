@@ -53,8 +53,8 @@ def get_conceptual_prompt(outline: str) -> str:
     return f"""You are creating a LEAN STRUCTURE for a Spoken Tutorial script (3-4 minutes).
 
 === METADATA RULES ===
-- presentation_title: "Spoken Tutorial on [Topic]" (no bold markers)
-- module: Extract from outline or use "AI Essentials"
+- presentation_title: "Spoken Tutorial on [Topic]" (no bold markers).
+- module: Extract from outline.
 - episode: Number + topic (e.g., "5. 3 Cs of Prompting")
 - duration: "3-4 min"
 - learning_objectives: FEW SIMPLE objectives (each ≤80 chars, achievable by end of tutorial)
