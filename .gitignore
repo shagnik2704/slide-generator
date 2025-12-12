@@ -14,20 +14,14 @@ uv.lock
 data/
 .uv-cache/
 .uvcache/
-generated_images
 # Environment variables
 .env
 .env.local
 
 # Generated files
 script_*.json
-static/outline_*.docx
-static/outline_*.md
-static/script_review_*.pdf
-static/slides_*.pdf
-static/*.mp4
-static/*.mp3
 *.db
+generated_images/
 
 # IDE
 .vscode/
@@ -47,12 +41,55 @@ uploads/
 
 # Output directories
 output/
+archive/
+static/
 *.tex
 *.aux
 *.log
 *.out
 *.synctex.gz
 
-# Local Generated Data
-archive/
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Type checking & Linting
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Node.js (for chatbot-ui)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary & Cache
+.cache/
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Python eggs
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Cython
+cython_debug/
 
