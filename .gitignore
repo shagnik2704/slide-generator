@@ -28,6 +28,7 @@ static/slides_*.pdf
 static/*.mp4
 static/*.mp3
 *.db
+generated_images/
 
 # IDE
 .vscode/
