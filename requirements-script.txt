@@ -1,0 +1,30 @@
+# Script Generation Pipeline - Minimal Dependencies
+# Install with: pip install -r requirements-script.txt
+
+# === API Server ===
+fastapi>=0.122.0
+uvicorn>=0.38.0
+python-multipart>=0.0.20  # File uploads
+
+# === LLM & Agent Framework ===
+langchain-core>=0.3.80
+langchain-google-genai>=1.0.0,<2.2.0
+langgraph>=0.6.11
+langgraph-checkpoint>=2.1.2
+google-generativeai>=0.8.5,<0.9.0
+
+# === Document Parsing ===
+python-docx>=1.1.2  # Parse .docx outlines
+
+# === PDF Generation ===
+reportlab>=4.4.5  # Generate script review PDFs
+
+# === Data Validation ===
+pydantic>=2.12.5
+
+# === Environment & Config ===
+python-dotenv>=1.2.1
+
+# === HTTP Client (for LLM calls) ===
+httpx>=0.28.1
+aiohttp>=3.13.2

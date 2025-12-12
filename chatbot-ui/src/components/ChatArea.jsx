@@ -3,7 +3,7 @@ import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 
-import { Menu, FileText, Video, Download } from 'lucide-react';
+import { Menu, FileText, Video, Download, FileCode2, Copy, Check } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -14,6 +14,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
     ]);
     const [isTyping, setIsTyping] = useState(false);
     const [currentProjectId, setCurrentProjectId] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -287,6 +288,56 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         }
     };
 
+    const handleExportMediaWiki = async (jsonScript) => {
+        setIsTyping(true);
+        const statusMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Exporting script to MediaWiki format...`
+        };
+        setMessages(prev => [...prev, statusMessage]);
+
+        try {
+            const response = await fetch(`${API_URL}/export_mediawiki`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    json_script: jsonScript
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to export to MediaWiki');
+            }
+
+            const data = await response.json();
+
+            const newBotMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✅ MediaWiki export complete! You can copy the content below or download the .wiki file.`,
+                mediawikiContent: data.mediawiki_content,
+                mediawikiFileUrl: data.mediawiki_file_url,
+                type: 'mediawiki_export'
+            };
+            setMessages(prev => [...prev, newBotMessage]);
+
+        } catch (error) {
+            console.error("Error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: error.message || "Sorry, something went wrong exporting to MediaWiki."
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
     return (
         <main style={{
             flex: 1,
@@ -531,6 +582,44 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                                         <FileText size={20} />
                                         Generate Slides PDF
                                     </button>
+                                    <button
+                                        onClick={() => handleExportMediaWiki(msg.jsonScript)}
+                                        disabled={isTyping}
+                                        style={{
+                                            marginLeft: '0.75rem',
+                                            padding: '0.75rem 1.5rem',
+                                            background: isTyping
+                                                ? 'var(--bg-tertiary)'
+                                                : 'linear-gradient(135deg, #059669, #10b981)',
+                                            color: isTyping ? 'var(--text-secondary)' : 'white',
+                                            border: 'none',
+                                            borderRadius: '0.75rem',
+                                            cursor: isTyping ? 'not-allowed' : 'pointer',
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
+                                            opacity: isTyping ? 0.6 : 1,
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isTyping) {
+                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isTyping) {
+                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }
+                                        }}
+                                    >
+                                        <FileCode2 size={20} />
+                                        Export to MediaWiki
+                                    </button>
                                 </div>
                             )}
                             {msg.type === 'slides_review' && (
@@ -635,6 +724,111 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                                         <Download size={20} />
                                         Download Video
                                     </a>
+                                </div>
+                            )}
+                            {msg.type === 'mediawiki_export' && (
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                    {/* MediaWiki content preview */}
+                                    <div style={{
+                                        background: 'var(--bg-tertiary)',
+                                        borderRadius: '0.75rem',
+                                        padding: '1rem',
+                                        marginBottom: '1rem',
+                                        maxHeight: '300px',
+                                        overflowY: 'auto',
+                                        border: '1px solid var(--border-color)'
+                                    }}>
+                                        <pre style={{
+                                            margin: 0,
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.85rem',
+                                            whiteSpace: 'pre-wrap',
+                                            wordBreak: 'break-word',
+                                            color: 'var(--text-primary)'
+                                        }}>
+                                            {msg.mediawikiContent}
+                                        </pre>
+                                    </div>
+                                    {/* Action buttons */}
+                                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(msg.mediawikiContent);
+                                                setCopiedId(msg.id);
+                                                setTimeout(() => setCopiedId(null), 2000);
+                                            }}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: copiedId === msg.id
+                                                    ? 'linear-gradient(135deg, #059669, #10b981)'
+                                                    : 'var(--bg-tertiary)',
+                                                color: copiedId === msg.id ? 'white' : 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (copiedId !== msg.id) {
+                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (copiedId !== msg.id) {
+                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                                }
+                                            }}
+                                        >
+                                            {copiedId === msg.id ? <Check size={20} /> : <Copy size={20} />}
+                                            {copiedId === msg.id ? 'Copied!' : 'Copy to Clipboard'}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                // Create a blob and download to avoid navigation
+                                                const blob = new Blob([msg.mediawikiContent], { type: 'text/plain' });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = 'script.wiki';
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+                                                URL.revokeObjectURL(url);
+                                            }}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.75rem 1.5rem',
+                                                background: 'linear-gradient(135deg, #059669, #10b981)',
+                                                color: 'white',
+                                                textDecoration: 'none',
+                                                borderRadius: '0.75rem',
+                                                fontSize: '1rem',
+                                                fontWeight: 600,
+                                                border: 'none',
+                                                boxShadow: 'var(--shadow-md)',
+                                                transition: 'all 0.3s ease',
+                                                cursor: 'pointer',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }}
+                                        >
+                                            <Download size={20} />
+                                            Download .wiki File
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
