@@ -21,6 +21,7 @@ generated_images
 
 # Generated files
 script_*.json
+static/
 static/outline_*.docx
 static/outline_*.md
 static/script_review_*.pdf
