@@ -82,6 +82,7 @@ class AgentState(TypedDict):
     evaluation_iteration: int
     evaluation_passed: bool
     evaluation_feedback: Optional[str]
+    problematic_slides: List[int]  # Slide indices that need fixing
 
 
 # === FINAL OUTPUT SCHEMAS (existing) ===

@@ -29,3 +29,7 @@ class GenerateVideoRequest(BaseModel):
 
 class GenerateSlidesRequest(BaseModel):
     json_script: dict
+
+
+class ExportMediaWikiRequest(BaseModel):
+    json_script: dict

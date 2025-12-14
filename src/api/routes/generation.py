@@ -8,7 +8,8 @@ import time
 import traceback
 
 from src.core.agent import graph
-from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest
+from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest, ExportMediaWikiRequest
+from src.services.mediawiki_service import export_to_mediawiki
 
 router = APIRouter(tags=["generation"])
 
@@ -126,4 +127,26 @@ async def generate_video(request: GenerateVideoRequest):
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in generate_video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/export_mediawiki")
+async def export_mediawiki_endpoint(request: ExportMediaWikiRequest):
+    """Exports the JSON script to MediaWiki format for Spoken Tutorial upload."""
+    print("Exporting script to MediaWiki format...")
+    
+    try:
+        result = export_to_mediawiki(request.json_script)
+        
+        print(f"✅ Exported to MediaWiki: {result['file_path']}")
+        
+        return JSONResponse({
+            "mediawiki_content": result["content"],
+            "mediawiki_file_url": f"/static/{os.path.basename(result['file_path'])}",
+            "file_path": result["file_path"]
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in export_mediawiki: {e}")
         raise HTTPException(status_code=500, detail=str(e))
