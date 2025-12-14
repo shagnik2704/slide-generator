@@ -27,6 +27,7 @@ static/script_review_*.pdf
 static/slides_*.pdf
 static/*.mp4
 static/*.mp3
+static/
 *.db
 generated_images/
 
