@@ -15,6 +15,7 @@ load_dotenv()
 class EvaluationResult(BaseModel):
     passed: bool
     feedback: str
+    problematic_slides: list[int] = []  # 0-indexed slide indices with issues
 
 
 def evaluate_quality(state: AgentState):
@@ -57,7 +58,8 @@ def evaluate_quality(state: AgentState):
             return {
                 "evaluation_passed": True,
                 "evaluation_feedback": "Evaluator returned no result.",
-                "evaluation_iteration": iteration + 1
+                "evaluation_iteration": iteration + 1,
+                "problematic_slides": []
             }
         
         passed = result.passed
@@ -71,7 +73,8 @@ def evaluate_quality(state: AgentState):
         return {
             "evaluation_passed": passed,
             "evaluation_feedback": feedback,
-            "evaluation_iteration": iteration + 1
+            "evaluation_iteration": iteration + 1,
+            "problematic_slides": result.problematic_slides if hasattr(result, 'problematic_slides') else []
         }
         
     except Exception as e:
@@ -79,7 +82,8 @@ def evaluate_quality(state: AgentState):
         return {
             "evaluation_passed": True,  # Fail open
             "evaluation_feedback": f"Evaluation error: {e}",
-            "evaluation_iteration": iteration + 1
+            "evaluation_iteration": iteration + 1,
+            "problematic_slides": []
         }
 
 
@@ -125,7 +129,10 @@ passed=true if:
 
 passed=false if:
 - Multiple formatting violations, OR
-- Narration is choppy with no flow (reads like bullet points)"""
+- Narration is choppy with no flow (reads like bullet points)
+
+IMPORTANT: Always include problematic_slides as a list of 0-indexed slide numbers with issues.
+Example: If slide 2 and slide 5 have issues, return problematic_slides: [2, 5]"""
 
 
 def get_demo_evaluation_prompt(json_script: dict) -> str:
@@ -185,5 +192,8 @@ passed=true if:
 
 passed=false if:
 - Multiple formatting violations, OR
-- Narration is not action-focused (too conceptual/explanatory)"""
+- Narration is not action-focused (too conceptual/explanatory)
+
+IMPORTANT: Always include problematic_slides as a list of 0-indexed slide numbers with issues.
+Example: If slide 2 and slide 5 have issues, return problematic_slides: [2, 5]"""
 

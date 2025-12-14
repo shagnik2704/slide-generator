@@ -1,0 +1,34 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node (frontend has its own Dockerfile)
+node_modules/
+chatbot-ui/node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Secrets (NEVER put in image!)
+.env
+.env.local
+.env.production
+
+# Generated files (mount as volumes instead)
+static/
+uploads/
+output/
+*.pdf
+*.mp3
+*.mp4   
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

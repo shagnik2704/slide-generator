@@ -1,9 +1,11 @@
 """
 Optimiser node for improving script based on feedback.
 Uses LangChain's ChatGoogleGenerativeAI.
+Implements SURGICAL EDITS - only fixes problematic slides, not the entire script.
 """
 import os
 import json
+from copy import deepcopy
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -13,7 +15,21 @@ from src.core.state import AgentState
 load_dotenv()
 
 
-# Fixed schema - title can be Optional (null for flow slides)
+# Schema for individual slide fixing
+class FixedSlide(BaseModel):
+    """A single fixed slide."""
+    index: int = Field(description="0-indexed position of this slide")
+    title: Optional[str] = None
+    narration: str
+    image_prompt: Optional[str] = ""
+
+
+class FixedSlidesList(BaseModel):
+    """List of fixed slides."""
+    slides: List[FixedSlide]
+
+
+# Legacy schema for full-script fallback
 class Slide(BaseModel):
     title: Optional[str] = None
     narration: str
@@ -33,14 +49,95 @@ class Script(BaseModel):
 
 
 def optimise_script(state: AgentState):
-    """Optimises the script based on evaluation feedback using LangChain."""
-    print("Optimising script based on feedback...")
+    """
+    Optimises the script based on evaluation feedback.
+    Uses SURGICAL EDITS when problematic_slides are identified.
+    Falls back to full-script optimization if no specific slides identified.
+    """
     json_script = state.get('json_script')
     feedback = state.get('evaluation_feedback', '')
+    problematic_indices = state.get('problematic_slides', [])
     
-    if not json_script:
-        return {"json_script": {}}
+    if not json_script or not json_script.get('slides'):
+        return {"json_script": json_script or {}}
 
+    # If specific problematic slides are identified, use surgical edits
+    if problematic_indices:
+        print(f"🔧 Surgical edit: Fixing slides {problematic_indices}")
+        return fix_specific_slides(json_script, feedback, problematic_indices)
+    else:
+        print("⚠️ No specific slides identified. Falling back to full-script optimization.")
+        return optimise_full_script(json_script, feedback)
+
+
+def fix_specific_slides(json_script: dict, feedback: str, problematic_indices: List[int]) -> dict:
+    """Fix only the problematic slides and merge back into original script."""
+    
+    # Extract problematic slides with their indices
+    slides_to_fix = []
+    for idx in problematic_indices:
+        if 0 <= idx < len(json_script.get('slides', [])):
+            slide = json_script['slides'][idx]
+            slides_to_fix.append({
+                "index": idx,
+                "title": slide.get('title'),
+                "narration": slide.get('narration', ''),
+                "image_prompt": slide.get('image_prompt', '')
+            })
+    
+    if not slides_to_fix:
+        print("⚠️ No valid slides to fix. Returning original.")
+        return {"json_script": json_script}
+
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+    structured_llm = llm.with_structured_output(FixedSlidesList)
+    
+    prompt = f"""Fix ONLY these specific slides based on the evaluator's feedback.
+DO NOT add new slides. DO NOT change the indices. Return the same slides, fixed.
+
+=== EVALUATOR FEEDBACK ===
+{feedback}
+
+=== SLIDES TO FIX ===
+{json.dumps(slides_to_fix, indent=2)}
+
+=== FORMATTING RULES ===
+1. Every sentence MUST be ≤ 80 characters
+2. Each sentence on a new line (use \\n)
+3. No filler words: "So,", "Now,", "Well,"
+4. Complete sentences only (no fragments)
+5. Use **bold** for technical terms
+
+Return the slides with the same indices, but with fixed narration."""
+
+    try:
+        result = structured_llm.invoke(prompt)
+        fixed_slides = result.slides
+        
+        # Merge fixed slides back into original script
+        new_script = deepcopy(json_script)
+        
+        for fixed in fixed_slides:
+            idx = fixed.index
+            if 0 <= idx < len(new_script['slides']):
+                new_script['slides'][idx]['narration'] = fixed.narration
+                if fixed.title is not None:
+                    new_script['slides'][idx]['title'] = fixed.title
+                if fixed.image_prompt:
+                    new_script['slides'][idx]['image_prompt'] = fixed.image_prompt
+        
+        print(f"✓ Fixed {len(fixed_slides)} slides surgically.")
+        return {"json_script": new_script}
+        
+    except Exception as e:
+        print(f"❌ Surgical edit failed: {e}. Returning original.")
+        return {"json_script": json_script}
+
+
+def optimise_full_script(json_script: dict, feedback: str) -> dict:
+    """Fallback: Optimize the entire script (legacy behavior)."""
+    print("Optimising full script...")
+    
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(Script)
     
@@ -99,9 +196,9 @@ Return the corrected script with all issues fixed."""
     try:
         result = structured_llm.invoke(prompt)
         optimised_script = result.model_dump()
-        print("✓ Script optimised.")
+        print("✓ Full script optimised.")
         return {"json_script": optimised_script}
         
     except Exception as e:
-        print(f"Optimisation failed: {e}")
-        return {"json_script": json_script}  # Return original on failure
+        print(f"❌ Full optimisation failed: {e}")
+        return {"json_script": json_script}
