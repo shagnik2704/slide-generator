@@ -4,7 +4,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
-from src.api.routes import upload_router, generation_router, download_router
+from src.api.routes import (
+    upload_router,
+    generation_router,
+    download_router,
+    outline_chat_router,
+)
 
 # Get project root
 project_root = Path(__file__).parent.parent.parent
@@ -28,6 +33,7 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 app.include_router(upload_router)
 app.include_router(generation_router)
 app.include_router(download_router)
+app.include_router(outline_chat_router)
 
 if __name__ == "__main__":
     import uvicorn
