@@ -3,7 +3,7 @@ import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 
-import { Menu, FileText, Video, Download, FileCode2, Copy, Check } from 'lucide-react';
+import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -408,7 +408,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
             role: 'assistant',
             content: `Exporting script to MediaWiki format...`
         };
-        setMessages(prev => [...prev, statusMessage]);
+        setUploadMessages(prev => [...prev, statusMessage]);
 
         try {
             const response = await fetch(`${API_URL}/export_mediawiki`, {
@@ -436,7 +436,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 mediawikiFileUrl: data.mediawiki_file_url,
                 type: 'mediawiki_export'
             };
-            setMessages(prev => [...prev, newBotMessage]);
+            setUploadMessages(prev => [...prev, newBotMessage]);
 
         } catch (error) {
             console.error("Error:", error);
@@ -445,7 +445,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 role: 'assistant',
                 content: error.message || "Sorry, something went wrong exporting to MediaWiki."
             };
-            setMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
