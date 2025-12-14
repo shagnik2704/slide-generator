@@ -1,6 +1,6 @@
 """Generation route handlers (script, slides, video)."""
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 import os
 import json
@@ -8,8 +8,9 @@ import time
 import traceback
 
 from src.core.agent import graph
-from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest, ExportMediaWikiRequest
+from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest, ExportMediaWikiRequest, DownloadScriptDocxRequest
 from src.services.mediawiki_service import export_to_mediawiki
+from src.services.docx_service import export_script_docx, docx_to_json
 
 router = APIRouter(tags=["generation"])
 
@@ -149,4 +150,61 @@ async def export_mediawiki_endpoint(request: ExportMediaWikiRequest):
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in export_mediawiki: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/download_script_docx")
+async def download_script_docx(request: DownloadScriptDocxRequest):
+    """Downloads the script as an editable Word document with two-column table format."""
+    print("Generating editable script .docx...")
+    
+    try:
+        result = export_script_docx(request.json_script)
+        file_path = result["file_path"]
+        
+        print(f"✅ Generated script .docx: {result['file_name']}")
+        
+        return FileResponse(
+            path=file_path,
+            filename=result["file_name"],
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in download_script_docx: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload_edited_script")
+async def upload_edited_script(file: UploadFile = File(...)):
+    """Uploads an edited .docx script and converts it back to JSON format."""
+    print(f"Receiving edited script: {file.filename}")
+    
+    try:
+        # Validate file type
+        if not file.filename.endswith('.docx'):
+            raise HTTPException(status_code=400, detail="Only .docx files are allowed")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Parse docx to JSON
+        from io import BytesIO
+        json_script = docx_to_json(BytesIO(content))
+        
+        print(f"✅ Parsed edited script: {len(json_script.get('slides', []))} slides")
+        
+        return JSONResponse({
+            "json_script": json_script,
+            "slide_count": len(json_script.get('slides', [])),
+            "message": "Script uploaded and parsed successfully"
+        })
+        
+    except ValueError as e:
+        print(f"Parsing error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in upload_edited_script: {e}")
         raise HTTPException(status_code=500, detail=str(e))

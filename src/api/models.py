@@ -33,3 +33,7 @@ class GenerateSlidesRequest(BaseModel):
 
 class ExportMediaWikiRequest(BaseModel):
     json_script: dict
+
+
+class DownloadScriptDocxRequest(BaseModel):
+    json_script: dict
