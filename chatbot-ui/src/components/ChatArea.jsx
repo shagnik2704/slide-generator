@@ -3,7 +3,7 @@ import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 
-import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare } from 'lucide-react';
+import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -25,6 +25,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
     const [currentProjectId, setCurrentProjectId] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
     const messagesEndRef = useRef(null);
+    const editedScriptInputRef = useRef(null);
 
     const activeMessages = mode === 'outline_chat' ? outlineMessages : uploadMessages;
 
@@ -326,7 +327,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
             }
 
             const data = await response.json();
-            
+
             // Update session state
             setOutlineSession({
                 projectId: data.project_id || outlineSession.projectId,
@@ -336,12 +337,12 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
 
             // Build assistant message
             let assistantContent = data.assistant_message || 'Here is the updated outline.';
-            
+
             // Add validation errors if any
             if (data.validation_errors && data.validation_errors.length > 0) {
                 assistantContent += '\n\n⚠️ Issues to address:\n' + data.validation_errors.map(e => `- ${e}`).join('\n');
             }
-            
+
             // Add pedagogy compliance badge if draft is ready
             if (data.is_draft_ready && data.pedagogy_compliance) {
                 const pc = data.pedagogy_compliance;
@@ -396,6 +397,95 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 content: error.message || "Sorry, something went wrong in outline chat."
             };
             setOutlineMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    // Download script as editable .docx
+    const handleDownloadScriptDocx = async (jsonScript) => {
+        setIsTyping(true);
+        try {
+            const response = await fetch(`${API_URL}/download_script_docx`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ json_script: jsonScript }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to download script');
+            }
+
+            // Get the file and trigger download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'script.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            console.log('✅ Script downloaded');
+        } catch (error) {
+            console.error('Download error:', error);
+            const errorMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: error.message || 'Failed to download script'
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    // Upload edited script .docx and update the message
+    const handleUploadEditedScript = async (file, messageId) => {
+        if (!file) return;
+        setIsTyping(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_URL}/upload_edited_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to upload edited script');
+            }
+
+            const data = await response.json();
+
+            // Update the message with edited script
+            setUploadMessages(prev => prev.map(msg => {
+                if (msg.id === messageId) {
+                    return { ...msg, jsonScript: data.json_script, wasEdited: true };
+                }
+                return msg;
+            }));
+
+            // Add confirmation message
+            const confirmMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: `✅ Script updated! (${data.slide_count} slides). You can now generate slides with your edits.`
+            };
+            setUploadMessages(prev => [...prev, confirmMessage]);
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            const errorMessage = {
+                id: Date.now(),
+                role: 'assistant',
+                content: error.message || 'Failed to upload edited script'
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
@@ -709,6 +799,100 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                                             <FileText size={18} />
                                             View Script PDF
                                         </a>
+                                        {msg.wasEdited && (
+                                            <span style={{
+                                                marginLeft: '0.75rem',
+                                                color: '#059669',
+                                                fontSize: '0.85rem',
+                                                fontWeight: 500
+                                            }}>
+                                                ✓ Edited
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* Edit Script Section */}
+                                    <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                        <button
+                                            onClick={() => handleDownloadScriptDocx(msg.jsonScript)}
+                                            disabled={isTyping}
+                                            style={{
+                                                padding: '0.6rem 1rem',
+                                                background: isTyping ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                                                color: 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: isTyping ? 'not-allowed' : 'pointer',
+                                                fontWeight: 500,
+                                                fontSize: '0.9rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                                opacity: isTyping ? 0.6 : 1,
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                }
+                                            }}
+                                        >
+                                            <Download size={18} />
+                                            Download Script (.docx)
+                                        </button>
+                                        <input
+                                            type="file"
+                                            accept=".docx"
+                                            style={{ display: 'none' }}
+                                            ref={editedScriptInputRef}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    handleUploadEditedScript(file, msg.id);
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => editedScriptInputRef.current?.click()}
+                                            disabled={isTyping}
+                                            style={{
+                                                padding: '0.6rem 1rem',
+                                                background: isTyping ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                                                color: 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: isTyping ? 'not-allowed' : 'pointer',
+                                                fontWeight: 500,
+                                                fontSize: '0.9rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                                opacity: isTyping ? 0.6 : 1,
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                }
+                                            }}
+                                        >
+                                            <Upload size={18} />
+                                            Upload Edited Script
+                                        </button>
                                     </div>
                                     <button
                                         onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
