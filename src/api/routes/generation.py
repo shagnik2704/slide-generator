@@ -84,7 +84,7 @@ async def generate_slides(request: GenerateSlidesRequest):
             print(f"✅ Generated slides PDF")
             
             return JSONResponse({
-                "slides_pdf_url": f"http://127.0.0.1:8000/static/{os.path.basename(pdf_path)}",
+                "slides_pdf_url": f"/static/{os.path.basename(pdf_path)}",
                 "pdf_path": pdf_path,
                 "json_script": request.json_script
             })
@@ -121,7 +121,7 @@ async def generate_video(request: GenerateVideoRequest):
             print(f"✅ Generated video: {video_filename}")
             
             return JSONResponse({
-                "video_url": f"http://127.0.0.1:8000/static/{video_filename}"
+                "video_url": f"/static/{video_filename}"
             })
         else:
             raise HTTPException(status_code=500, detail="Failed to generate video")
