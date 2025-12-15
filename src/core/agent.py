@@ -8,6 +8,10 @@ All business logic has been modularized into separate files.
   Stage 3: generate_visuals - Add image prompts based on narration
   Stage 4: evaluator - Quality checks + optimization loop
 """
+# Load environment variables first for LangSmith tracing
+from dotenv import load_dotenv
+load_dotenv()
+
 from langgraph.graph import StateGraph, START, END
 from src.core.state import AgentState
 
