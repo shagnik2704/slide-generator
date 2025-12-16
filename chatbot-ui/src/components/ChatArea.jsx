@@ -5,8 +5,8 @@ import ThemeToggle from './ThemeToggle';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
-// Use environment variable for API URL, fallback to hosted backend in production
-const API_URL = import.meta.env.VITE_API_URL || 'https://slide-generator-1.onrender.com';
+// Hardcoded API URL for production backend
+const API_URL = 'https://slide-generator-61ic.onrender.com';
 
 const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
