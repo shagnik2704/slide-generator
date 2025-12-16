@@ -1204,6 +1204,25 @@ Write 1-2 paragraphs (2-4 sentences total) describing what this course teaches a
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.options("/outline_chat")
+async def outline_chat_options():
+    """Handle CORS preflight for the outline chat endpoint.
+
+    Some deployments were returning 405 for OPTIONS when middleware
+    configuration was bypassed. This explicit handler ensures a 200
+    with permissive CORS headers so browsers can proceed.
+    """
+    return JSONResponse(
+        status_code=200,
+        content={"status": "ok"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
+
+
 @router.get("/outline_chat/{project_id}/export")
 async def export_outline(project_id: int, format: str = "json"):
     """Export the finalized outline in JSON or PDF-ready format."""
