@@ -2,6 +2,10 @@
 
 FastAPI backend plus a Vite/React chatbot UI for generating lesson outlines, narration, slides, and media. This README documents setup using **uv** for Python dependency management and **uvx** for Node/NPM binaries.
 
+**Production URLs**
+- Backend API: `https://slide-generator-1.onrender.com`
+- Frontend UI: `https://slide-generator-61ic.onrender.com`
+
 ## Prerequisites
 - uv installed: `curl -Ls https://astral.sh/uv/install.sh | sh`
 - Python 3.10–3.12 (repo targets 3.11). Install with uv if needed: `uv python install 3.11`

@@ -26,8 +26,10 @@ app.add_middleware(
 )
 
 # Mount static files to serve generated content
+# Use check_dir=False so the app can start even if the directory
+# doesn't exist yet on the deployment filesystem.
 static_dir = project_root / "static"
-app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+app.mount("/static", StaticFiles(directory=str(static_dir), check_dir=False), name="static")
 
 # Include routers
 app.include_router(upload_router)
