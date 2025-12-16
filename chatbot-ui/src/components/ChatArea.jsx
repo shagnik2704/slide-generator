@@ -17,7 +17,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         {
             id: 2,
             role: 'assistant',
-            content: 'Hi! I\'m here to help you create a Spoken Tutorial Course Outline. I\'ll guide you through a series of questions to capture all the information needed.\n\nLet\'s start! Please give the tutorial name (what should we call this course?).',
+            content: 'Hi! I\'m here to help you create a Spoken Tutorial Course Outline. I\'ll guide you through a series of questions to capture all the information needed.\n\nFirst, please tell me: is this a **FOSS** course (based on free/open-source software) or an **ICT** training (general ICT / digital skills)?\n\nReply with either `FOSS` or `ICT`.',
         }
     ]);
     const [outlineSession, setOutlineSession] = useState({ projectId: null, outlineData: null, phase: null });
