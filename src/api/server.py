@@ -17,12 +17,22 @@ project_root = Path(__file__).parent.parent.parent
 app = FastAPI(title="Slide Generator API")
 
 # CORS middleware
+# CORS middleware
+# Explicitly allow the deployed frontends and keep a permissive regex for staging.
+allowed_origins = [
+    "https://slide-generator-1.onrender.com",
+    "https://slide-generator-61ic.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.onrender\.com",
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 # Mount static files to serve generated content
