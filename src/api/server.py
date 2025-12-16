@@ -37,6 +37,15 @@ app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
 
+# Basic health/root endpoints for uptime checks
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
