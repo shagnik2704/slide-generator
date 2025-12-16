@@ -20,15 +20,18 @@ class GenerateScriptRequest(BaseModel):
     title: Optional[str] = None
     target_audience: Optional[str] = None
     mode: Optional[str] = "script_only"
+    thread_id: Optional[str] = None  # For checkpointer persistence
 
 
 class GenerateVideoRequest(BaseModel):
     json_script: dict
     pdf_path: Optional[str] = None
+    thread_id: Optional[str] = None  # For checkpointer persistence
 
 
 class GenerateSlidesRequest(BaseModel):
     json_script: dict
+    thread_id: Optional[str] = None  # For checkpointer persistence
 
 
 class ExportMediaWikiRequest(BaseModel):

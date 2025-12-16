@@ -96,7 +96,7 @@ Learning Objectives Slide:
 
 System Requirements Slide: "Here I am using a browser on a computer or mobile."
 
-Pre-requisite Slide: "To follow this tutorial, you should [prerequisites]."
+Pre-requisite Slide: "To follow this tutorial, you should have [concept knowledge].\\nPlease refer to our website for more details."
 
 Summary Slide: "Let us summarize what we learned.\\n[brief recap]"
 
@@ -230,7 +230,7 @@ Learning Objectives Slide:
 
 System Requirements Slide: "Here I am using a browser on a computer.\\nYou will need [specific requirements]."
 
-Pre-requisite Slide: "To follow this tutorial, you should have [prerequisites]."
+Pre-requisite Slide: "To follow this tutorial, you should have [concept knowledge].\\nPlease refer to our website for more details."
 
 Summary Slide: "Let us summarize what we did.\\n[recap of key actions]"
 

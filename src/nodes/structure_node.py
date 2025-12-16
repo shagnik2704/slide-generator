@@ -162,7 +162,7 @@ def get_demo_prompt(outline: str) -> str:
 - learning_objectives: FEW ACTION-based objectives (each ≤80 chars)
   - Use action verbs: Create, Set up, Configure, Navigate, Generate
   - Example: "Create an API key in Google AI Studio."
-- prerequisites: Based on the concept,add one line at the end "Please refer to our website for more detail"
+- prerequisites: Mention required concept knowledge (not specific tutorial names). Add at the end: "Please refer to our website for more details."
 - meta_tags: 8-12 relevant keywords
 - outline: Extract ONLY action steps from the user's outline (DO NOT invent new steps)
 
