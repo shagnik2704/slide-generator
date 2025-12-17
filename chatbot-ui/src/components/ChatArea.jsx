@@ -6,8 +6,8 @@ import ThemeToggle from './ThemeToggle';
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
 // Hardcoded API URL for production backend
-const API_URL = 'https://slide-generator-61ic.onrender.com';
-
+// const API_URL = 'https://slide-generator-61ic.onrender.com';
+const API_URL = 'http://localhost:8000';
 const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
@@ -17,7 +17,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         {
             id: 2,
             role: 'assistant',
-            content: 'Hi! I\'m here to help you create a Spoken Tutorial Course Outline. I\'ll guide you through a series of questions to capture all the information needed.\n\nFirst, please tell me: is this a **FOSS** course (based on free/open-source software) or an **ICT** training (general ICT / digital skills)?\n\nReply with either `FOSS` or `ICT`.',
+            content: 'Hi! 😊 I\'m here to help you create a Spoken Tutorial course outline, step by step.\n\nTo start, could you tell me what kind of course this is: **FOSS**, **ICT**, or **Other**?\n\nJust reply with `FOSS`, `ICT`, or `Other` (you can add a short note if you pick Other). Then I\'ll gently walk you through a few short questions.',
         }
     ]);
     const [outlineSession, setOutlineSession] = useState({ projectId: null, outlineData: null, phase: null });

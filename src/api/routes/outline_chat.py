@@ -43,7 +43,8 @@ class TutorialRow(BaseModel):
 
 class CourseOutlineData(BaseModel):
     """Complete Course Outline data structure matching the template."""
-    outline_type: str = "FOSS"  # "FOSS" or "ICT"
+    outline_type: str = "FOSS"  # "FOSS", "ICT", or "OTHER"
+    platform_name: str = ""     # Name of FOSS software / ICT platform / Other
     tutorial_name: str = ""
     foss_version: str = "Not Applicable"
     target_audience: str = ""
@@ -172,27 +173,32 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "outline_type",
-                        "question": "Before we start, is this a **FOSS** course (based on free/open-source software) or an **ICT** training (general ICT / digital skills)? Please reply with either `FOSS` or `ICT`.",
+                        "question": "Before we start, could you tell me whether this is a **FOSS** course (based on free/open-source software), an **ICT** training (general ICT / digital skills), or something else? You can reply with `FOSS`, `ICT`, or `Other` (and add a short note if you pick Other).",
                         "why": "Helps us tag the outline correctly for FOSSEE / ICT pipelines."
                     },
                     {
+                        "field": "platform_name",
+                        "question": "What is the name of the ICT platform, program, or initiative this course is about?",
+                        "why": "Captures the specific ICT focus before naming the course."
+                    },
+                    {
                         "field": "tutorial_name",
-                        "question": "Please give the tutorial name (what should we call this course?).\nExample: 'AI for Educators', 'Digital Skills for Teachers', 'ICT Integration in Teaching'",
-                        "why": "Title used in template."
+                        "question": "What would you like to call this ICT course or training? Please share the course/program name in your own words.",
+                        "why": "Title used in template for ICT outlines."
                     },
                     {
                         "field": "target_audience",
-                        "question": "Who is the target audience? (e.g., school teachers, college educators, students learning digital skills, lab technicians).\nFor ICT courses, this is often educators or professionals learning to teach/apply digital skills.",
+                        "question": "Who is the target audience? For example, you can mention the type of teachers, students, or professionals this is meant for.",
                         "why": "Helps choose depth, examples, and teaching methodologies."
                     },
                     {
                         "field": "entry_behaviour",
-                        "question": "What should learners already know before starting? (short list of prerequisites / entry behaviour).\nExample: 'Basic computer skills', 'Teaching experience', 'Familiarity with [specific tool/concept]'",
+                        "question": "What should learners already know before starting? You can give a short list of prerequisites or entry behaviour (for example, basic computer skills or prior teaching experience).",
                         "why": "Entry Behaviour field - helps determine starting point."
                     },
                     {
                         "field": "purpose",
-                        "question": "What is the main purpose of this course in one sentence? (What will learners be able to do, teach, or apply after completing?)\nExample: 'Teachers will learn to integrate AI tools in their lesson plans' or 'Educators will gain skills to teach digital literacy'",
+                        "question": "In one simple sentence, what is the main purpose of this course? (What will learners be able to do, teach, or apply after completing it?)",
                         "why": "Template Purpose - defines the learning outcome."
                     }
                 ]
@@ -200,18 +206,13 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
             "outcomes": {
                 "questions": [
                     {
-                        "field": "course_objectives",
-                        "question": "List the top 3-6 course objectives — what concrete skills, methodologies, or knowledge should learners gain?\n\nFor ICT courses, objectives often focus on:\n- Teaching methodologies (e.g., 'Design AI-integrated lesson plans')\n- Skill-building (e.g., 'Apply prompt engineering techniques')\n- Integration strategies (e.g., 'Integrate FOSS tools in teaching')\n- Practical applications (e.g., 'Create rubrics using AI assistance')\n\nPlease phrase objectives as actions learners will be able to perform.",
-                        "tip": "Focus on what learners will DO or TEACH, not just what they'll learn about."
-                    },
-                    {
                         "field": "topics_included",
-                        "question": "Which topics, skill areas, categories, or methodologies must be included? Give a short bullet list.\n\nFor ICT courses, topics might include:\n- Skill categories (e.g., 'Problem Identification', 'Data Collection', 'AI Integration')\n- Teaching methodologies (e.g., 'The AI+X Method', 'Activity Design: Concept → Practice → Reflect')\n- Tool integration (e.g., 'GeoGebra + AI for Data Modeling', 'Prompt Engineering')\n- Practical applications (e.g., 'Creating Surveys', 'Assessment Rubrics')\n\nYou can organize by categories if helpful.",
+                        "question": "Which topics, skill areas, categories, or methodologies must be included? You can list them as bullets or as a comma‑separated list, and group them into categories if that helps.",
                         "why": "Helps structure the course content and ensure all key areas are covered."
                     },
                     {
                         "field": "topics_not_included",
-                        "question": "Which topics should NOT be included or are out-of-scope?\nExample: 'Advanced programming', 'Specific software installation', 'Topics covered in prerequisite courses'",
+                        "question": "Are there any topics that should NOT be included or are clearly out-of-scope? You can briefly list them, if any.",
                         "why": "Helps avoid scope creep and keeps the course focused."
                     }
                 ]
@@ -220,13 +221,13 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "core_example",
-                        "question": "Give one core teaching scenario, use case, or practical application that will run throughout the course.\n\nThis should be a consistent example that demonstrates the concepts across multiple tutorials.\n\nExamples:\n- 'Teaching symmetry with AI drawing tools' (for an AI integration course)\n- 'Data collection project for student surveys' (for a data skills course)\n- 'Creating lesson plans with AI assistance' (for an educator training course)\n- 'Designing rubrics using AI tools' (for an assessment course)\n\nIf you don't have a single running example, describe a common teaching context or use case.",
+                        "question": "Please describe one core teaching scenario, use case, or practical application that can run throughout the course.\n\nThis should be a consistent example that helps you demonstrate the concepts across multiple tutorials. If you don’t have a single running example, you can instead describe a common teaching context or use case.",
                         "examples": "Teaching scenarios, lesson plan examples, practical applications, or common use cases.",
                         "why": "ICT courses benefit from a consistent teaching scenario or use case that helps learners see practical applications."
                     },
                     {
                         "field": "allied_examples",
-                        "question": "Do you want 0-2 allied examples (alternate scenarios, use cases, or contexts) to show variations?\n\nThese are optional examples that show how the concepts apply in different contexts.\nExample: 'Teaching geometry with GeoGebra' and 'Teaching chemistry with molecular modeling tools'\n\nIf not needed, reply 'none' or 'no'.",
+                        "question": "Would you like to add 0–2 allied examples (alternate scenarios, use cases, or contexts) to show variations? These are optional and only if you feel they are helpful. If not needed, you can simply say 'none' or 'no'.",
                         "why": "Allies cover different contexts or applications without bloating the core scenario."
                     }
                 ]
@@ -235,7 +236,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "recommended_no_of_tutorials",
-                        "question": "How many short tutorials (modules) should this course contain?\n\nFor ICT courses, tutorials often correspond to:\n- Skill categories (e.g., 'Problem Identification', 'Data Collection')\n- Teaching methodologies (e.g., 'The AI+X Method', 'Activity Design')\n- Tool integration topics (e.g., 'GeoGebra + AI', 'Prompt Engineering')\n\nRecommended: 3-12 tutorials. Each tutorial should be 3-5 minutes when delivered.\n\nHow many tutorials do you envision?"
+                        "question": "How many tutorials (modules) should this course contain? There is no fixed limit; choose any number that fits your course design."
                     }
                 ]
             }
@@ -246,27 +247,32 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "outline_type",
-                        "question": "Before we start, is this a **FOSS** course (based on free/open-source software) or an **ICT** training (general ICT / digital skills)? Please reply with either `FOSS` or `ICT`.",
+                        "question": "Before we start, could you tell me whether this is a **FOSS** course (based on free/open-source software), an **ICT** training (general ICT / digital skills), or something else? You can reply with `FOSS`, `ICT`, or `Other` (and add a short note if you pick Other).",
                         "why": "Helps us tag the outline correctly for FOSSEE / ICT pipelines."
                     },
                     {
+                        "field": "platform_name",
+                        "question": "What is the name of the FOSS software or tool this course is based on?",
+                        "why": "Captures the specific FOSS tool before naming the course."
+                    },
+                    {
                         "field": "tutorial_name",
-                        "question": "Please give the tutorial name (what should we call this course?).",
-                        "why": "Title used in template."
+                        "question": "What is the full name or title of this course (how it should appear to learners)?",
+                        "why": "Title used in template for FOSS outlines."
                     },
                     {
                         "field": "target_audience",
-                        "question": "Who is the target audience? (e.g., school students, college beginners, lab technicians).",
+                        "question": "Who is the target audience for this course?",
                         "why": "Helps choose depth and examples."
                     },
                     {
                         "field": "entry_behaviour",
-                        "question": "What should learners already know before starting? (short list of prerequisites / entry behaviour).",
+                        "question": "What should learners already know before starting? You can give a short list of prerequisites or entry behaviour.",
                         "why": "Entry Behaviour field."
                     },
                     {
                         "field": "purpose",
-                        "question": "What is the main purpose of this course in one sentence? (What will learners be able to do?)",
+                        "question": "In one simple sentence, what is the main purpose of this course? (What will learners be able to do after completing it?)",
                         "why": "Template Purpose."
                     }
                 ]
@@ -274,13 +280,8 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
             "outcomes": {
                 "questions": [
                     {
-                        "field": "course_objectives",
-                        "question": "List the top 3-6 course objectives — what concrete things should learners be able to do after completing the course?",
-                        "tip": "Please phrase objectives as actions (e.g., 'Create a basic report', 'Write and run a Python function')."
-                    },
-                    {
                         "field": "topics_included",
-                        "question": "Which topics must be included? Give a short bullet list."
+                        "question": "Which topics must be included? You can give a short list, separated by commas or line breaks."
                     },
                     {
                         "field": "topics_not_included",
@@ -293,7 +294,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "core_example",
-                        "question": "Give one core example (a real file, dataset, scenario, or project) we can use for demonstrations.",
+                        "question": "Please describe one core example (a real file, dataset, scenario, or project) we can use for demonstrations.",
                         "examples": "'student marksheet' for Excel; 'bookstore DB' for SQL; 'small image set' for image processing.",
                         "why": "Spoken Tutorials teach via a running example — this is mandatory."
                     },
@@ -308,7 +309,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "recommended_no_of_tutorials",
-                        "question": "How many short tutorials (modules) should this course contain? (recommended: 3-12)."
+                        "question": "How many tutorials (modules) should this course contain? There is no fixed limit; choose any number that fits your course design."
                     }
                 ]
             }
@@ -507,34 +508,26 @@ def _determine_next_question(outline_data: Dict, phase: str, conversation: List[
         for q in question_flow["warmup"]["questions"]:
             field = q["field"]
             if not outline_data.get(field):
-                question_text = q["question"]
-                if "why" in q:
-                    question_text += f"\n(Why: {q['why']})"
-                return phase, question_text
+                return phase, q["question"]
         phase = "outcomes"
     
     if phase == "outcomes":
         for q in question_flow["outcomes"]["questions"]:
             field = q["field"]
             if not outline_data.get(field):
-                question_text = q["question"]
-                if "tip" in q:
-                    question_text += f"\nTip: {q['tip']}"
-                if "why" in q:
-                    question_text += f"\n(Why: {q['why']})"
-                return phase, question_text
+                return phase, q["question"]
         phase = "examples"
     
     if phase == "examples":
         for q in question_flow["examples"]["questions"]:
             field = q["field"]
-            if not outline_data.get(field):
-                question_text = q["question"]
-                if "examples" in q:
-                    question_text += f"\nExample prompts: {q['examples']}"
-                if "why" in q:
-                    question_text += f"\n(Why: {q['why']})"
-                return phase, question_text
+            # For optional allied_examples, only ask if the field has never been set.
+            if field == "allied_examples":
+                if "allied_examples" not in outline_data:
+                    return phase, q["question"]
+            else:
+                if not outline_data.get(field):
+                    return phase, q["question"]
         phase = "structure"
     
     if phase == "structure":
@@ -560,34 +553,28 @@ def _determine_next_question(outline_data: Dict, phase: str, conversation: List[
                                           tutorial_rows[-1].get("time_seconds")):
                 # All info collected for last tutorial, start new one
                 next_tutorial_num = len(tutorial_rows) + 1
-                return phase, f"Tutorial #{next_tutorial_num} — give a short title (e.g., 'Importing data')."
+                return phase, f"Tutorial #{next_tutorial_num} — please give a short title."
         
         # Check if current tutorial needs more info
         if tutorial_rows:
             last_tutorial = tutorial_rows[-1]
             if not last_tutorial.get("title"):
-                return phase, f"Tutorial #{len(tutorial_rows)} — give a short title (e.g., 'Importing data')."
+                return phase, f"Tutorial #{len(tutorial_rows)} — please give a short title."
             if not last_tutorial.get("prerequisites") or last_tutorial.get("prerequisites") == "":
                 prev_tutorials = ""
                 if len(tutorial_rows) > 1:
-                    prev_tutorials = f" (e.g., 'Completion of Tutorial #{len(tutorial_rows)-1}' or specific skills required)"
+                    prev_tutorials = f" (you can refer to the previous tutorial number or specific skills required)"
                 return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): What are the prerequisites? What should learners already know or have completed before starting this tutorial?{prev_tutorials}"
             if not last_tutorial.get("topics_details") or len(last_tutorial.get("topics_details", [])) < 2:
                 if outline_type == "ICT":
-                    return phase, f"""For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3-6 practical steps, activities, or methodologies the learner will follow.
+                    return phase, f"""For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): please list 3–6 practical steps, activities, or methodologies the learner will follow.
 
-For ICT courses, steps should focus on:
-- Teaching methodologies (e.g., 'Guide students in identifying problems', 'Design a survey with AI assistance')
-- Skill-building activities (e.g., 'Practice creating prompts for lesson plans', 'Apply the AI+X method to a curriculum topic')
-- Integration strategies (e.g., 'Combine GeoGebra with AI for data modeling', 'Use AI to generate reflection questions')
-- Practical applications (e.g., 'Create a rubric using AI tools', 'Design an interdisciplinary project')
-
-Format: Short bullets describing what the learner will DO or TEACH.
-Example: 'Design a lesson plan integrating AI tools', 'Create prompts for generating survey questions', 'Apply the Concept → Practice → Reflect framework'"""
+For ICT courses, these steps should describe what learners will actually DO or TEACH, in simple, action-oriented language.
+"""
                 else:
-                    return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3-6 demonstrable steps the learner will follow (short bullets).\nTip: Avoid menu-only instructions like 'File → Open'. Instead describe actions: 'Open the marksheet file from Desktop and show how to sort by marks'."
+                    return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a comma‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
             if not last_tutorial.get("time_seconds") or last_tutorial.get("time_seconds") == 0:
-                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in seconds (e.g., 300 for 5 minutes)."
+                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in seconds."
         
         # All tutorials collected, move to metadata
         if len(tutorial_rows) >= num_tutorials and all(
@@ -613,6 +600,42 @@ Example: 'Design a lesson plan integrating AI tools', 'Create prompts for genera
     return phase, None
 
 
+def _friendly_rewrite_question(base_question: str, outline_type: str, phase: str) -> str:
+    """
+    Use LLM to lightly rewrite a base question in a more friendly,
+    conversational tone while keeping the meaning the same.
+    Falls back to the original question on any error.
+    """
+    try:
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        prompt = f"""You are a warm, supportive assistant helping to interview a subject-matter expert for a Spoken Tutorial course outline.
+
+Rewrite the following question in a more friendly, conversational way, but keep the meaning and structure the same.
+
+Guidelines:
+- Address the user as "you".
+- Sound encouraging and collaborative (as if you are gently guiding them).
+- Keep it within 1–2 sentences.
+- Do NOT add extra instructions, tips, examples, or emojis beyond what is already present.
+- Do NOT change any technical terms or placeholders.
+
+Question:
+{base_question}
+
+Return ONLY the rewritten question text."""
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        rewritten = response.text.strip()
+        # Basic sanity check: avoid empty or extremely short output
+        if len(rewritten) < 5:
+            return base_question
+        return rewritten
+    except Exception:
+        return base_question
+
+
 def _extract_field_from_response(field: str, response: str, outline_data: Dict) -> Dict:
     """Extract and transform field value from SME response."""
     updated = outline_data.copy()
@@ -621,19 +644,35 @@ def _extract_field_from_response(field: str, response: str, outline_data: Dict) 
         # Extract bullet points or numbered list
         objectives = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not objectives:
-            objectives = [line.strip() for line in response.split('\n') if line.strip()]
+            # Try comma-separated or line-separated
+            if ',' in response:
+                objectives = [item.strip() for item in response.split(',') if item.strip()]
+            else:
+                objectives = [line.strip() for line in response.split('\n') if line.strip()]
         updated["course_objectives"] = objectives[:6]  # Max 6
     
     elif field == "topics_included" or field == "topics_not_included":
         topics = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not topics:
-            topics = [line.strip() for line in response.split('\n') if line.strip()]
+            if ',' in response:
+                topics = [item.strip() for item in response.split(',') if item.strip()]
+            else:
+                topics = [line.strip() for line in response.split('\n') if line.strip()]
         updated[field] = topics
     
     elif field == "allied_examples":
         examples = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not examples:
-            examples = [line.strip() for line in response.split('\n') if line.strip() and line.strip().lower() not in ['no', 'none', 'n/a']]
+            if ',' in response:
+                examples = [
+                    item.strip() for item in response.split(',')
+                    if item.strip() and item.strip().lower() not in ['no', 'none', 'n/a']
+                ]
+            else:
+                examples = [
+                    line.strip() for line in response.split('\n')
+                    if line.strip() and line.strip().lower() not in ['no', 'none', 'n/a']
+                ]
         updated["allied_examples"] = examples[:2]  # Max 2
     
     elif field == "keywords":
@@ -934,12 +973,14 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                     if current_field == "outline_type":
                         # Normalize outline type
                         extracted_type = extracted_text.strip().upper()
-                        if extracted_type in ["FOSS", "ICT"]:
+                        if extracted_type in ["FOSS", "ICT", "OTHER"]:
                             outline_data["outline_type"] = extracted_type
                         elif "foss" in extracted_text.lower() or "free" in extracted_text.lower() or "open" in extracted_text.lower():
                             outline_data["outline_type"] = "FOSS"
                         elif "ict" in extracted_text.lower() or "digital" in extracted_text.lower() or "skill" in extracted_text.lower():
                             outline_data["outline_type"] = "ICT"
+                        elif "other" in extracted_text.lower():
+                            outline_data["outline_type"] = "OTHER"
                         else:
                             # Default to FOSS if unclear
                             outline_data["outline_type"] = "FOSS"
@@ -968,10 +1009,13 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             try:
                                 steps = json.loads(_extract_json_block(extracted_text))
                             except:
-                                # Fallback to regex extraction
+                                # Fallback to regex or comma/line-based extraction
                                 steps = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', last_message.content, re.MULTILINE)
                                 if not steps:
-                                    steps = [line.strip() for line in last_message.content.split('\n') if line.strip()]
+                                    if ',' in last_message.content:
+                                        steps = [item.strip() for item in last_message.content.split(',') if item.strip()]
+                                    else:
+                                        steps = [line.strip() for line in last_message.content.split('\n') if line.strip()]
                             # Transform menu instructions (only for FOSS)
                             if outline_type == "FOSS":
                                 steps = [_transform_menu_instructions(s) for s in steps if s.strip()]
@@ -1011,6 +1055,8 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             outline_data["outline_type"] = "FOSS"
                         elif "ict" in user_lower or "digital" in user_lower or "skill" in user_lower:
                             outline_data["outline_type"] = "ICT"
+                        elif "other" in user_lower:
+                            outline_data["outline_type"] = "OTHER"
                         else:
                             # Default to FOSS if unclear
                             outline_data["outline_type"] = "FOSS"
@@ -1029,7 +1075,10 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             elif current_field == "tutorial_steps":
                                 steps = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', last_message.content, re.MULTILINE)
                                 if not steps:
-                                    steps = [line.strip() for line in last_message.content.split('\n') if line.strip()]
+                                    if ',' in last_message.content:
+                                        steps = [item.strip() for item in last_message.content.split(',') if item.strip()]
+                                    else:
+                                        steps = [line.strip() for line in last_message.content.split('\n') if line.strip()]
                                 # Transform menu instructions (only for FOSS)
                                 if outline_type == "FOSS":
                                     steps = [_transform_menu_instructions(s) for s in steps if s.strip()]
@@ -1165,7 +1214,10 @@ Write 1-2 paragraphs (2-4 sentences total) describing what this course teaches a
             # Already showed draft, waiting for edits or approval
             assistant_message = "Please review the draft above and suggest any edits, or type 'approve' to finalize."
         elif next_question:
-            assistant_message = next_question
+            # Rewrite the base question in a slightly friendlier tone using LLM,
+            # but fall back to the original text if anything fails.
+            outline_type = outline_data.get("outline_type", "FOSS").upper()
+            assistant_message = _friendly_rewrite_question(next_question, outline_type, phase)
         else:
             assistant_message = "Thank you! All information collected."
         
