@@ -7,10 +7,11 @@ demonstration-based learning.
 """
 import os
 from typing import Tuple
+
 from dotenv import load_dotenv
-from google import genai
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable, InternalServerError
+from openai import OpenAI
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from src.core.state import AgentState
 
 load_dotenv()
@@ -180,9 +181,9 @@ def _format_outline(outline: str, topic: str) -> str:
 
 
 @retry(
-    retry=retry_if_exception_type((ResourceExhausted, ServiceUnavailable, InternalServerError)),
     wait=wait_exponential(multiplier=4, min=4, max=60),
-    stop=stop_after_attempt(5)
+    stop=stop_after_attempt(5),
+    reraise=True,
 )
 def generate_outline(state: AgentState):
     """
@@ -210,29 +211,39 @@ def generate_outline(state: AgentState):
         return {"outline": "# Presentation Outline\n\nNo topic provided."}
     
     print(f"📝 Topic: {topic}")
-    
-    # Initialize client
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-    
+
+    # Initialize OpenAI client (outline generation must use ONLY OpenAI)
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    if not openai_api_key:
+        print("❌ OPENAI_API_KEY is not set; cannot generate outline")
+        return {"outline": "# Presentation Outline\n\nLLM configuration error."}
+
+    client = OpenAI(api_key=openai_api_key)
+
     # Create comprehensive prompt
     prompt = _create_outline_prompt(topic)
     
     try:
-        print("🤖 Calling LLM to generate outline...")
-        
-        # Generate outline using Gemini 2.5 Flash
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            generation_config={
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "max_output_tokens": 2048,
-            }
+        print("🤖 Calling OpenAI LLM to generate outline...")
+
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that generates Spoken Tutorial style presentation outlines.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0.7,
+            max_tokens=2048,
         )
-        
+
         # Extract and format outline
-        raw_outline = response.text
+        raw_outline = (response.choices[0].message.content or "").strip()
         formatted_outline = _format_outline(raw_outline, topic)
         
         # Validate outline
@@ -246,12 +257,6 @@ def generate_outline(state: AgentState):
         
         print("✓ Outline generated successfully")
         return {"outline": formatted_outline}
-        
-    except (ResourceExhausted, ServiceUnavailable, InternalServerError) as e:
-        # These exceptions are retried by the decorator
-        print(f"❌ API error (will retry): {e}")
-        raise
-        
     except Exception as e:
         print(f"❌ Outline generation failed: {e}")
         print("🔄 Attempting fallback generation...")
@@ -272,12 +277,26 @@ Prerequisites should build progressively (later topics require earlier ones).
 Format as markdown with clear headings."""
         
         try:
-            fallback_response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=fallback_prompt,
+            fallback_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that generates Spoken Tutorial style presentation outlines.",
+                    },
+                    {
+                        "role": "user",
+                        "content": fallback_prompt,
+                    },
+                ],
+                temperature=0.7,
+                max_tokens=2048,
             )
-            
-            fallback_outline = _format_outline(fallback_response.text, topic)
+
+            fallback_outline = _format_outline(
+                (fallback_response.choices[0].message.content or "").strip(),
+                topic,
+            )
             print("✓ Fallback outline generated")
             return {"outline": fallback_outline}
             

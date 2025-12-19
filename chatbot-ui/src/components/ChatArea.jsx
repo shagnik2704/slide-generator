@@ -6,9 +6,9 @@ import ThemeToggle from './ThemeToggle';
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
 // Hardcoded API URL for production backend
- const API_URL = 'https://slide-generator-61ic.onrender.com';
+const API_URL = 'https://slide-generator-61ic.onrender.com';
 //const API_URL = 'http://localhost:8000';
-const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
+const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
         { id: 1, role: 'assistant', content: 'Hello! Please upload your presentation outline to get started. I\'ll help you generate a script, slides, and video from it.' }
@@ -300,6 +300,12 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         }
     };
 
+    const handleConfirmation = async (confirmed) => {
+        if (mode !== 'outline_chat') return;
+        const confirmationText = confirmed ? 'yes' : 'no';
+        await handleSendChatText(confirmationText);
+    };
+
     const handleSendChatText = async (text) => {
         if (mode !== 'outline_chat') return;
         const userMessage = { id: Date.now(), role: 'user', content: text };
@@ -361,7 +367,10 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 outlineData: data.outline_data,
                 isDraftReady: data.is_draft_ready,
                 isApproved: data.is_approved,
-                phase: data.phase
+                phase: data.phase,
+                needsConfirmation: data.needs_confirmation || false,
+                confirmationField: data.confirmation_field,
+                confirmationValue: data.confirmation_value
             };
 
             // If draft is ready, show it
@@ -693,7 +702,10 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     {activeMessages.map((msg) => (
                         <div key={msg.id}>
-                            <MessageBubble message={msg} />
+                            <MessageBubble 
+                                message={msg} 
+                                onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                            />
 
                             {mode === 'upload' && msg.type === 'outline_uploaded' && (
                                 <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
