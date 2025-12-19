@@ -16,8 +16,8 @@ async def upload_outline(file: UploadFile = File(...)):
     """Upload an edited outline file (.md or .docx)."""
     try:
         # Validate file type
-        if not (file.filename.endswith('.md') or file.filename.endswith('.docx') or file.filename.endswith('.txt')):
-            raise HTTPException(status_code=400, detail="Only .md, .txt, or .docx files are allowed")
+        if not (file.filename.endswith('.md') or file.filename.endswith('.docx') or file.filename.endswith('.txt') or file.filename.endswith('.odt')):
+            raise HTTPException(status_code=400, detail="Only .md, .txt, .docx, or .odt files are allowed")
         
         # Get project root (3 levels up from src/api/routes/upload.py)
         project_root = Path(__file__).parent.parent.parent

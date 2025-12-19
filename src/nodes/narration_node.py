@@ -240,7 +240,7 @@ Pre-requisite Slide:
 For pre-requisite tutorials, please visit this website."
 
 
-Summary Slide: "Let us summarize what we did.\\n[recap of key actions]"
+Summary Slide: "Let us summarize what we have learnt.\\n[recap of key actions]"
 
 Assignment Slide: "Now as an assignment,\\n[practice task].\\nCompare the results."
 

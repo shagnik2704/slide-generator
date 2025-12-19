@@ -118,7 +118,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".md,.docx,.txt"
+                            accept=".md,.docx,.txt,.odt"
                             onChange={handleFileSelect}
                             disabled={disabled}
                             style={{ display: 'none' }}
