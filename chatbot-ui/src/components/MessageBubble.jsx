@@ -32,7 +32,7 @@ const MessageBubble = ({ message, onConfirmation }) => {
                     flexShrink: 0,
                     boxShadow: 'var(--shadow-sm)'
                 }}>
-                    {isUser ? <User size={20} color="white" /> : <Bot size={20} color="var(--accent-secondary)" />}
+                    {isUser ? <User size={20} color="white" /> : <Bot size={20} color="var(--accent-primary)" />}
                 </div>
 
                 {/* Message Content */}
@@ -50,6 +50,7 @@ const MessageBubble = ({ message, onConfirmation }) => {
                 }}>
                     <div className="markdown-content">
                         <ReactMarkdown>{message.content}</ReactMarkdown>
+                        {message.isStreaming && <span className="streaming-cursor">▌</span>}
                     </div>
                     
                     {/* Confirmation Buttons */}

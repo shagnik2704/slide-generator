@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
+import OutlineCard from './OutlineCard';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
@@ -11,7 +12,7 @@ const API_URL = 'https://slide-generator-61ic.onrender.com';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
-        { id: 1, role: 'assistant', content: 'Hello! Please upload your presentation outline to get started. I\'ll help you generate a script, slides, and video from it.' }
+        { id: 1, role: 'assistant', content: 'Hello! Please upload your tutorial outline to get started. I\'ll help you generate a script, slides, and video from it.' }
     ]);
     const [outlineMessages, setOutlineMessages] = useState([
         {
@@ -175,7 +176,7 @@ const ChatArea = ({ toggleSidebar }) => {
             const newBotMessage = {
                 id: Date.now() + 1,
                 role: 'assistant',
-                content: `I've generated a script for your presentation. Please review it below.`,
+                content: `I've generated a script for your tutorial. Please review it below.`,
                 pdfUrl: data.script_pdf_url,
                 jsonScript: data.json_script,
                 projectId: data.project_id,
@@ -313,8 +314,17 @@ const ChatArea = ({ toggleSidebar }) => {
         setOutlineMessages(prev => [...prev, userMessage]);
         setIsTyping(true);
 
+        // Create empty assistant message that we'll fill with streaming content
+        const assistantMsgId = Date.now() + 1;
+        setOutlineMessages(prev => [...prev, {
+            id: assistantMsgId,
+            role: 'assistant',
+            content: '',
+            isStreaming: true
+        }]);
+
         try {
-            const response = await fetch(`${API_URL}/outline_chat`, {
+            const response = await fetch(`${API_URL}/outline_chat_stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -328,84 +338,107 @@ const ChatArea = ({ toggleSidebar }) => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to update outline');
+                throw new Error('Streaming failed');
             }
 
-            const data = await response.json();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullContent = '';
+            let finalData = null;
 
-            // Update session state
-            setOutlineSession({
-                projectId: data.project_id || outlineSession.projectId,
-                outlineData: data.outline_data || outlineSession.outlineData,
-                phase: data.phase || outlineSession.phase
-            });
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
 
-            // Build assistant message
-            let assistantContent = data.assistant_message || 'Here is the updated outline.';
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
 
-            // Add validation errors if any
-            if (data.validation_errors && data.validation_errors.length > 0) {
-                assistantContent += '\n\n⚠️ Issues to address:\n' + data.validation_errors.map(e => `- ${e}`).join('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+
+                            if (data.token) {
+                                fullContent += data.token;
+                                // Update the message with accumulated content
+                                setOutlineMessages(prev => prev.map(msg =>
+                                    msg.id === assistantMsgId
+                                        ? { ...msg, content: fullContent }
+                                        : msg
+                                ));
+                            }
+
+                            if (data.done) {
+                                finalData = data;
+                                // Mark streaming as complete
+                                setOutlineMessages(prev => prev.map(msg =>
+                                    msg.id === assistantMsgId
+                                        ? { ...msg, isStreaming: false, outlineData: data.outline_data, phase: data.phase }
+                                        : msg
+                                ));
+
+                                // Update session state
+                                setOutlineSession({
+                                    projectId: data.project_id || outlineSession.projectId,
+                                    outlineData: data.outline_data || outlineSession.outlineData,
+                                    phase: data.phase || outlineSession.phase
+                                });
+                            }
+
+                            if (data.error) {
+                                fullContent = `Error: ${data.error}`;
+                                setOutlineMessages(prev => prev.map(msg =>
+                                    msg.id === assistantMsgId
+                                        ? { ...msg, content: fullContent, isStreaming: false }
+                                        : msg
+                                ));
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing SSE:', parseError);
+                        }
+                    }
+                }
             }
+
+
+            // Handle special cases after streaming complete
 
             // Add pedagogy compliance badge if draft is ready
-            if (data.is_draft_ready && data.pedagogy_compliance) {
-                const pc = data.pedagogy_compliance;
-                assistantContent += '\n\n**Pedagogy Compliance:**\n';
-                assistantContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
-                assistantContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
-                assistantContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
-                assistantContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
-                assistantContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
+            if (finalData?.is_draft_ready && finalData?.pedagogy_compliance) {
+                const pc = finalData.pedagogy_compliance;
+                let complianceContent = '\n\n**Pedagogy Compliance:**\n';
+                complianceContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
+                complianceContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
+                complianceContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
+                complianceContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
+                complianceContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
+
+                // Append compliance to the last message
+                setOutlineMessages(prev => prev.map(msg =>
+                    msg.id === assistantMsgId
+                        ? { ...msg, content: msg.content + complianceContent }
+                        : msg
+                ));
             }
 
-            const assistantMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: assistantContent,
-                outlineData: data.outline_data,
-                isDraftReady: data.is_draft_ready,
-                isApproved: data.is_approved,
-                phase: data.phase,
-                needsConfirmation: data.needs_confirmation || false,
-                confirmationField: data.confirmation_field,
-                confirmationValue: data.confirmation_value
-            };
-
-            // If draft is ready, show it
-            if (data.is_draft_ready && data.outline_data?.draft) {
-                const draftMessage = {
+            if (finalData?.is_approved) {
+                const exportMessage = {
                     id: Date.now() + 2,
                     role: 'assistant',
-                    content: `# Course Outline Draft\n\n${data.outline_data.draft}`,
-                    type: 'outline_draft',
-                    outlineData: data.outline_data
-                };
-                setOutlineMessages(prev => [...prev, assistantMessage, draftMessage]);
-            } else {
-                setOutlineMessages(prev => [...prev, assistantMessage]);
-            }
-
-            // If approved, show export option
-            if (data.is_approved) {
-                const exportMessage = {
-                    id: Date.now() + 3,
-                    role: 'assistant',
-                    content: `✅ Outline approved! You can export it using:\n\`GET /outline_chat/${data.project_id}/export?format=json\``,
+                    content: `You can export it using:\n\`GET /outline_chat/${finalData.project_id}/export?format=json\``,
                     type: 'outline_approved',
-                    projectId: data.project_id
+                    projectId: finalData.project_id
                 };
                 setOutlineMessages(prev => [...prev, exportMessage]);
             }
+
         } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 3,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong in outline chat."
-            };
-            setOutlineMessages(prev => [...prev, errorMessage]);
+            console.error("Streaming error:", error);
+            setOutlineMessages(prev => prev.map(msg =>
+                msg.id === assistantMsgId
+                    ? { ...msg, content: error.message || "Sorry, something went wrong.", isStreaming: false }
+                    : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -607,19 +640,21 @@ const ChatArea = ({ toggleSidebar }) => {
                     >
                         <Menu size={24} strokeWidth={2.5} />
                     </button>
+                    <img
+                        src="/logo (1).png"
+                        alt="EduPyramids"
+                        style={{ height: '36px', marginRight: '0.5rem' }}
+                    />
                     <div style={{
                         fontWeight: 600,
                         fontSize: '1.25rem',
-                        fontFamily: '"Google Sans", "Outfit", sans-serif',
-                        background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
+                        fontFamily: '"Outfit", sans-serif',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.25rem'
                     }}>
-                        Spoken Tutorial Generator
+                        <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
+                        <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -642,7 +677,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 borderRadius: '0.75rem',
                                 border: 'none',
                                 background: mode === 'upload'
-                                    ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))'
+                                    ? 'var(--accent-primary)'
                                     : 'transparent',
                                 color: mode === 'upload' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
@@ -663,7 +698,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 borderRadius: '0.75rem',
                                 border: 'none',
                                 background: mode === 'outline_chat'
-                                    ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))'
+                                    ? 'var(--accent-primary)'
                                     : 'transparent',
                                 color: mode === 'outline_chat' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
@@ -677,10 +712,10 @@ const ChatArea = ({ toggleSidebar }) => {
                     </div>
                     <div style={{
                         padding: '0.25rem 0.75rem',
-                        background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                        background: 'var(--accent-primary)',
                         borderRadius: '1rem',
                         fontSize: '0.8rem',
-                        color: 'var(--bg-primary)',
+                        color: 'white',
                         fontWeight: 500,
                         boxShadow: 'var(--shadow-sm)',
                     }}>
@@ -702,13 +737,21 @@ const ChatArea = ({ toggleSidebar }) => {
                 <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     {activeMessages.map((msg) => (
                         <div key={msg.id}>
-                            <MessageBubble 
-                                message={msg} 
+                            <MessageBubble
+                                message={msg}
                                 onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
                             />
 
+                            {/* Show OutlineCard when outline data is ready for review */}
+                            {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
+                                <OutlineCard
+                                    outlineData={msg.outlineData}
+                                    projectId={outlineSession.projectId || msg.outlineData?.project_id}
+                                />
+                            )}
+
                             {mode === 'upload' && msg.type === 'outline_uploaded' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     <button
                                         onClick={() => handleGenerateScript(msg.outline, msg.projectId)}
                                         disabled={isTyping}
@@ -716,7 +759,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                             padding: '0.75rem 1.5rem',
                                             background: isTyping
                                                 ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                                : 'var(--accent-primary)',
                                             color: isTyping ? 'var(--text-secondary)' : 'white',
                                             border: 'none',
                                             borderRadius: '0.75rem',
@@ -749,7 +792,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'script_uploaded' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     <button
                                         onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
                                         disabled={isTyping}
@@ -757,7 +800,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                             padding: '0.75rem 1.5rem',
                                             background: isTyping
                                                 ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                                : 'var(--accent-primary)',
                                             color: isTyping ? 'var(--text-secondary)' : 'white',
                                             border: 'none',
                                             borderRadius: '0.75rem',
@@ -790,7 +833,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'script_review' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     <div style={{ marginBottom: '1rem' }}>
                                         <a
                                             href={`${API_URL}${msg.pdfUrl}`}
@@ -913,7 +956,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                             padding: '0.75rem 1.5rem',
                                             background: isTyping
                                                 ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                                : 'var(--accent-primary)',
                                             color: isTyping ? 'var(--text-secondary)' : 'white',
                                             border: 'none',
                                             borderRadius: '0.75rem',
@@ -984,7 +1027,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'slides_review' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     <div style={{ marginBottom: '1rem' }}>
                                         <a
                                             href={msg.pdfUrl}
@@ -1013,7 +1056,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                             padding: '0.75rem 1.5rem',
                                             background: isTyping
                                                 ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                                : 'var(--accent-primary)',
                                             color: isTyping ? 'var(--text-secondary)' : 'white',
                                             border: 'none',
                                             borderRadius: '0.75rem',
@@ -1046,7 +1089,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'video_result' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     <video controls width="100%" style={{
                                         borderRadius: '0.75rem',
                                         boxShadow: 'var(--shadow-lg)',
@@ -1063,7 +1106,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                             alignItems: 'center',
                                             gap: '0.5rem',
                                             padding: '0.75rem 1.5rem',
-                                            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                            background: 'var(--accent-primary)',
                                             color: 'white',
                                             textDecoration: 'none',
                                             borderRadius: '0.75rem',
@@ -1088,7 +1131,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {msg.type === 'mediawiki_export' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
                                     {/* MediaWiki content preview */}
                                     <div style={{
                                         background: 'var(--bg-tertiary)',

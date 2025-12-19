@@ -30,7 +30,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
         gap: '0.5rem',
         background: isDisabled
             ? 'var(--bg-tertiary)'
-            : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+            : 'var(--accent-primary)',
         color: isDisabled ? 'var(--text-secondary)' : 'white',
         border: 'none',
         borderRadius: '0.75rem',

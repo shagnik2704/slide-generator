@@ -1,42 +1,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
-/* Light Theme - OpenAI Style (Clean, B&W) */
+/* Light Theme - EduPyramids Branding */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  --text-primary: #000000;
-  --text-secondary: #6b7280;
-  --accent-primary: #000000;
-  /* Black accent as requested */
-  --accent-secondary: #000000;
-  --accent-glow: rgba(0, 0, 0, 0.05);
-  --border-color: #e5e7eb;
-  --font-sans: 'Google Sans', 'Outfit', system-ui, -apple-system, sans-serif;
+  /* Brand Colors */
+  --brand-blue: #2D3E8E;
+  --brand-orange: #F26522;
+  --brand-blue-light: #4A5BA8;
+  --brand-orange-light: #FF8246;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-glow: 0 0 15px var(--accent-glow);
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fc;
+  --bg-tertiary: #eef1f8;
+
+  /* Text */
+  --text-primary: #2D3E8E;
+  --text-secondary: #6b7280;
+
+  /* Accents - Using brand blue for buttons */
+  --accent-primary: #2D3E8E;
+  --accent-secondary: #F26522;
+  --accent-glow: rgba(45, 62, 142, 0.15);
+
+  /* Borders */
+  --border-color: #e0e4ed;
+
+  /* Typography */
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(45 62 142 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(45 62 142 / 0.08), 0 2px 4px -2px rgb(45 62 142 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(45 62 142 / 0.1), 0 4px 6px -4px rgb(45 62 142 / 0.05);
+  --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
-/* Dark Theme - OpenAI Style (Black & White) */
+/* Dark Theme - EduPyramids Dark Mode */
 [data-theme="dark"] {
-  --bg-primary: #000000;
-  --bg-secondary: #1a1a1a;
-  --bg-tertiary: #262626;
+  --bg-primary: #1a1f35;
+  --bg-secondary: #242a45;
+  --bg-tertiary: #2e3555;
   --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --accent-primary: #e5e5e5;
-  /* Softer off-white accent */
-  --accent-secondary: #d4d4d4;
-  --accent-glow: rgba(255, 255, 255, 0.1);
-  --border-color: #404040;
+  --text-secondary: #a0a8c4;
+  --accent-primary: #FF8246;
+  --accent-secondary: #6B7DC8;
+  --accent-glow: rgba(242, 101, 34, 0.2);
+  --border-color: #3d4566;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --shadow-glow: 0 0 20px var(--accent-glow);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-glow: 0 0 25px var(--accent-glow);
 }
 
 * {
@@ -87,13 +101,13 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: var(--accent-primary);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   box-shadow: var(--shadow-md);
 }
@@ -136,4 +150,40 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Streaming cursor animation */
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.streaming-cursor {
+  display: inline;
+  animation: blink 1s infinite;
+  color: var(--accent-primary);
+  font-weight: bold;
+}
+
+/* Spin animation for loaders */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

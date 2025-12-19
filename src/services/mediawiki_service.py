@@ -55,6 +55,9 @@ def format_visual_cue(image_prompt: str, title: str = "") -> str:
     # Check if it's a standard slide
     for slide_name in standard_slides:
         if slide_name.lower() in image_prompt.lower():
+            # For Pre-requisite slide, include the URL if present
+            if "pre-requisite" in slide_name.lower() and "edupyramids" in image_prompt.lower():
+                return f"'''Pre-requisite Slide'''<br><br>EduPyramids.org"
             return f"'''{slide_name}'''"
     
     # For content slides, use the image_prompt as descriptor
@@ -89,8 +92,8 @@ def format_narration(narration: str) -> str:
         else:
             formatted_lines.append(stripped)
     
-    # Use <br> for line breaks in MediaWiki tables (plain newlines don't render as breaks)
-    return '<br>\n'.join(formatted_lines)
+    # Use double <br> for more spacing between lines (like original Spoken Tutorial format)
+    return '<br><br>\n'.join(formatted_lines)
 
 
 def create_mediawiki_script(json_data: dict, output_filename: str = None) -> str:
@@ -104,10 +107,11 @@ def create_mediawiki_script(json_data: dict, output_filename: str = None) -> str
     Returns:
         The MediaWiki-formatted script as a string.
     """
-    # Start the MediaWiki table
+    # Start the MediaWiki table with column widths
     wiki_content = "{| border=1\n"
-    wiki_content += "|| '''Visual Cue'''\n"
-    wiki_content += "|| '''Narration'''\n\n"
+    wiki_content += "|-\n"
+    wiki_content += "! width=\"35%\" | '''Visual Cue'''\n"
+    wiki_content += "! width=\"65%\" | '''Narration'''\n\n"
     
     # Process each slide
     for slide in json_data.get('slides', []):

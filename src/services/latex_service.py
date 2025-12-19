@@ -49,51 +49,47 @@ def generate_bullets(content_list):
     latex += "\\end{itemize}"
     return latex
 
-def add_logo_overlay():
-    """Adds bottom-left logo overlay for intro/outro slides only."""
-    from pathlib import Path
-    project_root = Path(__file__).parent.parent.parent
-    logo_path = project_root / "static" / "logo.png"
-    return f"""\\begin{{tikzpicture}}[remember picture,overlay]
-    \\node[anchor=south west, xshift=1.5mm, yshift=5mm]
-      at (current page.south west) {{\\includegraphics[height=1.2cm]{{{str(logo_path)}}}}};
-  \\end{{tikzpicture}}
-"""
+# Logo is now added globally via background template in pdf_node.py
+# No per-slide logo overlay needed
 
 # ============== NEW TEMPLATE-BASED RENDERERS ==============
 
 def render_learning_objectives(slide):
-    """Learning Objectives: Intro text + bullets + logo"""
+    """Learning Objectives: Intro text + bullets"""
     title = escape_latex(slide.get('title', 'Learning Objectives'))
     content = slide.get('content', [])
     
     latex = f"\\begin{{frame}}\n\\frametitle{{{title}}}\n"
-    latex += add_logo_overlay()
-    latex += "In this tutorial, we will learn,\n"
+    latex += "In this tutorial, we will learn:\\\\\n"
     latex += generate_bullets(content) + "\n"
     latex += "\\end{frame}\n"
     return latex
 
 def render_system_requirements(slide):
-    """System Requirements: Just bullets + logo"""
-    title = escape_latex(slide.get('title', 'System Requirements'))
+    """System Requirements: Using inline title syntax as per template"""
     content = slide.get('content', [])
     
-    latex = f"\\begin{{frame}}\n\\frametitle{{{title}}}\n"
-    latex += add_logo_overlay()
-    latex += generate_bullets(content) + "\n"
+    latex = "\\begin{frame} {System Requirement}\n"
+    if content:
+        latex += generate_bullets(content) + "\n"
     latex += "\\end{frame}\n"
     return latex
 
 def render_prerequisites(slide):
-    """Prerequisites: Just bullets + logo"""
-    title = escape_latex(slide.get('title', 'Prerequisites'))
+    """Prerequisites: Two slides - bullets + website URL"""
     content = slide.get('content', [])
     
-    latex = f"\\begin{{frame}}\n\\frametitle{{{title}}}\n"
-    latex += add_logo_overlay()
-    latex += generate_bullets(content) + "\n"
+    # Slide 1: Prerequisites with bullets
+    latex = "\\begin{frame}\n\\frametitle{Prerequisite}\n"
+    if content:
+        latex += generate_bullets(content) + "\n"
     latex += "\\end{frame}\n"
+    
+    # Slide 2: Website URL
+    latex += "\\begin{frame}\n\\frametitle{Prerequisite}\n"
+    latex += "\\centering \\textcolor{blue}{\\large https://EduPyramids.org}\n"
+    latex += "\\end{frame}\n"
+    
     return latex
 
 
@@ -152,41 +148,30 @@ def render_two_column(slide):
     return latex
 
 def render_summary(slide):
-    """Summary: Intro text + bullets + logo"""
+    """Summary: Just bullets, no intro text"""
     title = escape_latex(slide.get('title', 'Summary'))
     content = slide.get('content', [])
     
     latex = f"\\begin{{frame}}\n\\frametitle{{{title}}}\n"
-    latex += add_logo_overlay()
-    latex += "In this tutorial, we learned that:\n"
     latex += generate_bullets(content) + "\n"
     latex += "\\end{frame}\n"
     return latex
 
 def render_assignment(slide):
-    """Assignment: Just bullets + logo"""
+    """Assignment: Just bullets"""
     title = escape_latex(slide.get('title', 'Assignment'))
     content = slide.get('content', [])
     
     latex = f"\\begin{{frame}}\n\\frametitle{{{title}}}\n"
-    latex += add_logo_overlay()
     latex += generate_bullets(content) + "\n"
     latex += "\\end{frame}\n"
     return latex
 
 def render_thank_you(slide):
-    """Domain Expert / Thank You slide"""
-    content = slide.get('content', [])
-    # Try to extract domain expert info from content
-    expert_name = content[0] if len(content) > 0 else "(Domain Expert)"
-    affiliation = content[1] if len(content) > 1 else "Affiliation"
-    
+    """Thank You slide - simplified centered text"""
     latex = "\\begin{frame}\n"
-    latex += "  \\centering   \\vspace{12pt}\n"
-    latex += "{ \\small Domain Expert}\\\\[12pt]\n"
-    latex += f"{{\\textcolor{{blue}}{{{escape_latex(expert_name)}}}}}\\\\\n"
-    latex += f" {{ {escape_latex(affiliation)}}}\\\\  [1.5cm]\n"
-    latex += " \\large Thank you\n"
+    latex += "  \\centering\n"
+    latex += "  {\\large Thank you}\n"
     latex += "\\end{frame}\n"
     return latex
 

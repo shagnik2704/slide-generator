@@ -5,6 +5,7 @@ Stage 1: Parses outline and creates metadata + slide skeleton.
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from src.core.state import AgentState, StructuredOutline
 
 load_dotenv()
@@ -23,7 +24,7 @@ def generate_structure(state: AgentState):
         print("⚠️ No outline provided")
         return {"structured_outline": {}}
     
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+    llm = ChatOpenAI(model="gpt-5-mini")
     structured_llm = llm.with_structured_output(StructuredOutline)
     
     # Select prompt based on tutorial type
@@ -152,24 +153,18 @@ Generate a LEAN structured outline with MINIMAL slides."""
 
 def get_demo_prompt(outline: str) -> str:
     """Prompt for demo tutorials - step-by-step software walkthroughs."""
-    return f"""You are creating a STEP-BY-STEP DEMO structure for a Spoken Tutorial (3-5 minutes).
+    return f"""You are creating a STEP-BY-STEP DEMO structure for a Spoken Tutorial.
 
 === METADATA RULES ===
 - presentation_title: "Spoken Tutorial on [Action/Task]" (no bold markers)
-- module: Extract from outline or use "AI Essentials"
+- module: Extract from outline
 - episode: Number + topic (e.g., "3. Creating an API Key")
 - duration: "3-4 min"
 - learning_objectives: FEW ACTION-based objectives (each ≤80 chars)
-  - Use action verbs: Create, Set up, Configure, Navigate, Generate
+  - Use action verbs for example: Create, Set up, Configure, Navigate, Generate
   - Example: "Create an API key in Google AI Studio."
-- prerequisites: Based on the concept,add one line at the end "Please refer to our website for more detail"
+- prerequisites: Mention required concept knowledge (not specific tutorial names). Add at the end: "For pre-requisite tutorials,please visit this website."
 - meta_tags: 8-12 relevant keywords
-- outline: Extract ONLY action steps from the user's outline (DO NOT invent new steps)
-
-=== STRICT TOPIC RULE (CRITICAL) ===
-- Use ONLY action steps provided in the user's outline
-- DO NOT add, invent, or infer new steps not explicitly mentioned
-- If the user lists 5 steps, create slides for those 5 steps only
 
 === SLIDE COUNT (STRICT) ===
 - TOTAL: 10-18 slides MAX
@@ -182,25 +177,17 @@ def get_demo_prompt(outline: str) -> str:
    - Each slide = ONE clear action the user performs
    - "Open browser" → "Go to URL" → "Click button" = 3 separate slides
 
-2. NO ANALOGIES NEEDED
-   - Demo tutorials don't need analogies
-   - Focus on WHAT to do, not WHY conceptually
-
-3. USE ACTION VERBS
+2. USE ACTION VERBS
    - Start each slide with: Open, Click, Type, Select, Navigate, Copy, Paste
    - Example notes: "Click Get API Key in the left panel"
 
-4. INCLUDE VERIFICATION STEPS
-   - After key actions, add "Verify: You should see..."
-   - Helps learner confirm they did it correctly
-
-5. DESCRIBE SCREEN LOCATIONS
+3. DESCRIBE SCREEN LOCATIONS
    - Always specify WHERE on screen the element is located
-   - Use: "top right corner", "left panel", "center of screen", "bottom of page"
+   - Examples: "top right corner", "left panel", "center of screen", "bottom of page"
    - Example: "Click Sign In in the top right corner"
    - Example: "On the left panel, click Get API Key"
 
-6. VISUAL CUES = SCREENSHOTS
+4. VISUAL CUES = SCREENSHOTS
    - slide_type should be "demo" for action slides
    - Image prompts should describe what the screen shows
 
