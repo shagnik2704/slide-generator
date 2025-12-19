@@ -402,6 +402,25 @@ const ChatArea = ({ toggleSidebar }) => {
 
 
             // Handle special cases after streaming complete
+
+            // Add pedagogy compliance badge if draft is ready
+            if (finalData?.is_draft_ready && finalData?.pedagogy_compliance) {
+                const pc = finalData.pedagogy_compliance;
+                let complianceContent = '\n\n**Pedagogy Compliance:**\n';
+                complianceContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
+                complianceContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
+                complianceContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
+                complianceContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
+                complianceContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
+
+                // Append compliance to the last message
+                setOutlineMessages(prev => prev.map(msg =>
+                    msg.id === assistantMsgId
+                        ? { ...msg, content: msg.content + complianceContent }
+                        : msg
+                ));
+            }
+
             if (finalData?.is_approved) {
                 const exportMessage = {
                     id: Date.now() + 2,
