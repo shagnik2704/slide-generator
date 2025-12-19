@@ -5,7 +5,6 @@ import ThemeToggle from './ThemeToggle';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
-// Hardcoded API URL for production backend
 const API_URL = 'https://slide-generator-61ic.onrender.com';
 //const API_URL = 'http://localhost:8000';
 const ChatArea = ({ toggleSidebar }) => {
