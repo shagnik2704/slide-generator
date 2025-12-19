@@ -7,7 +7,7 @@ import OutlineCard from './OutlineCard';
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
 const API_URL = 'https://slide-generator-61ic.onrender.com'; 
-// const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+//const API_URL = 'http://localhost:8000';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
