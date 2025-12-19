@@ -6,10 +6,10 @@ import OutlineCard from './OutlineCard';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
-// Use environment variable for API URL, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-
-const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
+// Hardcoded API URL for production backend
+const API_URL = 'https://slide-generator-61ic.onrender.com';
+//const API_URL = 'http://localhost:8000';
+const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
         { id: 1, role: 'assistant', content: 'Hello! Please upload your tutorial outline to get started. I\'ll help you generate a script, slides, and video from it.' }
@@ -18,7 +18,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         {
             id: 2,
             role: 'assistant',
-            content: 'Hi! I\'m here to help you create a Spoken Tutorial Course Outline. I\'ll guide you through a series of questions to capture all the information needed.\n\nLet\'s start! Please give the tutorial name (what should we call this course?).',
+            content: 'Hi! 😊 I\'m here to help you create a Spoken Tutorial course outline, step by step.\n\nTo start, could you tell me what kind of course this is: **FOSS**, **ICT**, or **Other**?\n\nJust reply with `FOSS`, `ICT`, or `Other` (you can add a short note if you pick Other). Then I\'ll gently walk you through a few short questions.',
         }
     ]);
     const [outlineSession, setOutlineSession] = useState({ projectId: null, outlineData: null, phase: null });
@@ -301,6 +301,12 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
         }
     };
 
+    const handleConfirmation = async (confirmed) => {
+        if (mode !== 'outline_chat') return;
+        const confirmationText = confirmed ? 'yes' : 'no';
+        await handleSendChatText(confirmationText);
+    };
+
     const handleSendChatText = async (text) => {
         if (mode !== 'outline_chat') return;
         const userMessage = { id: Date.now(), role: 'user', content: text };
@@ -393,6 +399,7 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                     }
                 }
             }
+
 
             // Handle special cases after streaming complete
             if (finalData?.is_approved) {
@@ -711,7 +718,10 @@ const ChatArea = ({ toggleSidebar, isSidebarOpen }) => {
                 <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     {activeMessages.map((msg) => (
                         <div key={msg.id}>
-                            <MessageBubble message={msg} />
+                            <MessageBubble
+                                message={msg}
+                                onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                            />
 
                             {/* Show OutlineCard when outline data is ready for review */}
                             {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (

@@ -31,17 +31,23 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Slide Generator API", lifespan=lifespan)
 
 # CORS middleware
+# Allow any origin (no credentials used) to avoid preflight failures when
+# frontends are served from new hosts or previews.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,
 )
 
 # Mount static files to serve generated content
+# Use check_dir=False so the app can start even if the directory
+# doesn't exist yet on the deployment filesystem.
 static_dir = project_root / "static"
-app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+app.mount("/static", StaticFiles(directory=str(static_dir), check_dir=False), name="static")
 
 # Import routers after app is created (they will use app.state.graph)
 from src.api.routes import (
@@ -56,6 +62,15 @@ app.include_router(upload_router)
 app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
+
+# Basic health/root endpoints for uptime checks
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
