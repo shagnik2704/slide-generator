@@ -3,6 +3,8 @@ Outline generator utilities for creating Word documents from markdown outlines.
 """
 import os
 import re
+import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
@@ -112,13 +114,60 @@ def create_outline_docx(markdown_text, project_id):
 
 def parse_docx_outline(file_path):
     """
-    Parse a Word document back to markdown text.
-    Handles both .docx and .md files.
+    Parse a document back to markdown text.
+    Handles .docx, .odt, .md, and .txt files.
     """
     if file_path.endswith('.md') or  file_path.endswith('.txt'):
         # For markdown files, just read the content
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
+    
+    elif file_path.endswith('.odt'):
+        # For ODT files, extract text from the ZIP archive's content.xml
+        # ODT files are ZIP archives containing XML
+        try:
+            with zipfile.ZipFile(file_path, 'r') as odt_zip:
+                # Read the content.xml file which contains the document text
+                content_xml = odt_zip.read('content.xml')
+            
+            # Parse the XML
+            root = ET.fromstring(content_xml)
+            
+            # Define ODF namespaces
+            namespaces = {
+                'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0',
+                'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0'
+            }
+            
+            # Extract all text content
+            text_content = []
+            
+            # Find all paragraph elements (text:p) and heading elements (text:h)
+            for elem in root.iter():
+                if elem.tag == '{urn:oasis:names:tc:opendocument:xmlns:text:1.0}h':
+                    # Heading element - get outline level for markdown formatting
+                    level = int(elem.get('{urn:oasis:names:tc:opendocument:xmlns:text:1.0}outline-level', '1'))
+                    text = ''.join(elem.itertext()).strip()
+                    if text:
+                        text_content.append(f"{'#' * level} {text}")
+                        
+                elif elem.tag == '{urn:oasis:names:tc:opendocument:xmlns:text:1.0}p':
+                    # Regular paragraph
+                    text = ''.join(elem.itertext()).strip()
+                    if text:
+                        text_content.append(text)
+                        
+                elif elem.tag == '{urn:oasis:names:tc:opendocument:xmlns:text:1.0}list-item':
+                    # List item - extract text from child paragraphs
+                    for p in elem.findall('.//{urn:oasis:names:tc:opendocument:xmlns:text:1.0}p'):
+                        text = ''.join(p.itertext()).strip()
+                        if text:
+                            text_content.append(f"- {text}")
+            
+            return '\n'.join(text_content)
+            
+        except Exception as e:
+            raise ValueError(f"Error parsing ODT file: {str(e)}")
     
     elif file_path.endswith('.docx'):
         # For Word documents, extract text and convert to markdown
@@ -149,3 +198,4 @@ def parse_docx_outline(file_path):
     
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
+
