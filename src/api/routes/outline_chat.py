@@ -543,19 +543,49 @@ def _transform_menu_instructions(text: str) -> str:
 
 def _should_ask_confirmation(field: str, value: any, original_response: str = "") -> bool:
     """
-    Use LLM to determine if we should ask for confirmation based on the field and extracted value.
-    Returns True if the value seems potentially incorrect or unusual, False otherwise.
+    Returns True ONLY if the value is clearly inappropriate or wrong.
+    Default behavior: ACCEPT the answer (return False) unless it's obviously wrong.
     """
     if value is None or (isinstance(value, str) and not value.strip()):
         return False  # Empty values don't need confirmation
 
+    # DEFAULT: Accept all reasonable answers. Only flag clearly inappropriate ones.
+    
+    # Fields that should NEVER need confirmation - accept any reasonable answer
+    auto_accept_fields = [
+        "purpose", "target_audience", "entry_behaviour", "platform_name", 
+        "os_version", "core_example", "prepared_by", "date", "domain",
+        "tutorial_prerequisites", "tutorial_comments", "course_objectives",
+        "topics_included", "topics_not_included", "allied_examples", "keywords"
+    ]
+    
+    if field in auto_accept_fields:
+        if isinstance(value, str):
+            cleaned = value.strip()
+            # ONLY reject if it's clearly inappropriate: too short (< 2 chars) or error messages
+            if len(cleaned) < 2:
+                return True
+            # Check for error indicators ONLY
+            error_indicators = [
+                "could not extract", "not a", "does not specify", "not found",
+                "error", "unable to", "i cannot", "i don't", "i'm not sure",
+                "placeholder", "test input", "example only"
+            ]
+            if any(indicator in cleaned.lower() for indicator in error_indicators):
+                return True
+            # Accept everything else - don't ask for confirmation
+            return False
+        elif isinstance(value, list):
+            # For lists, accept if it has any items
+            if len(value) > 0:
+                return False
+            return True  # Empty list might be inappropriate
+
     # For platform_name (FOSS / tool name + version), accept normal-looking values
-    # like "GIMP 2.10", "Koha 25.05" without asking for confirmation.
     if field == "platform_name" and isinstance(value, str):
         cleaned = value.strip()
-        # Allow letters, numbers, spaces, dots, dashes, and plus signs
-        if 3 <= len(cleaned) <= 80 and re.match(r'^[A-Za-z0-9 .+\-]+$', cleaned):
-            return False
+        if 2 <= len(cleaned) <= 100:  # Very permissive length
+            return False  # Accept it
 
     # For course outline name and tutorial title, enforce strict validation:
     # - Max 50 characters
@@ -564,29 +594,28 @@ def _should_ask_confirmation(field: str, value: any, original_response: str = ""
         cleaned = value.strip()
         if len(cleaned) == 0:
             return False  # let normal flow handle empty
-        # If invalid, force confirmation so we can reject and re-ask
+        # If invalid format, force confirmation so we can reject and re-ask
         if len(cleaned) > 50 or not re.match(r'^[A-Za-z0-9 ]+$', cleaned):
             return True
-        # If valid according to these rules, NEVER ask for confirmation,
-        # even if the LLM might think it's "unusual".
+        # If valid according to these rules, NEVER ask for confirmation
         return False
     
-    # Quick check: if value is obviously an error message, ask for confirmation
+    # Quick check: ONLY flag obvious error messages
     if isinstance(value, str):
-        value_str = value.lower()
+        value_str = value.lower().strip()
+        # Only check for error messages - be very strict
         error_indicators = [
-            "could not extract",
-            "not a",
-            "does not specify",
-            "not found",
-            "error",
-            "unable to",
-            "i cannot",
-            "i don't",
-            "i'm not sure",
+            "could not extract", "not a", "does not specify", "not found",
+            "error", "unable to", "i cannot", "i don't", "i'm not sure",
+            "placeholder", "test input"
         ]
         if any(indicator in value_str for indicator in error_indicators):
             return True
+        # For any reasonable string (>= 2 chars), accept without confirmation
+        if len(value_str) >= 2:
+            return False
+        # Very short strings (< 2 chars) might be inappropriate
+        return True
     elif isinstance(value, list):
         # Check if any item in the list looks like an error
         for item in value:
@@ -595,52 +624,67 @@ def _should_ask_confirmation(field: str, value: any, original_response: str = ""
                 error_indicators = ["could not", "not a", "does not", "error", "unable"]
                 if any(indicator in item_lower for indicator in error_indicators):
                     return True
+        # If list has any items, accept it
+        if len(value) > 0:
+            return False
+        # Empty list might be inappropriate
+        return True
+    elif isinstance(value, (int, float)):
+        # For numbers, accept reasonable ranges
+        if field == "tutorial_time" or field == "time_seconds":
+            # Time validation is handled separately, accept here
+            return False
+        if field == "recommended_no_of_tutorials":
+            # Accept any positive number
+            if value > 0:
+                return False
+        # Accept any number
+        return False
     
-    # Use LLM (OpenAI) to determine if the value seems unusual or incorrect
+    # Default: ACCEPT the answer (don't ask for confirmation)
+    # Only use LLM as a last resort for truly suspicious cases
     try:
         # Format value for display
         if isinstance(value, list):
-            display_value = ", ".join(str(v) for v in value[:5])
-            if len(value) > 5:
+            display_value = ", ".join(str(v) for v in value[:3])
+            if len(value) > 3:
                 display_value += f" ... ({len(value)} total)"
         else:
             display_value = str(value)
 
-        prompt = f"""You are helping to validate extracted data from a user's response in a course outline creation system.
+        prompt = f"""You are validating a user's answer in a course outline system.
 
-Field name: {field}
+Field: {field}
 Extracted value: {display_value}
-Original user response: {original_response[:500] if original_response else "N/A"}
 
-Determine if the extracted value seems unusual, incorrect, or potentially a mistake. Consider:
-- Is the value too short or incomplete (e.g., single character like "a")?
-- Does it look like a test input or placeholder?
-- Does it seem unrelated to what the field should contain?
-- Is it suspiciously formatted or unclear?
-- Does it look like an extraction error?
+ONLY return "yes" if the value is CLEARLY INAPPROPRIATE or WRONG:
+- Single character or extremely short (< 2 chars)
+- Contains error messages like "could not extract" or "not found"
+- Looks like placeholder/test text like "test" or "placeholder"
+- Completely unrelated gibberish
 
-For reasonable, complete values that match the field's purpose, return "no".
-For unusual, incomplete, or potentially incorrect values, return "yes".
+If the value is reasonable, complete, and makes sense for the field, return "no".
 
-Return ONLY "yes" or "no" (lowercase, no quotes, no explanation)."""
+Be VERY PERMISSIVE. Only flag obviously wrong answers.
+
+Return ONLY "yes" or "no" (lowercase, no quotes)."""
 
         result = _generate_llm_text(
             prompt,
             temperature=0.0,
             max_tokens=4,
-            system_prompt="You are a careful validator that answers only 'yes' or 'no'.",
+            system_prompt="You are a permissive validator. Default to accepting answers. Only flag clearly wrong ones.",
         ).strip().lower()
 
-        if result == "yes":
-            return True
-        return False
+        # Only return True if LLM explicitly says "yes" (clearly inappropriate)
+        return result == "yes"
 
     except Exception:
-        # If LLM call fails, fall back to simple heuristics
-        if isinstance(value, str) and len(value.strip()) == 1:
+        # If LLM call fails, DEFAULT TO ACCEPTING (be permissive)
+        # Only reject if it's obviously too short
+        if isinstance(value, str) and len(value.strip()) < 2:
             return True
-        if isinstance(value, str) and len(value) > 300:
-            return True
+        # Otherwise, accept it
         return False
 
 
@@ -687,7 +731,9 @@ def _determine_next_question(outline_data: Dict, phase: str, conversation: List[
                 if "allied_examples" not in outline_data:
                     return phase, q["question"]
             else:
-                if not outline_data.get(field):
+                # Check if field exists and has a non-empty value
+                field_value = outline_data.get(field)
+                if not field_value or (isinstance(field_value, str) and not field_value.strip()):
                     return phase, q["question"]
         phase = "structure"
     
@@ -735,7 +781,7 @@ For ICT courses, these steps should describe what learners will actually DO or T
                 else:
                     return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a semicolon‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
             if not last_tutorial.get("time_seconds") or last_tutorial.get("time_seconds") == 0:
-                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in minutes (between 2 and 5 minutes)."
+                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in minutes (typically 2-10 minutes, but you can provide any reasonable duration)."
         
         # All tutorials collected, move to metadata
         if len(tutorial_rows) >= num_tutorials and all(
@@ -1322,9 +1368,10 @@ Examples: 'Teaching symmetry with AI drawing tools', 'Data collection for studen
 User response: {last_message.content}
 Return only the scenario description as a string (teaching scenario, use case, or practical application)."""
                             else:
-                                extraction_prompt = f"""Extract the core example from the user's response. Return only the example description as a string.
+                                extraction_prompt = f"""Extract the core example from the user's response. Return the full example description as a string.
 
-User response: {last_message.content}"""
+User response: {last_message.content}
+Return the complete example description exactly as the user described it."""
                         break
             elif phase == "structure":
                 # Check if we're still collecting the number of tutorials
@@ -1548,7 +1595,7 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                                 tutorial_rows[-1]["topics_details"] = extracted_value
                             pending_confirmation = None
                     elif current_field == "tutorial_time":
-                        # We now treat user input as MINUTES and enforce 2–5 minutes.
+                        # We now treat user input as MINUTES and accept a reasonable range (1-30 minutes).
                         numbers = re.findall(r'\d+', extracted_text)
                         if numbers:
                             minutes = int(numbers[0])
@@ -1557,8 +1604,8 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             numbers = re.findall(r'\d+', last_message.content)
                             minutes = int(numbers[0]) if numbers else 0
 
-                        # Enforce 2–5 minute window
-                        if minutes < 2 or minutes > 5:
+                        # Accept reasonable range: 1-30 minutes
+                        if minutes < 1 or minutes > 30:
                             extracted_value = 0
                         else:
                             extracted_value = minutes * 60  # store as seconds
@@ -1568,7 +1615,7 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             # Invalid time, ask user again explicitly
                             return JSONResponse({
                                 "project_id": project_id,
-                                "assistant_message": "For each tutorial, the estimated time must be between 2 and 5 minutes.\n\nPlease enter a value between 2 and 5 minutes (for example: 3 minutes).",
+                                "assistant_message": "Please provide a reasonable estimated time for this tutorial (typically 1-30 minutes). For example: 3 minutes, 5 minutes, or 10 minutes.",
                                 "follow_up_question": None,
                                 "phase": phase,
                                 "outline_data": outline_data,
@@ -1624,7 +1671,18 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                             outline_data[current_field] = extracted_value
                             pending_confirmation = None
                     else:
+                        # For core_example and other text fields, use extracted text or fallback to original
                         extracted_value = extracted_text.strip('"\'')
+                        
+                        # If extraction failed or returned empty/error, use original user response
+                        if not extracted_value or len(extracted_value) < 3:
+                            if current_field == "core_example" and last_message.content:
+                                # For core_example, use the full user response as fallback
+                                extracted_value = last_message.content.strip()
+                            elif "could not extract" in extracted_text.lower() or "not a" in extracted_text.lower():
+                                # If LLM says it can't extract, use original response
+                                extracted_value = last_message.content.strip()
+                        
                         field_display = current_field.replace("_", " ").title()
                         if _should_ask_confirmation(current_field, extracted_value, last_message.content):
                             pending_confirmation = {
@@ -1791,13 +1849,22 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                                     tutorial_rows[-1]["topics_details"] = extracted_value
                                     pending_confirmation = None
                             elif current_field == "tutorial_time":
+                                # Treat user input as MINUTES and accept reasonable range (1-30 minutes)
                                 numbers = re.findall(r'\d+', last_message.content)
                                 if numbers:
-                                    extracted_value = int(numbers[0])
+                                    minutes = int(numbers[0])
+                                    # Accept reasonable range: 1-30 minutes, convert to seconds
+                                    if 1 <= minutes <= 30:
+                                        extracted_value = minutes * 60
+                                    else:
+                                        extracted_value = 0
                                 else:
                                     extracted_value = 0
-                                field_display = "Time (seconds)"
-                                if _should_ask_confirmation(current_field, extracted_value, last_message.content):
+                                field_display = "Time (minutes)"
+                                if extracted_value == 0:
+                                    # Invalid time, skip confirmation and let user provide again
+                                    pending_confirmation = None
+                                elif _should_ask_confirmation(current_field, extracted_value, last_message.content):
                                     pending_confirmation = {
                                         "field": current_field,
                                         "value": extracted_value,
