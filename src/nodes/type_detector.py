@@ -33,6 +33,7 @@ TYPE 1: "conceptual"
 - Examples: "What is an API?", "Understanding deepfakes", "3 Cs of Prompting"
 
 TYPE 2: "demo"  
+- Involving a software
 - Step-by-step SOFTWARE WALKTHROUGH with specific actions
 - Focus on clicking, typing, navigating UI
 - Examples: "How to create an API key", "Setting up ChatGPT", "Installing Python"

@@ -5,6 +5,7 @@ Stage 2: Expands slide skeleton into full narration.
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from src.core.state import AgentState, NarrationScript
 import json
 
@@ -23,8 +24,8 @@ def expand_narration(state: AgentState):
     if not structured_outline or not structured_outline.get('slides'):
         print("⚠️ No structured outline provided")
         return {"narration_script": {}}
-    
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+        
+    llm = ChatOpenAI(model="gpt-5-mini")      
     structured_llm = llm.with_structured_output(NarrationScript)
     
     # Select prompt based on tutorial type
@@ -89,14 +90,25 @@ Use **bold** for technical terms: **AI**, **API**, **prompt**, **ChatGPT**, etc.
 
 === BOILERPLATE NARRATION ===
 
-Title Slide: "Welcome to this Spoken Tutorial on [presentation_title]."
+IMPORTANT: Narration is ONLY what is spoken aloud.
+Do NOT include visual descriptions like "The title appears on screen" or "You will see X".
+Those belong in image_prompt, not narration.
+
+Title Slide (ONE sentence only):
+"Welcome to the Spoken Tutorial on [topic from title]."
 
 Learning Objectives Slide:
 "In this tutorial, you will learn to,\\n• [objective 1].\\n• [objective 2].\\n• [objective 3]."
 
-System Requirements Slide: "Here I am using a browser on a computer or mobile."
+System Requirements Slide:
+"Here I am using [device/browser].\\n
+For this tutorial, you need [item 1], [item 2], and [item 3]."
+(Combine all requirements into ONE flowing sentence - avoid repeating 'You will need')
 
-Pre-requisite Slide: "To follow this tutorial, you should have [concept knowledge].\\nPlease refer to our website for more details."
+Pre-requisite Slide:
+"To follow this tutorial, you should have [concept knowledge].\\n
+For pre-requisite tutorials, please visit this website."
+(Keep it brief - one sentence for requirements, one for the website.)
 
 Summary Slide: "Let us summarize what we learned.\\n[brief recap]"
 
@@ -147,7 +159,7 @@ def get_demo_narration_prompt(structured_outline: dict) -> str:
 {json.dumps(structured_outline, indent=2)}
 
 === DEMO WRITING STYLE ===
-- Write like you're GUIDING someone through a software task
+- Write like you're GUIDING someone through a task
 - Short, imperative sentences - one action at a time
 - Simple Indian English (easy to translate)
 - Each sentence on a NEW LINE (use \\n) for TTS
@@ -156,10 +168,6 @@ def get_demo_narration_prompt(structured_outline: dict) -> str:
 === SHARED QUALITY RULES (APPLY TO ALL TUTORIALS) ===
 
 1. CUT FILLER PHRASES
-   Remove these unnecessary starters:
-   - "So," / "Now," / "Well," / "Alright,"
-   - "Let's go ahead and..." → Just start the action
-   - "What we need to do is..." → Just state the action
 
 2. REMOVE REDUNDANCY (CRITICAL)
    - Don't say the same thing twice
@@ -167,21 +175,10 @@ def get_demo_narration_prompt(structured_outline: dict) -> str:
    - "Click the button. The button will..." → "Click the button. It will..."
 
 3. USE ACTIVE VOICE
-   - "The button is clicked" → "Click the button"
-   - "The key will be generated" → "A new key appears"
 
 === DEMO-SPECIFIC RULES ===
 
-1. USE ACTION VERBS (START EACH SENTENCE WITH)
-   - Open, Click, Type, Select, Navigate, Copy, Paste, Scroll
-   - Example: "Click on Get API Key."
-   - Example: "Type your project name in the text box."
-
-2. NO ANALOGIES NEEDED
-   - Demo tutorials focus on DOING, not explaining concepts
-   - Just tell them what to do, not why it works
-
-3. ONE ACTION = ONE SENTENCE
+1. ONE ACTION = ONE SENTENCE
    - "Open the browser. Go to aistudio.google.com."
    - NOT: "Open the browser and navigate to the AI Studio website where you can create API keys."
 
@@ -193,7 +190,7 @@ def get_demo_narration_prompt(structured_outline: dict) -> str:
 5. BE SCREEN-CENTRIC WITH EXPLICIT LOCATIONS (CRITICAL)
    Always describe WHERE elements are located on screen:
    
-   POSITIONS TO USE:
+   EXAMPLE POSITIONS TO USE:
    - "In the **top right corner**..."
    - "On the **left panel**..." / "In the **left sidebar**..."
    - "At the **bottom of the page**..."
@@ -223,14 +220,25 @@ Use **bold** for:
 
 === BOILERPLATE NARRATION ===
 
-Title Slide: "Welcome to this Spoken Tutorial on [presentation_title]."
+IMPORTANT: Narration is ONLY what is spoken aloud.
+Do NOT include visual descriptions like "The title appears on screen" or "You will see X".
+Those belong in image_prompt, not narration.
+
+Title Slide (ONE sentence only):
+"Welcome to the Spoken Tutorial on [topic from title]."
 
 Learning Objectives Slide:
 "In this tutorial, you will learn to,\\n• [action objective 1].\\n• [action objective 2]."
 
-System Requirements Slide: "Here I am using a browser on a computer.\\nYou will need [specific requirements]."
+System Requirements Slide:
+"Here I am using [device/browser].\\n
+Optional:For this tutorial, you need [item 1], [item 2], and [item 3]."
+(Combine all requirements into ONE flowing sentence - avoid repeating 'You will need')
 
-Pre-requisite Slide: "To follow this tutorial, you should have [concept knowledge].\\nPlease refer to our website for more details."
+Pre-requisite Slide:
+"To follow this tutorial, you should have [concept knowledge].\\n
+For pre-requisite tutorials, please visit this website."
+
 
 Summary Slide: "Let us summarize what we did.\\n[recap of key actions]"
 

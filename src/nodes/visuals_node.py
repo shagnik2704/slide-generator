@@ -2,11 +2,13 @@
 Visual generation node for the 4-node pipeline.
 Stage 3: Generates image prompts based on narration context.
 """
+from langchain_openai.chat_models.base import ChatOpenAI
 import os
 from dotenv import load_dotenv
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from src.core.state import AgentState
 import json
 
@@ -48,7 +50,8 @@ def generate_visuals(state: AgentState):
         print("⚠️ No narration script provided")
         return {"json_script": {}}
     
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+   
+    llm = ChatOpenAI(model="gpt-5-mini")
     structured_llm = llm.with_structured_output(FinalScript)
     
     prompt = f"""You are adding VISUAL CUES (image_prompt) to a Spoken Tutorial script.
@@ -62,7 +65,7 @@ BOILERPLATE SLIDES (use exact strings):
 - Title Slide → image_prompt: "Title Slide"
 - Learning Objectives → image_prompt: "Learning Objectives Slide"
 - System Requirements → image_prompt: "System Requirements Slide"
-- Pre-requisite Slide → image_prompt: "Pre-requisite Slide"
+- Pre-requisite Slide → image_prompt: "Pre-requisite Slide, EduPyramids.org at bottom"
 - Summary Slide → image_prompt: "Summary Slide"
 - Assignment Slide → image_prompt: "Assignment Slide"
 - Thank You Slide → image_prompt: "EduPyramids logo"

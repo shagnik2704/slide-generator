@@ -111,13 +111,26 @@ def convert_to_latex(state: AgentState):
     print("Converting JSON to LaTeX with Templates...")
     json_data = state['json_script']
     
-    # Escape title
-    safe_title = escape_latex(json_data.get('presentation_title', 'Presentation'))
+    # Extract topic name from episode field (e.g., "5. What is an API" → "What is an API")
+    episode = json_data.get('episode', '')
+    import re
+    # Remove leading number and dot (e.g., "5. " or "12. ")
+    topic_match = re.match(r'^\d+\.\s*(.+)$', episode)
+    if topic_match:
+        slide_title = topic_match.group(1).strip()
+    else:
+        # Fallback to episode as-is, or presentation_title
+        slide_title = episode if episode else json_data.get('presentation_title', 'Presentation')
+    
+    safe_title = escape_latex(slide_title)
     
     # Get absolute path to logo
     from pathlib import Path
     project_root = Path(__file__).parent.parent.parent
     logo_path = project_root / "static" / "logo.png"
+    
+    # Get absolute path to logo
+    logo_abs_path = str(logo_path).replace('\\', '/')
     
     latex_content = r"""
 \documentclass[17pt,xcolor=table]{beamer} 
@@ -138,17 +151,22 @@ def convert_to_latex(state: AgentState):
 % --- Remove navigation symbols ---
 \setbeamertemplate{navigation symbols}{}
 
-% --- Logo is now added per-slide for intro/outro slides only ---
-% Content slides with images do NOT show the logo
+% --- Bottom right logo on ALL slides via background template ---
+\addtobeamertemplate{background}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=south west, xshift=110mm, yshift=7mm]
+      at (current page.south west) {\includegraphics[height=1cm]{""" + logo_abs_path + r"""}};  
+  \end{tikzpicture}%
+}{}
 
 % --- Title info ---
 \title [""" + safe_title + r"""\hspace{0.5cm}]
-{""" + safe_title + r"""}\date{}
-\author [\ EduPyramids Educational Services Pvt.\ Ltd.]{%
-{Spoken Tutorial}\\[5pt]
-  { \small brought to you by }\\[5pt]
-{EduPyramids Educational Services Pvt.\ Ltd.}\\[10pt]
-  { \textcolor{blue}{https://spoken-tutorial.org}}
+{\large """ + safe_title + r"""}\date{}
+\author [EduPyramids Educational Services Pvt.\ Ltd.]{%
+{Spoken Tutorial}\\
+  { \small brought to you by }\\
+{EduPyramids Educational Services Pvt.\ Ltd.}\\
+  {\textcolor{blue}{https://EduPyramids.org}}
 }
 \date{} % empty date
 

@@ -160,25 +160,21 @@ def get_demo_evaluation_prompt(json_script: dict) -> str:
 
 Check if the script is properly action-focused:
 
-1. ACTION VERBS: Do sentences start with action verbs?
+1. ACTION VERBS: Do sentences have action verbs?
    - Good: "Click", "Open", "Type", "Select", "Navigate", "Copy"
-   - Bad: "Now we will...", "The next step is..."
 
 2. ONE ACTION PER SENTENCE: Is each sentence focused on a single action?
    - Good: "Click Get API Key."
    - Bad: "Click Get API Key and then select the project and copy the key."
 
-3. NO UNNECESSARY ANALOGIES: Demo tutorials should NOT have forced analogies.
-   - Demo = focus on DOING, not explaining concepts
-
-4. EXPLICIT SCREEN LOCATIONS (CRITICAL): Does it describe WHERE elements are?
+3. EXPLICIT SCREEN LOCATIONS (CRITICAL): Does it describe WHERE elements are?
    - Good: "In the **top right corner**, click **Sign In**."
    - Good: "On the **left panel**, click **Get API Key**."
    - Good: "At the **bottom of the dialog**, click **Create**."
    - Bad: "Click Sign In." (no location specified)
    - Bad: "Click Settings." (WHERE on screen?)
 
-5. VERIFICATION CUES: After key actions, does it tell what to expect?
+4. VERIFICATION CUES: After key actions, does it tell what to expect?
    - Good: "You will see...", "The key appears..."
 
 === SCRIPT TO CHECK ===

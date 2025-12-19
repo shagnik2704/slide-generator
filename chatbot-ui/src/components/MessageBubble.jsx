@@ -31,7 +31,7 @@ const MessageBubble = ({ message }) => {
                     flexShrink: 0,
                     boxShadow: 'var(--shadow-sm)'
                 }}>
-                    {isUser ? <User size={20} color="white" /> : <Bot size={20} color="var(--accent-secondary)" />}
+                    {isUser ? <User size={20} color="white" /> : <Bot size={20} color="var(--accent-primary)" />}
                 </div>
 
                 {/* Message Content */}
@@ -46,6 +46,7 @@ const MessageBubble = ({ message }) => {
                 }}>
                     <div className="markdown-content">
                         <ReactMarkdown>{message.content}</ReactMarkdown>
+                        {message.isStreaming && <span className="streaming-cursor">▌</span>}
                     </div>
                 </div>
             </div>

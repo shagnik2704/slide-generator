@@ -15,7 +15,8 @@ from typing import Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
+import asyncio
 from google import genai
 from google.api_core.exceptions import InternalServerError, ResourceExhausted, ServiceUnavailable
 from pydantic import BaseModel, Field
@@ -940,5 +941,193 @@ async def export_outline(project_id: int, format: str = "json"):
             "allied_examples": outline_data.get("allied_examples", []),
             "tutorial_rows": outline_data.get("tutorial_rows", [])
         })
+    elif format == "pdf":
+        # Generate PDF matching the ST Course Outline template
+        from src.services.outline_pdf_service import create_outline_pdf
+        import os
+        
+        pdf_path = create_outline_pdf(outline_data)
+        pdf_filename = os.path.basename(pdf_path)
+        
+        return JSONResponse({
+            "pdf_url": f"/static/{pdf_filename}",
+            "pdf_path": pdf_path,
+            "message": "PDF generated successfully"
+        })
+    elif format == "docx":
+        # Generate DOCX matching the ST Course Outline template
+        from src.services.outline_docx_service import create_outline_docx
+        import os
+        
+        docx_path = create_outline_docx(outline_data)
+        docx_filename = os.path.basename(docx_path)
+        
+        return JSONResponse({
+            "docx_url": f"/static/{docx_filename}",
+            "docx_path": docx_path,
+            "message": "DOCX generated successfully"
+        })
     else:
-        raise HTTPException(status_code=400, detail="Format must be 'json'")
+        raise HTTPException(status_code=400, detail="Format must be 'json', 'pdf', or 'docx'")
+
+
+@router.post("/outline_chat_stream")
+async def outline_chat_stream(request: OutlineChatRequest):
+    """Streaming version of outline chat - streams assistant response token by token."""
+    
+    async def generate():
+        try:
+            if not request.conversation:
+                yield f"data: {json.dumps({'error': 'Conversation history is required'})}\n\n"
+                return
+            
+            project_root = Path(__file__).parent.parent.parent
+            session_dir = project_root / "output" / "outline_sessions"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            
+            project_id = request.project_id or int(time.time())
+            session_path = session_dir / f"outline_{project_id}.json"
+            
+            # Load or initialize outline data
+            if session_path.exists():
+                with open(session_path, "r") as f:
+                    session_data = json.load(f)
+                    outline_data = session_data.get("outline_data", {})
+                    phase = session_data.get("phase", "warmup")
+            else:
+                outline_data = {}
+                phase = request.phase or "warmup"
+            
+            last_message = request.conversation[-1] if request.conversation else None
+            user_content = last_message.content.lower().strip() if last_message and last_message.role == "user" else ""
+            
+            # Quick approval check
+            if user_content == "approve" and phase == "review":
+                phase = "approved"
+                outline_data["status"] = "approved"
+                outline_data["approved_at"] = datetime.now().isoformat()
+                
+                # Stream approval message
+                approval_msg = "✅ Outline approved! Generating final outputs..."
+                for char in approval_msg:
+                    yield f"data: {json.dumps({'token': char})}\n\n"
+                    await asyncio.sleep(0.02)
+                
+                # Save and send completion
+                with open(session_path, "w") as f:
+                    json.dump({"project_id": project_id, "outline_data": outline_data, "phase": phase, "updated_at": time.time()}, f, indent=2)
+                
+                yield f"data: {json.dumps({'done': True, 'project_id': project_id, 'phase': phase, 'outline_data': outline_data, 'is_approved': True})}\n\n"
+                return
+            
+            # Process user input and extract information (non-streaming part)
+            if last_message and last_message.role == "user" and user_content and user_content != "approve":
+                client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+                question_flow = _get_question_flow()
+                current_field = None
+                extraction_prompt = ""
+                
+                # Determine field to extract based on phase (same logic as original)
+                if phase == "warmup":
+                    for q in question_flow["warmup"]["questions"]:
+                        if not outline_data.get(q["field"]):
+                            current_field = q["field"]
+                            extraction_prompt = f"Extract the {q['field']} from: {last_message.content}. Return only the value."
+                            break
+                elif phase == "outcomes":
+                    for q in question_flow["outcomes"]["questions"]:
+                        if not outline_data.get(q["field"]):
+                            current_field = q["field"]
+                            if q["field"] in ["course_objectives", "topics_included", "topics_not_included"]:
+                                extraction_prompt = f"Extract {q['field']} from: {last_message.content}. Return as JSON array."
+                            break
+                elif phase == "examples":
+                    for q in question_flow["examples"]["questions"]:
+                        if not outline_data.get(q["field"]):
+                            current_field = q["field"]
+                            extraction_prompt = f"Extract {q['field']} from: {last_message.content}. Return only the value."
+                            break
+                elif phase == "structure":
+                    if not outline_data.get("recommended_no_of_tutorials"):
+                        current_field = "recommended_no_of_tutorials"
+                        numbers = re.findall(r'\d+', last_message.content)
+                        if numbers:
+                            outline_data["recommended_no_of_tutorials"] = int(numbers[0])
+                
+                # Extract field if needed
+                if current_field and extraction_prompt:
+                    try:
+                        response = client.models.generate_content(model="gemini-2.5-flash", contents=extraction_prompt)
+                        extracted = response.text.strip()
+                        
+                        if current_field == "recommended_no_of_tutorials":
+                            numbers = re.findall(r'\d+', extracted)
+                            if numbers:
+                                outline_data["recommended_no_of_tutorials"] = int(numbers[0])
+                        elif current_field in ["course_objectives", "topics_included", "topics_not_included", "allied_examples"]:
+                            try:
+                                outline_data[current_field] = json.loads(_extract_json_block(extracted))
+                            except:
+                                outline_data[current_field] = [extracted]
+                        else:
+                            outline_data[current_field] = extracted.strip('"\'')
+                    except:
+                        # Fallback to simple extraction
+                        outline_data[current_field] = last_message.content.strip()
+            
+            # Determine next question
+            phase, next_question = _determine_next_question(outline_data, phase, request.conversation)
+            
+            # Build assistant message
+            assistant_message = ""
+            
+            if phase == "review" and not outline_data.get("draft_shown"):
+                # Auto-generate "About the Course" if missing
+                if not outline_data.get("about_course"):
+                    outline_data["about_course"] = f"This course teaches {outline_data.get('tutorial_name', 'the subject')} to {outline_data.get('target_audience', 'learners')}."
+                
+                draft = _generate_draft_outline(outline_data)
+                outline_data["draft"] = draft
+                outline_data["draft_shown"] = True
+                errors, compliance = _validate_outline(outline_data)
+                
+                assistant_message = f"Here's your draft Course Outline:\n\n{draft}\n\n"
+                assistant_message += f"**Pedagogy Compliance:**\n"
+                assistant_message += f"- Core Example: {'✓' if compliance['core_example'] else '✗'}\n"
+                assistant_message += f"- Demo Content: {compliance['demo_percentage']:.1f}%\n"
+                assistant_message += f"- Menu-free: {'✓' if compliance['menu_free'] else '⚠️'}\n\n"
+                if errors:
+                    assistant_message += "**Issues:**\n" + "\n".join(f"- {e}" for e in errors[:3]) + "\n\n"
+                assistant_message += "Please review and suggest edits, or type 'approve' to finalize."
+            
+            elif next_question:
+                assistant_message = next_question
+            else:
+                assistant_message = "Thank you! All information collected."
+            
+            # Stream the assistant message token by token
+            for char in assistant_message:
+                yield f"data: {json.dumps({'token': char})}\n\n"
+                await asyncio.sleep(0.015)  # 15ms delay for typing effect
+            
+            # Save session
+            with open(session_path, "w") as f:
+                json.dump({"project_id": project_id, "outline_data": outline_data, "phase": phase, "updated_at": time.time()}, f, indent=2)
+            
+            # Send completion event with full data
+            yield f"data: {json.dumps({'done': True, 'project_id': project_id, 'phase': phase, 'outline_data': outline_data, 'is_draft_ready': phase == 'review', 'is_approved': phase == 'approved'})}\n\n"
+        
+        except Exception as e:
+            traceback.print_exc()
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering
+        }
+    )
+
