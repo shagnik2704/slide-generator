@@ -8,8 +8,8 @@ import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, M
 
 // Hardcoded API URL for production backend
 // Use environment variable for API URL, fallback to localhost for development
-// const API_URL = 'https://slide-generator-61ic.onrender.com';
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_URL = 'https://slide-generator-61ic.onrender.com';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
@@ -375,19 +375,9 @@ const ChatArea = ({ toggleSidebar }) => {
                 confirmationValue: data.confirmation_value
             };
 
-            // If draft is ready, show it
-            if (data.is_draft_ready && data.outline_data?.draft) {
-                const draftMessage = {
-                    id: Date.now() + 2,
-                    role: 'assistant',
-                    content: `# Course Outline Draft\n\n${data.outline_data.draft}`,
-                    type: 'outline_draft',
-                    outlineData: data.outline_data
-                };
-                setOutlineMessages(prev => [...prev, assistantMessage, draftMessage]);
-            } else {
-                setOutlineMessages(prev => [...prev, assistantMessage]);
-            }
+
+            // Add assistant message (already includes draft if ready)
+            setOutlineMessages(prev => [...prev, assistantMessage]);
 
             // If approved, show export option
             if (data.is_approved) {
