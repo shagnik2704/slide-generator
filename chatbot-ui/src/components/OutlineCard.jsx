@@ -135,11 +135,28 @@ const OutlineCard = ({ outlineData, projectId }) => {
             <div style={headerStyle}>
                 <div>
                     <h3 style={titleStyle}>
-                        📋 {outlineData.tutorial_name || 'Course Outline'}
+                        📋 {outlineData.outline_name || outlineData.tutorial_name || 'Course Outline'}
                     </h3>
-                    <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        {outlineData.recommended_no_of_tutorials || 1} tutorial(s) •
-                        Prepared by {outlineData.prepared_by || 'Unknown'}
+                    <p style={{ margin: '0.35rem 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        {outlineData.outline_type && (
+                            <span style={{ marginRight: '0.75rem' }}>
+                                Type: {outlineData.outline_type}
+                            </span>
+                        )}
+                        {outlineData.platform_name && (
+                            <span style={{ marginRight: '0.75rem' }}>
+                                Tool / Platform: {outlineData.platform_name}
+                            </span>
+                        )}
+                        {outlineData.os_version && (
+                            <span>
+                                OS: {outlineData.os_version}
+                            </span>
+                        )}
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        {outlineData.recommended_no_of_tutorials || 1} tutorial(s) • Prepared by {outlineData.prepared_by || 'Unknown'}
+                        {outlineData.date && <> • Date: {outlineData.date}</>}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -176,6 +193,10 @@ const OutlineCard = ({ outlineData, projectId }) => {
             <div style={sectionStyle}>
                 <table style={tableStyle}>
                     <tbody>
+                        <tr>
+                            <td style={labelStyle}>Course Outline Name</td>
+                            <td style={valueStyle}>{outlineData.outline_name || '-'}</td>
+                        </tr>
                         <tr>
                             <td style={labelStyle}><Users size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Target Audience</td>
                             <td style={valueStyle}>{outlineData.target_audience || '-'}</td>
@@ -251,6 +272,18 @@ const OutlineCard = ({ outlineData, projectId }) => {
                 </div>
             )}
 
+            {/* Allied Examples */}
+            {outlineData.allied_examples?.length > 0 && (
+                <div style={sectionStyle}>
+                    <div style={sectionTitleStyle}>📌 Allied Examples</div>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                        {outlineData.allied_examples.map((ex, i) => (
+                            <li key={i} style={{ marginBottom: '0.25rem' }}>{ex}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             {/* Tutorial Rows Table */}
             {outlineData.tutorial_rows?.length > 0 && (
                 <div style={sectionStyle}>
@@ -260,6 +293,7 @@ const OutlineCard = ({ outlineData, projectId }) => {
                             <tr style={{ background: 'var(--bg-tertiary)' }}>
                                 <th style={{ ...tdStyle, fontWeight: 600, textAlign: 'left' }}>#</th>
                                 <th style={{ ...tdStyle, fontWeight: 600, textAlign: 'left' }}>Title</th>
+                                <th style={{ ...tdStyle, fontWeight: 600, textAlign: 'left' }}>Prerequisites</th>
                                 <th style={{ ...tdStyle, fontWeight: 600, textAlign: 'left' }}>Topics</th>
                                 <th style={{ ...tdStyle, fontWeight: 600, textAlign: 'center', width: '80px' }}>Time</th>
                             </tr>
@@ -269,7 +303,10 @@ const OutlineCard = ({ outlineData, projectId }) => {
                                 <tr key={i}>
                                     <td style={valueStyle}>{row.tutorial_number || i + 1}</td>
                                     <td style={{ ...valueStyle, fontWeight: 500 }}>{row.title}</td>
-                                    <td style={valueStyle}>
+                                <td style={valueStyle}>
+                                    {row.prerequisites || '-'}
+                                </td>
+                                <td style={valueStyle}>
                                         {row.topics_details?.map((topic, j) => (
                                             <div key={j} style={{ marginBottom: '0.25rem' }}>• {topic}</div>
                                         ))}

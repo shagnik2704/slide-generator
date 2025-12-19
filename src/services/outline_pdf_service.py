@@ -30,8 +30,8 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     static_dir.mkdir(exist_ok=True)
     
     if output_path is None:
-        tutorial_name = outline_data.get('tutorial_name', 'outline')
-        safe_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in tutorial_name)
+        base_name = outline_data.get('outline_name') or outline_data.get('tutorial_name') or 'outline'
+        safe_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in base_name)
         output_path = static_dir / f"course_outline_{safe_name[:30]}.pdf"
     
     doc = SimpleDocTemplate(
@@ -75,7 +75,7 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     
     # === METADATA TABLE ===
     metadata_rows = [
-        ["Tutorial Name", outline_data.get('tutorial_name', '')],
+        ["Course Outline Name", outline_data.get('outline_name', outline_data.get('tutorial_name', ''))],
         ["FOSS Version", outline_data.get('foss_version', 'Not Applicable for this series')],
         ["Target Audience", outline_data.get('target_audience', '')],
         ["Entry Behaviour", outline_data.get('entry_behaviour', '')],

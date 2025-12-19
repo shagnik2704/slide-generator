@@ -82,6 +82,7 @@ class CourseOutlineData(BaseModel):
     """Complete Course Outline data structure matching the template."""
     outline_type: str = "FOSS"  # "FOSS", "ICT", or "OTHER"
     platform_name: str = ""     # Name of FOSS software / ICT platform / Other
+    os_version: str = ""        # Compatible operating system name + version
     outline_name: str = ""      # Name of the course outline (how it should appear to learners)
     foss_version: str = "Not Applicable"
     target_audience: str = ""
@@ -219,14 +220,24 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                         "why": "Captures the specific ICT focus before naming the course."
                     },
                     {
+                        "field": "os_version",
+                        "question": "What is the compatible Operating Software version for this ICT course? Please mention the OS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
+                        "why": "Captures the operating system context learners will use."
+                    },
+                    {
                         "field": "outline_name",
-                        "question": "What would you like to call this ICT course or training? Please share the course/program name in your own words.",
+                        "question": "What would you like to call this ICT course or training? Please share the course/program name in your own words. The course outline name must be under 50 characters and use only letters, numbers, and spaces (no special characters).",
                         "why": "Title used in template for ICT outlines."
                     },
                     {
                         "field": "target_audience",
                         "question": "Who is the target audience? For example, you can mention the type of teachers, students, or professionals this is meant for.",
                         "why": "Helps choose depth, examples, and teaching methodologies."
+                    },
+                    {
+                        "field": "course_objectives",
+                        "question": "What are the main course objectives or learning outcomes? Please list 3–6 clear, action‑oriented objectives, separated by semicolons .",
+                        "why": "Fills the Course Objectives section in the outline template."
                     },
                     {
                         "field": "entry_behaviour",
@@ -244,7 +255,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "topics_included",
-                        "question": "Which topics, skill areas, categories, or methodologies must be included? You can list them as bullets or as a comma‑separated list, and group them into categories if that helps.",
+                        "question": "Which topics, skill areas, categories, or methodologies must be included? You can list them as bullets or as a semicolon‑separated list, and group them into categories if that helps.",
                         "why": "Helps structure the course content and ensure all key areas are covered."
                     },
                     {
@@ -289,18 +300,28 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "platform_name",
-                        "question": "What is the name of the FOSS software or tool this course is based on?",
-                        "why": "Captures the specific FOSS tool before naming the course."
+                        "question": "We’re excited to learn more! Which FOSS tool is this course based on? Please mention the FOSS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
+                        "why": "Captures the specific FOSS tool and version before naming the course."
+                    },
+                    {
+                        "field": "os_version",
+                        "question": "What is the compatible Operating Software version for this FOSS course, including the OS name and version? If this is a non-IT course, please write 'Not applicable'.",
+                        "why": "Captures the operating system context learners will use."
                     },
                     {
                         "field": "outline_name",
-                        "question": "What is the full name or title of this course outline (how it should appear to learners)?",
+                        "question": "What is the full name or title of this course outline (how it should appear to learners)? The course outline name must be under 50 characters and use only letters, numbers, and spaces (no special characters).",
                         "why": "Title used in template for FOSS outlines."
                     },
                     {
                         "field": "target_audience",
                         "question": "Who is the target audience for this course?",
                         "why": "Helps choose depth and examples."
+                    },
+                    {
+                        "field": "course_objectives",
+                        "question": "What are the main course objectives or learning outcomes? Please list 3–6 clear, action‑oriented objectives, separated by semicolons .",
+                        "why": "Fills the Course Objectives section in the outline template."
                     },
                     {
                         "field": "entry_behaviour",
@@ -318,7 +339,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "topics_included",
-                        "question": "Which topics must be included? You can give a short list, separated by commas or line breaks."
+                        "question": "Which topics must be included? You can give a short list, separated by semicolons or line breaks."
                     },
                     {
                         "field": "topics_not_included",
@@ -527,6 +548,28 @@ def _should_ask_confirmation(field: str, value: any, original_response: str = ""
     """
     if value is None or (isinstance(value, str) and not value.strip()):
         return False  # Empty values don't need confirmation
+
+    # For platform_name (FOSS / tool name + version), accept normal-looking values
+    # like "GIMP 2.10", "Koha 25.05" without asking for confirmation.
+    if field == "platform_name" and isinstance(value, str):
+        cleaned = value.strip()
+        # Allow letters, numbers, spaces, dots, dashes, and plus signs
+        if 3 <= len(cleaned) <= 80 and re.match(r'^[A-Za-z0-9 .+\-]+$', cleaned):
+            return False
+
+    # For course outline name and tutorial title, enforce strict validation:
+    # - Max 50 characters
+    # - Only letters, numbers, and spaces (no special characters)
+    if field in ["outline_name", "tutorial_title"] and isinstance(value, str):
+        cleaned = value.strip()
+        if len(cleaned) == 0:
+            return False  # let normal flow handle empty
+        # If invalid, force confirmation so we can reject and re-ask
+        if len(cleaned) > 50 or not re.match(r'^[A-Za-z0-9 ]+$', cleaned):
+            return True
+        # If valid according to these rules, NEVER ask for confirmation,
+        # even if the LLM might think it's "unusual".
+        return False
     
     # Quick check: if value is obviously an error message, ask for confirmation
     if isinstance(value, str):
@@ -671,13 +714,13 @@ def _determine_next_question(outline_data: Dict, phase: str, conversation: List[
                                           tutorial_rows[-1].get("time_seconds")):
                 # All info collected for last tutorial, start new one
                 next_tutorial_num = len(tutorial_rows) + 1
-                return phase, f"Tutorial #{next_tutorial_num} — please give a short title."
+                return phase, f"Tutorial #{next_tutorial_num} — please give a short title (under 50 characters, using only letters, numbers, and spaces; no special characters)."
         
         # Check if current tutorial needs more info
         if tutorial_rows:
             last_tutorial = tutorial_rows[-1]
             if not last_tutorial.get("title"):
-                return phase, f"Tutorial #{len(tutorial_rows)} — please give a short title."
+                return phase, f"Tutorial #{len(tutorial_rows)} — please give a short title (under 50 characters, using only letters, numbers, and spaces; no special characters)."
             if not last_tutorial.get("prerequisites") or last_tutorial.get("prerequisites") == "":
                 prev_tutorials = ""
                 if len(tutorial_rows) > 1:
@@ -690,9 +733,9 @@ def _determine_next_question(outline_data: Dict, phase: str, conversation: List[
 For ICT courses, these steps should describe what learners will actually DO or TEACH, in simple, action-oriented language.
 """
                 else:
-                    return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a comma‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
+                    return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a semicolon‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
             if not last_tutorial.get("time_seconds") or last_tutorial.get("time_seconds") == 0:
-                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in seconds."
+                return phase, f"Estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in minutes (between 2 and 5 minutes)."
         
         # All tutorials collected, move to metadata
         if len(tutorial_rows) >= num_tutorials and all(
@@ -708,7 +751,7 @@ For ICT courses, these steps should describe what learners will actually DO or T
             today = datetime.now().strftime("%Y-%m-%d")
             return phase, f"Preferred date for the outline? (default: {today})"
         if not outline_data.get("keywords"):
-            return phase, "Any keywords or tags to help search (3-6 words, comma-separated)?"
+            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
         # All metadata collected, move to review
         phase = "review"
     
@@ -780,6 +823,7 @@ Guidelines:
 - Do NOT include explanations, meta-commentary, or phrases like "for example" or "you could say".
 - Do NOT repeat the question text.
 - Only return the example answer text itself.
+- If the question is asking for a course name, outline name, tutorial title, or similar short title, make sure your answer is under 50 characters and uses only letters, numbers, and spaces (no special characters).
 
 Context:
 - Outline type: {outline_type}
@@ -812,8 +856,10 @@ def _extract_field_from_response(field: str, response: str, outline_data: Dict) 
         # Extract bullet points or numbered list
         objectives = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not objectives:
-            # Try comma-separated or line-separated
-            if ',' in response:
+            # Try semicolon-separated, then comma-separated, then line-separated
+            if ';' in response:
+                objectives = [item.strip() for item in response.split(';') if item.strip()]
+            elif ',' in response:
                 objectives = [item.strip() for item in response.split(',') if item.strip()]
             else:
                 objectives = [line.strip() for line in response.split('\n') if line.strip()]
@@ -822,7 +868,10 @@ def _extract_field_from_response(field: str, response: str, outline_data: Dict) 
     elif field == "topics_included" or field == "topics_not_included":
         topics = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not topics:
-            if ',' in response:
+            # Try semicolon-separated, then comma-separated, then line-separated
+            if ';' in response:
+                topics = [item.strip() for item in response.split(';') if item.strip()]
+            elif ',' in response:
                 topics = [item.strip() for item in response.split(',') if item.strip()]
             else:
                 topics = [line.strip() for line in response.split('\n') if line.strip()]
@@ -831,20 +880,27 @@ def _extract_field_from_response(field: str, response: str, outline_data: Dict) 
     elif field == "allied_examples":
         examples = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
         if not examples:
-            if ',' in response:
-                examples = [
-                    item.strip() for item in response.split(',')
-                    if item.strip() and item.strip().lower() not in ['no', 'none', 'n/a']
-                ]
+            # Try semicolon-separated, then comma-separated, then line-separated
+            if ';' in response:
+                raw_items = response.split(';')
+            elif ',' in response:
+                raw_items = response.split(',')
             else:
-                examples = [
-                    line.strip() for line in response.split('\n')
-                    if line.strip() and line.strip().lower() not in ['no', 'none', 'n/a']
-                ]
+                raw_items = response.split('\n')
+
+            examples = [
+                item.strip() for item in raw_items
+                if item.strip() and item.strip().lower() not in ['no', 'none', 'n/a']
+            ]
         updated["allied_examples"] = examples[:2]  # Max 2
     
     elif field == "keywords":
-        keywords = [k.strip() for k in response.split(',') if k.strip()]
+        # Support semicolon- or comma-separated keywords
+        if ';' in response:
+            raw_keywords = response.split(';')
+        else:
+            raw_keywords = response.split(',')
+        keywords = [k.strip() for k in raw_keywords if k.strip()]
         updated["keywords"] = keywords[:6]  # Max 6
     
     elif field == "recommended_no_of_tutorials":
@@ -1341,10 +1397,13 @@ Return format: ["step1", "step2", "step3"]
 Example transformation: "File → Open" becomes "Click File, then Open. In the dialog, choose your file and click Open." """
                         elif not last_tutorial.get("time_seconds") or last_tutorial.get("time_seconds") == 0:
                             current_field = "tutorial_time"
-                            extraction_prompt = f"""Extract the time in seconds from the user's response. Return only the number as an integer.
+                            extraction_prompt = f"""Extract the estimated time in MINUTES from the user's response. Return only the number of minutes as an integer between 2 and 5.
 
 User response: {last_message.content}
-Example: "300" or "5 minutes" should return 300"""
+Examples:
+- "2 minutes" -> 2
+- "around 4 min" -> 4
+- "5" -> 5"""
                         else:
                             current_field = "tutorial_comments"
                             extraction_prompt = f"""Extract any comments or notes from the user's response. Return as a string.
@@ -1460,10 +1519,12 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                         try:
                             steps = json.loads(_extract_json_block(extracted_text))
                         except:
-                            # Fallback to regex or comma/line-based extraction
+                            # Fallback to regex or semicolon/comma/line-based extraction
                             steps = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', last_message.content, re.MULTILINE)
                             if not steps:
-                                if ',' in last_message.content:
+                                if ';' in last_message.content:
+                                    steps = [item.strip() for item in last_message.content.split(';') if item.strip()]
+                                elif ',' in last_message.content:
                                     steps = [item.strip() for item in last_message.content.split(',') if item.strip()]
                                 else:
                                     steps = [line.strip() for line in last_message.content.split('\n') if line.strip()]
@@ -1487,24 +1548,36 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                                 tutorial_rows[-1]["topics_details"] = extracted_value
                             pending_confirmation = None
                     elif current_field == "tutorial_time":
+                        # We now treat user input as MINUTES and enforce 2–5 minutes.
                         numbers = re.findall(r'\d+', extracted_text)
                         if numbers:
-                            extracted_value = int(numbers[0])
-                        # Handle "X minutes" format
-                        elif "minute" in extracted_text.lower():
-                            minutes = re.findall(r'\d+', extracted_text)
-                            if minutes:
-                                extracted_value = int(minutes[0]) * 60
-                            else:
-                                extracted_value = 0
+                            minutes = int(numbers[0])
                         else:
                             # Try original message
                             numbers = re.findall(r'\d+', last_message.content)
-                            if numbers:
-                                extracted_value = int(numbers[0])
-                            else:
-                                extracted_value = 0
-                        field_display = "Time (seconds)"
+                            minutes = int(numbers[0]) if numbers else 0
+
+                        # Enforce 2–5 minute window
+                        if minutes < 2 or minutes > 5:
+                            extracted_value = 0
+                        else:
+                            extracted_value = minutes * 60  # store as seconds
+
+                        field_display = "Time (minutes)"
+                        if extracted_value == 0:
+                            # Invalid time, ask user again explicitly
+                            return JSONResponse({
+                                "project_id": project_id,
+                                "assistant_message": "For each tutorial, the estimated time must be between 2 and 5 minutes.\n\nPlease enter a value between 2 and 5 minutes (for example: 3 minutes).",
+                                "follow_up_question": None,
+                                "phase": phase,
+                                "outline_data": outline_data,
+                                "validation_errors": [],
+                                "pedagogy_compliance": {},
+                                "is_draft_ready": False,
+                                "is_approved": False,
+                            })
+
                         if _should_ask_confirmation(current_field, extracted_value, last_message.content):
                             pending_confirmation = {
                                 "field": current_field,
@@ -1588,20 +1661,56 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                         else:
                             display_value = str(display_value)
                         
-                        return JSONResponse({
-                            "project_id": project_id,
-                            "assistant_message": f"I took this value for **{pending_confirmation['field_display']}**: `{display_value}`\n\nAre you sure you want to continue with it?",
-                            "follow_up_question": None,
-                            "phase": phase,
-                            "outline_data": outline_data,
-                            "validation_errors": [],
-                            "pedagogy_compliance": {},
-                            "is_draft_ready": False,
-                            "is_approved": False,
-                            "needs_confirmation": True,
-                            "confirmation_field": pending_confirmation["field"],
-                            "confirmation_value": display_value
-                        })
+                        # For titles, do not accept invalid values; ask user to provide again
+                        if pending_confirmation["field"] in ["outline_name", "tutorial_title"]:
+                            rule_text = "It must be under 50 characters and can only contain letters, numbers, and spaces (no special characters)."
+                            return JSONResponse({
+                                "project_id": project_id,
+                                "assistant_message": f"I’m sorry, I can’t accept that value for **{pending_confirmation['field_display']}**: `{display_value}`.\n\n{rule_text}\n\nCould you please provide it again following these rules?",
+                                "follow_up_question": None,
+                                "phase": phase,
+                                "outline_data": outline_data,
+                                "validation_errors": [],
+                                "pedagogy_compliance": {},
+                                "is_draft_ready": False,
+                                "is_approved": False,
+                                "needs_confirmation": False,
+                                "confirmation_field": None,
+                                "confirmation_value": None
+                            })
+                        else:
+                            # For titles, do not accept invalid values; ask user to provide again
+                            if pending_confirmation["field"] in ["outline_name", "tutorial_title"]:
+                                rule_text = "It must be under 50 characters and can only contain letters, numbers, and spaces (no special characters)."
+                                return JSONResponse({
+                                    "project_id": project_id,
+                                    "assistant_message": f"I’m sorry, I can’t accept that value for **{pending_confirmation['field_display']}**: `{display_value}`.\n\n{rule_text}\n\nCould you please provide it again following these rules?",
+                                    "follow_up_question": None,
+                                    "phase": phase,
+                                    "outline_data": outline_data,
+                                    "validation_errors": [],
+                                    "pedagogy_compliance": {},
+                                    "is_draft_ready": False,
+                                    "is_approved": False,
+                                    "needs_confirmation": False,
+                                    "confirmation_field": None,
+                                    "confirmation_value": None
+                                })
+                            else:
+                                return JSONResponse({
+                                    "project_id": project_id,
+                                    "assistant_message": f"I took this value for **{pending_confirmation['field_display']}**: `{display_value}`\n\nAre you sure you want to continue with it?",
+                                    "follow_up_question": None,
+                                    "phase": phase,
+                                    "outline_data": outline_data,
+                                    "validation_errors": [],
+                                    "pedagogy_compliance": {},
+                                    "is_draft_ready": False,
+                                    "is_approved": False,
+                                    "needs_confirmation": True,
+                                    "confirmation_field": pending_confirmation["field"],
+                                    "confirmation_value": display_value
+                                })
                     else:
                         # No confirmation needed, save session and continue to next question
                         with open(session_path, "w") as f:
@@ -1734,20 +1843,38 @@ Return format: ["keyword1", "keyword2", "keyword3"]"""
                                 else:
                                     display_value = str(display_value)
                                 
-                                return JSONResponse({
-                                    "project_id": project_id,
-                                    "assistant_message": f"I took this value for **{pending_confirmation['field_display']}**: `{display_value}`\n\nAre you sure you want to continue with it?",
-                                    "follow_up_question": None,
-                                    "phase": phase,
-                                    "outline_data": outline_data,
-                                    "validation_errors": [],
-                                    "pedagogy_compliance": {},
-                                    "is_draft_ready": False,
-                                    "is_approved": False,
-                                    "needs_confirmation": True,
-                                    "confirmation_field": pending_confirmation["field"],
-                                    "confirmation_value": display_value
-                                })
+                                # For titles, do not accept invalid values; ask user to provide again
+                                if pending_confirmation["field"] in ["outline_name", "tutorial_title"]:
+                                    rule_text = "It must be under 50 characters and can only contain letters, numbers, and spaces (no special characters)."
+                                    return JSONResponse({
+                                        "project_id": project_id,
+                                        "assistant_message": f"I’m sorry, I can’t accept that value for **{pending_confirmation['field_display']}**: `{display_value}`.\n\n{rule_text}\n\nCould you please provide it again following these rules?",
+                                        "follow_up_question": None,
+                                        "phase": phase,
+                                        "outline_data": outline_data,
+                                        "validation_errors": [],
+                                        "pedagogy_compliance": {},
+                                        "is_draft_ready": False,
+                                        "is_approved": False,
+                                        "needs_confirmation": False,
+                                        "confirmation_field": None,
+                                        "confirmation_value": None
+                                    })
+                                else:
+                                    return JSONResponse({
+                                        "project_id": project_id,
+                                        "assistant_message": f"I took this value for **{pending_confirmation['field_display']}**: `{display_value}`\n\nAre you sure you want to continue with it?",
+                                        "follow_up_question": None,
+                                        "phase": phase,
+                                        "outline_data": outline_data,
+                                        "validation_errors": [],
+                                        "pedagogy_compliance": {},
+                                        "is_draft_ready": False,
+                                        "is_approved": False,
+                                        "needs_confirmation": True,
+                                        "confirmation_field": pending_confirmation["field"],
+                                        "confirmation_value": display_value
+                                    })
                             else:
                                 # No confirmation needed, save session and continue to next question
                                 with open(session_path, "w") as f:
