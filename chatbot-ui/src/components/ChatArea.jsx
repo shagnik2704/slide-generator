@@ -598,7 +598,7 @@ const ChatArea = ({ toggleSidebar }) => {
                         <Menu size={24} strokeWidth={2.5} />
                     </button>
                     <img
-                        src="/logo (1).png"
+                        src="/favicon.png"
                         alt="EduPyramids"
                         style={{ height: '36px', marginRight: '0.5rem' }}
                     />

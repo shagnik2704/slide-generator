@@ -300,7 +300,7 @@ def _get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "platform_name",
-                        "question": "We’re excited to learn more! Which FOSS tool is this course based on? Please mention the FOSS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
+                        "question": "We're excited to learn more! Which FOSS tool is this course based on? Please mention the FOSS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
                         "why": "Captures the specific FOSS tool and version before naming the course."
                     },
                     {
