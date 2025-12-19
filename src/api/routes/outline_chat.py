@@ -2213,6 +2213,8 @@ async def outline_chat_stream(request: OutlineChatRequest):
             
             # Build assistant message
             assistant_message = ""
+            compliance = {}  # Initialize compliance outside the if block
+            errors = []
             
             if phase == "review" and not outline_data.get("draft_shown"):
                 # Auto-generate "About the Course" if missing
@@ -2247,8 +2249,8 @@ async def outline_chat_stream(request: OutlineChatRequest):
             with open(session_path, "w") as f:
                 json.dump({"project_id": project_id, "outline_data": outline_data, "phase": phase, "updated_at": time.time()}, f, indent=2)
             
-            # Send completion event with full data
-            yield f"data: {json.dumps({'done': True, 'project_id': project_id, 'phase': phase, 'outline_data': outline_data, 'is_draft_ready': phase == 'review', 'is_approved': phase == 'approved'})}\n\n"
+            # Send completion event with full data including pedagogy_compliance
+            yield f"data: {json.dumps({'done': True, 'project_id': project_id, 'phase': phase, 'outline_data': outline_data, 'is_draft_ready': phase == 'review', 'is_approved': phase == 'approved', 'pedagogy_compliance': compliance})}\n\n"
         
         except Exception as e:
             traceback.print_exc()

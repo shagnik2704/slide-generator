@@ -7,8 +7,9 @@ import OutlineCard from './OutlineCard';
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
 // Hardcoded API URL for production backend
-const API_URL = 'https://slide-generator-61ic.onrender.com';
-//const API_URL = 'http://localhost:8000';
+// Use environment variable for API URL, fallback to localhost for development
+// const API_URL = 'https://slide-generator-61ic.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
@@ -314,17 +315,8 @@ const ChatArea = ({ toggleSidebar }) => {
         setOutlineMessages(prev => [...prev, userMessage]);
         setIsTyping(true);
 
-        // Create empty assistant message that we'll fill with streaming content
-        const assistantMsgId = Date.now() + 1;
-        setOutlineMessages(prev => [...prev, {
-            id: assistantMsgId,
-            role: 'assistant',
-            content: '',
-            isStreaming: true
-        }]);
-
         try {
-            const response = await fetch(`${API_URL}/outline_chat_stream`, {
+            const response = await fetch(`${API_URL}/outline_chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -338,107 +330,84 @@ const ChatArea = ({ toggleSidebar }) => {
             });
 
             if (!response.ok) {
-                throw new Error('Streaming failed');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to update outline');
             }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullContent = '';
-            let finalData = null;
+            const data = await response.json();
 
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
+            // Update session state
+            setOutlineSession({
+                projectId: data.project_id || outlineSession.projectId,
+                outlineData: data.outline_data || outlineSession.outlineData,
+                phase: data.phase || outlineSession.phase
+            });
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+            // Build assistant message
+            let assistantContent = data.assistant_message || 'Here is the updated outline.';
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-
-                            if (data.token) {
-                                fullContent += data.token;
-                                // Update the message with accumulated content
-                                setOutlineMessages(prev => prev.map(msg =>
-                                    msg.id === assistantMsgId
-                                        ? { ...msg, content: fullContent }
-                                        : msg
-                                ));
-                            }
-
-                            if (data.done) {
-                                finalData = data;
-                                // Mark streaming as complete
-                                setOutlineMessages(prev => prev.map(msg =>
-                                    msg.id === assistantMsgId
-                                        ? { ...msg, isStreaming: false, outlineData: data.outline_data, phase: data.phase }
-                                        : msg
-                                ));
-
-                                // Update session state
-                                setOutlineSession({
-                                    projectId: data.project_id || outlineSession.projectId,
-                                    outlineData: data.outline_data || outlineSession.outlineData,
-                                    phase: data.phase || outlineSession.phase
-                                });
-                            }
-
-                            if (data.error) {
-                                fullContent = `Error: ${data.error}`;
-                                setOutlineMessages(prev => prev.map(msg =>
-                                    msg.id === assistantMsgId
-                                        ? { ...msg, content: fullContent, isStreaming: false }
-                                        : msg
-                                ));
-                            }
-                        } catch (parseError) {
-                            console.error('Error parsing SSE:', parseError);
-                        }
-                    }
-                }
+            // Add validation errors if any
+            if (data.validation_errors && data.validation_errors.length > 0) {
+                assistantContent += '\n\n⚠️ Issues to address:\n' + data.validation_errors.map(e => `- ${e}`).join('\n');
             }
-
-
-            // Handle special cases after streaming complete
 
             // Add pedagogy compliance badge if draft is ready
-            if (finalData?.is_draft_ready && finalData?.pedagogy_compliance) {
-                const pc = finalData.pedagogy_compliance;
-                let complianceContent = '\n\n**Pedagogy Compliance:**\n';
-                complianceContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
-                complianceContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
-                complianceContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
-                complianceContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
-                complianceContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
-
-                // Append compliance to the last message
-                setOutlineMessages(prev => prev.map(msg =>
-                    msg.id === assistantMsgId
-                        ? { ...msg, content: msg.content + complianceContent }
-                        : msg
-                ));
+            if (data.is_draft_ready && data.pedagogy_compliance) {
+                const pc = data.pedagogy_compliance;
+                assistantContent += '\n\n**Pedagogy Compliance:**\n';
+                assistantContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
+                assistantContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
+                assistantContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
+                assistantContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
+                assistantContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
             }
 
-            if (finalData?.is_approved) {
-                const exportMessage = {
+            const assistantMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: assistantContent,
+                outlineData: data.outline_data,
+                isDraftReady: data.is_draft_ready,
+                isApproved: data.is_approved,
+                phase: data.phase,
+                needsConfirmation: data.needs_confirmation || false,
+                confirmationField: data.confirmation_field,
+                confirmationValue: data.confirmation_value
+            };
+
+            // If draft is ready, show it
+            if (data.is_draft_ready && data.outline_data?.draft) {
+                const draftMessage = {
                     id: Date.now() + 2,
                     role: 'assistant',
-                    content: `You can export it using:\n\`GET /outline_chat/${finalData.project_id}/export?format=json\``,
+                    content: `# Course Outline Draft\n\n${data.outline_data.draft}`,
+                    type: 'outline_draft',
+                    outlineData: data.outline_data
+                };
+                setOutlineMessages(prev => [...prev, assistantMessage, draftMessage]);
+            } else {
+                setOutlineMessages(prev => [...prev, assistantMessage]);
+            }
+
+            // If approved, show export option
+            if (data.is_approved) {
+                const exportMessage = {
+                    id: Date.now() + 3,
+                    role: 'assistant',
+                    content: `✅ Outline approved! You can export it using:\n\`GET /outline_chat/${data.project_id}/export?format=json\``,
                     type: 'outline_approved',
-                    projectId: finalData.project_id
+                    projectId: data.project_id
                 };
                 setOutlineMessages(prev => [...prev, exportMessage]);
             }
-
         } catch (error) {
-            console.error("Streaming error:", error);
-            setOutlineMessages(prev => prev.map(msg =>
-                msg.id === assistantMsgId
-                    ? { ...msg, content: error.message || "Sorry, something went wrong.", isStreaming: false }
-                    : msg
-            ));
+            console.error("Error:", error);
+            const errorMessage = {
+                id: Date.now() + 3,
+                role: 'assistant',
+                content: error.message || "Sorry, something went wrong in outline chat."
+            };
+            setOutlineMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
