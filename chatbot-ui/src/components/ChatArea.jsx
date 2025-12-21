@@ -6,7 +6,7 @@ import OutlineCard from './OutlineCard';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
 
-const API_URL = 'https://slide-generator-61ic.onrender.com'; 
+const API_URL = 'https://slide-generator-61ic.onrender.com';
 //const API_URL = 'http://localhost:8000';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
@@ -42,7 +42,7 @@ const ChatArea = ({ toggleSidebar }) => {
         const uploadMessage = {
             id: Date.now(),
             role: 'assistant',
-            content: `Uploading outline: ${file.name}...`
+            content: `Uploading content: ${file.name}...`
         };
         setUploadMessages(prev => [...prev, uploadMessage]);
         setIsTyping(true);
@@ -58,7 +58,7 @@ const ChatArea = ({ toggleSidebar }) => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to upload outline');
+                throw new Error(errorData.detail || 'Failed to upload content');
             }
 
             const data = await response.json();
@@ -70,7 +70,7 @@ const ChatArea = ({ toggleSidebar }) => {
             const newBotMessage = {
                 id: Date.now() + 1,
                 role: 'assistant',
-                content: `✅ Outline uploaded successfully!\n\nYou can now generate the script.`,
+                content: `✅ Content uploaded successfully!\n\nYou can now generate the script.`,
                 outline: data.outline,
                 projectId: projectId,
                 type: 'outline_uploaded'
