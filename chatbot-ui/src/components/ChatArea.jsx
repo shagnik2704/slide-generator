@@ -11,7 +11,7 @@ const API_URL = 'https://slide-generator-61ic.onrender.com';
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
     const [uploadMessages, setUploadMessages] = useState([
-        { id: 1, role: 'assistant', content: 'Hello! Please upload your tutorial outline to get started. I\'ll help you generate a script, slides, and video from it.' }
+        { id: 1, role: 'assistant', content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.' }
     ]);
     const [outlineMessages, setOutlineMessages] = useState([
         {
