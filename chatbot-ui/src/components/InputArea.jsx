@@ -154,7 +154,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
                                 }}
                             >
                                 <Upload size={20} />
-                                Upload Outline
+                                Upload Content
                             </button>
 
                             {/* Upload Script Button */}
@@ -187,7 +187,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
                             color: 'var(--text-secondary)',
                             marginTop: '0.75rem'
                         }}>
-                            Upload outline to generate script, or upload existing script to skip to slides.
+                            Upload content to generate script, or upload existing script to skip to slides.
                         </div>
                     </>
                 )}
