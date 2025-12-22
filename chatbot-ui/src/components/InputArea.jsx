@@ -126,7 +126,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
                         <input
                             ref={scriptInputRef}
                             type="file"
-                            accept=".json"
+                            accept=".json,.docx,.odt"
                             onChange={handleScriptSelect}
                             disabled={disabled}
                             style={{ display: 'none' }}
@@ -177,7 +177,7 @@ const InputArea = ({ mode = 'upload', onSendMessage, onUploadScript, onSendText,
                                 }}
                             >
                                 <FileJson size={20} />
-                                Upload Script (.json)
+                                Upload Script
                             </button>
                         </div>
 

@@ -4,6 +4,7 @@ import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
 import WikiScriptEditor from './WikiScriptEditor';
+import ComplianceReport from './ComplianceReport';
 
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2 } from 'lucide-react';
 
@@ -87,6 +88,7 @@ const ChatArea = ({ toggleSidebar }) => {
     const messagesEndRef = useRef(null);
     const editedScriptInputRef = useRef(null);
     const [openEditorId, setOpenEditorId] = useState(null);
+    const [complianceReport, setComplianceReport] = useState(null);
 
     // Flag to track if we restored from localStorage
     const [sessionRestored, setSessionRestored] = useState(() => {
@@ -203,13 +205,20 @@ const ChatArea = ({ toggleSidebar }) => {
             const data = await response.json();
             setCurrentProjectId(data.project_id);
 
+            // Show compliance report if returned
+            if (data.compliance_report) {
+                setComplianceReport(data.compliance_report);
+            }
+
+            const violationCount = data.compliance_report?.total_violations || 0;
             const newBotMessage = {
                 id: Date.now() + 1,
                 role: 'assistant',
-                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides) You can now generate slides directly.`,
+                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides)${violationCount > 0 ? `\n\n⚠️ ${violationCount} compliance issue${violationCount !== 1 ? 's' : ''} found. Check the report for details.` : ' All compliance checks passed!'} You can now generate slides directly.`,
                 jsonScript: data.json_script,
                 projectId: data.project_id,
-                type: 'script_uploaded'
+                type: 'script_uploaded',
+                complianceReport: data.compliance_report
             };
             setUploadMessages(prev => [...prev, newBotMessage]);
 
@@ -1405,6 +1414,14 @@ const ChatArea = ({ toggleSidebar }) => {
           40% { transform: scale(1); }
         }
       `}</style>
+
+            {/* Compliance Report Modal */}
+            {complianceReport && (
+                <ComplianceReport
+                    report={complianceReport}
+                    onClose={() => setComplianceReport(null)}
+                />
+            )}
         </main>
     );
 };
