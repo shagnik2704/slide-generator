@@ -3,16 +3,70 @@ import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
+import WikiScriptEditor from './WikiScriptEditor';
 
-import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload } from 'lucide-react';
+import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2 } from 'lucide-react';
 
-const API_URL = 'https://slide-generator-61ic.onrender.com';
-//const API_URL = 'http://localhost:8000';
+// const API_URL = 'https://slide-generator-61ic.onrender.com';
+const API_URL = 'http://localhost:8000';
+
+// LocalStorage key for persisting upload mode state
+const STORAGE_KEY = 'spokentutorial_upload_state';
+const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Default messages
+const DEFAULT_UPLOAD_MESSAGE = {
+    id: 1,
+    role: 'assistant',
+    content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.'
+};
+
+// Helper: Load state from localStorage
+const loadFromLocalStorage = () => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const state = JSON.parse(saved);
+            // Check if data is not too old
+            if (Date.now() - state.savedAt < MAX_AGE_MS) {
+                return state;
+            }
+            // Data expired, clear it
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    } catch (e) {
+        console.error('Error loading from localStorage:', e);
+    }
+    return null;
+};
+
+// Helper: Save state to localStorage
+const saveToLocalStorage = (uploadMessages, currentProjectId) => {
+    try {
+        const state = {
+            uploadMessages,
+            currentProjectId,
+            savedAt: Date.now()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error('Error saving to localStorage:', e);
+    }
+};
+
 const ChatArea = ({ toggleSidebar }) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
-    const [uploadMessages, setUploadMessages] = useState([
-        { id: 1, role: 'assistant', content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.' }
-    ]);
+
+    // Initialize uploadMessages from localStorage or default
+    const [uploadMessages, setUploadMessages] = useState(() => {
+        const saved = loadFromLocalStorage();
+        if (saved?.uploadMessages?.length > 0) {
+            console.log('📂 Restored session from localStorage');
+            return saved.uploadMessages;
+        }
+        return [DEFAULT_UPLOAD_MESSAGE];
+    });
+
     const [outlineMessages, setOutlineMessages] = useState([
         {
             id: 2,
@@ -22,10 +76,23 @@ const ChatArea = ({ toggleSidebar }) => {
     ]);
     const [outlineSession, setOutlineSession] = useState({ projectId: null, outlineData: null, phase: null });
     const [isTyping, setIsTyping] = useState(false);
-    const [currentProjectId, setCurrentProjectId] = useState(null);
+
+    // Initialize currentProjectId from localStorage or null
+    const [currentProjectId, setCurrentProjectId] = useState(() => {
+        const saved = loadFromLocalStorage();
+        return saved?.currentProjectId || null;
+    });
+
     const [copiedId, setCopiedId] = useState(null);
     const messagesEndRef = useRef(null);
     const editedScriptInputRef = useRef(null);
+    const [openEditorId, setOpenEditorId] = useState(null);
+
+    // Flag to track if we restored from localStorage
+    const [sessionRestored, setSessionRestored] = useState(() => {
+        const saved = loadFromLocalStorage();
+        return saved?.uploadMessages?.length > 1; // More than just the welcome message
+    });
 
     const activeMessages = mode === 'outline_chat' ? outlineMessages : uploadMessages;
 
@@ -36,6 +103,25 @@ const ChatArea = ({ toggleSidebar }) => {
     useEffect(() => {
         scrollToBottom();
     }, [activeMessages, isTyping, mode]);
+
+    // Auto-save upload mode state to localStorage
+    useEffect(() => {
+        if (mode === 'upload' && uploadMessages.length > 0) {
+            saveToLocalStorage(uploadMessages, currentProjectId);
+        }
+    }, [uploadMessages, currentProjectId, mode]);
+
+    // Clear session and start fresh
+    const handleClearSession = () => {
+        if (window.confirm('Clear all upload data and start fresh? This cannot be undone.')) {
+            localStorage.removeItem(STORAGE_KEY);
+            setUploadMessages([DEFAULT_UPLOAD_MESSAGE]);
+            setCurrentProjectId(null);
+            setOpenEditorId(null);
+            setSessionRestored(false);
+            console.log('🗑️ Session cleared');
+        }
+    };
 
     const handleSendMessage = async (file) => {
         // Show upload status
@@ -540,6 +626,28 @@ const ChatArea = ({ toggleSidebar }) => {
         }
     };
 
+    // Handle saving edits from the WikiScriptEditor
+    const handleSaveScriptEdit = (messageId, updatedScript) => {
+        setUploadMessages(prev => prev.map(msg => {
+            if (msg.id === messageId) {
+                return {
+                    ...msg,
+                    jsonScript: updatedScript,
+                    wasEdited: true
+                };
+            }
+            return msg;
+        }));
+
+        // Show confirmation
+        const confirmMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `✅ Script updated! (${updatedScript.slides?.length || 0} slides edited inline). You can now generate slides or export.`
+        };
+        setUploadMessages(prev => [...prev, confirmMessage]);
+    };
+
     return (
         <main style={{
             flex: 1,
@@ -667,6 +775,37 @@ const ChatArea = ({ toggleSidebar }) => {
                             Outline Chat
                         </button>
                     </div>
+                    {/* Clear Session button - only show in upload mode with existing session */}
+                    {mode === 'upload' && uploadMessages.length > 1 && (
+                        <button
+                            onClick={handleClearSession}
+                            style={{
+                                padding: '0.25rem 0.75rem',
+                                background: 'transparent',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '1rem',
+                                fontSize: '0.8rem',
+                                color: 'var(--text-secondary)',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#ef4444';
+                                e.currentTarget.style.color = '#ef4444';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <Trash2 size={14} />
+                            Clear Session
+                        </button>
+                    )}
                     <div style={{
                         padding: '0.25rem 0.75rem',
                         background: 'var(--accent-primary)',
@@ -744,7 +883,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                         }}
                                     >
                                         <FileText size={20} />
-                                        Generate Script from Edited Outline
+                                        Generate Script from Edited Content
                                     </button>
                                 </div>
                             )}
@@ -981,6 +1120,46 @@ const ChatArea = ({ toggleSidebar }) => {
                                         <FileCode2 size={20} />
                                         Export to MediaWiki
                                     </button>
+                                    <button
+                                        onClick={() => setOpenEditorId(openEditorId === msg.id ? null : msg.id)}
+                                        style={{
+                                            marginLeft: '0.75rem',
+                                            padding: '0.75rem 1.5rem',
+                                            background: openEditorId === msg.id
+                                                ? 'linear-gradient(135deg, #7c3aed, #a855f7)'
+                                                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '0.75rem',
+                                            cursor: 'pointer',
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: 'var(--shadow-md)',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                        }}
+                                    >
+                                        <Edit3 size={20} />
+                                        {openEditorId === msg.id ? 'Close Editor' : 'Edit Script Inline'}
+                                    </button>
+
+                                    {/* Wiki-style Script Editor */}
+                                    <WikiScriptEditor
+                                        jsonScript={msg.jsonScript}
+                                        isOpen={openEditorId === msg.id}
+                                        onSave={(updatedScript) => handleSaveScriptEdit(msg.id, updatedScript)}
+                                        onClose={() => setOpenEditorId(null)}
+                                    />
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'slides_review' && (
