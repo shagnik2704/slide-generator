@@ -88,7 +88,7 @@ const ChatArea = ({ toggleSidebar }) => {
     const messagesEndRef = useRef(null);
     const editedScriptInputRef = useRef(null);
     const [openEditorId, setOpenEditorId] = useState(null);
-    const [complianceReport, setComplianceReport] = useState(null);
+    const [openReportId, setOpenReportId] = useState(null);
 
     // Flag to track if we restored from localStorage
     const [sessionRestored, setSessionRestored] = useState(() => {
@@ -205,16 +205,11 @@ const ChatArea = ({ toggleSidebar }) => {
             const data = await response.json();
             setCurrentProjectId(data.project_id);
 
-            // Show compliance report if returned
-            if (data.compliance_report) {
-                setComplianceReport(data.compliance_report);
-            }
-
-            const violationCount = data.compliance_report?.total_violations || 0;
+            const failedCount = data.compliance_report?.summary?.ai_failed || 0;
             const newBotMessage = {
                 id: Date.now() + 1,
                 role: 'assistant',
-                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides)${violationCount > 0 ? `\n\n⚠️ ${violationCount} compliance issue${violationCount !== 1 ? 's' : ''} found. Check the report for details.` : ' All compliance checks passed!'} You can now generate slides directly.`,
+                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides)${failedCount > 0 ? `\n\n⚠️ ${failedCount} compliance issue${failedCount !== 1 ? 's' : ''} found. Check the report for details.` : ' All compliance checks passed!'} You can now generate slides directly.`,
                 jsonScript: data.json_script,
                 projectId: data.project_id,
                 type: 'script_uploaded',
@@ -897,7 +892,7 @@ const ChatArea = ({ toggleSidebar }) => {
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'script_uploaded' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
+                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                                     <button
                                         onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
                                         disabled={isTyping}
@@ -933,8 +928,49 @@ const ChatArea = ({ toggleSidebar }) => {
                                         }}
                                     >
                                         <FileText size={20} />
-                                        Generate Slides from Script
+                                        Generate Slides
                                     </button>
+                                    {msg.complianceReport && (
+                                        <button
+                                            onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: openReportId === msg.id ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                color: openReportId === msg.id ? 'white' : 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            📋 {openReportId === msg.id ? 'Close Report' : 'View Report'}
+                                        </button>
+                                    )}
+
+                                    {/* Inline Compliance Report */}
+                                    <ComplianceReport
+                                        report={msg.complianceReport}
+                                        isOpen={openReportId === msg.id}
+                                        onSave={(updated) => {
+                                            setUploadMessages(prev => prev.map(m =>
+                                                m.id === msg.id ? { ...m, complianceReport: updated } : m
+                                            ));
+                                        }}
+                                        onClose={() => setOpenReportId(null)}
+                                    />
                                 </div>
                             )}
                             {mode === 'upload' && msg.type === 'script_review' && (
@@ -1414,14 +1450,6 @@ const ChatArea = ({ toggleSidebar }) => {
           40% { transform: scale(1); }
         }
       `}</style>
-
-            {/* Compliance Report Modal */}
-            {complianceReport && (
-                <ComplianceReport
-                    report={complianceReport}
-                    onClose={() => setComplianceReport(null)}
-                />
-            )}
         </main>
     );
 };
