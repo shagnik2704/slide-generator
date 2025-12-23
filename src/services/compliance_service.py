@@ -32,10 +32,10 @@ class ComplianceResults(BaseModel):
     ready_for_review: CheckResult = Field(description="Is the script ready for Novice and Domain review?")
     
     # Formatting criteria
-    sentence_length: CheckResult = Field(description="Are all sentences ≤80 characters? (Skip LO and Thank You slides)")
+    sentence_length: CheckResult = Field(description="Are all sentences ≤80 characters? (Skip LO, System Req, Prerequisites, Summary, Assignment, Thank You slides)")
     new_lines: CheckResult = Field(description="Does each sentence start on a new line?")
     no_forbidden_symbols: CheckResult = Field(description="No forbidden symbols (->, -->, *, - at line start) in narration?")
-    no_fragmented_sentences: CheckResult = Field(description="Are there no fragmented or incomplete sentences?")
+    
 
 
 def extract_urls(json_script: dict) -> List[str]:
@@ -157,16 +157,21 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
 5. **Abbreviations Avoided**: Are abbreviations either avoided or properly explained when first used?
 6. **Bold Technical Terms**: Are technical terms, UI elements, buttons, and keywords marked in **bold**?
 7. **75% Demonstration**: Is at least 75% of the content focused on hands-on demonstration (not just theory)?
-8. **Sufficient Slides**: Are there enough slides to cover the content adequately (typically 8-15 for a 3-4 min tutorial)?
+    - SKIP this check for: Learning Objectives, System Requirements, Prerequisites, Summary, Assignment, and Thank You slides
+    - These slides typically have bullet points that naturally exceed 80 characters
+    - Only check content/demonstration slides
+
+8. **Sufficient Slides**: Are there enough slides to cover the content adequately (typically 8-15 for a 3-4 min tutorial)? More slides are okay,less are not.
 9. **Recap at End**: Is there a summary or recap slide near the end?
 10. **Visual-Narration Consistency**: Do the Visual Cues match what the Narration describes?
 11. **Ready for Review**: Overall, is this script polished enough for Novice and Domain expert review?
 
 ### FORMATTING CRITERIA
 12. **Sentence Length**: EVERY sentence MUST be ≤ 80 characters.
-    - SKIP this check for Learning Objectives slide
-    - SKIP this check for Thank You slide
-    - If ANY sentence exceeds 80 chars, mark as FAILED
+    - SKIP this check for: Learning Objectives, System Requirements, Prerequisites, Summary, Assignment, and Thank You slides
+    - These slides typically have bullet points that naturally exceed 80 characters
+    - Only check content/demonstration slides
+    - If ANY sentence in a content slide exceeds 80 chars, mark as FAILED
     
 13. **New Lines**: Each sentence must start on a new line (\\n between sentences).
     - Multiple sentences on the same line = FAILED
@@ -175,10 +180,6 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     - FORBIDDEN: ->, -->, *, - at the start of lines
     - ALLOWED: **bold** markers are OK
     - ALLOWED: • bullets ONLY in Learning Objectives slide
-
-15. **No Fragmented Sentences**: Check for incomplete or fragmented sentences.
-    - Sentences must be complete with subject and verb
-    - No sentence fragments or trailing phrases
 
 For each check, provide:
 - passed: true/false
@@ -211,7 +212,7 @@ For each check, provide:
             _format_check("sentence_length", "Every sentence ≤80 characters (skip LO/Thank You)?", result.sentence_length),
             _format_check("new_lines", "Each sentence starts on a new line?", result.new_lines),
             _format_check("no_symbols", "No forbidden symbols (->, -->, *, -)?", result.no_forbidden_symbols),
-            _format_check("no_fragments", "No fragmented or incomplete sentences?", result.no_fragmented_sentences),
+            
         ]
         
         # Link validation (done separately, not by LLM)
