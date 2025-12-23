@@ -1,207 +1,393 @@
-import React from 'react';
-import { X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Save, Download, RotateCcw } from 'lucide-react';
 
 /**
- * ComplianceReport - Modal component showing checklist-style compliance results
+ * Editable cell using contentEditable - exactly like WikiScriptEditor
  */
-const ComplianceReport = ({ report, onClose }) => {
-    if (!report) return null;
+const WikiCell = ({ value, onChange, width }) => {
+    const cellRef = useRef(null);
+    const [isFocused, setIsFocused] = useState(false);
 
-    const { formatting, narration, structure, total_violations } = report;
+    useEffect(() => {
+        if (cellRef.current && !isFocused) {
+            cellRef.current.innerText = value || '';
+        }
+    }, [value, isFocused]);
 
-    const renderCheck = (check) => {
-        const { rule, passed, violations } = check;
-        return (
-            <div key={rule} style={{ marginBottom: '0.75rem' }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    color: passed ? 'var(--success-color, #22c55e)' : 'var(--error-color, #ef4444)'
-                }}>
-                    {passed ? (
-                        <CheckCircle size={18} />
-                    ) : (
-                        <XCircle size={18} />
-                    )}
-                    <span style={{ fontWeight: 500 }}>{rule}</span>
-                </div>
-
-                {!passed && violations && violations.length > 0 && (
-                    <div style={{
-                        marginLeft: '1.75rem',
-                        marginTop: '0.25rem',
-                        fontSize: '0.85rem',
-                        color: 'var(--text-secondary)'
-                    }}>
-                        {violations.slice(0, 3).map((v, i) => (
-                            <div key={i} style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: '0.5rem',
-                                marginBottom: '0.25rem'
-                            }}>
-                                <span style={{ color: 'var(--text-tertiary)' }}>└─</span>
-                                <span>
-                                    {v.slide > 0 && <strong>Slide {v.slide}:</strong>} {v.issue}
-                                    {v.text && (
-                                        <span style={{
-                                            display: 'block',
-                                            fontStyle: 'italic',
-                                            color: 'var(--text-tertiary)',
-                                            marginTop: '0.1rem'
-                                        }}>
-                                            "{v.text}"
-                                        </span>
-                                    )}
-                                </span>
-                            </div>
-                        ))}
-                        {violations.length > 3 && (
-                            <div style={{
-                                marginLeft: '1.25rem',
-                                color: 'var(--text-tertiary)',
-                                fontStyle: 'italic'
-                            }}>
-                                ... and {violations.length - 3} more
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        );
+    const handleBlur = () => {
+        setIsFocused(false);
+        if (cellRef.current) {
+            const newValue = cellRef.current.innerText;
+            if (newValue !== value) {
+                onChange(newValue);
+            }
+        }
     };
 
-    const renderCategory = (title, checks) => {
-        if (!checks) return null;
-        return (
-            <div style={{ marginBottom: '1.25rem' }}>
-                <h3 style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.75rem',
-                    paddingBottom: '0.5rem',
-                    borderBottom: '1px solid var(--border-color)'
-                }}>
-                    {title}
-                </h3>
-                {Object.values(checks).map(renderCheck)}
-            </div>
-        );
+    return (
+        <td
+            ref={cellRef}
+            contentEditable={true}
+            onBlur={handleBlur}
+            onFocus={() => setIsFocused(true)}
+            style={{
+                padding: '0.4em 0.6em',
+                border: '1px solid #a2a9b1',
+                verticalAlign: 'top',
+                backgroundColor: '#ffffff',
+                width: width,
+                minHeight: '2em',
+                outline: isFocused ? '2px solid #36c' : 'none',
+                outlineOffset: '-2px',
+                cursor: 'text',
+                lineHeight: '1.6',
+            }}
+            suppressContentEditableWarning={true}
+        />
+    );
+};
+
+/**
+ * WikiComplianceReport - INLINE card (NOT a modal)
+ * Matches WikiScriptEditor styling exactly
+ * Uses isOpen prop to control visibility
+ */
+const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
+    const [checks, setChecks] = useState([]);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [originalChecks, setOriginalChecks] = useState([]);
+
+    useEffect(() => {
+        if (report?.checks) {
+            const checksCopy = JSON.parse(JSON.stringify(report.checks));
+            setChecks(checksCopy);
+            setOriginalChecks(checksCopy);
+            setHasChanges(false);
+        }
+    }, [report]);
+
+    // Don't render if not open or no report
+    if (!isOpen || !report) return null;
+
+    const { summary } = report;
+
+    const updateCheck = (index, field, value) => {
+        const updated = [...checks];
+        updated[index] = { ...updated[index], [field]: value };
+        setChecks(updated);
+        setHasChanges(true);
+    };
+
+    const handleSave = () => {
+        if (onSave) {
+            onSave({ ...report, checks });
+        }
+        setOriginalChecks(JSON.parse(JSON.stringify(checks)));
+        setHasChanges(false);
+    };
+
+    const handleReset = () => {
+        if (window.confirm('Discard all changes?')) {
+            setChecks(JSON.parse(JSON.stringify(originalChecks)));
+            setHasChanges(false);
+        }
+    };
+
+    const handleDownloadDocx = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/export_compliance_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    checks: checks,
+                    summary: summary,
+                    format: 'docx'
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate DOCX');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'compliance_report.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('DOCX download error:', error);
+            alert('Failed to download. Is the backend running?');
+        }
     };
 
     return (
         <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem'
+            marginTop: '1rem',
+            background: '#fff',
+            borderRadius: '4px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
         }}>
+            {/* Toolbar - Exactly like WikiScriptEditor */}
             <div style={{
-                backgroundColor: 'var(--bg-primary)',
-                borderRadius: '1rem',
-                width: '100%',
-                maxWidth: '600px',
-                maxHeight: '80vh',
                 display: 'flex',
-                flexDirection: 'column',
-                boxShadow: 'var(--shadow-lg)'
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.75rem 1rem',
+                background: '#f8f9fa',
+                borderBottom: '1px solid #a2a9b1',
             }}>
-                {/* Header */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '1rem 1.25rem',
-                    borderBottom: '1px solid var(--border-color)'
+                    gap: '1rem',
+                    fontFamily: 'sans-serif',
                 }}>
-                    <h2 style={{
-                        margin: 0,
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
+                    <span style={{ fontWeight: 600, color: '#202122' }}>
+                        Compliance Report
+                    </span>
+                    <span style={{
+                        fontSize: '0.85em',
+                        color: '#54595d',
+                        background: '#eaecf0',
+                        padding: '0.2em 0.6em',
+                        borderRadius: '3px',
                     }}>
-                        📋 Script Compliance Report
-                    </h2>
+                        {checks.length} checks
+                    </span>
+                    <span style={{
+                        fontSize: '0.85em',
+                        background: '#eaecf0',
+                        padding: '0.2em 0.6em',
+                        borderRadius: '3px',
+                    }}>
+                        <span style={{ color: '#14866d' }}>{summary?.ai_passed || 0} ✓</span>
+                        {' · '}
+                        <span style={{ color: '#d33' }}>{summary?.ai_failed || 0} ✗</span>
+                    </span>
+                    {hasChanges && (
+                        <span style={{
+                            fontSize: '0.85em',
+                            color: '#d33',
+                            fontWeight: 500,
+                        }}>
+                            • Unsaved changes
+                        </span>
+                    )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={handleDownloadDocx}
+                        style={{
+                            padding: '0.4rem 0.8rem',
+                            background: '#fff',
+                            border: '1px solid #a2a9b1',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontSize: '0.9rem',
+                            color: '#54595d',
+                        }}
+                    >
+                        <Download size={14} />
+                        DOCX
+                    </button>
+                    {hasChanges && (
+                        <>
+                            <button
+                                onClick={handleReset}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    background: '#fff',
+                                    border: '1px solid #a2a9b1',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    fontSize: '0.9rem',
+                                    color: '#54595d',
+                                }}
+                            >
+                                <RotateCcw size={14} />
+                                Reset
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    background: '#36c',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    fontSize: '0.9rem',
+                                    color: '#fff',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                <Save size={14} />
+                                Save
+                            </button>
+                        </>
+                    )}
                     <button
                         onClick={onClose}
                         style={{
-                            background: 'none',
+                            padding: '0.4rem',
+                            background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            padding: '0.25rem',
-                            color: 'var(--text-secondary)',
-                            borderRadius: '0.25rem'
+                            color: '#54595d',
                         }}
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
+            </div>
 
-                {/* Content */}
-                <div style={{
-                    padding: '1.25rem',
-                    overflowY: 'auto',
-                    flex: 1
+            {/* Wiki Table */}
+            <div style={{
+                padding: '1rem',
+                overflowX: 'auto',
+                background: '#fff',
+            }}>
+                <table style={{
+                    width: '100%',
+                    minWidth: '900px',
+                    borderCollapse: 'collapse',
+                    fontFamily: '"Linux Libertine", "Georgia", "Times", serif',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    border: '1px solid #a2a9b1',
                 }}>
-                    {renderCategory('Formatting', formatting)}
-                    {renderCategory('Narration', narration)}
-                    {renderCategory('Structure', structure)}
-                </div>
+                    <thead>
+                        <tr>
+                            <th style={{
+                                padding: '0.4em 0.6em',
+                                border: '1px solid #a2a9b1',
+                                backgroundColor: '#eaecf0',
+                                fontWeight: 'bold',
+                                width: '40px',
+                                textAlign: 'center',
+                            }}>
+                                #
+                            </th>
+                            <th style={{
+                                padding: '0.4em 0.6em',
+                                border: '1px solid #a2a9b1',
+                                backgroundColor: '#eaecf0',
+                                fontWeight: 'bold',
+                                width: '35%',
+                            }}>
+                                Criteria
+                            </th>
+                            <th style={{
+                                padding: '0.4em 0.6em',
+                                border: '1px solid #a2a9b1',
+                                backgroundColor: '#eaecf0',
+                                fontWeight: 'bold',
+                                width: '60px',
+                                textAlign: 'center',
+                            }}>
+                                AI
+                            </th>
+                            <th style={{
+                                padding: '0.4em 0.6em',
+                                border: '1px solid #a2a9b1',
+                                backgroundColor: '#eaecf0',
+                                fontWeight: 'bold',
+                                width: '30%',
+                            }}>
+                                AI Notes
+                            </th>
+                            <th style={{
+                                padding: '0.4em 0.6em',
+                                border: '1px solid #a2a9b1',
+                                backgroundColor: '#eaecf0',
+                                fontWeight: 'bold',
+                                width: '25%',
+                            }}>
+                                Human Review
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {checks.map((check, index) => (
+                            <tr key={check.id || index}>
+                                {/* Row Number */}
+                                <td style={{
+                                    padding: '0.4em 0.6em',
+                                    border: '1px solid #a2a9b1',
+                                    backgroundColor: '#f8f9fa',
+                                    textAlign: 'center',
+                                    fontWeight: 600,
+                                    color: '#202122',
+                                }}>
+                                    {index + 1}
+                                </td>
+                                {/* Criteria - Read only */}
+                                <td style={{
+                                    padding: '0.4em 0.6em',
+                                    border: '1px solid #a2a9b1',
+                                    verticalAlign: 'top',
+                                    backgroundColor: '#fff',
+                                }}>
+                                    {check.criteria}
+                                </td>
+                                {/* AI Status - Tick/Cross */}
+                                <td style={{
+                                    padding: '0.4em 0.6em',
+                                    border: '1px solid #a2a9b1',
+                                    textAlign: 'center',
+                                    verticalAlign: 'middle',
+                                    backgroundColor: check.ai_review === true ? '#e6f9e6' :
+                                        check.ai_review === false ? '#fee' : '#fff',
+                                    fontSize: '1.2em',
+                                }}>
+                                    {check.ai_review === true ? (
+                                        <span style={{ color: '#14866d' }}>✓</span>
+                                    ) : check.ai_review === false ? (
+                                        <span style={{ color: '#d33' }}>✗</span>
+                                    ) : (
+                                        <span style={{ color: '#54595d' }}>—</span>
+                                    )}
+                                </td>
+                                {/* AI Notes - Editable */}
+                                <WikiCell
+                                    value={check.ai_notes || ''}
+                                    onChange={(value) => updateCheck(index, 'ai_notes', value)}
+                                    width="30%"
+                                />
+                                {/* Human Review - Editable */}
+                                <WikiCell
+                                    value={check.human_review || ''}
+                                    onChange={(value) => updateCheck(index, 'human_review', value)}
+                                    width="25%"
+                                />
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
 
-                {/* Footer */}
+                {/* Help text */}
                 <div style={{
-                    padding: '1rem 1.25rem',
-                    borderTop: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    background: '#f8f9fa',
+                    border: '1px solid #eaecf0',
+                    borderRadius: '3px',
+                    fontSize: '0.85rem',
+                    color: '#54595d',
+                    fontFamily: 'sans-serif',
                 }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        color: total_violations === 0 ? 'var(--success-color, #22c55e)' : 'var(--warning-color, #f59e0b)',
-                        fontWeight: 500
-                    }}>
-                        {total_violations === 0 ? (
-                            <>
-                                <CheckCircle size={18} />
-                                All checks passed!
-                            </>
-                        ) : (
-                            <>
-                                <AlertCircle size={18} />
-                                {total_violations} violation{total_violations !== 1 ? 's' : ''} found
-                            </>
-                        )}
-                    </div>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            backgroundColor: 'var(--accent-primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '0.5rem',
-                            cursor: 'pointer',
-                            fontWeight: 500
-                        }}
-                    >
-                        Close
-                    </button>
+                    <strong>Tips:</strong> ✓ = AI passed, ✗ = AI failed. Click AI Notes or Human Review cells to edit.
                 </div>
             </div>
         </div>

@@ -93,7 +93,7 @@ async def upload_script(file: UploadFile = File(...)):
             json.dump(json_script, f, indent=2)
         
         print(f"✅ Script uploaded: {file.filename} → project #{project_id}")
-        print(f"📋 Compliance: {compliance_report['total_violations']} violations found")
+        print(f"📋 Compliance: {compliance_report['summary']['ai_failed']} issues found")
         
         return {
             "json_script": json_script,
@@ -129,3 +129,102 @@ def _detect_tutorial_type(json_script: dict) -> str:
         return "demo"
     return "conceptual"
 
+
+@router.post("/export_compliance_report")
+async def export_compliance_report(data: dict):
+    """Export compliance report as DOCX or ODT file."""
+    from docx import Document
+    from docx.shared import Inches, Pt, RGBColor
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+    
+    try:
+        checks = data.get('checks', [])
+        summary = data.get('summary', {})
+        format_type = data.get('format', 'docx')  # 'docx' or 'odt'
+        
+        # Create document
+        doc = Document()
+        
+        # Add title
+        title = doc.add_heading('Script Compliance Report', level=0)
+        
+        # Add summary
+        doc.add_paragraph(
+            f"AI Passed: {summary.get('ai_passed', 0)} | "
+            f"AI Failed: {summary.get('ai_failed', 0)} | "
+            f"Total: {summary.get('total', 0)}"
+        )
+        doc.add_paragraph()
+        
+        # Create table - Same format as inline: # | Criteria | AI | AI Notes | Human Review
+        table = doc.add_table(rows=1, cols=5)
+        table.style = 'Table Grid'
+        
+        # Header row
+        header_cells = table.rows[0].cells
+        header_cells[0].text = '#'
+        header_cells[1].text = 'Criteria'
+        header_cells[2].text = 'AI'
+        header_cells[3].text = 'AI Notes'
+        header_cells[4].text = 'Human Review'
+        
+        # Set column widths
+        from docx.shared import Cm
+        table.columns[0].width = Cm(1)      # # - narrow
+        table.columns[1].width = Cm(6)      # Criteria - wide
+        table.columns[2].width = Cm(1)      # AI - narrow
+        table.columns[3].width = Cm(5)      # AI Notes - wide
+        table.columns[4].width = Cm(3)      # Human Review
+        
+        # Make header bold
+        for cell in header_cells:
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.bold = True
+        
+        # Add data rows
+        for i, check in enumerate(checks):
+            row = table.add_row()
+            
+            # Row number
+            row.cells[0].text = str(i + 1)
+            
+            # Criteria
+            row.cells[1].text = check.get('criteria', '')
+            
+            # AI Status - Tick/Cross
+            ai_review = check.get('ai_review')
+            if ai_review is True:
+                row.cells[2].text = '✓'
+            elif ai_review is False:
+                row.cells[2].text = '✗'
+            else:
+                row.cells[2].text = '—'
+            
+            # AI Notes
+            row.cells[3].text = check.get('ai_notes', '')
+            
+            # Human Review (editable text from user)
+            human_review = check.get('human_review', '')
+            row.cells[4].text = str(human_review) if human_review else ''
+        
+        # Save to buffer
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        # Return file
+        filename = f"compliance_report.{format_type}"
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        
+        return StreamingResponse(
+            buffer,
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

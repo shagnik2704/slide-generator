@@ -1,357 +1,268 @@
 """
-Compliance checking service for Spoken Tutorial scripts.
-Runs checklist-style checks and returns pass/fail results with violations.
+AI-powered compliance checking service for Spoken Tutorial scripts.
+Uses Gemini LLM to evaluate scripts against the official checklist.
 """
+import json
 import re
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple
+from pydantic import BaseModel, Field
+from langchain_google_genai import ChatGoogleGenerativeAI
+import httpx
+
+
+class CheckResult(BaseModel):
+    """Result for a single compliance check."""
+    passed: bool = Field(description="Whether the check passed (true) or failed (false)")
+    notes: str = Field(description="Brief explanation of the result")
+
+
+class ComplianceResults(BaseModel):
+    """All compliance check results."""
+    # Original checklist criteria
+    two_column_format: CheckResult = Field(description="Is the script in two column tabular format?")
+    prerequisites_mentioned: CheckResult = Field(description="Are all prerequisites mentioned?")
+    learning_objectives: CheckResult = Field(description="Are learning objectives mentioned at the beginning?")
+    utility_explained: CheckResult = Field(description="Is the utility of the topic explained briefly?")
+    abbreviations_avoided: CheckResult = Field(description="Are abbreviations/acronyms avoided or explained?")
+    bold_technical_terms: CheckResult = Field(description="Are technical words and UI elements displayed in **bold**?")
+    demo_75_percent: CheckResult = Field(description="Is 75% of the tutorial devoted to demonstration?")
+    sufficient_slides: CheckResult = Field(description="Are there sufficient slides for the content?")
+    recap_at_end: CheckResult = Field(description="Is there a quick recap at the end of the script?")
+    visual_narration_consistent: CheckResult = Field(description="Are Visual Cues consistent with Narration?")
+    ready_for_review: CheckResult = Field(description="Is the script ready for Novice and Domain review?")
+    
+    # Formatting criteria
+    sentence_length: CheckResult = Field(description="Are all sentences ≤80 characters? (Skip LO and Thank You slides)")
+    new_lines: CheckResult = Field(description="Does each sentence start on a new line?")
+    no_forbidden_symbols: CheckResult = Field(description="No forbidden symbols (->, -->, *, - at line start) in narration?")
+    no_fragmented_sentences: CheckResult = Field(description="Are there no fragmented or incomplete sentences?")
+
+
+def extract_urls(json_script: dict) -> List[str]:
+    """Extract all URLs from narration and visual cue text in the script."""
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]\'()]+'
+    urls = []
+    
+    for slide in json_script.get('slides', []):
+        # Check narration
+        narration = slide.get('narration', '')
+        urls.extend(re.findall(url_pattern, narration))
+        
+        # Check visual cue / image prompt
+        visual_cue = slide.get('image_prompt', '')
+        urls.extend(re.findall(url_pattern, visual_cue))
+    
+    return list(set(urls))  # Remove duplicates
+
+
+def validate_urls(urls: List[str]) -> Tuple[List[str], List[Tuple[str, str]]]:
+    """
+    Validate URLs by making HEAD requests.
+    Returns (active_urls, broken_urls) where broken_urls is list of (url, reason) tuples.
+    """
+    active = []
+    broken = []
+    
+    if not urls:
+        return active, broken
+    
+    with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+        for url in urls:
+            try:
+                response = client.head(url)
+                if response.status_code < 400:
+                    active.append(url)
+                else:
+                    broken.append((url, f"HTTP {response.status_code}"))
+            except httpx.TimeoutException:
+                broken.append((url, "Timeout"))
+            except httpx.RequestError as e:
+                broken.append((url, f"Connection error"))
+            except Exception as e:
+                broken.append((url, str(e)[:30]))
+    
+    return active, broken
+
+
+def check_links(json_script: dict) -> dict:
+    """
+    Check if all links in the script are active.
+    Returns a check result dict.
+    """
+    urls = extract_urls(json_script)
+    
+    if not urls:
+        return {
+            "id": "links_active",
+            "criteria": "Are all links in the script active (if any)?",
+            "ai_review": True,
+            "ai_notes": "No URLs found in the script",
+            "human_review": None
+        }
+    
+    active, broken = validate_urls(urls)
+    
+    if not broken:
+        return {
+            "id": "links_active",
+            "criteria": "Are all links in the script active (if any)?",
+            "ai_review": True,
+            "ai_notes": f"All {len(active)} link(s) are active",
+            "human_review": None
+        }
+    else:
+        broken_list = ", ".join([f"{url} ({reason})" for url, reason in broken[:3]])
+        if len(broken) > 3:
+            broken_list += f" ... and {len(broken) - 3} more"
+        return {
+            "id": "links_active",
+            "criteria": "Are all links in the script active (if any)?",
+            "ai_review": False,
+            "ai_notes": f"{len(broken)} broken link(s): {broken_list}",
+            "human_review": None
+        }
 
 
 def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> dict:
     """
-    Run all compliance checks on a script and return checklist results.
+    Run AI-powered compliance checks on a script.
     
     Args:
         json_script: The parsed script JSON
         tutorial_type: 'conceptual' or 'demo'
     
     Returns:
-        Dictionary with checklist results (no scores, just pass/fail)
+        Dictionary with checklist results for 3-column display
     """
-    slides = json_script.get('slides', [])
-    
-    # Run all checks
-    formatting_results = _check_formatting(slides)
-    narration_results = _check_narration(slides, tutorial_type)
-    structure_results = _check_structure(slides, json_script)
-    
-    # Count total violations
-    total_violations = sum(
-        len(check.get('violations', [])) 
-        for category in [formatting_results, narration_results, structure_results]
-        for check in category.values()
-        if not check.get('passed', True)
+    # Initialize LLM with structured output
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.3,
     )
+    structured_llm = llm.with_structured_output(ComplianceResults)
     
-    return {
-        "formatting": formatting_results,
-        "narration": narration_results,
-        "structure": structure_results,
-        "total_violations": total_violations
-    }
+    # Build the prompt
+    prompt = f"""You are a Spoken Tutorial script reviewer. Evaluate this script against the official compliance checklist.
 
+=== SCRIPT TO REVIEW ===
+{json.dumps(json_script, indent=2)}
 
-def _check_formatting(slides: List[dict]) -> dict:
-    """Check formatting rules."""
-    results = {}
-    
-    # 1. Sentence length check (≤80 characters)
-    sentence_violations = []
-    for i, slide in enumerate(slides):
-        title = slide.get('title', '').lower()
-        # Skip LO and Thank You slides
-        if 'learning' in title or 'thank you' in title:
-            continue
-        
-        narration = slide.get('narration', '')
-        sentences = _split_sentences(narration)
-        for sentence in sentences:
-            if len(sentence.strip()) > 80:
-                sentence_violations.append({
-                    "slide": i + 1,
-                    "issue": f"Sentence too long ({len(sentence.strip())} chars)",
-                    "text": sentence.strip()[:50] + "..." if len(sentence.strip()) > 50 else sentence.strip()
-                })
-    
-    results["sentence_length"] = {
-        "rule": "Sentence length ≤80 characters",
-        "passed": len(sentence_violations) == 0,
-        "violations": sentence_violations
-    }
-    
-    # 2. New lines check (sentences on new lines)
-    newline_violations = []
-    for i, slide in enumerate(slides):
-        title = slide.get('title', '').lower()
-        if 'learning' in title or 'thank you' in title:
-            continue
-            
-        narration = slide.get('narration', '')
-        # Check if there are multiple sentences without newlines
-        sentences = _split_sentences(narration)
-        if len(sentences) > 1:
-            # Check if narration has proper newlines
-            newline_count = narration.count('\\n') + narration.count('\n')
-            if newline_count < len(sentences) - 1:
-                newline_violations.append({
-                    "slide": i + 1,
-                    "issue": f"Multiple sentences without newlines ({len(sentences)} sentences, {newline_count} newlines)"
-                })
-    
-    results["new_lines"] = {
-        "rule": "Each sentence on new line",
-        "passed": len(newline_violations) == 0,
-        "violations": newline_violations
-    }
-    
-    # 3. Forbidden symbols check
-    symbol_violations = []
-    forbidden_patterns = [r'->', r'-->', r'^\*\s', r'^-\s']
-    for i, slide in enumerate(slides):
-        narration = slide.get('narration', '')
-        for pattern in forbidden_patterns:
-            if pattern.startswith('^'):
-                # Check at line start
-                lines = narration.split('\n')
-                for line in lines:
-                    if re.match(pattern, line.strip()):
-                        symbol_violations.append({
-                            "slide": i + 1,
-                            "issue": f"Forbidden symbol at line start",
-                            "text": line.strip()[:30]
-                        })
-            else:
-                if re.search(pattern, narration):
-                    symbol_violations.append({
-                        "slide": i + 1,
-                        "issue": f"Contains forbidden symbol: {pattern.replace(chr(92), '')}"
-                    })
-    
-    results["no_forbidden_symbols"] = {
-        "rule": "No forbidden symbols (→, -->, * or - at line start)",
-        "passed": len(symbol_violations) == 0,
-        "violations": symbol_violations
-    }
-    
-    # 4. Bold markers for technical terms (advisory)
-    bold_count = 0
-    for slide in slides:
-        narration = slide.get('narration', '')
-        bold_count += len(re.findall(r'\*\*[^*]+\*\*', narration))
-    
-    results["bold_markers"] = {
-        "rule": "Technical terms use **bold** markers",
-        "passed": bold_count > 0,
-        "violations": [] if bold_count > 0 else [{
-            "slide": 0,
-            "issue": "No bold markers found in script"
-        }]
-    }
-    
-    return results
+=== COMPLIANCE CHECKLIST ===
 
+### CONTENT CRITERIA
+1. **Two Column Format**: Does the script have a clear Visual Cue and Narration structure?
+2. **Prerequisites Mentioned**: Are the prerequisites (prior knowledge, software, tutorials) clearly stated?
+3. **Learning Objectives**: Are clear learning objectives mentioned in the first few slides?
+4. **Utility Explained**: Is there a brief explanation of WHY this topic is useful or important?
+5. **Abbreviations Avoided**: Are abbreviations either avoided or properly explained when first used?
+6. **Bold Technical Terms**: Are technical terms, UI elements, buttons, and keywords marked in **bold**?
+7. **75% Demonstration**: Is at least 75% of the content focused on hands-on demonstration (not just theory)?
+8. **Sufficient Slides**: Are there enough slides to cover the content adequately (typically 8-15 for a 3-4 min tutorial)?
+9. **Recap at End**: Is there a summary or recap slide near the end?
+10. **Visual-Narration Consistency**: Do the Visual Cues match what the Narration describes?
+11. **Ready for Review**: Overall, is this script polished enough for Novice and Domain expert review?
 
-def _check_narration(slides: List[dict], tutorial_type: str) -> dict:
-    """Check narration quality rules."""
-    results = {}
+### FORMATTING CRITERIA
+12. **Sentence Length**: EVERY sentence MUST be ≤ 80 characters.
+    - SKIP this check for Learning Objectives slide
+    - SKIP this check for Thank You slide
+    - If ANY sentence exceeds 80 chars, mark as FAILED
     
-    if tutorial_type == "demo":
-        # Demo-specific checks
-        
-        # 1. Action verbs check
-        action_verbs = ['click', 'open', 'type', 'select', 'navigate', 'copy', 'paste', 
-                       'drag', 'enter', 'press', 'scroll', 'hover', 'choose', 'tap']
-        action_violations = []
-        
-        for i, slide in enumerate(slides):
-            title = slide.get('title', '').lower()
-            # Skip boilerplate slides
-            if any(x in title for x in ['title', 'learning', 'thank', 'summary', 'assignment', 'prerequisite', 'system']):
-                continue
-            
-            narration = slide.get('narration', '').lower()
-            has_action = any(verb in narration for verb in action_verbs)
-            if not has_action:
-                action_violations.append({
-                    "slide": i + 1,
-                    "issue": "No action verbs found (Click, Open, Type, etc.)"
-                })
-        
-        results["action_verbs"] = {
-            "rule": "Uses action verbs (Click, Open, Type...)",
-            "passed": len(action_violations) == 0,
-            "violations": action_violations
-        }
-        
-        # 2. Screen location check
-        location_words = ['top', 'bottom', 'left', 'right', 'corner', 'menu', 'toolbar', 
-                         'panel', 'sidebar', 'dialog', 'window', 'tab', 'bar']
-        location_violations = []
-        
-        for i, slide in enumerate(slides):
-            title = slide.get('title', '').lower()
-            if any(x in title for x in ['title', 'learning', 'thank', 'summary', 'assignment', 'prerequisite', 'system']):
-                continue
-            
-            narration = slide.get('narration', '').lower()
-            # Check if click/select actions have location context
-            if 'click' in narration or 'select' in narration:
-                has_location = any(loc in narration for loc in location_words)
-                if not has_location:
-                    location_violations.append({
-                        "slide": i + 1,
-                        "issue": "Click/Select without screen location (top, left, menu, etc.)"
-                    })
-        
-        results["screen_location"] = {
-            "rule": "Screen location specified for actions",
-            "passed": len(location_violations) == 0,
-            "violations": location_violations
-        }
-        
-        # 3. Verification cues check
-        verification_words = ['you will see', 'appears', 'shows', 'displayed', 'notice', 
-                             'observe', 'visible', 'confirmation', 'result']
-        verification_violations = []
-        
-        for i, slide in enumerate(slides):
-            title = slide.get('title', '').lower()
-            if any(x in title for x in ['title', 'learning', 'thank', 'summary', 'assignment', 'prerequisite', 'system']):
-                continue
-            
-            narration = slide.get('narration', '').lower()
-            has_verification = any(v in narration for v in verification_words)
-            if not has_verification:
-                verification_violations.append({
-                    "slide": i + 1,
-                    "issue": "No verification cue (You will see, appears, etc.)"
-                })
-        
-        results["verification_cues"] = {
-            "rule": "Verification cues present",
-            "passed": len(verification_violations) <= len(slides) // 3,  # Allow some slides without
-            "violations": verification_violations[:5]  # Limit to first 5
-        }
-        
-    else:
-        # Conceptual tutorial checks
-        
-        # 1. Smooth transitions check
-        transition_words = ['now', 'next', 'let us', "let's", 'so', 'therefore', 'this means',
-                          'in other words', 'for example', 'similarly', 'however', 'but']
-        transition_count = 0
-        
-        for slide in slides:
-            narration = slide.get('narration', '').lower()
-            if any(t in narration for t in transition_words):
-                transition_count += 1
-        
-        results["smooth_transitions"] = {
-            "rule": "Uses transition words between ideas",
-            "passed": transition_count >= len(slides) // 3,
-            "violations": [] if transition_count >= len(slides) // 3 else [{
-                "slide": 0,
-                "issue": f"Only {transition_count} slides use transitions"
-            }]
-        }
-        
-        # 2. Analogies/examples check
-        analogy_words = ['like', 'imagine', 'think of', 'similar to', 'just as', 'for example',
-                        'consider', 'suppose', 'everyday', 'real-world', 'real world']
-        analogy_count = 0
-        
-        for slide in slides:
-            narration = slide.get('narration', '').lower()
-            if any(a in narration for a in analogy_words):
-                analogy_count += 1
-        
-        results["uses_analogies"] = {
-            "rule": "Uses analogies and examples",
-            "passed": analogy_count > 0,
-            "violations": [] if analogy_count > 0 else [{
-                "slide": 0,
-                "issue": "No analogies or real-world examples found"
-            }]
-        }
-        
-        # 3. Engagement check (questions, prompts)
-        engagement_words = ['?', 'notice', 'observe', 'think about', 'consider', 'why', 'how']
-        engagement_count = 0
-        
-        for slide in slides:
-            narration = slide.get('narration', '')
-            if any(e in narration.lower() for e in engagement_words) or '?' in narration:
-                engagement_count += 1
-        
-        results["learner_engagement"] = {
-            "rule": "Engages learner (questions, prompts)",
-            "passed": engagement_count > 0,
-            "violations": [] if engagement_count > 0 else [{
-                "slide": 0,
-                "issue": "No questions or engagement prompts found"
-            }]
-        }
+13. **New Lines**: Each sentence must start on a new line (\\n between sentences).
+    - Multiple sentences on the same line = FAILED
     
-    return results
+14. **No Forbidden Symbols**: Check narration for forbidden symbols:
+    - FORBIDDEN: ->, -->, *, - at the start of lines
+    - ALLOWED: **bold** markers are OK
+    - ALLOWED: • bullets ONLY in Learning Objectives slide
 
+15. **No Fragmented Sentences**: Check for incomplete or fragmented sentences.
+    - Sentences must be complete with subject and verb
+    - No sentence fragments or trailing phrases
 
-def _check_structure(slides: List[dict], json_script: dict) -> dict:
-    """Check script structure rules."""
-    results = {}
-    
-    if not slides:
+For each check, provide:
+- passed: true/false
+- notes: Brief explanation (specific issue if failed, or "OK" if passed)
+"""
+
+    try:
+        result = structured_llm.invoke(prompt)
+        
+        if result is None:
+            return _get_error_response("AI returned no result")
+        
+        # Convert to checklist format - Content criteria
+        checks = [
+            _format_check("two_column_format", "Is the script in two column tabular format?", result.two_column_format),
+            _format_check("prerequisites", "Are all the prerequisites mentioned?", result.prerequisites_mentioned),
+            _format_check("learning_objectives", "Are the learning objectives mentioned at the beginning?", result.learning_objectives),
+            _format_check("utility_explained", "Is the utility of the topic explained briefly?", result.utility_explained),
+            _format_check("abbreviations", "Are abbreviations/acronyms avoided or explained?", result.abbreviations_avoided),
+            _format_check("bold_technical", "Are technical words/UI elements in **bold**?", result.bold_technical_terms),
+            _format_check("demo_percentage", "Is 75% of the tutorial devoted to demonstration?", result.demo_75_percent),
+            _format_check("sufficient_slides", "Are there sufficient slides for the content?", result.sufficient_slides),
+            _format_check("recap", "Is a quick recap given at the end of the script?", result.recap_at_end),
+            _format_check("visual_narration", "Are Visual Cues consistent with Narration?", result.visual_narration_consistent),
+            _format_check("ready_for_review", "Is the script ready for Novice and Domain review?", result.ready_for_review),
+        ]
+        
+        # Formatting criteria
+        formatting_checks = [
+            _format_check("sentence_length", "Every sentence ≤80 characters (skip LO/Thank You)?", result.sentence_length),
+            _format_check("new_lines", "Each sentence starts on a new line?", result.new_lines),
+            _format_check("no_symbols", "No forbidden symbols (->, -->, *, -)?", result.no_forbidden_symbols),
+            _format_check("no_fragments", "No fragmented or incomplete sentences?", result.no_fragmented_sentences),
+        ]
+        
+        # Link validation (done separately, not by LLM)
+        link_check = check_links(json_script)
+        
+        all_checks = checks + formatting_checks + [link_check]
+        
+        # Calculate summary
+        ai_passed = sum(1 for c in all_checks if c["ai_review"] is True)
+        ai_failed = sum(1 for c in all_checks if c["ai_review"] is False)
+        
         return {
-            "title_slide": {"rule": "Title slide present", "passed": False, "violations": [{"slide": 0, "issue": "No slides found"}]},
-            "lo_slide": {"rule": "Learning objectives slide", "passed": False, "violations": []},
-            "thank_you_slide": {"rule": "Thank you slide", "passed": False, "violations": []}
+            "checks": all_checks,
+            "summary": {
+                "ai_passed": ai_passed,
+                "ai_failed": ai_failed,
+                "ai_skipped": 0,
+                "total": len(all_checks)
+            }
         }
-    
-    slide_titles = [s.get('title', '').lower() for s in slides]
-    
-    # 1. Title slide
-    has_title = any('title' in t or 'spoken tutorial' in t for t in slide_titles[:2])
-    results["title_slide"] = {
-        "rule": "Title slide present",
-        "passed": has_title,
-        "violations": [] if has_title else [{"slide": 1, "issue": "First slide should be title slide"}]
-    }
-    
-    # 2. Learning objectives slide
-    has_lo = any('learning' in t or 'objective' in t for t in slide_titles[:4])
-    results["lo_slide"] = {
-        "rule": "Learning objectives slide",
-        "passed": has_lo,
-        "violations": [] if has_lo else [{"slide": 2, "issue": "Missing learning objectives slide"}]
-    }
-    
-    # 3. Thank you slide
-    has_thank = any('thank' in t for t in slide_titles[-3:])
-    results["thank_you_slide"] = {
-        "rule": "Thank you slide",
-        "passed": has_thank,
-        "violations": [] if has_thank else [{"slide": len(slides), "issue": "Missing thank you slide at end"}]
-    }
-    
-    # 4. Summary slide
-    has_summary = any('summary' in t or 'summarize' in t or 'summarise' in t for t in slide_titles[-5:])
-    results["summary_slide"] = {
-        "rule": "Summary slide",
-        "passed": has_summary,
-        "violations": [] if has_summary else [{"slide": len(slides) - 1, "issue": "Missing summary slide"}]
-    }
-    
-    return results
-
-
-def _split_sentences(text: str) -> List[str]:
-    """Split text into sentences, handling common edge cases."""
-    # Replace escaped newlines
-    text = text.replace('\\n', '\n')
-    
-    # Split by newlines first (each line is likely a sentence)
-    lines = text.split('\n')
-    
-    sentences = []
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
         
-        # For lines without periods, treat as single sentence
-        if '.' not in line:
-            sentences.append(line)
-        else:
-            # Split by sentence-ending punctuation
-            parts = re.split(r'(?<=[.!?])\s+', line)
-            sentences.extend([p.strip() for p in parts if p.strip()])
-    
-    return sentences
+    except Exception as e:
+        print(f"⚠️ Compliance check error: {e}")
+        return _get_error_response(str(e))
+
+
+def _format_check(check_id: str, criteria: str, result: CheckResult) -> dict:
+    """Format a single check result."""
+    return {
+        "id": check_id,
+        "criteria": criteria,
+        "ai_review": result.passed,
+        "ai_notes": result.notes,
+        "human_review": None
+    }
+
+
+def _get_error_response(error_msg: str) -> dict:
+    """Return error response structure."""
+    return {
+        "checks": [{
+            "id": "error",
+            "criteria": "Compliance check failed",
+            "ai_review": None,
+            "ai_notes": f"Error: {error_msg}",
+            "human_review": None
+        }],
+        "summary": {
+            "ai_passed": 0,
+            "ai_failed": 0,
+            "ai_skipped": 1,
+            "total": 1
+        }
+    }
