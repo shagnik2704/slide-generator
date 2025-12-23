@@ -9,7 +9,7 @@ import ComplianceReport from './ComplianceReport';
 import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2 } from 'lucide-react';
 
 // const API_URL = 'https://slide-generator-61ic.onrender.com';
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 // LocalStorage key for persisting upload mode state
 const STORAGE_KEY = 'spokentutorial_upload_state';
