@@ -117,7 +117,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "topics_not_included",
-                        "question": "Are there any topics that should NOT be included or are clearly out-of-scope? You can briefly list them, if any.",
+                        "question": "Are there any topics that should NOT be included or are clearly out-of-scope? Please list them (semicolon-separated is perfect).",
                         "why": "Helps avoid scope creep and keeps the course focused."
                     }
                 ]
@@ -132,7 +132,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "allied_examples",
-                        "question": "Would you like to add 0–2 allied examples (alternate scenarios, use cases, or contexts) to show variations? These are optional and only if you feel they are helpful. If not needed, you can simply say 'none' or 'no'.",
+                        "question": "Would you like to add 0–2 allied examples (alternate scenarios, use cases, or contexts) to show variations? If yes, please separate each example with semicolons. If not needed, you can simply say 'none' or 'no'.",
                         "why": "Allies cover different contexts or applications without bloating the core scenario."
                     }
                 ]
@@ -200,7 +200,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "topics_not_included",
-                        "question": "Which topics should NOT be included or are out-of-scope?",
+                        "question": "Which topics should NOT be included or are out-of-scope? Please list them, separated by semicolons.",
                         "why": "Helps avoid scope creep."
                     }
                 ]
@@ -215,7 +215,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "allied_examples",
-                        "question": "Do you want 0-2 allied examples (short alternate scenarios) to show variations? If yes, list them.",
+                        "question": "Do you want 0-2 allied examples (short alternate scenarios) to show variations? If yes, list them separated by semicolons.",
                         "why": "Allies cover edge-cases without bloating the core demo."
                     }
                 ]
@@ -266,6 +266,10 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
         phase = "structure"
     
     if phase == "structure":
+        # Collect keywords before tutorial numbering to avoid asking them at the very end
+        if not outline_data.get("keywords"):
+            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
+
         if not outline_data.get("recommended_no_of_tutorials"):
             q = question_flow["structure"]["questions"][0]
             return phase, q["question"]
@@ -305,6 +309,7 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
                     return phase, f"""For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): please list 3–6 practical steps, activities, or methodologies the learner will follow.
 
 For ICT courses, these steps should describe what learners will actually DO or TEACH, in simple, action-oriented language.
+You can provide them as a short semicolon-separated list or bullets.
 """
                 else:
                     return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a semicolon‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
@@ -325,8 +330,6 @@ For ICT courses, these steps should describe what learners will actually DO or T
             from datetime import datetime
             today = datetime.now().strftime("%Y-%m-%d")
             return phase, f"Preferred date for the outline? (default: {today})"
-        if not outline_data.get("keywords"):
-            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
         # All metadata collected, move to review
         phase = "review"
     

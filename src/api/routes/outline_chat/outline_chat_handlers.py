@@ -115,17 +115,18 @@ def handle_confirmation_no(
             elif field == "tutorial_prerequisites":
                 next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, what are the prerequisites?"
             elif field == "tutorial_steps":
-                next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, list 3–6 demonstrable steps."
+                next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, list 3–6 demonstrable steps (semicolon-separated list is fine)."
             elif field == "tutorial_time":
                 next_question = f"Could you please share your estimated time for Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))} ({last_tutorial.get('title', 'N/A')}) in minutes? Typically, it ranges from 2 to 10 minutes, but feel free to suggest any reasonable duration. You can provide a single number (e.g., '5 minutes') or a range (e.g., '3-4 minutes' or '3 to 4 minutes').\n\nExample answer: 7 minutes or 3-4 minutes"
+        # If we rejected keywords while in structure phase, re-ask here
+        if field == "keywords":
+            next_question = "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
     elif phase == "metadata":
         if field == "prepared_by":
             next_question = "Who prepared the outline? (Name)"
         elif field == "date":
             today = datetime.now().strftime("%Y-%m-%d")
             next_question = f"Preferred date for the outline? (default: {today})"
-        elif field == "keywords":
-            next_question = "Any keywords or tags to help search (3-6 words, comma-separated)?"
     
     if not next_question:
         phase, next_question = determine_next_question(outline_data, phase, conversation)
