@@ -262,7 +262,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                     width: '100%',
                     minWidth: '900px',
                     borderCollapse: 'collapse',
-                    fontFamily: '"Linux Libertine", "Georgia", "Times", serif',
+                    fontFamily: 'Arial, sans-serif',
                     fontSize: '14px',
                     lineHeight: '1.6',
                     border: '1px solid #a2a9b1',

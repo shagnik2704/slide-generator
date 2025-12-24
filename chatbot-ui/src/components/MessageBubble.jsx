@@ -52,7 +52,7 @@ const MessageBubble = ({ message, onConfirmation }) => {
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                         {message.isStreaming && <span className="streaming-cursor">▌</span>}
                     </div>
-                    
+
                     {/* Confirmation Buttons */}
                     {needsConfirmation && onConfirmation && (
                         <div style={{

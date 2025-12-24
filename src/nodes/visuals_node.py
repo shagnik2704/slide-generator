@@ -51,7 +51,8 @@ def generate_visuals(state: AgentState):
         return {"json_script": {}}
     
    
-    llm = ChatOpenAI(model="gpt-5-mini")
+    # llm = ChatOpenAI(model="gpt-5-mini")
+    llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
     structured_llm = llm.with_structured_output(FinalScript)
     
     prompt = f"""You are adding VISUAL CUES (image_prompt) to a Spoken Tutorial script.

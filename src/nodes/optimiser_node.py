@@ -89,7 +89,7 @@ def fix_specific_slides(json_script: dict, feedback: str, problematic_indices: L
         print("⚠️ No valid slides to fix. Returning original.")
         return {"json_script": json_script}
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+    llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
     structured_llm = llm.with_structured_output(FixedSlidesList)
     
     prompt = f"""Fix ONLY these specific slides based on the evaluator's feedback.

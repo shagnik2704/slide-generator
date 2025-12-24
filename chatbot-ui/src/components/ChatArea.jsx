@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
 import WikiScriptEditor from './WikiScriptEditor';
 import ComplianceReport from './ComplianceReport';
+import QualityReport from './QualityReport';
 
-import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2 } from 'lucide-react';
+import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2, Globe } from 'lucide-react';
 
 // const API_URL = 'https://slide-generator-61ic.onrender.com';
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 
 // LocalStorage key for persisting upload mode state
 const STORAGE_KEY = 'spokentutorial_upload_state';
@@ -55,7 +57,7 @@ const saveToLocalStorage = (uploadMessages, currentProjectId) => {
     }
 };
 
-const ChatArea = ({ toggleSidebar }) => {
+const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
 
     // Initialize uploadMessages from localStorage or default
@@ -89,6 +91,9 @@ const ChatArea = ({ toggleSidebar }) => {
     const editedScriptInputRef = useRef(null);
     const [openEditorId, setOpenEditorId] = useState(null);
     const [openReportId, setOpenReportId] = useState(null);
+    const [openQualityId, setOpenQualityId] = useState(null);
+    const [qualityReports, setQualityReports] = useState({});  // Store quality reports by message ID
+    const [isQualityLoading, setIsQualityLoading] = useState(false);
 
     // Flag to track if we restored from localStorage
     const [sessionRestored, setSessionRestored] = useState(() => {
@@ -229,6 +234,170 @@ const ChatArea = ({ toggleSidebar }) => {
             setIsTyping(false);
         }
     };
+
+    // === SIDEBAR HANDLERS ===
+    // These are exposed via ref for sidebar buttons
+
+    // Handle compliance check from sidebar (parse → compliance only)
+    const handleSidebarComplianceUpload = async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Running Admin Compliance check on: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the script (no checks)
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!parseResponse.ok) {
+                const errorData = await parseResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to parse script file');
+            }
+
+            const parseData = await parseResponse.json();
+            setCurrentProjectId(parseData.project_id);
+
+            // Step 2: Run compliance check only
+            const complianceResponse = await fetch(`${API_URL}/check_compliance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: parseData.json_script,
+                    tutorial_type: parseData.tutorial_type
+                }),
+            });
+
+            if (!complianceResponse.ok) {
+                const errorData = await complianceResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to run compliance check');
+            }
+
+            const complianceReport = await complianceResponse.json();
+
+            const failedCount = complianceReport?.summary?.ai_failed || 0;
+            const passedCount = complianceReport?.summary?.ai_passed || 0;
+            const newBotMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `Admin Compliance Check Complete\n\n` +
+                    `Checked: ${file.name}\n` +
+                    `Rows: ${parseData.json_script.slides?.length || 0}`,
+                jsonScript: parseData.json_script,
+                projectId: parseData.project_id,
+                type: 'script_uploaded',
+                complianceReport: complianceReport,
+                hideQualityCheck: true,
+                hideGenerateSlides: true
+            };
+            setUploadMessages(prev => [...prev, newBotMessage]);
+            setOpenReportId(newBotMessage.id); // Auto-open the report
+
+        } catch (error) {
+            console.error("Compliance check error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Compliance check failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    // Handle quality check from sidebar (parse → quality only)
+    const handleSidebarQualityUpload = async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Running Quality Compliance on: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the script (no checks)
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!parseResponse.ok) {
+                const errorData = await parseResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to parse script file');
+            }
+
+            const parseData = await parseResponse.json();
+            setCurrentProjectId(parseData.project_id);
+
+            // Step 2: Run quality check only (no compliance)
+            const qualityResponse = await fetch(`${API_URL}/check_quality`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ json_script: parseData.json_script }),
+            });
+
+            if (!qualityResponse.ok) {
+                const errorData = await qualityResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to run quality check');
+            }
+
+            const qualityData = await qualityResponse.json();
+            const messageId = Date.now() + 1;
+
+            const passedCount = qualityData.summary?.ai_passed || 0;
+            const failedCount = qualityData.summary?.ai_failed || 0;
+            const avgScore = qualityData.summary?.avg_quality_score || 0;
+
+            const newBotMessage = {
+                id: messageId,
+                role: 'assistant',
+                content: `Quality Compliance Check Complete\n\n` +
+                    `Checked: ${file.name}\n` +
+                    `Rows: ${parseData.json_script.slides?.length || 0}`,
+                jsonScript: parseData.json_script,
+                projectId: parseData.project_id,
+                type: 'script_uploaded',
+                complianceReport: null,  // No compliance report for quality-only
+                hideQualityCheck: true,
+                hideGenerateSlides: true
+            };
+            setUploadMessages(prev => [...prev, newBotMessage]);
+
+            // Store quality report and auto-open
+            setQualityReports(prev => ({ ...prev, [messageId]: qualityData }));
+            setOpenQualityId(messageId);
+
+        } catch (error) {
+            console.error("Quality check error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `Quality check failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    // Expose handlers for sidebar via ref
+    useImperativeHandle(ref, () => ({
+        handleSidebarComplianceUpload,
+        handleSidebarQualityUpload
+    }));
 
     const handleGenerateScript = async (outline, projectId) => {
         setIsTyping(true);
@@ -652,6 +821,45 @@ const ChatArea = ({ toggleSidebar }) => {
         setUploadMessages(prev => [...prev, confirmMessage]);
     };
 
+    // Handle quality check - translate to Hindi and assess quality
+    const handleQualityCheck = async (jsonScript, messageId) => {
+        setIsQualityLoading(true);
+        setOpenQualityId(messageId);
+
+        try {
+            const response = await fetch(`${API_URL}/check_quality`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ json_script: jsonScript }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to run quality check');
+            }
+
+            const data = await response.json();
+
+            // Store the quality report for this message
+            setQualityReports(prev => ({ ...prev, [messageId]: data }));
+
+            console.log('✅ Quality check complete:', data.summary);
+
+        } catch (error) {
+            console.error('Quality check error:', error);
+            setQualityReports(prev => ({
+                ...prev,
+                [messageId]: {
+                    error: error.message,
+                    checks: [{ id: 'error', criteria: 'Quality check failed', ai_review: null, ai_notes: error.message }],
+                    summary: { ai_passed: 0, ai_failed: 0, total: 1 }
+                }
+            }));
+        } finally {
+            setIsQualityLoading(false);
+        }
+    };
+
     return (
         <main style={{
             flex: 1,
@@ -893,43 +1101,46 @@ const ChatArea = ({ toggleSidebar }) => {
                             )}
                             {mode === 'upload' && msg.type === 'script_uploaded' && (
                                 <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                    <button
-                                        onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
-                                        disabled={isTyping}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'var(--accent-primary)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={20} />
-                                        Generate Slides
-                                    </button>
+                                    {/* Generate Slides Button - hidden for Quality Agent sidebar */}
+                                    {!msg.hideGenerateSlides && (
+                                        <button
+                                            onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
+                                            disabled={isTyping}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: isTyping
+                                                    ? 'var(--bg-tertiary)'
+                                                    : 'var(--accent-primary)',
+                                                color: isTyping ? 'var(--text-secondary)' : 'white',
+                                                border: 'none',
+                                                borderRadius: '0.75rem',
+                                                cursor: isTyping ? 'not-allowed' : 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
+                                                opacity: isTyping ? 0.6 : 1,
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (!isTyping) {
+                                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                                }
+                                            }}
+                                        >
+                                            <FileText size={20} />
+                                            Generate Slides
+                                        </button>
+                                    )}
                                     {msg.complianceReport && (
                                         <button
                                             onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
@@ -970,6 +1181,96 @@ const ChatArea = ({ toggleSidebar }) => {
                                             ));
                                         }}
                                         onClose={() => setOpenReportId(null)}
+                                    />
+
+                                    {/* View Quality Report Toggle - for sidebar quality flow */}
+                                    {qualityReports[msg.id] && msg.hideQualityCheck && (
+                                        <button
+                                            onClick={() => setOpenQualityId(openQualityId === msg.id ? null : msg.id)}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: 'var(--accent-primary)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '0.75rem',
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                                boxShadow: 'var(--shadow-md)',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(26, 68, 128, 0.3)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            {openQualityId === msg.id ? 'Close Quality Report' : 'View Quality Report'}
+                                        </button>
+                                    )}
+
+                                    {/* Quality Check Button - hidden for Admin Compliance */}
+                                    {!msg.hideQualityCheck && (
+                                        <button
+                                            onClick={() => {
+                                                if (openQualityId === msg.id) {
+                                                    setOpenQualityId(null);
+                                                } else if (qualityReports[msg.id]) {
+                                                    // Already have report, just toggle open
+                                                    setOpenQualityId(msg.id);
+                                                } else {
+                                                    // Need to fetch report
+                                                    handleQualityCheck(msg.jsonScript, msg.id);
+                                                }
+                                            }}
+                                            disabled={isQualityLoading && openQualityId === msg.id}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: openQualityId === msg.id
+                                                    ? 'var(--accent-primary)'
+                                                    : 'var(--bg-secondary)',
+                                                color: openQualityId === msg.id ? 'white' : 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: isQualityLoading ? 'wait' : 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                                marginTop: '0.5rem',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (!isQualityLoading) {
+                                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            🌐 {isQualityLoading && openQualityId === msg.id
+                                                ? 'Checking...'
+                                                : openQualityId === msg.id
+                                                    ? 'Close Quality'
+                                                    : 'Quality Check (Hindi)'}
+                                        </button>
+                                    )}
+
+                                    {/* Inline Quality Report */}
+                                    <QualityReport
+                                        report={qualityReports[msg.id]}
+                                        isOpen={openQualityId === msg.id && !isQualityLoading}
+                                        onClose={() => setOpenQualityId(null)}
                                     />
                                 </div>
                             )}
@@ -1452,6 +1753,6 @@ const ChatArea = ({ toggleSidebar }) => {
       `}</style>
         </main>
     );
-};
+});
 
 export default ChatArea;

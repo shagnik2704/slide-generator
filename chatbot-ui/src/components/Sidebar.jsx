@@ -1,63 +1,187 @@
-import React from 'react';
-import { Settings, FileText } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload }) => {
+    const collapsedWidth = '60px';
+    const expandedWidth = '280px';
+
+    // Dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    // Refs for hidden file inputs
+    const complianceInputRef = useRef(null);
+    const qualityInputRef = useRef(null);
+
+    // Handle compliance file selection
+    const handleComplianceFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onComplianceUpload) {
+            onComplianceUpload(file);
+            e.target.value = '';
+        }
+    };
+
+    // Handle quality file selection
+    const handleQualityFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onQualityUpload) {
+            onQualityUpload(file);
+            e.target.value = '';
+        }
+    };
+
+    // Styles for icon buttons in collapsed mode
+    const iconButtonStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isOpen ? 'flex-start' : 'center',
+        gap: '0.75rem',
+        padding: isOpen ? '0.75rem 1rem' : '0.75rem',
+        background: 'transparent',
+        border: 'none',
+        borderRadius: '0.5rem',
+        color: 'var(--text-secondary)',
+        fontSize: '0.85rem',
+        cursor: 'pointer',
+        width: '100%',
+        transition: 'all 0.2s ease',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden'
+    };
+
+    // Dropdown item style (indented)
+    const dropdownItemStyle = {
+        ...iconButtonStyle,
+        paddingLeft: isOpen ? '2.5rem' : '0.75rem',
+        fontSize: '0.8rem'
+    };
+
+    // Wrapper component for conditional tooltip
+    const TooltipWrapper = ({ children, text }) => {
+        // Only show tooltip when sidebar is collapsed
+        if (isOpen) return children;
+        return <Tooltip text={text} position="right">{children}</Tooltip>;
+    };
+
     return (
         <aside style={{
-            width: isOpen ? '280px' : '0',
-            opacity: isOpen ? 1 : 0,
-            visibility: isOpen ? 'visible' : 'hidden',
+            width: isOpen ? expandedWidth : collapsedWidth,
+            minWidth: isOpen ? expandedWidth : collapsedWidth,
             backgroundColor: 'var(--bg-secondary)',
             borderRight: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
-            padding: isOpen ? '1rem' : '0',
+            padding: isOpen ? '1rem' : '0.75rem 0.5rem',
             flexShrink: 0,
             transition: 'all 0.3s ease-in-out',
-            overflow: 'hidden'
+            overflow: 'visible',
+            position: 'relative'
         }}>
-            {/* Header */}
-            <div style={{
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '1rem',
-                paddingLeft: '0.5rem'
-            }}>
-                Spoken Tutorial Generator
-            </div>
 
-            {/* Info Card */}
-            <div style={{
-                padding: '1rem',
-                background: 'var(--bg-tertiary)',
-                borderRadius: '0.5rem',
-                marginBottom: '1rem'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginBottom: '0.5rem',
-                    color: 'var(--accent-primary)'
-                }}>
-                    <FileText size={16} />
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>How to use</span>
-                </div>
-                <ol style={{
-                    margin: 0,
-                    paddingLeft: '1.25rem',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.8rem',
-                    lineHeight: 1.6
-                }}>
-                    <li>Upload your outline (.md, .docx, .txt)</li>
-                    <li>Generate script from outline</li>
-                    <li>Review and download PDF</li>
-                </ol>
-            </div>
+            {/* Hidden file inputs */}
+            <input
+                ref={complianceInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleComplianceFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={qualityInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleQualityFileSelect}
+                style={{ display: 'none' }}
+            />
+
+            {/* Navigation Items */}
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+
+                {/* Compliance Report Parent Button */}
+                <TooltipWrapper text="Compliance Report">
+                    <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        style={{
+                            ...iconButtonStyle,
+                            background: isDropdownOpen ? 'var(--bg-tertiary)' : 'transparent',
+                            color: isDropdownOpen ? 'var(--accent-primary)' : 'var(--text-secondary)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isDropdownOpen) {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }
+                        }}
+                    >
+                        <ClipboardCheck size={20} />
+                        {isOpen && (
+                            <>
+                                <span style={{ flex: 1, textAlign: 'left' }}>Compliance Report</span>
+                                <ChevronDown
+                                    size={16}
+                                    style={{
+                                        transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.2s ease'
+                                    }}
+                                />
+                            </>
+                        )}
+                    </button>
+                </TooltipWrapper>
+
+                {/* Dropdown Items */}
+                {isDropdownOpen && (
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.125rem',
+                        marginTop: '0.125rem'
+                    }}>
+                        {/* Admin Compliance */}
+                        <TooltipWrapper text="Admin Compliance">
+                            <button
+                                onClick={() => complianceInputRef.current?.click()}
+                                style={dropdownItemStyle}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                    e.currentTarget.style.color = 'var(--accent-primary)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                }}
+                            >
+                                <ShieldCheck size={18} />
+                                {isOpen && <span>Admin Compliance</span>}
+                            </button>
+                        </TooltipWrapper>
+
+                        {/* Quality Compliance */}
+                        <TooltipWrapper text="Quality Compliance">
+                            <button
+                                onClick={() => qualityInputRef.current?.click()}
+                                style={dropdownItemStyle}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                    e.currentTarget.style.color = 'var(--accent-primary)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                }}
+                            >
+                                <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '-1px' }}>अத</span>
+                                {isOpen && <span>Quality Compliance</span>}
+                            </button>
+                        </TooltipWrapper>
+                    </div>
+                )}
+            </nav>
 
             {/* Spacer */}
             <div style={{ flex: 1 }} />
@@ -68,30 +192,45 @@ const Sidebar = ({ isOpen }) => {
                 paddingTop: '0.75rem',
                 marginTop: '0.75rem',
                 display: 'flex',
+                flexDirection: 'column',
                 gap: '0.5rem'
             }}>
-                <button
-                    style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        padding: '0.5rem',
-                        background: 'transparent',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '0.4rem',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Settings size={14} />
-                    Settings
-                </button>
+                <TooltipWrapper text="Settings">
+                    <button
+                        style={iconButtonStyle}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                    >
+                        <Settings size={20} />
+                        {isOpen && <span>Settings</span>}
+                    </button>
+                </TooltipWrapper>
+
+                {/* Toggle button */}
+                <TooltipWrapper text={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
+                    <button
+                        onClick={toggleSidebar}
+                        style={{
+                            ...iconButtonStyle,
+                            justifyContent: 'center',
+                            background: 'var(--bg-tertiary)',
+                            marginTop: '0.5rem'
+                        }}
+                    >
+                        {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                        {isOpen && <span style={{ marginLeft: '0.25rem' }}>Collapse</span>}
+                    </button>
+                </TooltipWrapper>
             </div>
         </aside>
     );
 };
 
 export default Sidebar;
+
