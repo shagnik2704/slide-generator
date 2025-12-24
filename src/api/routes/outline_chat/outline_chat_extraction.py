@@ -342,7 +342,6 @@ def extract_and_set_field_value(
     elif field == "tutorial_time":
         # Try to extract from LLM response first
         numbers = re.findall(r'\d+', extracted_text)
-        range_minutes = None
         if numbers:
             minutes = int(numbers[0])
         else:
@@ -351,11 +350,8 @@ def extract_and_set_field_value(
             range_pattern = r'(\d+)\s*[-–—to]\s*(\d+)'
             range_match = re.search(range_pattern, user_response, re.IGNORECASE)
             if range_match:
-                # If range found, capture both and use the midpoint for time_seconds
-                min_minutes = int(range_match.group(1))
-                max_minutes = int(range_match.group(2))
-                range_minutes = (min_minutes, max_minutes)
-                minutes = round((min_minutes + max_minutes) / 2)
+                # If range found, use the first number
+                minutes = int(range_match.group(1))
             else:
                 # Extract single number
                 numbers = re.findall(r'\d+', user_response)
@@ -371,12 +367,6 @@ def extract_and_set_field_value(
             tutorial_rows = outline_data.get("tutorial_rows", [])
             if tutorial_rows:
                 tutorial_rows[-1]["time_seconds"] = extracted_value
-                # Preserve the provided range, if any, for downstream use
-                if range_minutes:
-                    tutorial_rows[-1]["time_seconds_range"] = {
-                        "min": range_minutes[0] * 60,
-                        "max": range_minutes[1] * 60,
-                    }
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_comments":

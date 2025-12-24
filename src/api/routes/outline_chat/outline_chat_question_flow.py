@@ -266,10 +266,6 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
         phase = "structure"
     
     if phase == "structure":
-        # Collect keywords before tutorial numbering to avoid asking them at the very end
-        if not outline_data.get("keywords"):
-            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
-
         if not outline_data.get("recommended_no_of_tutorials"):
             q = question_flow["structure"]["questions"][0]
             return phase, q["question"]
@@ -330,6 +326,8 @@ You can provide them as a short semicolon-separated list or bullets.
             from datetime import datetime
             today = datetime.now().strftime("%Y-%m-%d")
             return phase, f"Preferred date for the outline? (default: {today})"
+        if not outline_data.get("keywords"):
+            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
         # All metadata collected, move to review
         phase = "review"
     
