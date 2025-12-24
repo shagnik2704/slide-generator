@@ -37,7 +37,7 @@ def evaluate_quality(state: AgentState):
 
     # Initialize LangChain model with structured output
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3-flash-preview",
         temperature=0.7,
     )
     
@@ -150,7 +150,6 @@ def get_demo_evaluation_prompt(json_script: dict) -> str:
 3. NO SYMBOLS in narration:
    - Forbidden: ->, -->, *, - at start of lines
    - ALLOWED: **bold** markers
-   - ALLOWED: • bullets ONLY in Learning Objectives slide
 
 4. BOLD TERMS: UI elements and buttons should use **bold**.
 

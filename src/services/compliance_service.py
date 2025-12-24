@@ -34,6 +34,7 @@ class ComplianceResults(BaseModel):
     # Formatting criteria
     sentence_length: CheckResult = Field(description="Are all sentences ≤80 characters? (Skip LO, System Req, Prerequisites, Summary, Assignment, Thank You slides)")
     new_lines: CheckResult = Field(description="Does each sentence start on a new line?")
+    grammatical_correctness: CheckResult = Field(description="Is the narration grammatically correct with proper spelling and punctuation?")
     no_forbidden_symbols: CheckResult = Field(description="No forbidden symbols (->, -->, *, - at line start) in narration?")
     
 
@@ -137,12 +138,14 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     # Initialize LLM with structured output
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
-        temperature=0.3,
+        temperature=0.3,    
     )
     structured_llm = llm.with_structured_output(ComplianceResults)
     
     # Build the prompt
     prompt = f"""You are a Spoken Tutorial script reviewer. Evaluate this script against the official compliance checklist.
+
+ Use British English spelling and conventions throughout your responses.
 
 === SCRIPT TO REVIEW ===
 {json.dumps(json_script, indent=2)}
@@ -175,15 +178,30 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     
 13. **New Lines**: Each sentence must start on a new line (\\n between sentences).
     - Multiple sentences on the same line = FAILED
+
+14. **Grammatical Correctness**: Check the narration for grammar, spelling, and punctuation:
+    - Correct subject-verb agreement
+    - Proper spelling of all words
+    - Correct punctuation (periods, commas, apostrophes)
+    - Clear and readable sentence structure
+    - If there are ANY errors, mark as FAILED and list the specific issues
     
-14. **No Forbidden Symbols**: Check narration for forbidden symbols:
+15. **No Forbidden Symbols**: Check narration for forbidden symbols:
     - FORBIDDEN: ->, -->, *, - at the start of lines
     - ALLOWED: **bold** markers are OK
     - ALLOWED: • bullets ONLY in Learning Objectives slide
 
 For each check, provide:
 - passed: true/false
-- notes: Brief explanation (specific issue if failed, or "OK" if passed)
+- notes: Structured feedback following this format:
+  - If PASSED: brief confirmation
+  - If FAILED: Use numbered lists with EACH ITEM ON A NEW LINE:
+    1. "Slide X: [specific issue]"
+    2. "Line Y: [specific problem]"
+    Use newline characters (\\n) between each numbered item.
+  - Always reference slide numbers or line numbers when applicable
+  - Be specific: quote problematic text when helpful
+  - Keep each item concise (under 100 chars)
 """
 
     try:
@@ -211,6 +229,7 @@ For each check, provide:
         formatting_checks = [
             _format_check("sentence_length", "Every sentence ≤80 characters (skip LO/Thank You)?", result.sentence_length),
             _format_check("new_lines", "Each sentence starts on a new line?", result.new_lines),
+            _format_check("grammatical", "Is the narration grammatically correct?", result.grammatical_correctness),
             _format_check("no_symbols", "No forbidden symbols (->, -->, *, -)?", result.no_forbidden_symbols),
             
         ]

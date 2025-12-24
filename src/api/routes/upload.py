@@ -48,6 +48,103 @@ async def upload_outline(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/parse_script")
+async def parse_script(file: UploadFile = File(...)):
+    """Parse a script file (.json, .docx, or .odt) WITHOUT running any checks."""
+    try:
+        filename = file.filename.lower()
+        
+        # Validate file type
+        if not (filename.endswith('.json') or filename.endswith('.docx') or filename.endswith('.odt')):
+            raise HTTPException(status_code=400, detail="Only .json, .docx, or .odt files are allowed")
+        
+        # Get project root
+        project_root = Path(__file__).parent.parent.parent
+        
+        # Read file content
+        content = await file.read()
+        
+        # Parse based on file type
+        if filename.endswith('.json'):
+            # Direct JSON parsing
+            json_script = json.loads(content.decode('utf-8'))
+        else:
+            # Parse docx/odt using existing parser
+            from io import BytesIO
+            from src.services.docx_service import docx_to_json
+            
+            json_script = docx_to_json(BytesIO(content))
+        
+        # Detect tutorial type (demo or conceptual)
+        tutorial_type = _detect_tutorial_type(json_script)
+        
+        # Generate project ID
+        project_id = int(time.time())
+        
+        # Save a copy
+        output_dir = project_root / "output"
+        output_dir.mkdir(exist_ok=True)
+        json_path = output_dir / f"script_{project_id}.json"
+        with open(str(json_path), 'w') as f:
+            json.dump(json_script, f, indent=2)
+        
+        print(f"✅ Script parsed: {file.filename} → project #{project_id}")
+        
+        return {
+            "json_script": json_script,
+            "project_id": project_id,
+            "tutorial_type": tutorial_type,
+            "message": "Script parsed successfully"
+        }
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON format: {str(e)}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse document: {str(e)}")
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in parse_script: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/check_compliance")
+async def check_compliance_endpoint(data: dict):
+    """
+    Run compliance checks on a parsed script.
+    
+    Args:
+        json_script: The parsed script JSON
+        tutorial_type: Optional, 'demo' or 'conceptual' (auto-detected if not provided)
+    
+    Returns:
+        Compliance report with checks and summary
+    """
+    print("Running compliance checks...")
+    
+    try:
+        json_script = data.get('json_script')
+        
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+        
+        # Get tutorial type or detect it
+        tutorial_type = data.get('tutorial_type')
+        if not tutorial_type:
+            tutorial_type = _detect_tutorial_type(json_script)
+        
+        from src.services.compliance_service import check_compliance
+        compliance_report = check_compliance(json_script, tutorial_type)
+        
+        summary = compliance_report.get('summary', {})
+        print(f"✅ Compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
+        
+        return compliance_report
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in check_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/upload_script")
 async def upload_script(file: UploadFile = File(...)):
     """Upload a script file (.json, .docx, or .odt) and run compliance check."""
@@ -227,4 +324,36 @@ async def export_compliance_report(data: dict):
         
     except Exception as e:
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/check_quality")
+async def check_quality_endpoint(data: dict):
+    """
+    Run quality checks and translate script to Hindi.
+    
+    Returns:
+        - Quality check results (translation quality, timing, transliteration)
+        - Full translated Hindi script
+    """
+    print("Running quality checks and Hindi translation...")
+    
+    try:
+        json_script = data.get('json_script')
+        
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+        
+        from src.services.quality_service import check_quality
+        result = check_quality(json_script)
+        
+        summary = result.get('summary', {})
+        print(f"✅ Quality check complete: {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
+        print(f"📊 Avg translation quality: {summary.get('avg_quality_score', 0)}/5")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in check_quality: {e}")
         raise HTTPException(status_code=500, detail=str(e))
