@@ -67,7 +67,7 @@ def create_outline_docx(outline_data: dict, output_path: str = None) -> str:
         ("Reviewer", outline_data.get('reviewer', 'IITB ST Team')),
         ("Client Side Reviewer", "Will be from the IITB ST Team. Hence you may leave this blank."),
         ("Date", outline_data.get('date', '')),
-        ("Keywords", ", ".join(outline_data.get('keywords', []))),
+        ("Keywords", "; ".join(outline_data.get('keywords', []))),
     ]
     
     table = doc.add_table(rows=len(metadata_rows), cols=2)
@@ -124,7 +124,7 @@ def create_outline_docx(outline_data: dict, output_path: str = None) -> str:
     examples_table.rows[1].cells[0].text = "Allied examples used in this series"
     examples_table.rows[1].cells[0].paragraphs[0].runs[0].bold = True
     set_cell_shading(examples_table.rows[1].cells[0], 'F5F5F5')
-    examples_table.rows[1].cells[1].text = ", ".join(outline_data.get('allied_examples', []))
+    examples_table.rows[1].cells[1].text = "; ".join(outline_data.get('allied_examples', []))
     
     doc.add_paragraph()
     

@@ -87,7 +87,7 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
         ["Reviewer", outline_data.get('reviewer', 'IITB ST Team')],
         ["Client Side Reviewer", "Will be from the IITB ST Team. Hence you may leave this blank."],
         ["Date", outline_data.get('date', '')],
-        ["Keywords", ", ".join(outline_data.get('keywords', []))],
+        ["Keywords", "; ".join(outline_data.get('keywords', []))],
     ]
     
     # Convert to Paragraphs for word wrap
@@ -140,7 +140,7 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     # === EXAMPLES ===
     examples_rows = [
         ["Core example used in the series", outline_data.get('core_example', '')],
-        ["Allied examples used in this series", ", ".join(outline_data.get('allied_examples', []))],
+        ["Allied examples used in this series", "; ".join(outline_data.get('allied_examples', []))],
     ]
     examples_table_data = []
     for label, value in examples_rows:

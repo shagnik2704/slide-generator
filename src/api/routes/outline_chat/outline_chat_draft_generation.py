@@ -36,7 +36,7 @@ def generate_draft_outline(outline_data: Dict) -> str:
     draft += f"""
 ## Examples
 - **Core Example:** {outline_data.get('core_example', 'N/A')}
-- **Allied Examples:** {', '.join(outline_data.get('allied_examples', [])) or 'None'}
+- **Allied Examples:** {'; '.join(outline_data.get('allied_examples', [])) or 'None'}
 
 ## Course Outline Table
 
@@ -53,7 +53,7 @@ def generate_draft_outline(outline_data: Dict) -> str:
 - **Prepared By:** {outline_data.get('prepared_by', 'N/A')}
 - **Reviewer:** {outline_data.get('reviewer', 'IITB ST Team')}
 - **Date:** {outline_data.get('date', 'N/A')}
-- **Keywords:** {', '.join(outline_data.get('keywords', []))}
+- **Keywords:** {'; '.join(outline_data.get('keywords', []))}
 """
     return draft
 

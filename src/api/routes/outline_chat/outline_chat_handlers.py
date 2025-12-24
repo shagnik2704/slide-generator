@@ -149,7 +149,7 @@ def handle_approval(
 Course Outline Name: {outline_data.get('outline_name', 'N/A')}
 Purpose: {outline_data.get('purpose', 'N/A')}
 Target Audience: {outline_data.get('target_audience', 'N/A')}
-Course Objectives: {', '.join(outline_data.get('course_objectives', []))}
+Course Objectives: {'; '.join(outline_data.get('course_objectives', []))}
 
 Write 1-2 paragraphs (2-4 sentences total) describing what this course teaches and who it's for. Keep it concise and clear."""
                 
