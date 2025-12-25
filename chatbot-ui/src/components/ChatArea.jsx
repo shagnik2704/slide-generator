@@ -1,397 +1,75 @@
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
+import { Menu, UploadCloud, MessageSquare, Trash2 } from 'lucide-react';
+
+// Components
 import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
-import WikiScriptEditor from './WikiScriptEditor';
-import ComplianceReport from './ComplianceReport';
-import QualityReport from './QualityReport';
 
-import { Menu, FileText, Video, Download, FileCode2, Copy, Check, UploadCloud, MessageSquare, Edit3, Upload, Trash2, Globe } from 'lucide-react';
+// Message Action Components
+import {
+    ScriptUploadedActions,
+    ScriptReviewActions,
+    SlidesReviewActions,
+    VideoResultActions,
+    MediaWikiExportActions,
+    OutlineUploadedActions,
+} from './message-actions';
 
-// const API_URL = 'https://slide-generator-61ic.onrender.com';
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+// Custom Hook
+import { useChatArea } from '../hooks/useChatArea';
 
-
-// LocalStorage key for persisting upload mode state
-const STORAGE_KEY = 'spokentutorial_upload_state';
-const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// Default messages
-const DEFAULT_UPLOAD_MESSAGE = {
-    id: 1,
-    role: 'assistant',
-    content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.'
-};
-
-// Helper: Load state from localStorage
-const loadFromLocalStorage = () => {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            const state = JSON.parse(saved);
-            // Check if data is not too old
-            if (Date.now() - state.savedAt < MAX_AGE_MS) {
-                return state;
-            }
-            // Data expired, clear it
-            localStorage.removeItem(STORAGE_KEY);
-        }
-    } catch (e) {
-        console.error('Error loading from localStorage:', e);
-    }
-    return null;
-};
-
-// Helper: Save state to localStorage
-const saveToLocalStorage = (uploadMessages, currentProjectId) => {
-    try {
-        const state = {
-            uploadMessages,
-            currentProjectId,
-            savedAt: Date.now()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-        console.error('Error saving to localStorage:', e);
-    }
-};
-
+/**
+ * ChatArea - Main chat interface component
+ * 
+ * This component handles the presentation layer for the chat interface.
+ * All business logic and state management is handled by the useChatArea hook.
+ */
 const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
-    const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
+    const {
+        // State
+        mode,
+        setMode,
+        uploadMessages,
+        setUploadMessages,
+        outlineSession,
+        isTyping,
+        activeMessages,
 
-    // Initialize uploadMessages from localStorage or default
-    const [uploadMessages, setUploadMessages] = useState(() => {
-        const saved = loadFromLocalStorage();
-        if (saved?.uploadMessages?.length > 0) {
-            console.log('📂 Restored session from localStorage');
-            return saved.uploadMessages;
-        }
-        return [DEFAULT_UPLOAD_MESSAGE];
-    });
+        // UI State
+        copiedId,
+        setCopiedId,
+        openEditorId,
+        setOpenEditorId,
+        openReportId,
+        setOpenReportId,
+        openQualityId,
+        setOpenQualityId,
+        qualityReports,
+        isQualityLoading,
 
-    const [outlineMessages, setOutlineMessages] = useState([
-        {
-            id: 2,
-            role: 'assistant',
-            content: 'Hi! 😊 I\'m here to help you create a Spoken Tutorial course outline, step by step.\n\nTo start, could you tell me what kind of course this is: **FOSS**, **ICT**, or **Other**?\n\nJust reply with `FOSS`, `ICT`, or `Other` (you can add a short note if you pick Other). Then I\'ll gently walk you through a few short questions.',
-        }
-    ]);
-    const [outlineSession, setOutlineSession] = useState({ projectId: null, outlineData: null, phase: null });
-    const [isTyping, setIsTyping] = useState(false);
+        // Refs
+        messagesEndRef,
+        editedScriptInputRef,
 
-    // Initialize currentProjectId from localStorage or null
-    const [currentProjectId, setCurrentProjectId] = useState(() => {
-        const saved = loadFromLocalStorage();
-        return saved?.currentProjectId || null;
-    });
-
-    const [copiedId, setCopiedId] = useState(null);
-    const messagesEndRef = useRef(null);
-    const editedScriptInputRef = useRef(null);
-    const [openEditorId, setOpenEditorId] = useState(null);
-    const [openReportId, setOpenReportId] = useState(null);
-    const [openQualityId, setOpenQualityId] = useState(null);
-    const [qualityReports, setQualityReports] = useState({});  // Store quality reports by message ID
-    const [isQualityLoading, setIsQualityLoading] = useState(false);
-
-    // Flag to track if we restored from localStorage
-    const [sessionRestored, setSessionRestored] = useState(() => {
-        const saved = loadFromLocalStorage();
-        return saved?.uploadMessages?.length > 1; // More than just the welcome message
-    });
-
-    const activeMessages = mode === 'outline_chat' ? outlineMessages : uploadMessages;
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [activeMessages, isTyping, mode]);
-
-    // Auto-save upload mode state to localStorage
-    useEffect(() => {
-        if (mode === 'upload' && uploadMessages.length > 0) {
-            saveToLocalStorage(uploadMessages, currentProjectId);
-        }
-    }, [uploadMessages, currentProjectId, mode]);
-
-    // Clear session and start fresh
-    const handleClearSession = () => {
-        if (window.confirm('Clear all upload data and start fresh? This cannot be undone.')) {
-            localStorage.removeItem(STORAGE_KEY);
-            setUploadMessages([DEFAULT_UPLOAD_MESSAGE]);
-            setCurrentProjectId(null);
-            setOpenEditorId(null);
-            setSessionRestored(false);
-            console.log('🗑️ Session cleared');
-        }
-    };
-
-    const handleSendMessage = async (file) => {
-        // Show upload status
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Uploading content: ${file.name}...`
-        };
-        setUploadMessages(prev => [...prev, uploadMessage]);
-        setIsTyping(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch(`${API_URL}/upload_outline`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to upload content');
-            }
-
-            const data = await response.json();
-
-            // Generate a simple project ID
-            const projectId = Date.now();
-            setCurrentProjectId(projectId);
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ Content uploaded successfully!\n\nYou can now generate the script.`,
-                outline: data.outline,
-                projectId: projectId,
-                type: 'outline_uploaded'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    const handleUploadScript = async (file) => {
-        // Show upload status
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Uploading script: ${file.name}...`
-        };
-        setUploadMessages(prev => [...prev, uploadMessage]);
-        setIsTyping(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch(`${API_URL}/upload_script`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to upload script');
-            }
-
-            const data = await response.json();
-            setCurrentProjectId(data.project_id);
-
-            const failedCount = data.compliance_report?.summary?.ai_failed || 0;
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ Script uploaded successfully! (${data.json_script.slides?.length || 0} slides)${failedCount > 0 ? `\n\n⚠️ ${failedCount} compliance issue${failedCount !== 1 ? 's' : ''} found. Check the report for details.` : ' All compliance checks passed!'} You can now generate slides directly.`,
-                jsonScript: data.json_script,
-                projectId: data.project_id,
-                type: 'script_uploaded',
-                complianceReport: data.compliance_report
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong uploading the script."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // === SIDEBAR HANDLERS ===
-    // These are exposed via ref for sidebar buttons
-
-    // Handle compliance check from sidebar (parse → compliance only)
-    const handleSidebarComplianceUpload = async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Admin Compliance check on: ${file.name}...`
-        };
-        setUploadMessages(prev => [...prev, uploadMessage]);
-        setIsTyping(true);
-
-        try {
-            // Step 1: Parse the script (no checks)
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const parseResponse = await fetch(`${API_URL}/parse_script`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!parseResponse.ok) {
-                const errorData = await parseResponse.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to parse script file');
-            }
-
-            const parseData = await parseResponse.json();
-            setCurrentProjectId(parseData.project_id);
-
-            // Step 2: Run compliance check only
-            const complianceResponse = await fetch(`${API_URL}/check_compliance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    json_script: parseData.json_script,
-                    tutorial_type: parseData.tutorial_type
-                }),
-            });
-
-            if (!complianceResponse.ok) {
-                const errorData = await complianceResponse.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to run compliance check');
-            }
-
-            const complianceReport = await complianceResponse.json();
-
-            const failedCount = complianceReport?.summary?.ai_failed || 0;
-            const passedCount = complianceReport?.summary?.ai_passed || 0;
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `Admin Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: complianceReport,
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-            setOpenReportId(newBotMessage.id); // Auto-open the report
-
-        } catch (error) {
-            console.error("Compliance check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Compliance check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // Handle quality check from sidebar (parse → quality only)
-    const handleSidebarQualityUpload = async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Quality Compliance on: ${file.name}...`
-        };
-        setUploadMessages(prev => [...prev, uploadMessage]);
-        setIsTyping(true);
-
-        try {
-            // Step 1: Parse the script (no checks)
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const parseResponse = await fetch(`${API_URL}/parse_script`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!parseResponse.ok) {
-                const errorData = await parseResponse.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to parse script file');
-            }
-
-            const parseData = await parseResponse.json();
-            setCurrentProjectId(parseData.project_id);
-
-            // Step 2: Run quality check only (no compliance)
-            const qualityResponse = await fetch(`${API_URL}/check_quality`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ json_script: parseData.json_script }),
-            });
-
-            if (!qualityResponse.ok) {
-                const errorData = await qualityResponse.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to run quality check');
-            }
-
-            const qualityData = await qualityResponse.json();
-            const messageId = Date.now() + 1;
-
-            const passedCount = qualityData.summary?.ai_passed || 0;
-            const failedCount = qualityData.summary?.ai_failed || 0;
-            const avgScore = qualityData.summary?.avg_quality_score || 0;
-
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Quality Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: null,  // No compliance report for quality-only
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-            // Store quality report and auto-open
-            setQualityReports(prev => ({ ...prev, [messageId]: qualityData }));
-            setOpenQualityId(messageId);
-
-        } catch (error) {
-            console.error("Quality check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `Quality check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
+        // Handlers
+        handleClearSession,
+        handleSendMessage,
+        handleUploadScript,
+        handleSidebarComplianceUpload,
+        handleSidebarQualityUpload,
+        handleGenerateScript,
+        handleGenerateSlides,
+        handleApprove,
+        handleConfirmation,
+        handleSendChatText,
+        handleDownloadScriptDocx,
+        handleUploadEditedScript,
+        handleExportMediaWiki,
+        handleSaveScriptEdit,
+        handleQualityCheck,
+    } = useChatArea();
 
     // Expose handlers for sidebar via ref
     useImperativeHandle(ref, () => ({
@@ -399,465 +77,11 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarQualityUpload
     }));
 
-    const handleGenerateScript = async (outline, projectId) => {
-        setIsTyping(true);
-
-        const statusMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Generating script...`
-        };
-        setUploadMessages(prev => [...prev, statusMessage]);
-
-        try {
-            const requestBody = {
-                outline: outline,
-                title: `Project #${projectId}`,
-                project_id: projectId
-            };
-
-            const response = await fetch(`${API_URL}/generate_script`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to generate script');
-            }
-
-            const data = await response.json();
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `I've generated a script for your tutorial. Please review it below.`,
-                pdfUrl: data.script_pdf_url,
-                jsonScript: data.json_script,
-                projectId: data.project_id,
-                type: 'script_review'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong generating script."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-
-
-    const handleGenerateSlides = async (jsonScript, projectId) => {
-        console.log("🚀 handleGenerateSlides called with:", { jsonScript, projectId });
-        setIsTyping(true);
-        const statusMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Generating slides... (This might take a moment)`
-        };
-        setUploadMessages(prev => [...prev, statusMessage]);
-
-        try {
-            // Phase 2: Generate Slides PDF
-            const response = await fetch(`${API_URL}/generate_slides`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    json_script: jsonScript,
-                    project_id: projectId || currentProjectId,
-                    style_mode: "standard"
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to generate slides PDF');
-            }
-
-            const data = await response.json();
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: "Slides PDF generated! Please review the slides below.",
-                pdfUrl: data.slides_pdf_url,
-                pdfPath: data.pdf_path,
-                jsonScript: data.json_script,
-                projectId: data.project_id,
-                type: 'slides_review'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong generating slides."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    const handleApprove = async (jsonScript, pdfPath, projectId) => {
-        setIsTyping(true);
-        try {
-            // Phase 3: Generate Video
-            const response = await fetch(`${API_URL}/generate_video`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    json_script: jsonScript,
-                    pdf_path: pdfPath,
-                    project_id: projectId || currentProjectId
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to generate video');
-            }
-
-            const data = await response.json();
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ Project #${data.project_id} completed! Video generated successfully! Watch it below.`,
-                videoUrl: data.video_url,
-                projectId: data.project_id,
-                type: 'video_result'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong generating the video."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    const handleConfirmation = async (confirmed) => {
-        if (mode !== 'outline_chat') return;
-        const confirmationText = confirmed ? 'yes' : 'no';
-        await handleSendChatText(confirmationText);
-    };
-
-    const handleSendChatText = async (text) => {
-        if (mode !== 'outline_chat') return;
-        const userMessage = { id: Date.now(), role: 'user', content: text };
-        const conversationForApi = [...outlineMessages, userMessage].map(({ role, content }) => ({ role, content }));
-        setOutlineMessages(prev => [...prev, userMessage]);
-        setIsTyping(true);
-
-        try {
-            const response = await fetch(`${API_URL}/outline_chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conversation: conversationForApi,
-                    outline_data: outlineSession.outlineData || null,
-                    project_id: outlineSession.projectId,
-                    phase: outlineSession.phase || null,
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to update outline');
-            }
-
-            const data = await response.json();
-
-            // Update session state
-            setOutlineSession({
-                projectId: data.project_id || outlineSession.projectId,
-                outlineData: data.outline_data || outlineSession.outlineData,
-                phase: data.phase || outlineSession.phase
-            });
-
-            // Build assistant message
-            let assistantContent = data.assistant_message || 'Here is the updated outline.';
-
-            // Add validation errors if any
-            if (data.validation_errors && data.validation_errors.length > 0) {
-                assistantContent += '\n\n⚠️ Issues to address:\n' + data.validation_errors.map(e => `- ${e}`).join('\n');
-            }
-
-            // Add pedagogy compliance badge if draft is ready
-            if (data.is_draft_ready && data.pedagogy_compliance) {
-                const pc = data.pedagogy_compliance;
-                assistantContent += '\n\n**Pedagogy Compliance:**\n';
-                assistantContent += `- Core Example: ${pc.core_example ? '✓' : '✗'}\n`;
-                assistantContent += `- Demo Content: ${pc.demo_percentage?.toFixed(1) || 0}% ${pc.demo_percentage >= 75 ? '✓' : '⚠️'}\n`;
-                assistantContent += `- Menu-free: ${pc.menu_free ? '✓' : '⚠️'}\n`;
-                assistantContent += `- Time checks: ${pc.time_checks ? '✓' : '⚠️'}\n`;
-                assistantContent += `- No repetition: ${pc.no_repetition ? '✓' : '⚠️'}\n`;
-            }
-
-            const assistantMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: assistantContent,
-                outlineData: data.outline_data,
-                isDraftReady: data.is_draft_ready,
-                isApproved: data.is_approved,
-                phase: data.phase,
-                needsConfirmation: data.needs_confirmation || false,
-                confirmationField: data.confirmation_field,
-                confirmationValue: data.confirmation_value
-            };
-
-
-            // Add assistant message (already includes draft if ready)
-            setOutlineMessages(prev => [...prev, assistantMessage]);
-
-            // If approved, show export option
-            if (data.is_approved) {
-                const exportMessage = {
-                    id: Date.now() + 3,
-                    role: 'assistant',
-                    content: `✅ Outline approved! You can export it using:\n\`GET /outline_chat/${data.project_id}/export?format=json\``,
-                    type: 'outline_approved',
-                    projectId: data.project_id
-                };
-                setOutlineMessages(prev => [...prev, exportMessage]);
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 3,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong in outline chat."
-            };
-            setOutlineMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // Download script as editable .docx
-    const handleDownloadScriptDocx = async (jsonScript) => {
-        setIsTyping(true);
-        try {
-            const response = await fetch(`${API_URL}/download_script_docx`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ json_script: jsonScript }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to download script');
-            }
-
-            // Get the file and trigger download
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'script.docx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            console.log('✅ Script downloaded');
-        } catch (error) {
-            console.error('Download error:', error);
-            const errorMessage = {
-                id: Date.now(),
-                role: 'assistant',
-                content: error.message || 'Failed to download script'
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // Upload edited script .docx and update the message
-    const handleUploadEditedScript = async (file, messageId) => {
-        if (!file) return;
-        setIsTyping(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch(`${API_URL}/upload_edited_script`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to upload edited script');
-            }
-
-            const data = await response.json();
-
-            // Update the message with edited script
-            setUploadMessages(prev => prev.map(msg => {
-                if (msg.id === messageId) {
-                    return { ...msg, jsonScript: data.json_script, wasEdited: true };
-                }
-                return msg;
-            }));
-
-            // Add confirmation message
-            const confirmMessage = {
-                id: Date.now(),
-                role: 'assistant',
-                content: `✅ Script updated! (${data.slide_count} slides). You can now generate slides with your edits.`
-            };
-            setUploadMessages(prev => [...prev, confirmMessage]);
-
-        } catch (error) {
-            console.error('Upload error:', error);
-            const errorMessage = {
-                id: Date.now(),
-                role: 'assistant',
-                content: error.message || 'Failed to upload edited script'
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    const handleExportMediaWiki = async (jsonScript) => {
-        setIsTyping(true);
-        const statusMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Exporting script to MediaWiki format...`
-        };
-        setUploadMessages(prev => [...prev, statusMessage]);
-
-        try {
-            const response = await fetch(`${API_URL}/export_mediawiki`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    json_script: jsonScript
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to export to MediaWiki');
-            }
-
-            const data = await response.json();
-
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ MediaWiki export complete! You can copy the content below or download the .wiki file.`,
-                mediawikiContent: data.mediawiki_content,
-                mediawikiFileUrl: data.mediawiki_file_url,
-                type: 'mediawiki_export'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-
-        } catch (error) {
-            console.error("Error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: error.message || "Sorry, something went wrong exporting to MediaWiki."
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // Handle saving edits from the WikiScriptEditor
-    const handleSaveScriptEdit = (messageId, updatedScript) => {
-        setUploadMessages(prev => prev.map(msg => {
-            if (msg.id === messageId) {
-                return {
-                    ...msg,
-                    jsonScript: updatedScript,
-                    wasEdited: true
-                };
-            }
-            return msg;
-        }));
-
-        // Show confirmation
-        const confirmMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `✅ Script updated! (${updatedScript.slides?.length || 0} slides edited inline). You can now generate slides or export.`
-        };
-        setUploadMessages(prev => [...prev, confirmMessage]);
-    };
-
-    // Handle quality check - translate to Hindi and assess quality
-    const handleQualityCheck = async (jsonScript, messageId) => {
-        setIsQualityLoading(true);
-        setOpenQualityId(messageId);
-
-        try {
-            const response = await fetch(`${API_URL}/check_quality`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ json_script: jsonScript }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to run quality check');
-            }
-
-            const data = await response.json();
-
-            // Store the quality report for this message
-            setQualityReports(prev => ({ ...prev, [messageId]: data }));
-
-            console.log('✅ Quality check complete:', data.summary);
-
-        } catch (error) {
-            console.error('Quality check error:', error);
-            setQualityReports(prev => ({
-                ...prev,
-                [messageId]: {
-                    error: error.message,
-                    checks: [{ id: 'error', criteria: 'Quality check failed', ai_review: null, ai_notes: error.message }],
-                    summary: { ai_passed: 0, ai_failed: 0, total: 1 }
-                }
-            }));
-        } finally {
-            setIsQualityLoading(false);
-        }
+    // Helper to update compliance report in a message
+    const handleUpdateComplianceReport = (messageId, updatedReport) => {
+        setUploadMessages(prev => prev.map(m =>
+            m.id === messageId ? { ...m, complianceReport: updatedReport } : m
+        ));
     };
 
     return (
@@ -935,6 +159,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {/* Mode Toggle */}
                     <div style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
@@ -987,7 +212,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                             Outline Chat
                         </button>
                     </div>
-                    {/* Clear Session button - only show in upload mode with existing session */}
+
+                    {/* Clear Session button */}
                     {mode === 'upload' && uploadMessages.length > 1 && (
                         <button
                             onClick={handleClearSession}
@@ -1018,17 +244,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                             Clear Session
                         </button>
                     )}
-                    <div style={{
-                        padding: '0.25rem 0.75rem',
-                        background: 'var(--accent-primary)',
-                        borderRadius: '1rem',
-                        fontSize: '0.8rem',
-                        color: 'white',
-                        fontWeight: 500,
-                        boxShadow: 'var(--shadow-sm)',
-                    }}>
-                        Model: Gemini 2.5 Flash
-                    </div>
+                    
                     <ThemeToggle />
                 </div>
             </header>
@@ -1050,7 +266,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                 onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
                             />
 
-                            {/* Show OutlineCard when outline data is ready for review */}
+                            {/* OutlineCard for outline_chat mode */}
                             {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
                                 <OutlineCard
                                     outlineData={msg.outlineData}
@@ -1058,668 +274,69 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                 />
                             )}
 
+                            {/* Message Action Components */}
                             {mode === 'upload' && msg.type === 'outline_uploaded' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
-                                    <button
-                                        onClick={() => handleGenerateScript(msg.outline, msg.projectId)}
-                                        disabled={isTyping}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'var(--accent-primary)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={20} />
-                                        Generate Script from Edited Content
-                                    </button>
-                                </div>
+                                <OutlineUploadedActions
+                                    msg={msg}
+                                    isTyping={isTyping}
+                                    onGenerateScript={handleGenerateScript}
+                                />
                             )}
+
                             {mode === 'upload' && msg.type === 'script_uploaded' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                    {/* Generate Slides Button - hidden for Quality Agent sidebar */}
-                                    {!msg.hideGenerateSlides && (
-                                        <button
-                                            onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
-                                            disabled={isTyping}
-                                            style={{
-                                                padding: '0.75rem 1.5rem',
-                                                background: isTyping
-                                                    ? 'var(--bg-tertiary)'
-                                                    : 'var(--accent-primary)',
-                                                color: isTyping ? 'var(--text-secondary)' : 'white',
-                                                border: 'none',
-                                                borderRadius: '0.75rem',
-                                                cursor: isTyping ? 'not-allowed' : 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                                boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                                opacity: isTyping ? 0.6 : 1,
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                    e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                                }
-                                            }}
-                                        >
-                                            <FileText size={20} />
-                                            Generate Slides
-                                        </button>
-                                    )}
-                                    {msg.complianceReport && (
-                                        <button
-                                            onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
-                                            style={{
-                                                padding: '0.75rem 1.5rem',
-                                                background: openReportId === msg.id ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                                color: openReportId === msg.id ? 'white' : 'var(--text-primary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.75rem',
-                                                cursor: 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = 'none';
-                                            }}
-                                        >
-                                            📋 {openReportId === msg.id ? 'Close Report' : 'View Report'}
-                                        </button>
-                                    )}
-
-                                    {/* Inline Compliance Report */}
-                                    <ComplianceReport
-                                        report={msg.complianceReport}
-                                        isOpen={openReportId === msg.id}
-                                        onSave={(updated) => {
-                                            setUploadMessages(prev => prev.map(m =>
-                                                m.id === msg.id ? { ...m, complianceReport: updated } : m
-                                            ));
-                                        }}
-                                        onClose={() => setOpenReportId(null)}
-                                    />
-
-                                    {/* View Quality Report Toggle - for sidebar quality flow */}
-                                    {qualityReports[msg.id] && msg.hideQualityCheck && (
-                                        <button
-                                            onClick={() => setOpenQualityId(openQualityId === msg.id ? null : msg.id)}
-                                            style={{
-                                                padding: '0.75rem 1.5rem',
-                                                background: 'var(--accent-primary)',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.75rem',
-                                                cursor: 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                                boxShadow: 'var(--shadow-md)',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(26, 68, 128, 0.3)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = 'none';
-                                            }}
-                                        >
-                                            {openQualityId === msg.id ? 'Close Quality Report' : 'View Quality Report'}
-                                        </button>
-                                    )}
-
-                                    {/* Quality Check Button - hidden for Admin Compliance */}
-                                    {!msg.hideQualityCheck && (
-                                        <button
-                                            onClick={() => {
-                                                if (openQualityId === msg.id) {
-                                                    setOpenQualityId(null);
-                                                } else if (qualityReports[msg.id]) {
-                                                    // Already have report, just toggle open
-                                                    setOpenQualityId(msg.id);
-                                                } else {
-                                                    // Need to fetch report
-                                                    handleQualityCheck(msg.jsonScript, msg.id);
-                                                }
-                                            }}
-                                            disabled={isQualityLoading && openQualityId === msg.id}
-                                            style={{
-                                                padding: '0.75rem 1.5rem',
-                                                background: openQualityId === msg.id
-                                                    ? 'var(--accent-primary)'
-                                                    : 'var(--bg-secondary)',
-                                                color: openQualityId === msg.id ? 'white' : 'var(--text-primary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.75rem',
-                                                cursor: isQualityLoading ? 'wait' : 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                                marginTop: '0.5rem',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!isQualityLoading) {
-                                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = 'none';
-                                            }}
-                                        >
-                                            🌐 {isQualityLoading && openQualityId === msg.id
-                                                ? 'Checking...'
-                                                : openQualityId === msg.id
-                                                    ? 'Close Quality'
-                                                    : 'Quality Check (Hindi)'}
-                                        </button>
-                                    )}
-
-                                    {/* Inline Quality Report */}
-                                    <QualityReport
-                                        report={qualityReports[msg.id]}
-                                        isOpen={openQualityId === msg.id && !isQualityLoading}
-                                        onClose={() => setOpenQualityId(null)}
-                                    />
-                                </div>
+                                <ScriptUploadedActions
+                                    msg={msg}
+                                    isTyping={isTyping}
+                                    openReportId={openReportId}
+                                    setOpenReportId={setOpenReportId}
+                                    openQualityId={openQualityId}
+                                    setOpenQualityId={setOpenQualityId}
+                                    qualityReports={qualityReports}
+                                    isQualityLoading={isQualityLoading}
+                                    onGenerateSlides={handleGenerateSlides}
+                                    onQualityCheck={handleQualityCheck}
+                                    onUpdateComplianceReport={handleUpdateComplianceReport}
+                                />
                             )}
+
                             {mode === 'upload' && msg.type === 'script_review' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <a
-                                            href={`${API_URL}${msg.pdfUrl}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                color: 'var(--accent-primary)',
-                                                textDecoration: 'none',
-                                                fontWeight: 500,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                                        >
-                                            <FileText size={18} />
-                                            View Script PDF
-                                        </a>
-                                        {msg.wasEdited && (
-                                            <span style={{
-                                                marginLeft: '0.75rem',
-                                                color: '#059669',
-                                                fontSize: '0.85rem',
-                                                fontWeight: 500
-                                            }}>
-                                                ✓ Edited
-                                            </span>
-                                        )}
-                                    </div>
-                                    {/* Edit Script Section */}
-                                    <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                        <button
-                                            onClick={() => handleDownloadScriptDocx(msg.jsonScript)}
-                                            disabled={isTyping}
-                                            style={{
-                                                padding: '0.6rem 1rem',
-                                                background: isTyping ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                                                color: 'var(--text-primary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.75rem',
-                                                cursor: isTyping ? 'not-allowed' : 'pointer',
-                                                fontWeight: 500,
-                                                fontSize: '0.9rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                                opacity: isTyping ? 0.6 : 1,
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
-                                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
-                                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                                }
-                                            }}
-                                        >
-                                            <Download size={18} />
-                                            Download Script (.docx)
-                                        </button>
-                                        <input
-                                            type="file"
-                                            accept=".docx"
-                                            style={{ display: 'none' }}
-                                            ref={editedScriptInputRef}
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
-                                                if (file) {
-                                                    handleUploadEditedScript(file, msg.id);
-                                                    e.target.value = '';
-                                                }
-                                            }}
-                                        />
-                                        <button
-                                            onClick={() => editedScriptInputRef.current?.click()}
-                                            disabled={isTyping}
-                                            style={{
-                                                padding: '0.6rem 1rem',
-                                                background: isTyping ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                                                color: 'var(--text-primary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.75rem',
-                                                cursor: isTyping ? 'not-allowed' : 'pointer',
-                                                fontWeight: 500,
-                                                fontSize: '0.9rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                                opacity: isTyping ? 0.6 : 1,
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
-                                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (!isTyping) {
-                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
-                                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                                }
-                                            }}
-                                        >
-                                            <Upload size={18} />
-                                            Upload Edited Script
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={() => handleGenerateSlides(msg.jsonScript, msg.projectId)}
-                                        disabled={isTyping}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'var(--accent-primary)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={20} />
-                                        Generate Slides PDF
-                                    </button>
-                                    <button
-                                        onClick={() => handleExportMediaWiki(msg.jsonScript)}
-                                        disabled={isTyping}
-                                        style={{
-                                            marginLeft: '0.75rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'linear-gradient(135deg, #059669, #10b981)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileCode2 size={20} />
-                                        Export to MediaWiki
-                                    </button>
-                                    <button
-                                        onClick={() => setOpenEditorId(openEditorId === msg.id ? null : msg.id)}
-                                        style={{
-                                            marginLeft: '0.75rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: openEditorId === msg.id
-                                                ? 'linear-gradient(135deg, #7c3aed, #a855f7)'
-                                                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: 'var(--shadow-md)',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        }}
-                                    >
-                                        <Edit3 size={20} />
-                                        {openEditorId === msg.id ? 'Close Editor' : 'Edit Script Inline'}
-                                    </button>
+                                <ScriptReviewActions
+                                    msg={msg}
+                                    isTyping={isTyping}
+                                    openEditorId={openEditorId}
+                                    setOpenEditorId={setOpenEditorId}
+                                    editedScriptInputRef={editedScriptInputRef}
+                                    onGenerateSlides={handleGenerateSlides}
+                                    onDownloadScriptDocx={handleDownloadScriptDocx}
+                                    onUploadEditedScript={handleUploadEditedScript}
+                                    onExportMediaWiki={handleExportMediaWiki}
+                                    onSaveScriptEdit={handleSaveScriptEdit}
+                                />
+                            )}
 
-                                    {/* Wiki-style Script Editor */}
-                                    <WikiScriptEditor
-                                        jsonScript={msg.jsonScript}
-                                        isOpen={openEditorId === msg.id}
-                                        onSave={(updatedScript) => handleSaveScriptEdit(msg.id, updatedScript)}
-                                        onClose={() => setOpenEditorId(null)}
-                                    />
-                                </div>
-                            )}
                             {mode === 'upload' && msg.type === 'slides_review' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <a
-                                            href={msg.pdfUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                color: 'var(--accent-primary)',
-                                                textDecoration: 'none',
-                                                fontWeight: 500,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                                        >
-                                            <FileText size={18} />
-                                            View Slides PDF
-                                        </a>
-                                    </div>
-                                    <button
-                                        onClick={() => handleApprove(msg.jsonScript, msg.pdfPath, msg.projectId)}
-                                        disabled={isTyping}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: isTyping
-                                                ? 'var(--bg-tertiary)'
-                                                : 'var(--accent-primary)',
-                                            color: isTyping ? 'var(--text-secondary)' : 'white',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            cursor: isTyping ? 'not-allowed' : 'pointer',
-                                            fontWeight: 600,
-                                            fontSize: '1rem',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.3s ease',
-                                            boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                                            opacity: isTyping ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isTyping) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <Video size={20} />
-                                        Approve & Generate Video
-                                    </button>
-                                </div>
+                                <SlidesReviewActions
+                                    msg={msg}
+                                    isTyping={isTyping}
+                                    onApprove={handleApprove}
+                                />
                             )}
+
                             {mode === 'upload' && msg.type === 'video_result' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
-                                    <video controls width="100%" style={{
-                                        borderRadius: '0.75rem',
-                                        boxShadow: 'var(--shadow-lg)',
-                                        marginBottom: '1rem'
-                                    }}>
-                                        <source src={msg.videoUrl} type="video/mp4" />
-                                        Your browser does not support the video tag.
-                                    </video>
-                                    <a
-                                        href={msg.videoUrl}
-                                        download="presentation.mp4"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: 'var(--accent-primary)',
-                                            color: 'white',
-                                            textDecoration: 'none',
-                                            borderRadius: '0.75rem',
-                                            fontSize: '1rem',
-                                            fontWeight: 600,
-                                            border: 'none',
-                                            boxShadow: 'var(--shadow-md)',
-                                            transition: 'all 0.3s ease',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        }}
-                                    >
-                                        <Download size={20} />
-                                        Download Video
-                                    </a>
-                                </div>
+                                <VideoResultActions msg={msg} />
                             )}
+
                             {msg.type === 'mediawiki_export' && (
-                                <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
-                                    {/* MediaWiki content preview */}
-                                    <div style={{
-                                        background: 'var(--bg-tertiary)',
-                                        borderRadius: '0.75rem',
-                                        padding: '1rem',
-                                        marginBottom: '1rem',
-                                        maxHeight: '300px',
-                                        overflowY: 'auto',
-                                        border: '1px solid var(--border-color)'
-                                    }}>
-                                        <pre style={{
-                                            margin: 0,
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.85rem',
-                                            whiteSpace: 'pre-wrap',
-                                            wordBreak: 'break-word',
-                                            color: 'var(--text-primary)'
-                                        }}>
-                                            {msg.mediawikiContent}
-                                        </pre>
-                                    </div>
-                                    {/* Action buttons */}
-                                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(msg.mediawikiContent);
-                                                setCopiedId(msg.id);
-                                                setTimeout(() => setCopiedId(null), 2000);
-                                            }}
-                                            style={{
-                                                padding: '0.75rem 1.5rem',
-                                                background: copiedId === msg.id
-                                                    ? 'linear-gradient(135deg, #059669, #10b981)'
-                                                    : 'var(--bg-tertiary)',
-                                                color: copiedId === msg.id ? 'white' : 'var(--text-primary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.75rem',
-                                                cursor: 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                transition: 'all 0.3s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (copiedId !== msg.id) {
-                                                    e.currentTarget.style.background = 'var(--bg-secondary)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (copiedId !== msg.id) {
-                                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
-                                                }
-                                            }}
-                                        >
-                                            {copiedId === msg.id ? <Check size={20} /> : <Copy size={20} />}
-                                            {copiedId === msg.id ? 'Copied!' : 'Copy to Clipboard'}
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                // Create a blob and download to avoid navigation
-                                                const blob = new Blob([msg.mediawikiContent], { type: 'text/plain' });
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = 'script.wiki';
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                document.body.removeChild(a);
-                                                URL.revokeObjectURL(url);
-                                            }}
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.75rem 1.5rem',
-                                                background: 'linear-gradient(135deg, #059669, #10b981)',
-                                                color: 'white',
-                                                textDecoration: 'none',
-                                                borderRadius: '0.75rem',
-                                                fontSize: '1rem',
-                                                fontWeight: 600,
-                                                border: 'none',
-                                                boxShadow: 'var(--shadow-md)',
-                                                transition: 'all 0.3s ease',
-                                                cursor: 'pointer',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }}
-                                        >
-                                            <Download size={20} />
-                                            Download .wiki File
-                                        </button>
-                                    </div>
-                                </div>
+                                <MediaWikiExportActions
+                                    msg={msg}
+                                    copiedId={copiedId}
+                                    setCopiedId={setCopiedId}
+                                />
                             )}
                         </div>
                     ))}
 
+                    {/* Typing Indicator */}
                     {isTyping && (
                         <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1rem', marginBottom: '1.5rem' }}>
                             <div style={{
@@ -1746,11 +363,11 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
             />
 
             <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0); }
-          40% { transform: scale(1); }
-        }
-      `}</style>
+                @keyframes bounce {
+                    0%, 80%, 100% { transform: scale(0); }
+                    40% { transform: scale(1); }
+                }
+            `}</style>
         </main>
     );
 });

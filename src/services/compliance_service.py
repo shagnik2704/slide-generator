@@ -137,7 +137,7 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     """
     # Initialize LLM with structured output
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-preview",
         temperature=0.3,    
     )
     structured_llm = llm.with_structured_output(ComplianceResults)
@@ -176,7 +176,7 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     - Only check content/demonstration slides
     - If ANY sentence in a content slide exceeds 80 chars, mark as FAILED
     
-13. **New Lines**: Each sentence must start on a new line (\\n between sentences).
+13. **New Lines**: Each sentence must start on a new line (\n between sentences).
     - Multiple sentences on the same line = FAILED
 
 14. **Grammatical Correctness**: Check the narration for grammar, spelling, and punctuation:
@@ -198,7 +198,7 @@ For each check, provide:
   - If FAILED: Use numbered lists with EACH ITEM ON A NEW LINE:
     1. "Slide X: [specific issue]"
     2. "Line Y: [specific problem]"
-    Use newline characters (\\n) between each numbered item.
+    Use newline characters (\n) between each numbered item.
   - Always reference slide numbers or line numbers when applicable
   - Be specific: quote problematic text when helpful
   - Keep each item concise (under 100 chars)
