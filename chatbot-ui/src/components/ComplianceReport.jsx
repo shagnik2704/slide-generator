@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Save, Download, RotateCcw } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 /**
  * Editable cell using contentEditable - exactly like WikiScriptEditor
  */
@@ -95,7 +97,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
 
     const handleDownloadDocx = async () => {
         try {
-            const response = await fetch('http://localhost:8000/export_compliance_report', {
+            const response = await fetch(`${API_URL}/export_compliance_report`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
