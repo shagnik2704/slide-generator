@@ -137,7 +137,7 @@ def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> di
     """
     # Initialize LLM with structured output
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-preview",
+        model="gemini-2.5-flash",
         temperature=0.3,    
     )
     structured_llm = llm.with_structured_output(ComplianceResults)
