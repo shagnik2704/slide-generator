@@ -59,6 +59,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleUploadScript,
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
+        handleSidebarVoiceUpload,
         handleGenerateScript,
         handleGenerateSlides,
         handleApprove,
@@ -74,7 +75,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     // Expose handlers for sidebar via ref
     useImperativeHandle(ref, () => ({
         handleSidebarComplianceUpload,
-        handleSidebarQualityUpload
+        handleSidebarQualityUpload,
+        handleSidebarVoiceUpload
     }));
 
     // Helper to update compliance report in a message
@@ -244,7 +246,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                             Clear Session
                         </button>
                     )}
-                    
+
                     <ThemeToggle />
                 </div>
             </header>

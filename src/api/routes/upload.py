@@ -357,3 +357,45 @@ async def check_quality_endpoint(data: dict):
         traceback.print_exc()
         print(f"ERROR in check_quality: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate_voice")
+async def generate_voice_endpoint(data: dict):
+    """
+    Generate voice narration for a JSON script.
+    
+    Args:
+        json_script: The parsed script JSON
+        project_id: Optional project ID (auto-generated if not provided)
+        target_audience: kids, students, professionals, or general (default: general)
+    
+    Returns:
+        audio_urls: Per-slide audio file URLs
+        zip_url: URL to download all audio as ZIP
+    """
+    print("🎤 Starting voice generation...")
+    
+    try:
+        json_script = data.get('json_script')
+        project_id = data.get('project_id')
+        target_audience = data.get('target_audience', 'general')
+        
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+        
+        from src.services.voice_service import generate_voice_for_script
+        result = await generate_voice_for_script(
+            json_script=json_script,
+            project_id=project_id,
+            target_audience=target_audience
+        )
+        
+        print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_voice: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

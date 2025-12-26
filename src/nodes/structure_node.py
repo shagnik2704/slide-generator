@@ -25,7 +25,7 @@ def generate_structure(state: AgentState):
         return {"structured_outline": {}}
     
    #  llm = ChatOpenAI(model="gpt-5-mini")
-    llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(StructuredOutline)
     
     # Select prompt based on tutorial type

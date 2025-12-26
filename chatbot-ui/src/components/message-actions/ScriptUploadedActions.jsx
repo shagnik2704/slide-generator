@@ -23,47 +23,6 @@ export default function ScriptUploadedActions({
 }) {
     return (
         <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {/* Generate Slides Button - hidden for Quality Agent sidebar */}
-            {!msg.hideGenerateSlides && (
-                <button
-                    onClick={() => onGenerateSlides(msg.jsonScript, msg.projectId)}
-                    disabled={isTyping}
-                    style={{
-                        padding: '0.75rem 1.5rem',
-                        background: isTyping
-                            ? 'var(--bg-tertiary)'
-                            : 'var(--accent-primary)',
-                        color: isTyping ? 'var(--text-secondary)' : 'white',
-                        border: 'none',
-                        borderRadius: '0.75rem',
-                        cursor: isTyping ? 'not-allowed' : 'pointer',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        transition: 'all 0.3s ease',
-                        boxShadow: isTyping ? 'none' : 'var(--shadow-md)',
-                        opacity: isTyping ? 0.6 : 1,
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isTyping) {
-                            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!isTyping) {
-                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                        }
-                    }}
-                >
-                    <FileText size={20} />
-                    Generate Slides
-                </button>
-            )}
-
             {/* View Report Button */}
             {msg.complianceReport && (
                 <button

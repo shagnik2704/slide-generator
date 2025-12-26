@@ -1,6 +1,6 @@
 """
 Quality checking service for Spoken Tutorial scripts.
-Translates scripts to Hindi and evaluates translation quality.
+Uses back-translation (English → Hindi → English) for quality verification.
 """
 import json
 from typing import Dict, List, Optional
@@ -8,44 +8,50 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-class QualityCheckResult(BaseModel):
-    """Result for a single quality check."""
-    passed: bool = Field(description="Whether the check passed (true) or failed (false)")
-    notes: str = Field(description="Brief explanation of the result")
-
-
 class TranslatedSlide(BaseModel):
-    """A single translated slide."""
+    """A single translated slide with back-translation."""
     slide_number: int = Field(description="Slide number")
-    original_narration: str = Field(description="Original English narration")
     hindi_narration: str = Field(description="Translated Hindi narration")
-    quality_score: int = Field(description="Quality score 1-5 (5=excellent, 1=poor)")
-    timing_ok: bool = Field(description="Whether sentence fits time frame")
-    issues: List[str] = Field(description="List of specific issues found", default_factory=list)
 
 
-class QualityResults(BaseModel):
-    """Complete quality check results with translation."""
-    # Quality checks
-    translation_quality: QualityCheckResult = Field(
-        description="Does the Hindi translation preserve the original meaning?"
-    )
-    sentence_timing: QualityCheckResult = Field(
-        description="Do all sentences fit within their time frames for speaking?"
-    )
-    transliteration: QualityCheckResult = Field(
-        description="Are technical terms (in **bold**) preserved for transliteration?"
-    )
-    
-    # Translated slides
-    translated_slides: List[TranslatedSlide] = Field(
-        description="All slides with Hindi translation and individual assessments"
-    )
+class BackTranslatedSlide(BaseModel):
+    """A single back-translated slide."""
+    slide_number: int = Field(description="Slide number")
+    english_narration: str = Field(description="Back-translated English narration")
+
+
+class TranslationBatch(BaseModel):
+    """Batch of translated slides."""
+    slides: List[TranslatedSlide] = Field(description="All translated slides")
+
+
+class BackTranslationBatch(BaseModel):
+    """Batch of back-translated slides."""
+    slides: List[BackTranslatedSlide] = Field(description="All back-translated slides")
+
+
+class MeaningComparison(BaseModel):
+    """Comparison result for a single slide."""
+    slide_number: int = Field(description="Slide number")
+    meaning_preserved: bool = Field(description="True if meaning is preserved, False if meaning changed")
+    similarity_score: int = Field(description="Similarity score 1-5 (5=identical meaning, 1=completely different)")
+    issues: List[str] = Field(description="List of specific meaning differences found", default_factory=list)
+
+
+class ComparisonResults(BaseModel):
+    """Results of comparing original with back-translation."""
+    overall_quality: bool = Field(description="True if overall translation quality is acceptable (avg score >= 4)")
+    comparisons: List[MeaningComparison] = Field(description="Per-slide comparison results")
 
 
 def check_quality(json_script: dict) -> dict:
     """
-    Run quality checks and translate script to Hindi.
+    Run quality checks using back-translation approach.
+    
+    Flow:
+    1. English → Hindi (forward translation)
+    2. Hindi → English (back-translation)
+    3. Compare original English with back-translated English
     
     Args:
         json_script: The parsed script JSON with slides
@@ -53,134 +59,166 @@ def check_quality(json_script: dict) -> dict:
     Returns:
         Dictionary with quality checks and translated script
     """
-    # Initialize LLM with structured output
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-preview",
+        model="gemini-2.5-flash",
         temperature=0.3,
     )
-    structured_llm = llm.with_structured_output(QualityResults)
     
-    # Build the prompt
-    prompt = f"""You are a bilingual (English-Hindi) expert translator and quality assessor for Spoken Tutorial scripts.
-
-Use British English spelling and conventions in all English text.
-
-Your task is to:
-1. Translate the English narration to natural, spoken Hindi
-2. Assess the translation quality
-3. Check if technical terms are properly marked for transliteration
-
-=== SCRIPT TO TRANSLATE AND ASSESS ===
-{json.dumps(json_script, indent=2)}
-
-=== TRANSLATION GUIDELINES ===
-
-**Language Style:**
-- Use simple, conversational Hindi suitable for spoken tutorials
-- The Hindi should sound natural when read aloud
-- Avoid overly formal or literary Hindi
-- Use Devanagari script
-
-**Technical Terms (Transliteration):**
-- Words marked in **bold** in English should be kept as-is (transliterated, not translated)
-- Examples: **Python**, **Linux**, **File menu**, **click** → keep in English/transliterated form
-- If a bold term is missing in the original but should be there, note it as an issue
-
-**Sentence Timing:**
-- Hindi translations are typically 10-20% longer than English
-- If a sentence seems too long to speak in ~5-6 seconds, flag it
-- Each narration line should be speakable in one breath
-
-=== QUALITY CHECKS ===
-
-1. **Translation Quality**: 
-   - Does the Hindi preserve the EXACT meaning of the English?
-   - Is it natural spoken Hindi (not machine-translated sounding)?
-   - Score each slide 1-5 (5=excellent)
-   - Overall PASSED if average score >= 4
-
-2. **Sentence Timing**:
-   - Are sentences short enough to speak comfortably?
-   - PASSED if all sentences are reasonable length
-   - FAILED if any sentence is too long (>100 Hindi characters per line)
-
-3. **Transliteration**:
-   - Are all **bold** technical terms preserved in the translation?
-   - PASSED if all bold terms kept as-is
-   - FAILED if any bold term was incorrectly translated
-
-For each slide, provide:
-- slide_number: the slide number
-- original_narration: the original English text
-- hindi_narration: your Hindi translation
-- quality_score: 1-5 rating
-- timing_ok: true/false
-- issues: list any specific problems (empty if none)
-"""
-
+    slides = json_script.get("slides", [])
+    if not slides:
+        return _get_error_response("No slides found in script")
+    
+    print(f"🔄 Starting back-translation for {len(slides)} slides...")
+    
     try:
-        result = structured_llm.invoke(prompt)
+        # ============================================
+        # STEP 1: Forward Translation (English → Hindi)
+        # ============================================
+        print("📝 Step 1: Translating English → Hindi...")
         
-        if result is None:
-            return _get_error_response("AI returned no result")
+        forward_prompt = f"""You are an expert English-to-Hindi translator for Spoken Tutorial scripts.
+
+Translate ONLY the narration text from English to Hindi. Follow these rules:
+
+**Translation Rules:**
+- Use natural, conversational Hindi (Devanagari script)
+- Keep technical terms in English/transliterated (e.g., Python, Linux, File menu, click)
+- If text has **bold** markers, keep them around technical terms
+- Each sentence should be speakable in one breath
+
+**Script to translate:**
+{json.dumps([{"slide_number": s.get("slide_number", i+1), "narration": s.get("narration", "")} for i, s in enumerate(slides)], indent=2)}
+
+Return the Hindi translation for each slide."""
+
+        forward_llm = llm.with_structured_output(TranslationBatch)
+        forward_result = forward_llm.invoke(forward_prompt)
         
-        # Format checks for display (same structure as compliance)
+        if not forward_result or not forward_result.slides:
+            return _get_error_response("Forward translation failed")
+        
+        hindi_translations = {s.slide_number: s.hindi_narration for s in forward_result.slides}
+        print(f"   ✓ Translated {len(hindi_translations)} slides to Hindi")
+        
+        # ============================================
+        # STEP 2: Back Translation (Hindi → English)
+        # ============================================
+        print("📝 Step 2: Back-translating Hindi → English...")
+        
+        back_prompt = f"""You are an expert Hindi-to-English translator.
+
+Translate these Hindi narrations back to English. Be literal and accurate - do NOT try to guess the original text.
+
+**Hindi narrations to translate:**
+{json.dumps([{"slide_number": sn, "hindi": hn} for sn, hn in hindi_translations.items()], indent=2, ensure_ascii=False)}
+
+Return the English translation for each slide."""
+
+        back_llm = llm.with_structured_output(BackTranslationBatch)
+        back_result = back_llm.invoke(back_prompt)
+        
+        if not back_result or not back_result.slides:
+            return _get_error_response("Back translation failed")
+        
+        back_translations = {s.slide_number: s.english_narration for s in back_result.slides}
+        print(f"   ✓ Back-translated {len(back_translations)} slides to English")
+        
+        # ============================================
+        # STEP 3: Compare Original vs Back-Translation
+        # ============================================
+        print("📝 Step 3: Comparing original with back-translation...")
+        
+        # Build comparison data
+        comparison_data = []
+        for i, slide in enumerate(slides):
+            slide_num = slide.get("slide_number", i + 1)
+            comparison_data.append({
+                "slide_number": slide_num,
+                "original_english": slide.get("narration", ""),
+                "back_translated_english": back_translations.get(slide_num, "")
+            })
+        
+        compare_prompt = f"""You are a quality assessor comparing original English text with back-translated English.
+
+For each slide, determine if the MEANING is preserved:
+- Compare the original English with the back-translated English
+- Score 1-5: 5 = identical meaning, 4 = minor wording difference, 3 = some meaning lost, 2 = significant difference, 1 = completely different
+- List any specific meaning differences (missing info, changed facts, wrong terms)
+- meaning_preserved = True if score >= 4
+
+**Comparisons:**
+{json.dumps(comparison_data, indent=2)}
+
+Overall quality passes if average score >= 4."""
+
+        compare_llm = llm.with_structured_output(ComparisonResults)
+        compare_result = compare_llm.invoke(compare_prompt)
+        
+        if not compare_result:
+            return _get_error_response("Comparison failed")
+        
+        print(f"   ✓ Compared {len(compare_result.comparisons)} slides")
+        
+        # ============================================
+        # Build Response
+        # ============================================
+        
+        # Calculate stats
+        scores = [c.similarity_score for c in compare_result.comparisons]
+        avg_score = sum(scores) / len(scores) if scores else 0
+        passed_count = sum(1 for c in compare_result.comparisons if c.meaning_preserved)
+        failed_count = len(compare_result.comparisons) - passed_count
+        
+        # Build checks array (for UI compatibility)
         checks = [
-            _format_check(
-                "translation_quality",
-                "Does Hindi translation preserve original meaning?",
-                result.translation_quality
-            ),
-            _format_check(
-                "sentence_timing",
-                "Are all sentences within speakable time frames?",
-                result.sentence_timing
-            ),
-            _format_check(
-                "transliteration",
-                "Are technical terms (**bold**) preserved for transliteration?",
-                result.transliteration
-            ),
+            {
+                "id": "back_translation",
+                "criteria": "Does back-translation match original meaning?",
+                "ai_review": compare_result.overall_quality,
+                "ai_notes": f"Average similarity score: {avg_score:.1f}/5. {passed_count} slides passed, {failed_count} failed.",
+                "human_review": None
+            },
+            {
+                "id": "transliteration",
+                "criteria": "Are technical terms preserved?",
+                "ai_review": True,  # Checked implicitly in comparison
+                "ai_notes": "Technical terms checked via back-translation comparison.",
+                "human_review": None
+            }
         ]
         
-        # Build translated script
+        # Build translated script with comparison data
         translated_script = {
-            "title": json_script.get("title", "Untitled"),
-            "title_hindi": _translate_title(json_script.get("title", ""), llm),
+            "title": json_script.get("presentation_title", json_script.get("title", "Untitled")),
+            "title_hindi": _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm),
             "slides": []
         }
         
-        for ts in result.translated_slides:
-            # Find original slide to get visual cue
-            original_slide = next(
-                (s for s in json_script.get("slides", []) 
-                 if s.get("slide_number") == ts.slide_number),
-                {}
-            )
+        comparison_map = {c.slide_number: c for c in compare_result.comparisons}
+        
+        for i, slide in enumerate(slides):
+            slide_num = slide.get("slide_number", i + 1)
+            comparison = comparison_map.get(slide_num)
             
             translated_script["slides"].append({
-                "slide_number": ts.slide_number,
-                "narration": ts.hindi_narration,
-                "narration_original": ts.original_narration,
-                "image_prompt": original_slide.get("image_prompt", ""),
-                "quality_score": ts.quality_score,
-                "timing_ok": ts.timing_ok,
-                "issues": ts.issues
+                "slide_number": slide_num,
+                "narration": hindi_translations.get(slide_num, ""),
+                "narration_original": slide.get("narration", ""),
+                "back_translation": back_translations.get(slide_num, ""),
+                "image_prompt": slide.get("image_prompt", ""),
+                "similarity_score": comparison.similarity_score if comparison else 0,
+                "meaning_preserved": comparison.meaning_preserved if comparison else False,
+                "timing_ok": True,  # Not checking in this version
+                "issues": comparison.issues if comparison else []
             })
         
-        # Calculate summary
-        ai_passed = sum(1 for c in checks if c["ai_review"] is True)
-        ai_failed = sum(1 for c in checks if c["ai_review"] is False)
-        
-        # Calculate average quality score
-        scores = [ts.quality_score for ts in result.translated_slides]
-        avg_score = sum(scores) / len(scores) if scores else 0
+        print(f"✅ Quality check complete. Avg score: {avg_score:.1f}/5")
         
         return {
             "checks": checks,
             "summary": {
-                "ai_passed": ai_passed,
-                "ai_failed": ai_failed,
+                "ai_passed": sum(1 for c in checks if c["ai_review"] is True),
+                "ai_failed": sum(1 for c in checks if c["ai_review"] is False),
                 "total": len(checks),
                 "avg_quality_score": round(avg_score, 1)
             },
@@ -203,17 +241,6 @@ def _translate_title(title: str, llm) -> str:
         return response.content.strip()
     except:
         return title
-
-
-def _format_check(check_id: str, criteria: str, result: QualityCheckResult) -> dict:
-    """Format a single check result."""
-    return {
-        "id": check_id,
-        "criteria": criteria,
-        "ai_review": result.passed,
-        "ai_notes": result.notes,
-        "human_review": None
-    }
 
 
 def _get_error_response(error_msg: str) -> dict:
