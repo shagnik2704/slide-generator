@@ -15,8 +15,8 @@ from typing import Dict, List, Optional
 import asyncio
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
-from google import genai
 
+from .outline_chat_field_extraction import extract_json_block
 from .outline_chat_handlers import (
     handle_approval,
     handle_confirmation_no,
@@ -24,6 +24,7 @@ from .outline_chat_handlers import (
 )
 from .outline_chat_llm_utils import (
     friendly_rewrite_question,
+    generate_llm_text,
     get_example_answer_hint,
 )
 from .outline_chat_models import (
@@ -34,7 +35,7 @@ from .outline_chat_processing import (
     handle_review_phase,
     process_user_input,
 )
-from .outline_chat_question_flow import determine_next_question
+from .outline_chat_question_flow import determine_next_question, get_question_flow
 from .outline_chat_responses import build_confirmation_response
 from .outline_chat_session import (
     load_session,
@@ -336,8 +337,9 @@ async def outline_chat_stream(request: OutlineChatRequest):
             
             # Process user input and extract information (non-streaming part)
             if last_message and last_message.role == "user" and user_content and user_content != "approve":
-                client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-                question_flow = get_question_flow()
+                # Use OpenAI for all LLM calls
+                outline_type = outline_data.get("outline_type", "FOSS")
+                question_flow = get_question_flow(outline_type)
                 current_field = None
                 extraction_prompt = ""
                 
@@ -368,11 +370,15 @@ async def outline_chat_stream(request: OutlineChatRequest):
                         if numbers:
                             outline_data["recommended_no_of_tutorials"] = int(numbers[0])
                 
-                # Extract field if needed
+                # Extract field if needed using OpenAI
                 if current_field and extraction_prompt:
                     try:
-                        response = client.models.generate_content(model="gemini-2.5-flash", contents=extraction_prompt)
-                        extracted = response.text.strip()
+                        extracted = generate_llm_text(
+                            extraction_prompt,
+                            temperature=0.2,
+                            max_tokens=512,
+                            system_prompt="You are a helpful assistant that extracts information from user responses."
+                        ).strip()
                         
                         if current_field == "recommended_no_of_tutorials":
                             numbers = re.findall(r'\d+', extracted)

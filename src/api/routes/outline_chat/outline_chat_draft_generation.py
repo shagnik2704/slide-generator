@@ -40,13 +40,28 @@ def generate_draft_outline(outline_data: Dict) -> str:
 
 ## Course Outline Table
 
-| Tutorial | Prerequisites | Topics Details | Time (secs) | Comments |
+| Tutorial | Prerequisites | Topics Details | Time (range) | Comments |
 |----------|--------------|---------------|-------------|----------|
 """
     for tutorial in outline_data.get('tutorial_rows', []):
         topics = '; '.join(tutorial.get('topics_details', []))
         prerequisites = tutorial.get('prerequisites', 'N/A')
-        draft += f"| {tutorial.get('title', 'N/A')} | {prerequisites} | {topics} | {tutorial.get('time_seconds', 0)} | {tutorial.get('comments', '')} |\n"
+        
+        # Display time as range if available, otherwise use time_seconds
+        time_range = tutorial.get('time_range')
+        if time_range:
+            min_minutes = time_range.get('min_seconds', 0) // 60
+            max_minutes = time_range.get('max_seconds', 0) // 60
+            if min_minutes == max_minutes:
+                time_display = f"{min_minutes} min"
+            else:
+                time_display = f"{min_minutes}-{max_minutes} min"
+        else:
+            # Fallback to time_seconds for backward compatibility
+            time_seconds = tutorial.get('time_seconds', 0)
+            time_display = f"{time_seconds // 60} min" if time_seconds > 0 else "0 min"
+        
+        draft += f"| {tutorial.get('title', 'N/A')} | {prerequisites} | {topics} | {time_display} | {tutorial.get('comments', '')} |\n"
     
     draft += f"""
 ## Metadata

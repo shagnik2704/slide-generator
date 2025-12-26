@@ -169,13 +169,26 @@ def create_outline_docx(outline_data: dict, output_path: str = None) -> str:
             set_cell_shading(cell, 'E8E8E8')
         
         # Data rows
-        time_per_topic = tutorial.get('time_seconds', 180) // max(len(topics), 1)
+        time_seconds = tutorial.get('time_seconds', 180)
+        time_per_topic = time_seconds // max(len(topics), 1)
         
         for i, topic in enumerate(topics):
             row = tutorial_table.rows[i + 1]
             row.cells[0].text = f"{i + 1}. {topic}"
             if i == 0:
-                row.cells[1].text = str(tutorial.get('time_seconds', ''))
+                # Display time as range if available
+                time_range = tutorial.get('time_range')
+                if time_range:
+                    min_minutes = time_range.get('min_seconds', 0) // 60
+                    max_minutes = time_range.get('max_seconds', 0) // 60
+                    if min_minutes == max_minutes:
+                        time_display = f"{min_minutes} min"
+                    else:
+                        time_display = f"{min_minutes}-{max_minutes} min"
+                else:
+                    # Fallback to time_seconds
+                    time_display = f"{time_seconds // 60} min" if time_seconds > 0 else "0 min"
+                row.cells[1].text = time_display
                 row.cells[2].text = tutorial.get('comments', '')
         
         # Empty rows to match template

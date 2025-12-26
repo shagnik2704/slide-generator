@@ -188,19 +188,33 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
         table_data = [
             [
                 Paragraph("<b>Topics Details</b>", normal_style),
-                Paragraph("<b>Time (secs)</b>", normal_style),
+                Paragraph("<b>Time (range)</b>", normal_style),
                 Paragraph("<b>Comments</b>", normal_style)
             ]
         ]
         
         # Add each topic as a row
         topics = tutorial.get('topics_details', [])
-        time_per_topic = tutorial.get('time_seconds', 180) // max(len(topics), 1)
+        time_seconds = tutorial.get('time_seconds', 180)
+        time_per_topic = time_seconds // max(len(topics), 1)
+        
+        # Format time display as range if available
+        time_range = tutorial.get('time_range')
+        if time_range:
+            min_minutes = time_range.get('min_seconds', 0) // 60
+            max_minutes = time_range.get('max_seconds', 0) // 60
+            if min_minutes == max_minutes:
+                time_display = f"{min_minutes} min"
+            else:
+                time_display = f"{min_minutes}-{max_minutes} min"
+        else:
+            # Fallback to time_seconds
+            time_display = f"{time_seconds // 60} min" if time_seconds > 0 else "0 min"
         
         for i, topic in enumerate(topics):
             table_data.append([
                 Paragraph(f"{i+1}. {topic}", normal_style),
-                Paragraph(str(time_per_topic) if i == 0 else "", normal_style),
+                Paragraph(time_display if i == 0 else "", normal_style),
                 Paragraph(tutorial.get('comments', '') if i == 0 else "", normal_style)
             ])
         

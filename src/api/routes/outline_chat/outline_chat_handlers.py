@@ -113,7 +113,7 @@ def handle_confirmation_no(
             if field == "tutorial_title":
                 next_question = f"Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))} — please give a short title."
             elif field == "tutorial_prerequisites":
-                next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, what are the prerequisites?"
+                next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, what are the prerequisites? If there are multiple prerequisites, please separate them with semicolons (e.g., 'Tutorial #1; Basic Python knowledge; Computer skills')."
             elif field == "tutorial_steps":
                 next_question = f"For Tutorial #{last_tutorial.get('tutorial_number', len(tutorial_rows))}, list 3–6 demonstrable steps (semicolon-separated list is fine)."
             elif field == "tutorial_time":

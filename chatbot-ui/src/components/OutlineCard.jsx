@@ -312,7 +312,15 @@ const OutlineCard = ({ outlineData, projectId }) => {
                                         ))}
                                     </td>
                                     <td style={{ ...valueStyle, textAlign: 'center' }}>
-                                        {Math.floor((row.time_seconds || 0) / 60)}m
+                                        {row.time_range ? (
+                                            row.time_range.min_seconds === row.time_range.max_seconds ? (
+                                                `${Math.floor(row.time_range.min_seconds / 60)}m`
+                                            ) : (
+                                                `${Math.floor(row.time_range.min_seconds / 60)}-${Math.floor(row.time_range.max_seconds / 60)}m`
+                                            )
+                                        ) : (
+                                            `${Math.floor((row.time_seconds || 0) / 60)}m`
+                                        )}
                                     </td>
                                 </tr>
                             ))}

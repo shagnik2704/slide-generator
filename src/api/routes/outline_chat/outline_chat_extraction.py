@@ -109,7 +109,7 @@ Example: "5" should return 5, "eight" should return 8"""
 
 User response: {user_response}"""
         elif field == "tutorial_prerequisites":
-            return f"""Extract the prerequisites from the user's response. Return as a string describing what learners need before this tutorial (e.g., "Completion of Tutorial #1" or specific skills).
+            return f"""Extract the prerequisites from the user's response. Return as a string describing what learners need before this tutorial (e.g., "Completion of Tutorial #1" or specific skills). If multiple prerequisites are provided, separate them with semicolons (e.g., "Tutorial #1; Basic Python knowledge; Computer skills").
 
 User response: {user_response}"""
         elif field == "tutorial_steps":
@@ -132,17 +132,17 @@ User response: {user_response}
 Return format: ["step1", "step2", "step3"]
 Example transformation: "File → Open" becomes "Click File, then Open. In the dialog, choose your file and click Open." """
         elif field == "tutorial_time":
-            return f"""Extract the estimated time in MINUTES from the user's response. The user may provide a single number or a range (e.g., "3-4", "3 to 4", "3-4 minutes"). If a range is provided, use the first number or average if both numbers are given.
+            return f"""Extract the estimated time in MINUTES from the user's response. The user may provide a single number or a range (e.g., "3-4", "3 to 4", "3-4 minutes"). If a range is provided, extract both numbers.
 
 User response: {user_response}
 Examples:
-- "2 minutes" -> 2
-- "around 4 min" -> 4
-- "5" -> 5
-- "3-4" -> 3 (use first number)
-- "3 to 4 minutes" -> 3 (use first number)
-- "4-5 min" -> 4 (use first number)
-Return only the number as an integer."""
+- "2 minutes" -> return "2" (single value)
+- "around 4 min" -> return "4" (single value)
+- "5" -> return "5" (single value)
+- "3-4" -> return "3-4" (range)
+- "3 to 4 minutes" -> return "3-4" (range)
+- "4-5 min" -> return "4-5" (range)
+Return the time as a string: single number like "5" or range like "3-4"."""
         elif field == "tutorial_comments":
             return f"""Extract any comments or notes from the user's response. Return as a string.
 
@@ -304,6 +304,11 @@ def extract_and_set_field_value(
     
     elif field == "tutorial_prerequisites":
         extracted_value = extracted_text.strip('"\'')
+        # Support semicolon-separated prerequisites
+        if ';' in extracted_value:
+            prerequisites_list = [item.strip() for item in extracted_value.split(';') if item.strip()]
+            # Join with semicolon and space for readability
+            extracted_value = "; ".join(prerequisites_list)
         field_display = "Prerequisites"
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
         if not needs_confirmation:
@@ -340,33 +345,58 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_time":
-        # Try to extract from LLM response first
-        numbers = re.findall(r'\d+', extracted_text)
-        if numbers:
-            minutes = int(numbers[0])
+        # Extract time range or single value
+        # Patterns: "3-4", "3 to 4", "3-4 minutes", "3 to 4 min", etc.
+        range_pattern = r'(\d+)\s*[-–—to]\s*(\d+)'
+        
+        # First try extracted text
+        range_match = re.search(range_pattern, extracted_text, re.IGNORECASE)
+        if range_match:
+            min_minutes = int(range_match.group(1))
+            max_minutes = int(range_match.group(2))
         else:
-            # Fallback: extract from user response, handling ranges
-            # Patterns: "3-4", "3 to 4", "3-4 minutes", "3 to 4 min", etc.
-            range_pattern = r'(\d+)\s*[-–—to]\s*(\d+)'
+            # Try user response
             range_match = re.search(range_pattern, user_response, re.IGNORECASE)
             if range_match:
-                # If range found, use the first number
-                minutes = int(range_match.group(1))
+                min_minutes = int(range_match.group(1))
+                max_minutes = int(range_match.group(2))
             else:
-                # Extract single number
-                numbers = re.findall(r'\d+', user_response)
-                minutes = int(numbers[0]) if numbers else 0
+                # Single value - extract from extracted_text first, then user_response
+                numbers = re.findall(r'\d+', extracted_text)
+                if numbers:
+                    min_minutes = int(numbers[0])
+                    max_minutes = int(numbers[0])  # Same value for single number
+                else:
+                    numbers = re.findall(r'\d+', user_response)
+                    if numbers:
+                        min_minutes = int(numbers[0])
+                        max_minutes = int(numbers[0])
+                    else:
+                        return 0, "Time (minutes)", False  # Will trigger error response
         
-        if minutes < 1 or minutes > 30:
+        # Validate range
+        if min_minutes < 1 or min_minutes > 30 or max_minutes < 1 or max_minutes > 30:
             return 0, "Time (minutes)", False  # Will trigger error response
         
-        extracted_value = minutes * 60  # store as seconds
-        field_display = "Time (minutes)"
+        if min_minutes > max_minutes:
+            # Swap if reversed
+            min_minutes, max_minutes = max_minutes, min_minutes
+        
+        # Store as dict with min_seconds and max_seconds
+        time_range = {
+            "min_seconds": min_minutes * 60,
+            "max_seconds": max_minutes * 60
+        }
+        
+        # For backward compatibility, also store time_seconds as min_seconds
+        extracted_value = time_range["min_seconds"]
+        field_display = f"Time ({min_minutes}-{max_minutes} minutes)" if min_minutes != max_minutes else f"Time ({min_minutes} minutes)"
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
         if not needs_confirmation:
             tutorial_rows = outline_data.get("tutorial_rows", [])
             if tutorial_rows:
                 tutorial_rows[-1]["time_seconds"] = extracted_value
+                tutorial_rows[-1]["time_range"] = time_range  # Store range
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_comments":

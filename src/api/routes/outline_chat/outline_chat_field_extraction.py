@@ -232,6 +232,16 @@ def extract_field_from_response(field: str, response: str, outline_data: Dict) -
         keywords = [k.strip() for k in raw_keywords if k.strip()]
         updated["keywords"] = keywords[:6]  # Max 6
     
+    elif field == "tutorial_prerequisites":
+        # Support semicolon-separated prerequisites
+        if ';' in response:
+            prerequisites_list = [item.strip() for item in response.split(';') if item.strip()]
+            # Join with semicolon and space for readability
+            updated["tutorial_prerequisites"] = "; ".join(prerequisites_list)
+        else:
+            # Single prerequisite or comma-separated
+            updated["tutorial_prerequisites"] = response.strip()
+    
     elif field == "recommended_no_of_tutorials":
         # Extract number
         numbers = re.findall(r'\d+', response)

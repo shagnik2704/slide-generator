@@ -299,7 +299,7 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
                 prev_tutorials = ""
                 if len(tutorial_rows) > 1:
                     prev_tutorials = f" (you can refer to the previous tutorial number or specific skills required)"
-                return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): What are the prerequisites? What should learners already know or have completed before starting this tutorial?{prev_tutorials}"
+                return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): What are the prerequisites? What should learners already know or have completed before starting this tutorial? If there are multiple prerequisites, please separate them with semicolons (e.g., 'Tutorial #1; Basic Python knowledge; Computer skills').{prev_tutorials}"
             if not last_tutorial.get("topics_details") or len(last_tutorial.get("topics_details", [])) < 2:
                 if outline_type == "ICT":
                     return phase, f"""For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): please list 3–6 practical steps, activities, or methodologies the learner will follow.
