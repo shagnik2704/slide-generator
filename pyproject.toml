@@ -103,6 +103,7 @@ dependencies = [
   "langgraph-checkpoint-sqlite>=2.0.11",
   "aiosqlite<0.22.0",
   "langchain-openai>=0.3.35",
+  "pydub>=0.25.1",
 ]
 
 [tool.hatch.build.targets.wheel]

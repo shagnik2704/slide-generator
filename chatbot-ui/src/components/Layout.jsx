@@ -24,6 +24,13 @@ const Layout = () => {
     }
   };
 
+  // Handle voice upload from sidebar
+  const handleSidebarVoiceUpload = (file) => {
+    if (chatAreaRef.current?.handleSidebarVoiceUpload) {
+      chatAreaRef.current.handleSidebarVoiceUpload(file);
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
@@ -32,6 +39,7 @@ const Layout = () => {
           toggleSidebar={toggleSidebar}
           onComplianceUpload={handleSidebarComplianceUpload}
           onQualityUpload={handleSidebarQualityUpload}
+          onVoiceUpload={handleSidebarVoiceUpload}
         />
         <ChatArea
           ref={chatAreaRef}

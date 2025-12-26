@@ -219,12 +219,12 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                         </span>
                                         <span style={{
                                             fontSize: '0.85em',
-                                            color: slide.timing_ok ? '#14866d' : '#d33',
-                                            background: slide.timing_ok ? '#e6f9e6' : '#fee',
+                                            color: slide.meaning_preserved ? '#14866d' : '#d33',
+                                            background: slide.meaning_preserved ? '#e6f9e6' : '#fee',
                                             padding: '0.15em 0.5em',
                                             borderRadius: '3px',
                                         }}>
-                                            {slide.timing_ok ? '⏱️ OK' : '⏱️ Long'}
+                                            {slide.meaning_preserved ? '✓ Match' : '⚠️ Mismatch'} ({slide.similarity_score || 0}/5)
                                         </span>
                                     </div>
                                     {expandedSlide === slide.slide_number ?
@@ -233,56 +233,95 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                     }
                                 </div>
 
-                                {/* Expanded Content */}
+                                {/* Expanded Content - 3 Column Layout */}
                                 {expandedSlide === slide.slide_number && (
                                     <div style={{ padding: '1rem' }}>
-                                        {/* Original English */}
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <label style={{
-                                                display: 'block',
-                                                fontSize: '0.75em',
-                                                color: '#54595d',
-                                                marginBottom: '0.25rem',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em',
-                                            }}>
-                                                Original (English)
-                                            </label>
-                                            <div style={{
-                                                padding: '0.75rem',
-                                                background: '#f8f9fa',
-                                                borderRadius: '4px',
-                                                border: '1px solid #eaecf0',
-                                                fontFamily: 'sans-serif',
-                                                fontSize: '0.9rem',
-                                                lineHeight: '1.6',
-                                            }}>
-                                                {slide.narration_original}
+                                        {/* 3 Column Grid */}
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr 1fr',
+                                            gap: '1rem',
+                                            marginBottom: slide.issues?.length > 0 ? '1rem' : 0
+                                        }}>
+                                            {/* Column 1: Original English */}
+                                            <div>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '0.75em',
+                                                    color: '#54595d',
+                                                    marginBottom: '0.25rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                    fontWeight: 600,
+                                                }}>
+                                                    Original (English)
+                                                </label>
+                                                <div style={{
+                                                    padding: '0.75rem',
+                                                    background: '#f8f9fa',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid #eaecf0',
+                                                    fontFamily: 'sans-serif',
+                                                    fontSize: '0.85rem',
+                                                    lineHeight: '1.6',
+                                                    minHeight: '80px',
+                                                }}>
+                                                    {slide.narration_original}
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Hindi Translation */}
-                                        <div style={{ marginBottom: slide.issues?.length > 0 ? '1rem' : 0 }}>
-                                            <label style={{
-                                                display: 'block',
-                                                fontSize: '0.75em',
-                                                color: '#54595d',
-                                                marginBottom: '0.25rem',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.05em',
-                                            }}>
-                                                Hindi Translation
-                                            </label>
-                                            <div style={{
-                                                padding: '0.75rem',
-                                                background: 'linear-gradient(135deg, #667eea10 0%, #764ba210 100%)',
-                                                borderRadius: '4px',
-                                                border: '1px solid #667eea30',
-                                                fontFamily: 'Noto Sans Devanagari, sans-serif',
-                                                fontSize: '1rem',
-                                                lineHeight: '1.8',
-                                            }}>
-                                                {slide.narration}
+                                            {/* Column 2: Hindi Translation */}
+                                            <div>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '0.75em',
+                                                    color: '#667eea',
+                                                    marginBottom: '0.25rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                    fontWeight: 600,
+                                                }}>
+                                                    Hindi Translation
+                                                </label>
+                                                <div style={{
+                                                    padding: '0.75rem',
+                                                    background: 'linear-gradient(135deg, #667eea10 0%, #764ba210 100%)',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid #667eea30',
+                                                    fontFamily: 'Noto Sans Devanagari, sans-serif',
+                                                    fontSize: '0.9rem',
+                                                    lineHeight: '1.8',
+                                                    minHeight: '80px',
+                                                }}>
+                                                    {slide.narration}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 3: Back Translation */}
+                                            <div>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '0.75em',
+                                                    color: slide.meaning_preserved ? '#14866d' : '#d33',
+                                                    marginBottom: '0.25rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                    fontWeight: 600,
+                                                }}>
+                                                    Back-Translation {slide.meaning_preserved ? '✓' : '⚠️'}
+                                                </label>
+                                                <div style={{
+                                                    padding: '0.75rem',
+                                                    background: slide.meaning_preserved ? '#e6f9e6' : '#fee',
+                                                    borderRadius: '4px',
+                                                    border: `1px solid ${slide.meaning_preserved ? '#14866d30' : '#d3330'}`,
+                                                    fontFamily: 'sans-serif',
+                                                    fontSize: '0.85rem',
+                                                    lineHeight: '1.6',
+                                                    minHeight: '80px',
+                                                }}>
+                                                    {slide.back_translation || 'N/A'}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -329,8 +368,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                 color: '#54595d',
                 fontFamily: 'sans-serif',
             }}>
-                <strong>Tips:</strong> Click on any slide to see the English → Hindi translation.
-                Quality scores range from 1-5 (5 = excellent translation).
+                <strong>How it works:</strong> English → Hindi → Back to English. If back-translation matches original, the translation is accurate.
             </div>
         </div>
     );

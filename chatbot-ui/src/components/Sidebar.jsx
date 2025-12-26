@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, onVoiceUpload }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -12,6 +12,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload })
     // Refs for hidden file inputs
     const complianceInputRef = useRef(null);
     const qualityInputRef = useRef(null);
+    const voiceInputRef = useRef(null);
 
     // Handle compliance file selection
     const handleComplianceFileSelect = (e) => {
@@ -27,6 +28,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload })
         const file = e.target.files[0];
         if (file && onQualityUpload) {
             onQualityUpload(file);
+            e.target.value = '';
+        }
+    };
+
+    // Handle voice file selection
+    const handleVoiceFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onVoiceUpload) {
+            onVoiceUpload(file);
             e.target.value = '';
         }
     };
@@ -92,6 +102,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload })
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleQualityFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={voiceInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleVoiceFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -182,6 +199,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload })
                     </div>
                 )}
             </nav>
+
+            {/* Voice Generator Button */}
+            <TooltipWrapper text="Voice Generator">
+                <button
+                    onClick={() => voiceInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.75rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Mic size={20} />
+                    {isOpen && <span>Voice Generator</span>}
+                </button>
+            </TooltipWrapper>
 
             {/* Spacer */}
             <div style={{ flex: 1 }} />

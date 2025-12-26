@@ -350,6 +350,78 @@ export function useChatArea() {
         }
     }, []);
 
+    const handleSidebarVoiceUpload = useCallback(async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `🎤 Generating voice for: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // First parse the script
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!parseResponse.ok) {
+                const errorData = await parseResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to parse script file');
+            }
+
+            const parseData = await parseResponse.json();
+            setCurrentProjectId(parseData.project_id);
+
+            // Generate voice
+            const voiceResponse = await fetch(`${API_URL}/generate_voice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: parseData.json_script,
+                    project_id: parseData.project_id,
+                    target_audience: 'general'
+                }),
+            });
+
+            if (!voiceResponse.ok) {
+                const errorData = await voiceResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to generate voice');
+            }
+
+            const voiceData = await voiceResponse.json();
+            const messageId = Date.now() + 1;
+
+            const newBotMessage = {
+                id: messageId,
+                role: 'assistant',
+                content: `🎤 Voice Generation Complete!\n\n` +
+                    `File: ${file.name}\n` +
+                    `Generated: ${voiceData.generated_slides}/${voiceData.total_slides} slides`,
+                jsonScript: parseData.json_script,
+                projectId: parseData.project_id,
+                type: 'voice_preview',
+                voiceData: voiceData
+            };
+            setUploadMessages(prev => [...prev, newBotMessage]);
+
+        } catch (error) {
+            console.error("Voice generation error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Voice generation failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, []);
+
     // =========================
     // GENERATION HANDLERS
     // =========================
@@ -838,6 +910,7 @@ export function useChatArea() {
         // Handlers - Sidebar
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
+        handleSidebarVoiceUpload,
 
         // Handlers - Generation
         handleGenerateScript,
