@@ -36,7 +36,17 @@ def handle_confirmation_yes(
     elif field == "tutorial_prerequisites":
         tutorial_rows = outline_data.get("tutorial_rows", [])
         if tutorial_rows:
-            tutorial_rows[-1]["prerequisites"] = value
+            # Convert value to list if it's a string (for backward compatibility)
+            if isinstance(value, str):
+                if ';' in value:
+                    prerequisites_list = [item.strip() for item in value.split(';') if item.strip()]
+                elif ',' in value:
+                    prerequisites_list = [item.strip() for item in value.split(',') if item.strip()]
+                else:
+                    prerequisites_list = [value.strip()] if value.strip() else []
+            else:
+                prerequisites_list = value if isinstance(value, list) else []
+            tutorial_rows[-1]["prerequisites"] = prerequisites_list
     elif field == "tutorial_steps":
         tutorial_rows = outline_data.get("tutorial_rows", [])
         if tutorial_rows:
@@ -70,7 +80,7 @@ def handle_confirmation_no(
     elif field == "tutorial_prerequisites":
         tutorial_rows = outline_data.get("tutorial_rows", [])
         if tutorial_rows:
-            tutorial_rows[-1]["prerequisites"] = ""
+            tutorial_rows[-1]["prerequisites"] = []
     elif field == "tutorial_steps":
         tutorial_rows = outline_data.get("tutorial_rows", [])
         if tutorial_rows:

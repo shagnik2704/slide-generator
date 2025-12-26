@@ -295,7 +295,13 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
             last_tutorial = tutorial_rows[-1]
             if not last_tutorial.get("title"):
                 return phase, f"Tutorial #{len(tutorial_rows)} — please give a short title (under 50 characters, using only letters, numbers, and spaces; no special characters)."
-            if not last_tutorial.get("prerequisites") or last_tutorial.get("prerequisites") == "":
+            prerequisites = last_tutorial.get("prerequisites", [])
+            is_empty = (
+                not prerequisites or 
+                (isinstance(prerequisites, list) and len(prerequisites) == 0) or
+                (isinstance(prerequisites, str) and prerequisites.strip() == "")
+            )
+            if is_empty:
                 prev_tutorials = ""
                 if len(tutorial_rows) > 1:
                     prev_tutorials = f" (you can refer to the previous tutorial number or specific skills required)"
@@ -314,7 +320,13 @@ You can provide them as a short semicolon-separated list or bullets.
         
         # All tutorials collected, move to metadata
         if len(tutorial_rows) >= num_tutorials and all(
-            t.get("title") and t.get("prerequisites") and t.get("topics_details") and len(t.get("topics_details", [])) >= 2 and t.get("time_seconds")
+            t.get("title") and 
+            (t.get("prerequisites") and (
+                (isinstance(t.get("prerequisites"), list) and len(t.get("prerequisites", [])) > 0) or
+                (isinstance(t.get("prerequisites"), str) and t.get("prerequisites", "").strip() != "")
+            )) and 
+            t.get("topics_details") and len(t.get("topics_details", [])) >= 2 and 
+            t.get("time_seconds")
             for t in tutorial_rows
         ):
             phase = "metadata"

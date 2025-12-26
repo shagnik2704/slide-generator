@@ -15,7 +15,7 @@ class TutorialRow(BaseModel):
     """Single tutorial row in the course outline table."""
     tutorial_number: int
     title: str
-    prerequisites: str = Field(default="", description="Prerequisites for this tutorial")
+    prerequisites: List[str] = Field(default_factory=list, description="List of prerequisites for this tutorial")
     topics_details: List[str] = Field(description="List of demonstrable steps")
     time_seconds: int
     comments: str = ""

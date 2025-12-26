@@ -304,7 +304,13 @@ const OutlineCard = ({ outlineData, projectId }) => {
                                     <td style={valueStyle}>{row.tutorial_number || i + 1}</td>
                                     <td style={{ ...valueStyle, fontWeight: 500 }}>{row.title}</td>
                                 <td style={valueStyle}>
-                                    {row.prerequisites || '-'}
+                                    {Array.isArray(row.prerequisites) && row.prerequisites.length > 0 ? (
+                                        row.prerequisites.map((prereq, j) => (
+                                            <div key={j} style={{ marginBottom: '0.25rem' }}>• {prereq}</div>
+                                        ))
+                                    ) : (
+                                        row.prerequisites || '-'
+                                    )}
                                 </td>
                                 <td style={valueStyle}>
                                         {row.topics_details?.map((topic, j) => (

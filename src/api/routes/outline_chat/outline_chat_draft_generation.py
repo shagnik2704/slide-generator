@@ -45,7 +45,12 @@ def generate_draft_outline(outline_data: Dict) -> str:
 """
     for tutorial in outline_data.get('tutorial_rows', []):
         topics = '; '.join(tutorial.get('topics_details', []))
-        prerequisites = tutorial.get('prerequisites', 'N/A')
+        # Handle prerequisites as list or string (for backward compatibility)
+        prerequisites_data = tutorial.get('prerequisites', [])
+        if isinstance(prerequisites_data, list):
+            prerequisites = '; '.join(prerequisites_data) if prerequisites_data else 'N/A'
+        else:
+            prerequisites = prerequisites_data if prerequisites_data else 'N/A'
         
         # Display time as range if available, otherwise use time_seconds
         time_range = tutorial.get('time_range')

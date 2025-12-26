@@ -212,7 +212,7 @@ def determine_current_field(phase: str, outline_data: Dict, outline_type: str) -
                 tutorial_rows.append({
                     "tutorial_number": len(tutorial_rows) + 1,
                     "title": "",
-                    "prerequisites": "",
+                    "prerequisites": [],
                     "topics_details": [],
                     "time_seconds": 0,
                     "comments": ""
@@ -223,7 +223,7 @@ def determine_current_field(phase: str, outline_data: Dict, outline_type: str) -
             last_tutorial = tutorial_rows[-1]
             if not last_tutorial.get("title"):
                 return "tutorial_title", {}
-            elif not last_tutorial.get("prerequisites") or last_tutorial.get("prerequisites") == "":
+            elif not last_tutorial.get("prerequisites") or (isinstance(last_tutorial.get("prerequisites"), list) and len(last_tutorial.get("prerequisites", [])) == 0) or (isinstance(last_tutorial.get("prerequisites"), str) and last_tutorial.get("prerequisites", "").strip() == ""):
                 return "tutorial_prerequisites", {}
             elif not last_tutorial.get("topics_details") or len(last_tutorial.get("topics_details", [])) < 2:
                 return "tutorial_steps", {}
@@ -304,18 +304,25 @@ def extract_and_set_field_value(
     
     elif field == "tutorial_prerequisites":
         extracted_value = extracted_text.strip('"\'')
-        # Support semicolon-separated prerequisites
+        # Support semicolon-separated prerequisites - store as list
         if ';' in extracted_value:
             prerequisites_list = [item.strip() for item in extracted_value.split(';') if item.strip()]
-            # Join with semicolon and space for readability
-            extracted_value = "; ".join(prerequisites_list)
+        elif ',' in extracted_value:
+            # Also support comma-separated
+            prerequisites_list = [item.strip() for item in extracted_value.split(',') if item.strip()]
+        else:
+            # Single prerequisite
+            prerequisites_list = [extracted_value] if extracted_value.strip() else []
+        
         field_display = "Prerequisites"
-        needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
+        # For confirmation, join with semicolon for display
+        extracted_value_display = "; ".join(prerequisites_list) if prerequisites_list else ""
+        needs_confirmation = should_ask_confirmation(field, extracted_value_display, user_response)
         if not needs_confirmation:
             tutorial_rows = outline_data.get("tutorial_rows", [])
             if tutorial_rows:
-                tutorial_rows[-1]["prerequisites"] = extracted_value
-        return extracted_value, field_display, needs_confirmation
+                tutorial_rows[-1]["prerequisites"] = prerequisites_list
+        return extracted_value_display, field_display, needs_confirmation
     
     elif field == "tutorial_steps":
         tutorial_rows = outline_data.get("tutorial_rows", [])
