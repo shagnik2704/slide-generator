@@ -100,7 +100,7 @@ async def generate_voice_for_slide(
         print(f"🎤 Generating audio for slide {slide_num}...")
         
         response = client.models.generate_content(
-            model='gemini-2.5-pro-preview-tts',
+            model='gemini-2.5-flash-preview-tts',
             contents=full_prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
