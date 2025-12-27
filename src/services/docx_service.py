@@ -6,9 +6,11 @@ import re
 from pathlib import Path
 from io import BytesIO
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
+from docx.shared import Inches, Pt, RGBColor, Twips
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 
 def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
@@ -64,11 +66,15 @@ def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
         visual_cue = _format_visual_cue(slide)
         row.cells[0].text = visual_cue
         
-        # Narration column (editable)
+        # Narration column (with bold markdown parsing)
         narration = slide.get('narration', '')
         # Convert \n to actual newlines for display
         narration = narration.replace('\\n', '\n')
-        row.cells[1].text = narration
+        _add_formatted_text(row.cells[1], narration)
+        
+        # Add padding to all cells in this row
+        for cell in row.cells:
+            _set_cell_padding(cell, top=100, bottom=100, left=100, right=100)
     
     # Save or return buffer
     if output_path:
@@ -79,6 +85,54 @@ def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
         doc.save(buffer)
         buffer.seek(0)
         return buffer
+
+
+def _set_cell_padding(cell, top=0, bottom=0, left=0, right=0):
+    """Set cell padding/margins in twips (1/20 of a point)."""
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
+    
+    for side, value in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
+        node = OxmlElement(f'w:{side}')
+        node.set(qn('w:w'), str(value))
+        node.set(qn('w:type'), 'dxa')
+        tcMar.append(node)
+    
+    tcPr.append(tcMar)
+
+
+def _add_formatted_text(cell, text):
+    """Add text to cell with **bold** markdown parsed as actual bold."""
+    from docx.shared import Pt as PtSpacing
+    
+    # Clear existing text
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    
+    # Set line spacing (1.5 lines = 1.5 * 12pt = 18pt)
+    paragraph.paragraph_format.line_spacing = 1.5
+    paragraph.paragraph_format.space_after = Pt(6)  # Extra space after paragraph
+    
+    # Parse **bold** pattern
+    pattern = r'\*\*(.+?)\*\*'
+    last_end = 0
+    
+    for match in re.finditer(pattern, text):
+        # Add normal text before this match
+        if match.start() > last_end:
+            normal_text = text[last_end:match.start()]
+            paragraph.add_run(normal_text)
+        
+        # Add bold text
+        bold_run = paragraph.add_run(match.group(1))
+        bold_run.bold = True
+        
+        last_end = match.end()
+    
+    # Add remaining normal text
+    if last_end < len(text):
+        paragraph.add_run(text[last_end:])
 
 
 def docx_to_json(docx_file) -> dict:

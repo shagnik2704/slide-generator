@@ -1,10 +1,18 @@
 """
 Video creation node.
+Combines PDF slides with audio narration into a final video.
 """
 import os
+import glob
 import fitz
 from moviepy import ImageClip, AudioFileClip, concatenate_videoclips, VideoFileClip, CompositeVideoClip, vfx
 from src.core.state import AgentState
+
+# === VIDEO CONFIGURATION ===
+# Padding (in seconds) added after each slide's audio ends
+# Gives viewers time to absorb content before the next slide
+SLIDE_PADDING = 0.5  # seconds
+
 
 def create_video(state: AgentState):
     print("Creating video...")
@@ -81,8 +89,11 @@ def create_video(state: AgentState):
             try:
                 audio_segment = audio_clip.subclipped(start_time, end_time)
                 
-                # Base clip from PDF page
-                base_clip = ImageClip(img_path).with_duration(duration_per_page)
+                # Total display time = audio duration + padding for absorption
+                clip_duration = duration_per_page + SLIDE_PADDING
+                
+                # Base clip from PDF page (shows longer than audio plays)
+                base_clip = ImageClip(img_path).with_duration(clip_duration)
                 
                 # Composite video background if available
                 if master_video_bg:
@@ -106,7 +117,7 @@ def create_video(state: AgentState):
                         # Composite: Base PDF (bottom) + Video (top, right)
                         # Note: PDF page has white background on right, so video covers it.
                         video_clip = CompositeVideoClip([base_clip, video_segment])
-                        video_clip = video_clip.with_duration(duration_per_page)
+                        video_clip = video_clip.with_duration(clip_duration)
                         
                     except Exception as e:
                         print(f"Failed to composite video for slide {i} page {page_offset}: {e}")
@@ -118,8 +129,9 @@ def create_video(state: AgentState):
                 clips.append(video_clip)
             except Exception as e:
                 print(f"Error creating video clip for slide {i}, page {page_offset}: {e}")
-                # Create clip without audio as fallback
-                video_clip = ImageClip(img_path).with_duration(duration_per_page)
+                # Create clip without audio as fallback (still include padding)
+                clip_duration = duration_per_page + SLIDE_PADDING
+                video_clip = ImageClip(img_path).with_duration(clip_duration)
                 clips.append(video_clip)
         
         current_page_index += num_pages_for_slide

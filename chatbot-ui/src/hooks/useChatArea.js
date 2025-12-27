@@ -329,6 +329,7 @@ export function useChatArea() {
                 projectId: parseData.project_id,
                 type: 'script_uploaded',
                 complianceReport: null,
+                qualityReport: qualityData,  // Embedded for localStorage persistence
                 hideQualityCheck: true,
                 hideGenerateSlides: true
             };

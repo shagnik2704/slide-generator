@@ -23,7 +23,7 @@ def detect_tutorial_type(state: AgentState) -> dict:
         print("⚠️ No outline provided, defaulting to conceptual")
         return {"tutorial_type": "conceptual"}
     
-    llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     
     prompt = f"""Classify this tutorial outline into ONE of two types:
 

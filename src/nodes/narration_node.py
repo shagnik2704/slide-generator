@@ -5,7 +5,7 @@ Stage 2: Expands slide skeleton into full narration.
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 from src.core.state import AgentState, NarrationScript
 import json
 
@@ -25,21 +25,40 @@ def expand_narration(state: AgentState):
         print("⚠️ No structured outline provided")
         return {"narration_script": {}}
         
-    llm = ChatOpenAI(model="gpt-5-mini")      
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(NarrationScript)
     
-    # Select prompt based on tutorial type
+    # Select messages based on tutorial type
     if tutorial_type == "demo":
-        prompt = get_demo_narration_prompt(structured_outline)
+        messages = get_demo_narration_messages(structured_outline)
     else:
-        prompt = get_conceptual_narration_prompt(structured_outline)
+        messages = get_conceptual_narration_messages(structured_outline)
     
     try:
-        result = structured_llm.invoke(prompt)
+        result = structured_llm.invoke(messages)
         narration_script = result.model_dump()
+        
+        # Calculate duration based on word count (avg 135 wpm)
+        total_words = 0
+        for slide in narration_script.get('slides', []):
+            narration_text = slide.get('narration', '')
+            total_words += len(narration_text.split())
+            
+        minutes = total_words / 135
+        min_duration = int(minutes)
+        max_duration = int(minutes) + 1
+        
+        # Ensure at least "1-2 min"
+        if min_duration < 1:
+            min_duration = 1
+            max_duration = 2
+            
+        calculated_duration = f"{min_duration}-{max_duration} min"
+        narration_script['duration'] = calculated_duration
         
         slide_count = len(narration_script.get('slides', []))
         print(f"✓ Stage 2 complete: {slide_count} slides with narration ({tutorial_type} mode)")
+        print(f"⏱️  Calculated Duration: {calculated_duration} ({total_words} words)")
         
         return {"narration_script": narration_script}
         
@@ -50,12 +69,9 @@ def expand_narration(state: AgentState):
         return {"narration_script": {}}
 
 
-def get_conceptual_narration_prompt(structured_outline: dict) -> str:
-    """Prompt for conceptual tutorials - flowing narrative with analogies."""
-    return f"""You are expanding a slide skeleton into FULL NARRATION for a Spoken Tutorial.
-
-=== INPUT: STRUCTURED OUTLINE ===
-{json.dumps(structured_outline, indent=2)}
+def get_conceptual_narration_messages(structured_outline: dict) -> list:
+    """Messages for conceptual tutorials - flowing narrative with analogies."""
+    system_content = """You are a Spoken Tutorial script writer expanding slide skeletons into FULL NARRATION.
 
 === WRITING STYLE ===
 - Write like you're SPEAKING to a learner, not reading bullet points
@@ -66,23 +82,17 @@ def get_conceptual_narration_prompt(structured_outline: dict) -> str:
 
 === CONCISENESS RULES (IMPORTANT) ===
 
-1. CUT FILLER PHRASES
-   Remove these unnecessary starters:
-   - "So," / "Now," / "Well,"
-   - "So, what exactly is..." → "What is..."
-   - "Now, let's look at..." → Just start the content
-
-2. REMOVE REDUNDANCY (CRITICAL)
+1. REMOVE REDUNDANCY (CRITICAL)
    - Don't say the same thing twice: "X is for Y. It does Y." → Just say "X is for Y."
    - Avoid repeating a term 3+ times in one slide
-   - "The API delivers to the model. The model processes..." → "The model receives and processes..."
+   - Example:"The API delivers to the model. The model processes..." → "The model receives and processes..."
 
-3. ANALOGY REQUIRED FOR EVERY CONTENT TOPIC
+2. ANALOGY REQUIRED FOR EVERY CONTENT TOPIC
    - Every content slide MUST include a relatable analogy
    - Pattern: "Think of X like Y..." or "Imagine X as Y..."
    - Use everyday scenarios: restaurant, library, traffic, school, keys
 
-4. USE ACTIVE VOICE
+3. USE ACTIVE VOICE
    - "The request is sent to the API" → "You send a request to the API"
 
 === BOLD TERMS (for transliteration) ===
@@ -128,17 +138,6 @@ PATTERN:
 5. Show the result: "You see the tomato products on your screen."
 6. Optionally show edge case: "If no products are found, the **API** returns an empty list."
 
-EXAMPLE NARRATION:
-"Let's see how this works in real life.
-Open any grocery app on your phone.
-Tap the search bar at the top.
-Type 'tomato' and press search.
-Behind the scenes, the app sends a request to the **API**.
-The **API** searches for all matching products.
-The server sends back a list of results.
-You now see all tomato products on your screen.
-This is an **API** in action!"
-
 USE EVERYDAY APPS: grocery apps, food delivery, ride sharing, weather apps, etc.
 
 === NARRATIVE FLOW FOR CONTENT SLIDES ===
@@ -150,13 +149,19 @@ USE EVERYDAY APPS: grocery apps, food delivery, ride sharing, weather apps, etc.
 
 Expand EVERY slide's 'notes' into full conversational 'narration' with analogies."""
 
+    human_content = f"""Expand the following structured outline into full narration:
 
-def get_demo_narration_prompt(structured_outline: dict) -> str:
-    """Prompt for demo tutorials - action-focused step-by-step instructions."""
-    return f"""You are expanding a slide skeleton into STEP-BY-STEP NARRATION for a Demo Tutorial.
+{json.dumps(structured_outline, indent=2)}"""
 
-=== INPUT: STRUCTURED OUTLINE ===
-{json.dumps(structured_outline, indent=2)}
+    return [
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content)
+    ]
+
+
+def get_demo_narration_messages(structured_outline: dict) -> list:
+    """Messages for demo tutorials - action-focused step-by-step instructions."""
+    system_content = """You are a Spoken Tutorial script writer expanding slide skeletons into STEP-BY-STEP NARRATION for a Demo Tutorial.
 
 === DEMO WRITING STYLE ===
 - Write like you're GUIDING someone through a task
@@ -239,7 +244,6 @@ Pre-requisite Slide:
 "To follow this tutorial, you should have [concept knowledge].\\n
 For pre-requisite tutorials, please visit this website."
 
-
 Summary Slide: "Let us summarize what we have learnt.\\n[recap of key actions]"
 
 Assignment Slide: "Now as an assignment,\\n[practice task].\\nCompare the results."
@@ -247,4 +251,13 @@ Assignment Slide: "Now as an assignment,\\n[practice task].\\nCompare the result
 Thank You Slide: "This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
 
 Expand EVERY slide's 'notes' into clear action-focused narration."""
+
+    human_content = f"""Expand the following structured outline into full narration:
+
+{json.dumps(structured_outline, indent=2)}"""
+
+    return [
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content)
+    ]
 

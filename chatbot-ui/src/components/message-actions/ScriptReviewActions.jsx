@@ -150,7 +150,7 @@ export default function ScriptReviewActions({
                     padding: '0.75rem 1.5rem',
                     background: isTyping
                         ? 'var(--bg-tertiary)'
-                        : 'linear-gradient(135deg, #059669, #10b981)',
+                        : '#059669',
                     color: isTyping ? 'var(--text-secondary)' : 'white',
                     border: 'none',
                     borderRadius: '0.75rem',
@@ -187,8 +187,8 @@ export default function ScriptReviewActions({
                     marginLeft: '0.75rem',
                     padding: '0.75rem 1.5rem',
                     background: openEditorId === msg.id
-                        ? 'linear-gradient(135deg, #7c3aed, #a855f7)'
-                        : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                        ? '#1a4480'
+                        : '#1a4480',
                     color: 'white',
                     border: 'none',
                     borderRadius: '0.75rem',

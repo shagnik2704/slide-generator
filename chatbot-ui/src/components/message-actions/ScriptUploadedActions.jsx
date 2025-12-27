@@ -63,7 +63,7 @@ export default function ScriptUploadedActions({
             />
 
             {/* View Quality Report Toggle - for sidebar quality flow */}
-            {qualityReports[msg.id] && msg.hideQualityCheck && (
+            {(qualityReports[msg.id] || msg.qualityReport) && msg.hideQualityCheck && (
                 <button
                     onClick={() => setOpenQualityId(openQualityId === msg.id ? null : msg.id)}
                     style={{
@@ -100,7 +100,7 @@ export default function ScriptUploadedActions({
                     onClick={() => {
                         if (openQualityId === msg.id) {
                             setOpenQualityId(null);
-                        } else if (qualityReports[msg.id]) {
+                        } else if (qualityReports[msg.id] || msg.qualityReport) {
                             setOpenQualityId(msg.id);
                         } else {
                             onQualityCheck(msg.jsonScript, msg.id);
@@ -145,7 +145,7 @@ export default function ScriptUploadedActions({
 
             {/* Inline Quality Report */}
             <QualityReport
-                report={qualityReports[msg.id]}
+                report={qualityReports[msg.id] || msg.qualityReport}
                 isOpen={openQualityId === msg.id && !isQualityLoading}
                 onClose={() => setOpenQualityId(null)}
             />

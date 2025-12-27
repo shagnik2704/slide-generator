@@ -2,13 +2,12 @@
 Visual generation node for the 4-node pipeline.
 Stage 3: Generates image prompts based on narration context.
 """
-from langchain_openai.chat_models.base import ChatOpenAI
 import os
 from dotenv import load_dotenv
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 from src.core.state import AgentState
 import json
 
@@ -51,14 +50,46 @@ def generate_visuals(state: AgentState):
         return {"json_script": {}}
     
    
-    # llm = ChatOpenAI(model="gpt-5-mini")
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(FinalScript)
     
-    prompt = f"""You are adding VISUAL CUES (image_prompt) to a Spoken Tutorial script.
+    messages = get_visual_messages(narration_script)
 
-=== INPUT: NARRATION SCRIPT ===
-{json.dumps(narration_script, indent=2)}
+    try:
+        result = structured_llm.invoke(messages)
+        
+        # Handle None result from LLM
+        if result is None:
+            print("⚠️ Stage 3: LLM returned None, using narration script with default image prompts")
+            # Fallback: use narration_script and add basic image_prompts
+            fallback_script = narration_script.copy()
+            for slide in fallback_script.get('slides', []):
+                if not slide.get('image_prompt'):
+                    slide['image_prompt'] = slide.get('title', 'Content Slide')
+            return {"json_script": fallback_script}
+        
+        json_script = result.model_dump()
+        
+        slide_count = len(json_script.get('slides', []))
+        print(f"✓ Stage 3 complete: {slide_count} slides with visual cues")
+        
+        return {"json_script": json_script}
+        
+    except Exception as e:
+        print(f"❌ Stage 3 failed: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fallback: return narration_script as json_script with basic prompts
+        fallback_script = narration_script.copy()
+        for slide in fallback_script.get('slides', []):
+            if not slide.get('image_prompt'):
+                slide['image_prompt'] = slide.get('title', 'Content Slide')
+        return {"json_script": fallback_script}
+
+
+def get_visual_messages(narration_script: dict) -> list:
+    """Messages for adding visual cues to narration script."""
+    system_content = """You are adding VISUAL CUES (image_prompt) to a Spoken Tutorial script.
 
 === VISUAL CUE RULES ===
 
@@ -66,7 +97,7 @@ BOILERPLATE SLIDES (use exact strings):
 - Title Slide → image_prompt: "Title Slide"
 - Learning Objectives → image_prompt: "Learning Objectives Slide"
 - System Requirements → image_prompt: "System Requirements Slide"
-- Pre-requisite Slide → image_prompt: "Pre-requisite Slide, EduPyramids.org at bottom"
+- Pre-requisite Slide → image_prompt: "Pre-requisite Slide \n https://EduPyramids.org"
 - Summary Slide → image_prompt: "Summary Slide"
 - Assignment Slide → image_prompt: "Assignment Slide"
 - Thank You Slide → image_prompt: "EduPyramids logo"
@@ -103,33 +134,11 @@ REACTION/REFLECTION:
 
 Add image_prompt to EVERY slide. Keep title and narration unchanged."""
 
-    try:
-        result = structured_llm.invoke(prompt)
-        
-        # Handle None result from LLM
-        if result is None:
-            print("⚠️ Stage 3: LLM returned None, using narration script with default image prompts")
-            # Fallback: use narration_script and add basic image_prompts
-            fallback_script = narration_script.copy()
-            for slide in fallback_script.get('slides', []):
-                if not slide.get('image_prompt'):
-                    slide['image_prompt'] = slide.get('title', 'Content Slide')
-            return {"json_script": fallback_script}
-        
-        json_script = result.model_dump()
-        
-        slide_count = len(json_script.get('slides', []))
-        print(f"✓ Stage 3 complete: {slide_count} slides with visual cues")
-        
-        return {"json_script": json_script}
-        
-    except Exception as e:
-        print(f"❌ Stage 3 failed: {e}")
-        import traceback
-        traceback.print_exc()
-        # Fallback: return narration_script as json_script with basic prompts
-        fallback_script = narration_script.copy()
-        for slide in fallback_script.get('slides', []):
-            if not slide.get('image_prompt'):
-                slide['image_prompt'] = slide.get('title', 'Content Slide')
-        return {"json_script": fallback_script}
+    human_content = f"""Add visual cues (image_prompt) to this narration script:
+
+{json.dumps(narration_script, indent=2)}"""
+
+    return [
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content)
+    ]
