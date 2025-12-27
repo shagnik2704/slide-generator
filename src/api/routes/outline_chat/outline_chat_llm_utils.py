@@ -47,6 +47,7 @@ def friendly_rewrite_question(base_question: str, outline_type: str, phase: str)
     Use OpenAI to lightly rewrite a base question in a more friendly,
     conversational tone while keeping the meaning the same.
     Falls back to the original question on any error.
+    Ensures the final question is under 100 characters.
     """
     try:
         prompt = f"""You are a warm, supportive assistant helping to interview a subject-matter expert for a Spoken Tutorial course outline.
@@ -59,23 +60,40 @@ Guidelines:
 - Keep it within 1–2 sentences.
 - Do NOT add extra instructions, tips, examples, or emojis beyond what is already present.
 - Do NOT change any technical terms or placeholders.
+- CRITICAL: The final question MUST be under 100 characters. If needed, shorten it while keeping essential information.
 
 Question:
 {base_question}
 
-Return ONLY the rewritten question text."""
+Return ONLY the rewritten question text (under 100 characters)."""
 
         rewritten = generate_llm_text(
             prompt,
             temperature=0.4,
-            max_tokens=256,
-            system_prompt="You are a warm but precise rewriting assistant.",
+            max_tokens=128,  # Reduced to encourage shorter output
+            system_prompt="You are a warm but precise rewriting assistant. Always keep questions under 100 characters.",
         )
         if len(rewritten.strip()) < 5:
             return base_question
-        return rewritten.strip()
+        
+        rewritten = rewritten.strip()
+        
+        # Enforce 100 character limit - truncate if needed
+        if len(rewritten) > 100:
+            # Try to truncate at a sentence boundary or word boundary
+            truncated = rewritten[:97] + "..."
+            # If the original base question is shorter, use it instead
+            if len(base_question) <= 100:
+                return base_question
+            return truncated
+        
+        return rewritten
     except Exception:
-        return base_question
+        # Fallback: if base question is already under 100 chars, return it
+        if len(base_question) <= 100:
+            return base_question
+        # Otherwise truncate base question
+        return base_question[:97] + "..."
 
 
 def get_example_answer_hint(

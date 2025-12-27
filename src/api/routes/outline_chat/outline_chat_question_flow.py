@@ -68,7 +68,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "outline_type",
-                        "question": "Before we start, could you tell me whether this is a **FOSS** course (based on free/open-source software), an **ICT** training (general ICT / digital skills), or something else? You can reply with `FOSS`, `ICT`, or `Other` (and add a short note if you pick Other).",
+                        "question": "Is this a FOSS course, ICT training, or Other? Reply: FOSS, ICT, or Other.",
                         "why": "Helps us tag the outline correctly for FOSSEE / ICT pipelines."
                     },
                     {
@@ -78,32 +78,32 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "os_version",
-                        "question": "What is the compatible Operating Software version for this ICT course? Please mention the OS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
+                        "question": "What OS version is compatible? (e.g., Windows 10, Ubuntu 22.04). If non-IT, write 'Not applicable'.",
                         "why": "Captures the operating system context learners will use."
                     },
                     {
                         "field": "outline_name",
-                        "question": "What would you like to call this ICT course or training? Please share the course/program name in your own words. The course outline name must be under 50 characters and use only letters, numbers, and spaces (no special characters).",
+                        "question": "What is the course name? (Max 50 chars, letters/numbers/spaces only, no special chars)",
                         "why": "Title used in template for ICT outlines."
                     },
                     {
                         "field": "target_audience",
-                        "question": "Who is the target audience? For example, you can mention the type of teachers, students, or professionals this is meant for.",
+                        "question": "Who is the target audience? (e.g., teachers, students, professionals)",
                         "why": "Helps choose depth, examples, and teaching methodologies."
                     },
                     {
                         "field": "course_objectives",
-                        "question": "What are the main course objectives or learning outcomes? Please list 3–6 clear, action‑oriented objectives, separated by semicolons .",
+                        "question": "List 3-6 course objectives (action-oriented, semicolon-separated)",
                         "why": "Fills the Course Objectives section in the outline template."
                     },
                     {
                         "field": "entry_behaviour",
-                        "question": "What should learners already know before starting? You can give a short list of prerequisites or entry behaviour (for example, basic computer skills or prior teaching experience).",
+                        "question": "What should learners already know? (e.g., basic computer skills, prior experience)",
                         "why": "Entry Behaviour field - helps determine starting point."
                     },
                     {
                         "field": "purpose",
-                        "question": "In one simple sentence, what is the main purpose of this course? (What will learners be able to do, teach, or apply after completing it?)",
+                        "question": "What is the main purpose? (What will learners be able to do after completing it?)",
                         "why": "Template Purpose - defines the learning outcome."
                     }
                 ]
@@ -112,12 +112,12 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "topics_included",
-                        "question": "Which topics, skill areas, categories, or methodologies must be included? You can list them as bullets or as a semicolon‑separated list, and group them into categories if that helps.",
+                        "question": "Which topics/skills must be included? (List as bullets or semicolon-separated)",
                         "why": "Helps structure the course content and ensure all key areas are covered."
                     },
                     {
                         "field": "topics_not_included",
-                        "question": "Are there any topics that should NOT be included or are clearly out-of-scope? Please list them (semicolon-separated is perfect).",
+                        "question": "Which topics should NOT be included? (List semicolon-separated)",
                         "why": "Helps avoid scope creep and keeps the course focused."
                     }
                 ]
@@ -126,13 +126,13 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "core_example",
-                        "question": "Please describe one core teaching scenario, use case, or practical application that can run throughout the course.\n\nThis should be a consistent example that helps you demonstrate the concepts across multiple tutorials. If you don't have a single running example, you can instead describe a common teaching context or use case.",
+                        "question": "Describe one core teaching scenario/use case that runs throughout the course.",
                         "examples": "Teaching scenarios, lesson plan examples, practical applications, or common use cases.",
                         "why": "ICT courses benefit from a consistent teaching scenario or use case that helps learners see practical applications."
                     },
                     {
                         "field": "allied_examples",
-                        "question": "Would you like to add 0–2 allied examples (alternate scenarios, use cases, or contexts) to show variations? If yes, please separate each example with semicolons. If not needed, you can simply say 'none' or 'no'.",
+                        "question": "Add 0-2 allied examples? (Separate with semicolons, or say 'none')",
                         "why": "Allies cover different contexts or applications without bloating the core scenario."
                     }
                 ]
@@ -141,7 +141,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "recommended_no_of_tutorials",
-                        "question": "How many tutorials (modules) should this course contain? There is no fixed limit; choose any number that fits your course design."
+                        "question": "How many tutorials should this course contain? (No fixed limit)"
                     }
                 ]
             }
@@ -152,22 +152,22 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "outline_type",
-                        "question": "Before we start, could you tell me whether this is a **FOSS** course (based on free/open-source software), an **ICT** training (general ICT / digital skills), or something else? You can reply with `FOSS`, `ICT`, or `Other` (and add a short note if you pick Other).",
+                        "question": "Is this a FOSS course, ICT training, or Other? Reply: FOSS, ICT, or Other.",
                         "why": "Helps us tag the outline correctly for FOSSEE / ICT pipelines."
                     },
                     {
                         "field": "platform_name",
-                        "question": "We're excited to learn more! Which FOSS tool is this course based on? Please mention the FOSS name along with its version. If this is a non-IT course, please write 'Not applicable'.",
+                        "question": "Which FOSS tool and version? (e.g., LibreOffice 7.5). If non-IT, write 'Not applicable'.",
                         "why": "Captures the specific FOSS tool and version before naming the course."
                     },
                     {
                         "field": "os_version",
-                        "question": "What is the compatible Operating Software version for this FOSS course, including the OS name and version? If this is a non-IT course, please write 'Not applicable'.",
+                        "question": "What OS version is compatible? (e.g., Windows 10, Ubuntu 22.04). If non-IT, write 'Not applicable'.",
                         "why": "Captures the operating system context learners will use."
                     },
                     {
                         "field": "outline_name",
-                        "question": "What is the full name or title of this course outline (how it should appear to learners)? The course outline name must be under 50 characters and use only letters, numbers, and spaces (no special characters).",
+                        "question": "What is the course name? (Max 50 chars, letters/numbers/spaces only, no special chars)",
                         "why": "Title used in template for FOSS outlines."
                     },
                     {
@@ -177,17 +177,17 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                     },
                     {
                         "field": "course_objectives",
-                        "question": "What are the main course objectives or learning outcomes? Please list 3–6 clear, action‑oriented objectives, separated by semicolons .",
+                        "question": "List 3-6 course objectives (action-oriented, semicolon-separated)",
                         "why": "Fills the Course Objectives section in the outline template."
                     },
                     {
                         "field": "entry_behaviour",
-                        "question": "What should learners already know before starting? You can give a short list of prerequisites or entry behaviour.",
+                        "question": "What should learners already know? (e.g., basic computer skills, prior experience)",
                         "why": "Entry Behaviour field."
                     },
                     {
                         "field": "purpose",
-                        "question": "In one simple sentence, what is the main purpose of this course? (What will learners be able to do after completing it?)",
+                        "question": "What is the main purpose? (What will learners be able to do after completing it?)",
                         "why": "Template Purpose."
                     }
                 ]
@@ -196,11 +196,11 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "topics_included",
-                        "question": "Which topics must be included? You can give a short list, separated by semicolons or line breaks."
+                        "question": "Which topics must be included? (List semicolon-separated or line breaks)"
                     },
                     {
                         "field": "topics_not_included",
-                        "question": "Which topics should NOT be included or are out-of-scope? Please list them, separated by semicolons.",
+                        "question": "Which topics should NOT be included? (List semicolon-separated)",
                         "why": "Helps avoid scope creep."
                     }
                 ]
@@ -209,13 +209,13 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "core_example",
-                        "question": "Please describe one core example (a real file, dataset, scenario, or project) we can use for demonstrations.",
+                        "question": "Describe one core example (file, dataset, scenario, or project) for demonstrations.",
                         "examples": "'student marksheet' for Excel; 'bookstore DB' for SQL; 'small image set' for image processing.",
                         "why": "Spoken Tutorials teach via a running example — this is mandatory."
                     },
                     {
                         "field": "allied_examples",
-                        "question": "Do you want 0-2 allied examples (short alternate scenarios) to show variations? If yes, list them separated by semicolons.",
+                        "question": "Add 0-2 allied examples? (Separate with semicolons, or say 'none')",
                         "why": "Allies cover edge-cases without bloating the core demo."
                     }
                 ]
@@ -224,7 +224,7 @@ def get_question_flow(outline_type: str = "FOSS") -> Dict[str, Dict]:
                 "questions": [
                     {
                         "field": "recommended_no_of_tutorials",
-                        "question": "How many tutorials (modules) should this course contain? There is no fixed limit; choose any number that fits your course design."
+                        "question": "How many tutorials should this course contain? (No fixed limit)"
                     }
                 ]
             }
@@ -288,13 +288,13 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
                                           tutorial_rows[-1].get("time_seconds")):
                 # All info collected for last tutorial, start new one
                 next_tutorial_num = len(tutorial_rows) + 1
-                return phase, f"Tutorial #{next_tutorial_num} — please give a short title (under 50 characters, using only letters, numbers, and spaces; no special characters)."
+                return phase, f"Tutorial #{next_tutorial_num}: Title? (Max 50 chars, letters/numbers/spaces only)"
         
         # Check if current tutorial needs more info
         if tutorial_rows:
             last_tutorial = tutorial_rows[-1]
             if not last_tutorial.get("title"):
-                return phase, f"Tutorial #{len(tutorial_rows)} — please give a short title (under 50 characters, using only letters, numbers, and spaces; no special characters)."
+                return phase, f"Tutorial #{len(tutorial_rows)}: Title? (Max 50 chars, letters/numbers/spaces only)"
             prerequisites = last_tutorial.get("prerequisites", [])
             is_empty = (
                 not prerequisites or 
@@ -302,21 +302,17 @@ def determine_next_question(outline_data: Dict, phase: str, conversation: List[C
                 (isinstance(prerequisites, str) and prerequisites.strip() == "")
             )
             if is_empty:
-                prev_tutorials = ""
-                if len(tutorial_rows) > 1:
-                    prev_tutorials = f" (you can refer to the previous tutorial number or specific skills required)"
-                return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): What are the prerequisites? What should learners already know or have completed before starting this tutorial? If there are multiple prerequisites, please separate them with semicolons (e.g., 'Tutorial #1; Basic Python knowledge; Computer skills').{prev_tutorials}"
+                tut_title = last_tutorial.get('title', 'N/A')
+                return phase, f"Tutorial #{len(tutorial_rows)} ({tut_title}): Prerequisites? (Separate with semicolons)"
             if not last_tutorial.get("topics_details") or len(last_tutorial.get("topics_details", [])) < 2:
+                tut_title = last_tutorial.get('title', 'N/A')
                 if outline_type == "ICT":
-                    return phase, f"""For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): please list 3–6 practical steps, activities, or methodologies the learner will follow.
-
-For ICT courses, these steps should describe what learners will actually DO or TEACH, in simple, action-oriented language.
-You can provide them as a short semicolon-separated list or bullets.
-"""
+                    return phase, f"Tutorial #{len(tutorial_rows)} ({tut_title}): List 3-6 practical steps (semicolon-separated)"
                 else:
-                    return phase, f"For Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}): list 3–6 demonstrable steps the learner will follow. You can write them as short bullets or as a semicolon‑separated list. Please avoid menu-only instructions like 'File → Open' and instead describe full actions in simple language."
+                    return phase, f"Tutorial #{len(tutorial_rows)} ({tut_title}): List 3-6 demonstrable steps (semicolon-separated)"
             if not last_tutorial.get("time_seconds") or last_tutorial.get("time_seconds") == 0:
-                return phase, f"Could you please share your estimated time for Tutorial #{len(tutorial_rows)} ({last_tutorial.get('title', 'N/A')}) in minutes? Typically, it ranges from 2 to 10 minutes, but feel free to suggest any reasonable duration. You can provide a single number (e.g., '5 minutes') or a range (e.g., '3-4 minutes' or '3 to 4 minutes').\n\nExample answer: 7 minutes or 3-4 minutes"
+                tut_title = last_tutorial.get('title', 'N/A')
+                return phase, f"Tutorial #{len(tutorial_rows)} ({tut_title}): Estimated time in minutes? (e.g., 5 or 3-4)"
         
         # All tutorials collected, move to metadata
         if len(tutorial_rows) >= num_tutorials and all(
@@ -339,7 +335,7 @@ You can provide them as a short semicolon-separated list or bullets.
             today = datetime.now().strftime("%Y-%m-%d")
             return phase, f"Preferred date for the outline? (default: {today})"
         if not outline_data.get("keywords"):
-            return phase, "Any keywords or tags to help search (3-6 words, separated by semicolons)?"
+            return phase, "Keywords? (3-6 words, semicolon-separated)"
         # All metadata collected, move to review
         phase = "review"
     

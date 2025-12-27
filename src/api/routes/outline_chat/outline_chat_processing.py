@@ -45,27 +45,65 @@ def process_user_input(
     if not current_field:
         return outline_data, phase, None, None
     
-    # Build extraction prompt
-    extraction_prompt = build_extraction_prompt(
-        phase, current_field, last_message.content, outline_type, outline_data
-    )
+    # List-type fields that need parsing (no LLM, just parse from user response)
+    # Note: tutorial_prerequisites and tutorial_steps are handled separately as they belong to tutorial rows
+    list_fields = [
+        "course_objectives", "topics_included", "topics_not_included",
+        "allied_examples", "keywords"
+    ]
     
-    if not extraction_prompt:
-        return outline_data, phase, None, None
+    # Special fields that need regex/pattern matching
+    special_fields = ["outline_type", "recommended_no_of_tutorials", "tutorial_time"]
     
-    # Extract using LLM
     try:
-        extracted_text = generate_llm_text(
-            extraction_prompt,
-            temperature=0.0,
-            max_tokens=512,
-            system_prompt="You are a strict information extraction assistant. Follow the instructions exactly.",
-        )
-        
-        # Extract and set field value
-        extracted_value, field_display, needs_confirmation = extract_and_set_field_value(
-            current_field, extracted_text, last_message.content, outline_data, outline_type
-        )
+        # For list-type fields, parse directly from user response without LLM
+        if current_field in list_fields:
+            from .outline_chat_field_extraction import extract_field_from_response
+            outline_data = extract_field_from_response(current_field, last_message.content, outline_data)
+            # Get the extracted value for validation/confirmation
+            extracted_value = outline_data.get(current_field)
+            field_display = current_field.replace("_", " ").title()
+            needs_confirmation = False  # Lists are auto-accepted after parsing
+        # For special fields, use regex/pattern matching
+        elif current_field in special_fields:
+            import re
+            if current_field == "recommended_no_of_tutorials":
+                numbers = re.findall(r'\d+', last_message.content)
+                if numbers:
+                    outline_data["recommended_no_of_tutorials"] = int(numbers[0])
+                    extracted_value = int(numbers[0])
+                else:
+                    extracted_value = None
+                field_display = "Recommended Number of Tutorials"
+                needs_confirmation = False
+            elif current_field == "outline_type":
+                user_lower = last_message.content.lower()
+                if "foss" in user_lower or "free" in user_lower or "open" in user_lower:
+                    outline_data["outline_type"] = "FOSS"
+                    extracted_value = "FOSS"
+                elif "ict" in user_lower or "digital" in user_lower or "skill" in user_lower:
+                    outline_data["outline_type"] = "ICT"
+                    extracted_value = "ICT"
+                elif "other" in user_lower:
+                    outline_data["outline_type"] = "OTHER"
+                    extracted_value = "OTHER"
+                else:
+                    outline_data["outline_type"] = "FOSS"
+                    extracted_value = "FOSS"
+                field_display = "Outline Type"
+                needs_confirmation = False
+            elif current_field == "tutorial_time":
+                # Use extract_and_set_field_value for time (it has complex regex logic)
+                # Pass raw user response as both extracted_text and user_response
+                extracted_value, field_display, needs_confirmation = extract_and_set_field_value(
+                    current_field, last_message.content, last_message.content, outline_data, outline_type
+                )
+        else:
+            # For text fields, use raw user response directly (no LLM extraction)
+            # Pass raw user response as both extracted_text and user_response
+            extracted_value, field_display, needs_confirmation = extract_and_set_field_value(
+                current_field, last_message.content, last_message.content, outline_data, outline_type
+            )
         
         # Strict validation for titles - reject immediately and re-ask
         if current_field in ["outline_name", "tutorial_title"] and isinstance(extracted_value, str):
@@ -87,17 +125,17 @@ def process_user_input(
                     tutorial_rows = outline_data.get("tutorial_rows", [])
                     if tutorial_rows:
                         tutorial_num = tutorial_rows[-1].get("tutorial_number", len(tutorial_rows))
-                        next_question = f"Tutorial #{tutorial_num} — please give a short title (under 50 characters, letters/numbers/spaces only)."
+                        next_question = f"Tutorial #{tutorial_num}: Title? (Max 50 chars, letters/numbers/spaces only)"
                 
                 # Fallback if question not found
                 if not next_question:
                     if current_field == "outline_name":
-                        next_question = "What would you like to call this course? The course outline name must be under 50 characters and use only letters, numbers, and spaces (no special characters)."
+                        next_question = "Course name? (Max 50 chars, letters/numbers/spaces only, no special chars)"
                     else:
                         tutorial_rows = outline_data.get("tutorial_rows", [])
                         if tutorial_rows:
                             tutorial_num = tutorial_rows[-1].get("tutorial_number", len(tutorial_rows))
-                            next_question = f"Tutorial #{tutorial_num} — please give a short title (under 50 characters, letters/numbers/spaces only)."
+                            next_question = f"Tutorial #{tutorial_num}: Title? (Max 50 chars, letters/numbers/spaces only)"
                 
                 # Make the question friendlier
                 rewritten = friendly_rewrite_question(next_question, outline_type, phase)
@@ -127,11 +165,12 @@ def process_user_input(
             if tutorial_rows:
                 tutorial_title = tutorial_rows[-1].get("title", "")
             
-            question_text = f"Could you please share your estimated time for Tutorial #{len(tutorial_rows) if tutorial_rows else 1} ({tutorial_title if tutorial_title else 'N/A'}) in minutes? Typically, it ranges from 2 to 10 minutes, but feel free to suggest any reasonable duration. You can provide a single number (e.g., '5 minutes') or a range (e.g., '3-4 minutes' or '3 to 4 minutes').\n\nExample answer: 7 minutes or 3-4 minutes"
+            tut_num = len(tutorial_rows) if tutorial_rows else 1
+            question_text = f"Tutorial #{tut_num} ({tutorial_title if tutorial_title else 'N/A'}): Estimated time in minutes? (e.g., 5 or 3-4)"
             
             return outline_data, phase, None, JSONResponse({
                 "project_id": project_id,
-                "assistant_message": f"Please provide a reasonable estimated time for this tutorial (typically 2-30 minutes). You can provide a single number or a range.\n\n{question_text}",
+                "assistant_message": f"Please provide estimated time (2-30 minutes). {question_text}",
                 "follow_up_question": question_text,
                 "phase": phase,
                 "outline_data": outline_data,
@@ -155,26 +194,47 @@ def process_user_input(
             save_session(project_id, outline_data, phase, None)
             return outline_data, phase, None, None
             
-    except Exception:
-        # Fallback to regex-based extraction
-        if current_field == "recommended_no_of_tutorials":
-            import re
-            numbers = re.findall(r'\d+', last_message.content)
-            if numbers:
-                outline_data["recommended_no_of_tutorials"] = int(numbers[0])
-        elif current_field == "outline_type":
-            user_lower = last_message.content.lower()
-            if "foss" in user_lower or "free" in user_lower or "open" in user_lower:
-                outline_data["outline_type"] = "FOSS"
-            elif "ict" in user_lower or "digital" in user_lower or "skill" in user_lower:
-                outline_data["outline_type"] = "ICT"
-            elif "other" in user_lower:
-                outline_data["outline_type"] = "OTHER"
-            else:
-                outline_data["outline_type"] = "FOSS"
-        else:
+    except Exception as e:
+        # Fallback: use raw user response for text fields, parse lists for list fields
+        # Note: tutorial fields (tutorial_title, tutorial_prerequisites, tutorial_steps, tutorial_time, tutorial_comments)
+        # are handled separately as they belong to tutorial rows and should use extract_and_set_field_value
+        list_fields_fallback = [
+            "course_objectives", "topics_included", "topics_not_included",
+            "allied_examples", "keywords"
+        ]
+        special_fields_fallback = ["outline_type", "recommended_no_of_tutorials"]
+        tutorial_fields = ["tutorial_title", "tutorial_prerequisites", "tutorial_steps", "tutorial_time", "tutorial_comments"]
+        
+        if current_field in list_fields_fallback:
             from .outline_chat_field_extraction import extract_field_from_response
             outline_data = extract_field_from_response(current_field, last_message.content, outline_data)
+        elif current_field in special_fields_fallback:
+            # Handle outline_type and recommended_no_of_tutorials
+            import re
+            if current_field == "recommended_no_of_tutorials":
+                numbers = re.findall(r'\d+', last_message.content)
+                if numbers:
+                    outline_data["recommended_no_of_tutorials"] = int(numbers[0])
+            elif current_field == "outline_type":
+                user_lower = last_message.content.lower()
+                if "foss" in user_lower or "free" in user_lower or "open" in user_lower:
+                    outline_data["outline_type"] = "FOSS"
+                elif "ict" in user_lower or "digital" in user_lower or "skill" in user_lower:
+                    outline_data["outline_type"] = "ICT"
+                elif "other" in user_lower:
+                    outline_data["outline_type"] = "OTHER"
+                else:
+                    outline_data["outline_type"] = "FOSS"
+        elif current_field in tutorial_fields:
+            # For tutorial fields, use extract_and_set_field_value to store in tutorial row
+            extracted_value, field_display, needs_confirmation = extract_and_set_field_value(
+                current_field, last_message.content, last_message.content, outline_data, outline_type
+            )
+        else:
+            # For other text fields, store raw response
+            extracted_value, field_display, needs_confirmation = extract_and_set_field_value(
+                current_field, last_message.content, last_message.content, outline_data, outline_type
+            )
         
         save_session(project_id, outline_data, phase, None)
         return outline_data, phase, None, None

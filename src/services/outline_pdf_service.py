@@ -74,9 +74,23 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     story.append(Spacer(1, 10))
     
     # === METADATA TABLE ===
+    # Determine outline type (FOSS or ICT)
+    outline_type = outline_data.get('outline_type', 'FOSS').upper()
+    
+    # Get platform name (FOSS/ICT tool name and version)
+    platform_name = outline_data.get('platform_name', 'Not Applicable for this series')
+    if not platform_name or platform_name.strip() == '':
+        platform_name = 'Not Applicable for this series'
+    
+    # Use appropriate label based on outline type
+    if outline_type == 'ICT':
+        platform_label = "ICT Platform/Program"
+    else:
+        platform_label = "FOSS Version"
+    
     metadata_rows = [
         ["Course Outline Name", outline_data.get('outline_name', outline_data.get('tutorial_name', ''))],
-        ["FOSS Version", outline_data.get('foss_version', 'Not Applicable for this series')],
+        [platform_label, platform_name],
         ["Target Audience", outline_data.get('target_audience', '')],
         ["Entry Behaviour", outline_data.get('entry_behaviour', '')],
         ["Purpose", outline_data.get('purpose', '')],
@@ -108,11 +122,6 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     story.append(metadata_table)
     story.append(Spacer(1, 20))
     
-    # === ABOUT THE COURSE ===
-    story.append(Paragraph("<b>About the course (Brief introduction)</b>", heading_style))
-    story.append(Paragraph(outline_data.get('about_course', ''), normal_style))
-    story.append(Spacer(1, 15))
-    
     # === COURSE OBJECTIVES ===
     story.append(Paragraph("<b>Course Objectives:</b>", heading_style))
     objectives = outline_data.get('course_objectives', [])
@@ -138,9 +147,17 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     story.append(Spacer(1, 15))
     
     # === EXAMPLES ===
+    # Use appropriate labels based on outline type
+    if outline_type == 'ICT':
+        core_example_label = "Teaching Scenarios/Examples (core use case)"
+        allied_example_label = "Allied examples/scenarios"
+    else:
+        core_example_label = "Core example used in the series"
+        allied_example_label = "Allied examples used in this series"
+    
     examples_rows = [
-        ["Core example used in the series", outline_data.get('core_example', '')],
-        ["Allied examples used in this series", "; ".join(outline_data.get('allied_examples', []))],
+        [core_example_label, outline_data.get('core_example', '')],
+        [allied_example_label, "; ".join(outline_data.get('allied_examples', []))],
     ]
     examples_table_data = []
     for label, value in examples_rows:
@@ -161,16 +178,28 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
     
     # === COURSE OUTLINE GUIDELINES ===
     story.append(Paragraph("<b>Course Outline Guidelines</b>", heading_style))
-    guidelines = [
-        "Every script should be written such that 75-80% of the content is the demonstration.",
-        "Keep theory to a minimum.",
-        "Do not use the Menu-based approach to explain the features of the software.",
-        "Cover crucial and important features in detail.",
-        "Avoid repetitions across the outline or across scripts or within a script.",
-        "Provide quick pointers for less important features.",
-        "Avoid spending too much time on topics which learners can figure out on their own.",
-        "Refer to other features in assignments with an appropriate number of hints to help the learner."
-    ]
+    if outline_type == 'ICT':
+        guidelines = [
+            "Focus on skill-building and practical application (what learners will DO or TEACH).",
+            "Include teaching methodologies and integration strategies.",
+            "Use relatable teaching scenarios and real-world educational applications.",
+            "Keep content practical and actionable (avoid pure theory).",
+            "Organize topics by categories or skill areas when helpful.",
+            "Each tutorial should focus on a specific skill, methodology, or integration strategy.",
+            "Avoid repetition across tutorials.",
+            "Flag topics that are too advanced or off-scope."
+        ]
+    else:  # FOSS
+        guidelines = [
+            "Every script should be written such that 75-80% of the content is the demonstration.",
+            "Keep theory to a minimum.",
+            "Do not use the Menu-based approach to explain the features of the software.",
+            "Cover crucial and important features in detail.",
+            "Avoid repetitions across the outline or across scripts or within a script.",
+            "Provide quick pointers for less important features.",
+            "Avoid spending too much time on topics which learners can figure out on their own.",
+            "Refer to other features in assignments with an appropriate number of hints to help the learner."
+        ]
     for g in guidelines:
         story.append(Paragraph(f"• {g}", normal_style))
     story.append(Spacer(1, 20))
@@ -184,9 +213,17 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
         
         story.append(Paragraph(f"<b>Tutorial Title {tutorial_num}: {title}</b>", heading_style))
         
+        # Handle prerequisites as list or string (for backward compatibility)
+        prerequisites_data = tutorial.get('prerequisites', [])
+        if isinstance(prerequisites_data, list):
+            prerequisites = '; '.join(prerequisites_data) if prerequisites_data else 'N/A'
+        else:
+            prerequisites = prerequisites_data if prerequisites_data else 'N/A'
+        
         # Table header
         table_data = [
             [
+                Paragraph("<b>Prerequisites</b>", normal_style),
                 Paragraph("<b>Topics Details</b>", normal_style),
                 Paragraph("<b>Time (range)</b>", normal_style),
                 Paragraph("<b>Comments</b>", normal_style)
@@ -196,7 +233,6 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
         # Add each topic as a row
         topics = tutorial.get('topics_details', [])
         time_seconds = tutorial.get('time_seconds', 180)
-        time_per_topic = time_seconds // max(len(topics), 1)
         
         # Format time display as range if available
         time_range = tutorial.get('time_range')
@@ -211,22 +247,26 @@ def create_outline_pdf(outline_data: dict, output_path: str = None) -> str:
             # Fallback to time_seconds
             time_display = f"{time_seconds // 60} min" if time_seconds > 0 else "0 min"
         
+        comments = tutorial.get('comments', '')
+        
         for i, topic in enumerate(topics):
             table_data.append([
+                Paragraph(prerequisites if i == 0 else "", normal_style),
                 Paragraph(f"{i+1}. {topic}", normal_style),
                 Paragraph(time_display if i == 0 else "", normal_style),
-                Paragraph(tutorial.get('comments', '') if i == 0 else "", normal_style)
+                Paragraph(comments if i == 0 else "", normal_style)
             ])
         
         # Add empty rows if needed (template shows 4 rows minimum)
         while len(table_data) < 5:
             table_data.append([
+                Paragraph("", normal_style),
                 Paragraph(f"{len(table_data)}. ", normal_style),
                 Paragraph("", normal_style),
                 Paragraph("", normal_style)
             ])
         
-        tutorial_table = Table(table_data, colWidths=[10*cm, 3*cm, 5*cm])
+        tutorial_table = Table(table_data, colWidths=[4*cm, 8*cm, 3*cm, 3*cm])
         tutorial_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),

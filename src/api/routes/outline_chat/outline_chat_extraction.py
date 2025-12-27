@@ -256,9 +256,8 @@ def extract_and_set_field_value(
     """
     field_display = field.replace("_", " ").title()
     
-    # Clean up extracted text
-    if "could not extract" in extracted_text.lower() or "not a" in extracted_text.lower() or "does not specify" in extracted_text.lower() or "not a title" in extracted_text.lower():
-        extracted_text = user_response.strip()
+    # Use user_response directly for all fields (no LLM extraction)
+    # extracted_text parameter is kept for backward compatibility but we use user_response
     
     if field == "outline_type":
         extracted_type = extracted_text.strip().upper()
@@ -283,17 +282,15 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field == "recommended_no_of_tutorials":
-        numbers = re.findall(r'\d+', extracted_text)
+        # Extract number from user response directly
+        numbers = re.findall(r'\d+', user_response)
         if numbers:
             outline_data["recommended_no_of_tutorials"] = int(numbers[0])
-        else:
-            numbers = re.findall(r'\d+', user_response)
-            if numbers:
-                outline_data["recommended_no_of_tutorials"] = int(numbers[0])
         return None, field_display, False
     
     elif field == "tutorial_title":
-        extracted_value = extracted_text.strip('"\'')
+        # Use raw user response directly
+        extracted_value = user_response.strip()
         field_display = "Tutorial Title"
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
         if not needs_confirmation:
@@ -303,16 +300,14 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_prerequisites":
-        extracted_value = extracted_text.strip('"\'')
-        # Support semicolon-separated prerequisites - store as list
-        if ';' in extracted_value:
-            prerequisites_list = [item.strip() for item in extracted_value.split(';') if item.strip()]
-        elif ',' in extracted_value:
-            # Also support comma-separated
-            prerequisites_list = [item.strip() for item in extracted_value.split(',') if item.strip()]
+        # Parse prerequisites from user response directly
+        user_resp = user_response.strip()
+        # Split on semicolon if present, otherwise store as single item
+        if ';' in user_resp:
+            prerequisites_list = [item.strip() for item in user_resp.split(';') if item.strip()]
         else:
-            # Single prerequisite
-            prerequisites_list = [extracted_value] if extracted_value.strip() else []
+            # No semicolon - store entire response as single item
+            prerequisites_list = [user_resp] if user_resp else []
         
         field_display = "Prerequisites"
         # For confirmation, join with semicolon for display
@@ -326,17 +321,13 @@ def extract_and_set_field_value(
     
     elif field == "tutorial_steps":
         tutorial_rows = outline_data.get("tutorial_rows", [])
-        try:
-            steps = json.loads(extract_json_block(extracted_text))
-        except:
-            steps = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', user_response, re.MULTILINE)
-            if not steps:
-                if ';' in user_response:
-                    steps = [item.strip() for item in user_response.split(';') if item.strip()]
-                elif ',' in user_response:
-                    steps = [item.strip() for item in user_response.split(',') if item.strip()]
-                else:
-                    steps = [line.strip() for line in user_response.split('\n') if line.strip()]
+        # Parse steps from user response: split on semicolon if present, otherwise store as single item
+        user_resp = user_response.strip()
+        if ';' in user_resp:
+            steps = [item.strip() for item in user_resp.split(';') if item.strip()]
+        else:
+            # No semicolon - store entire response as single item
+            steps = [user_resp] if user_resp else []
         
         if outline_type == "FOSS":
             steps = [transform_menu_instructions(s) for s in steps if s.strip()]
@@ -352,34 +343,23 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_time":
-        # Extract time range or single value
+        # Extract time range or single value from user response directly
         # Patterns: "3-4", "3 to 4", "3-4 minutes", "3 to 4 min", etc.
         range_pattern = r'(\d+)\s*[-–—to]\s*(\d+)'
         
-        # First try extracted text
-        range_match = re.search(range_pattern, extracted_text, re.IGNORECASE)
+        # Try user response first
+        range_match = re.search(range_pattern, user_response, re.IGNORECASE)
         if range_match:
             min_minutes = int(range_match.group(1))
             max_minutes = int(range_match.group(2))
         else:
-            # Try user response
-            range_match = re.search(range_pattern, user_response, re.IGNORECASE)
-            if range_match:
-                min_minutes = int(range_match.group(1))
-                max_minutes = int(range_match.group(2))
+            # Single value - extract from user_response
+            numbers = re.findall(r'\d+', user_response)
+            if numbers:
+                min_minutes = int(numbers[0])
+                max_minutes = int(numbers[0])  # Same value for single number
             else:
-                # Single value - extract from extracted_text first, then user_response
-                numbers = re.findall(r'\d+', extracted_text)
-                if numbers:
-                    min_minutes = int(numbers[0])
-                    max_minutes = int(numbers[0])  # Same value for single number
-                else:
-                    numbers = re.findall(r'\d+', user_response)
-                    if numbers:
-                        min_minutes = int(numbers[0])
-                        max_minutes = int(numbers[0])
-                    else:
-                        return 0, "Time (minutes)", False  # Will trigger error response
+                return 0, "Time (minutes)", False  # Will trigger error response
         
         # Validate range
         if min_minutes < 1 or min_minutes > 30 or max_minutes < 1 or max_minutes > 30:
@@ -407,7 +387,8 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field == "tutorial_comments":
-        extracted_value = extracted_text.strip('"\'')
+        # Use raw user response directly
+        extracted_value = user_response.strip()
         field_display = "Comments"
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
         if not needs_confirmation:
@@ -417,11 +398,9 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     elif field in ["course_objectives", "topics_included", "topics_not_included", "allied_examples", "keywords"]:
-        try:
-            extracted_value = json.loads(extract_json_block(extracted_text))
-        except:
-            outline_data = extract_field_from_response(field, user_response, outline_data)
-            extracted_value = outline_data.get(field)
+        # Parse list from user response directly (no JSON parsing)
+        outline_data = extract_field_from_response(field, user_response, outline_data)
+        extracted_value = outline_data.get(field)
         
         field_display = field.replace("_", " ").title()
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)
@@ -430,13 +409,8 @@ def extract_and_set_field_value(
         return extracted_value, field_display, needs_confirmation
     
     else:
-        # For core_example and other text fields
-        extracted_value = extracted_text.strip('"\'')
-        if not extracted_value or len(extracted_value) < 3:
-            if field == "core_example" and user_response:
-                extracted_value = user_response.strip()
-            elif "could not extract" in extracted_text.lower() or "not a" in extracted_text.lower():
-                extracted_value = user_response.strip()
+        # For core_example and other text fields - use raw user response directly
+        extracted_value = user_response.strip()
         
         field_display = field.replace("_", " ").title()
         needs_confirmation = should_ask_confirmation(field, extracted_value, user_response)

@@ -178,70 +178,55 @@ Return ONLY "yes" or "no" (lowercase, no quotes)."""
 
 
 def extract_field_from_response(field: str, response: str, outline_data: Dict) -> Dict:
-    """Extract and transform field value from SME response."""
+    """Extract and transform field value from SME response. Enhanced list parsing."""
     updated = outline_data.copy()
     
+    def parse_list_items(text: str) -> list:
+        """Parse list items: split on semicolon if present, otherwise store as single item."""
+        text = text.strip()
+        if not text:
+            return []
+        
+        # If semicolon is present, split on semicolon
+        if ';' in text:
+            items = [item.strip() for item in text.split(';') if item.strip()]
+            return items if items else []
+        else:
+            # No semicolon - store entire response as single item
+            return [text] if text else []
+    
     if field == "course_objectives":
-        # Extract bullet points or numbered list
-        objectives = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
-        if not objectives:
-            # Try semicolon-separated, then comma-separated, then line-separated
-            if ';' in response:
-                objectives = [item.strip() for item in response.split(';') if item.strip()]
-            elif ',' in response:
-                objectives = [item.strip() for item in response.split(',') if item.strip()]
-            else:
-                objectives = [line.strip() for line in response.split('\n') if line.strip()]
+        objectives = parse_list_items(response)
         updated["course_objectives"] = objectives[:6]  # Max 6
     
     elif field == "topics_included" or field == "topics_not_included":
-        topics = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
-        if not topics:
-            # Try semicolon-separated, then comma-separated, then line-separated
-            if ';' in response:
-                topics = [item.strip() for item in response.split(';') if item.strip()]
-            elif ',' in response:
-                topics = [item.strip() for item in response.split(',') if item.strip()]
-            else:
-                topics = [line.strip() for line in response.split('\n') if line.strip()]
+        topics = parse_list_items(response)
         updated[field] = topics
     
     elif field == "allied_examples":
-        examples = re.findall(r'[•\-\d+\.]\s*(.+?)(?:\n|$)', response, re.MULTILINE)
-        if not examples:
-            # Try semicolon-separated, then comma-separated, then line-separated
-            if ';' in response:
-                raw_items = response.split(';')
-            elif ',' in response:
-                raw_items = response.split(',')
-            else:
-                raw_items = response.split('\n')
-
+        # Check for negative responses first
+        response_lower = response.lower().strip()
+        if response_lower in ['no', 'none', 'n/a', 'na', 'not applicable']:
+            updated["allied_examples"] = []
+        else:
+            examples = parse_list_items(response)
+            # Filter out negative responses from the list
             examples = [
-                item.strip() for item in raw_items
-                if item.strip() and item.strip().lower() not in ['no', 'none', 'n/a']
+                ex for ex in examples
+                if ex.lower() not in ['no', 'none', 'n/a', 'na', 'not applicable']
             ]
-        updated["allied_examples"] = examples[:2]  # Max 2
+            updated["allied_examples"] = examples[:2]  # Max 2
     
     elif field == "keywords":
-        # Support semicolon- or comma-separated keywords
-        if ';' in response:
-            raw_keywords = response.split(';')
-        else:
-            raw_keywords = response.split(',')
-        keywords = [k.strip() for k in raw_keywords if k.strip()]
+        keywords = parse_list_items(response)
         updated["keywords"] = keywords[:6]  # Max 6
     
     elif field == "tutorial_prerequisites":
-        # Support semicolon-separated prerequisites - store as list
-        if ';' in response:
-            prerequisites_list = [item.strip() for item in response.split(';') if item.strip()]
-        elif ',' in response:
-            # Also support comma-separated
-            prerequisites_list = [item.strip() for item in response.split(',') if item.strip()]
-        else:
-            # Single prerequisite
-            prerequisites_list = [response.strip()] if response.strip() else []
+        # Parse prerequisites as list
+        prerequisites_list = parse_list_items(response)
+        # If empty after parsing, check if it's a single item
+        if not prerequisites_list and response.strip():
+            prerequisites_list = [response.strip()]
         updated["tutorial_prerequisites"] = prerequisites_list
     
     elif field == "recommended_no_of_tutorials":
