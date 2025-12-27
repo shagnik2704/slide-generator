@@ -5,7 +5,7 @@ Stage 1: Parses outline and creates metadata + slide skeleton.
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 from src.core.state import AgentState, StructuredOutline
 
 load_dotenv()
@@ -24,18 +24,17 @@ def generate_structure(state: AgentState):
         print("⚠️ No outline provided")
         return {"structured_outline": {}}
     
-   #  llm = ChatOpenAI(model="gpt-5-mini")
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     structured_llm = llm.with_structured_output(StructuredOutline)
     
-    # Select prompt based on tutorial type
+    # Select messages based on tutorial type
     if tutorial_type == "demo":
-        prompt = get_demo_prompt(outline)
+        messages = get_demo_messages(outline)
     else:
-        prompt = get_conceptual_prompt(outline)
+        messages = get_conceptual_messages(outline)
     
     try:
-        result = structured_llm.invoke(prompt)
+        result = structured_llm.invoke(messages)
         structured_outline = result.model_dump()
         
         slide_count = len(structured_outline.get('slides', []))
@@ -50,9 +49,9 @@ def generate_structure(state: AgentState):
         return {"structured_outline": {}}
 
 
-def get_conceptual_prompt(outline: str) -> str:
-    """Prompt for conceptual tutorials - explains concepts with analogies."""
-    return f"""You are creating a LEAN STRUCTURE for a Spoken Tutorial script (3-4 minutes).
+def get_conceptual_messages(outline: str) -> list:
+    """Messages for conceptual tutorials - explains concepts with analogies."""
+    system_content = """You are creating a LEAN STRUCTURE for a Spoken Tutorial script (3-4 minutes).
 
 === METADATA RULES ===
 - presentation_title: "Spoken Tutorial on [Topic]" (no bold markers).
@@ -146,15 +145,21 @@ NOTE: If topic involves comparison (prompting, writing), add:
 - Improved Example (demo)
 - Comparison (demo)
 
-=== USER OUTLINE ===
-{outline}
-
 Generate a LEAN structured outline with MINIMAL slides."""
 
+    human_content = f"""Create a structured outline for the following tutorial:
 
-def get_demo_prompt(outline: str) -> str:
-    """Prompt for demo tutorials - step-by-step software walkthroughs."""
-    return f"""You are creating a STEP-BY-STEP DEMO structure for a Spoken Tutorial.
+{outline}"""
+
+    return [
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content)
+    ]
+
+
+def get_demo_messages(outline: str) -> list:
+    """Messages for demo tutorials - step-by-step software walkthroughs."""
+    system_content = """You are creating a STEP-BY-STEP DEMO structure for a Spoken Tutorial.
 
 === METADATA RULES ===
 - presentation_title: "Spoken Tutorial on [Action/Task]" (no bold markers)
@@ -231,8 +236,14 @@ BOILERPLATE (ending):
 12. Assignment (boilerplate)
 13. Thank You (boilerplate)
 
-=== USER OUTLINE ===
-{outline}
-
 Generate a clear STEP-BY-STEP demo structure."""
+
+    human_content = f"""Create a structured outline for the following demo tutorial:
+
+{outline}"""
+
+    return [
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content)
+    ]
 

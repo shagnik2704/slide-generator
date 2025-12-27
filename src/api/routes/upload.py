@@ -367,7 +367,6 @@ async def generate_voice_endpoint(data: dict):
     Args:
         json_script: The parsed script JSON
         project_id: Optional project ID (auto-generated if not provided)
-        target_audience: kids, students, professionals, or general (default: general)
     
     Returns:
         audio_urls: Per-slide audio file URLs
@@ -378,7 +377,6 @@ async def generate_voice_endpoint(data: dict):
     try:
         json_script = data.get('json_script')
         project_id = data.get('project_id')
-        target_audience = data.get('target_audience', 'general')
         
         if not json_script:
             raise HTTPException(status_code=400, detail="json_script is required")
@@ -387,7 +385,6 @@ async def generate_voice_endpoint(data: dict):
         result = await generate_voice_for_script(
             json_script=json_script,
             project_id=project_id,
-            target_audience=target_audience
         )
         
         print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")

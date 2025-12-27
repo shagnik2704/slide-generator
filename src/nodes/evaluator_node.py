@@ -37,7 +37,7 @@ def evaluate_quality(state: AgentState):
 
     # Initialize LangChain model with structured output
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash",
         temperature=0.7,
     )
     

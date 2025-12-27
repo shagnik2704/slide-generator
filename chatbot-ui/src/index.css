@@ -9,9 +9,10 @@
   --brand-orange-light: #FF8246;
 
   /* Backgrounds */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fc;
-  --bg-tertiary: #eef1f8;
+  --bg-primary: #f0f0ed;
+  /* Very soft gray-cream - minimal eye strain */
+  --bg-secondary: #eaeae5;
+  --bg-tertiary: #e3e3dd;
 
   /* Text */
   --text-primary: #2D3E8E;

@@ -49,6 +49,11 @@ app.add_middleware(
 static_dir = project_root / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir), check_dir=False), name="static")
 
+# Mount output directory to serve audio files
+output_dir = project_root / "output"
+output_dir.mkdir(exist_ok=True)  # Ensure it exists
+app.mount("/output", StaticFiles(directory=str(output_dir), check_dir=False), name="output")
+
 # Import routers after app is created (they will use app.state.graph)
 from src.api.routes import (
     upload_router,

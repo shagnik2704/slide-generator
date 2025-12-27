@@ -6,6 +6,7 @@ import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
+import VoicePreview from './VoicePreview';
 
 // Message Action Components
 import {
@@ -334,6 +335,10 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     copiedId={copiedId}
                                     setCopiedId={setCopiedId}
                                 />
+                            )}
+
+                            {msg.type === 'voice_preview' && msg.voiceData && (
+                                <VoicePreview voiceData={msg.voiceData} isOpen={true} />
                             )}
                         </div>
                     ))}

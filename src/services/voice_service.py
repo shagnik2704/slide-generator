@@ -19,19 +19,14 @@ load_dotenv()
 
 # === TTS Configuration ===
 
-TTS_PROMPTS = {
-    'kids': "Speak in a friendly, enthusiastic tone suitable for children. Use simple words and clear pronunciation.",
-    'students': "Speak clearly and at a moderate pace, suitable for educational content. Be engaging but professional.",
-    'professionals': "Speak in a professional, authoritative tone. Be concise and clear.",
-    'general': "Speak clearly and naturally, as if explaining to a friend. Use a warm, engaging tone."
-}
+# Single voice and prompt for consistent narration
+DEFAULT_VOICE = "Laomedeia"
+DEFAULT_PROMPT = """Speak as an instructor for a Spoken Tutorial video. Use an Indian English accent.
+Follow these guidelines:
+- Speak clearly, at a pace that allows learners to follow along on their computers.
+- Pause briefly after each sentence to give learners time to process.
+- Use a tone as if teaching a student one-on-one."""
 
-VOICE_MAPPING = {
-    'kids': "Tevel",
-    'students': "Kore", 
-    'professionals': "Ophir",
-    'general': "Kore"
-}
 
 
 def extract_narration(json_script: dict) -> List[Dict]:
@@ -81,8 +76,6 @@ async def generate_voice_for_slide(
     text: str, 
     slide_num: int, 
     output_dir: Path,
-    voice: str = "Kore",
-    audience: str = "general"
 ) -> Optional[str]:
     """
     Generate audio for a single slide.
@@ -91,8 +84,6 @@ async def generate_voice_for_slide(
         text: Narration text
         slide_num: Slide number
         output_dir: Directory to save audio
-        voice: Voice name (Kore, Tevel, Ophir, etc.)
-        audience: Target audience for prompt styling
     
     Returns:
         Path to generated audio file, or None if failed
@@ -103,37 +94,41 @@ async def generate_voice_for_slide(
     
     client = genai.Client(api_key=api_key)
     
-    voice_instruction = TTS_PROMPTS.get(audience, TTS_PROMPTS['general'])
-    full_prompt = f"{voice_instruction} {text}"
+    full_prompt = f"{DEFAULT_PROMPT} {text}"
     
     try:
         print(f"🎤 Generating audio for slide {slide_num}...")
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash-preview-tts',
+            model='gemini-2.5-pro-preview-tts',
             contents=full_prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=voice
+                            voice_name=DEFAULT_VOICE
                         )
                     )
                 )
             )
         )
         
+        # Check if response has parts
+        if not response.parts:
+            print(f"⚠️ Empty response for slide {slide_num} - API may have blocked or failed")
+            return None
+        
         # Extract audio data
         for part in response.parts:
             if part.inline_data:
-                # Gemini returns WAV data - save directly
-                wav_data = part.inline_data.data
+                # Gemini returns raw PCM data - use wave_file to add proper WAV headers
+                pcm_data = part.inline_data.data
                 wav_path = output_dir / f"slide_{slide_num}.wav"
                 
-                # Save WAV file directly
-                with open(str(wav_path), 'wb') as f:
-                    f.write(wav_data)
+                # Use audio_utils to create proper WAV file with headers
+                from src.utils.audio_utils import wave_file
+                wave_file(str(wav_path), pcm_data)
                 
                 print(f"✓ Generated audio for slide {slide_num}")
                 return str(wav_path)
@@ -149,7 +144,6 @@ async def generate_voice_for_slide(
 async def generate_voice_for_script(
     json_script: dict,
     project_id: Optional[int] = None,
-    target_audience: str = "general"
 ) -> Dict:
     """
     Generate audio narration for all slides in a script.
@@ -157,7 +151,6 @@ async def generate_voice_for_script(
     Args:
         json_script: The parsed script JSON
         project_id: Optional project ID for file naming
-        target_audience: kids, students, professionals, or general
     
     Returns:
         {
@@ -180,9 +173,6 @@ async def generate_voice_for_script(
     # Extract narrations
     narrations = extract_narration(json_script)
     
-    # Select voice based on audience
-    voice = VOICE_MAPPING.get(target_audience, "Kore")
-    
     # Generate audio for each slide
     audio_map = {}
     errors = []
@@ -199,14 +189,12 @@ async def generate_voice_for_script(
                 text=text,
                 slide_num=slide_num,
                 output_dir=audio_dir,
-                voice=voice,
-                audience=target_audience
             )
             
             if audio_path:
-                # Convert to URL path
-                relative_path = Path(audio_path).relative_to(project_root)
-                audio_map[slide_num] = f"/static/{relative_path}"
+                # Convert to URL path - use /output/ mount
+                relative_path = Path(audio_path).relative_to(project_root / "output")
+                audio_map[slide_num] = f"/output/{relative_path}"
             else:
                 errors.append(f"Slide {slide_num}: No audio generated")
                 
@@ -219,13 +207,13 @@ async def generate_voice_for_script(
         for wav_file in audio_dir.glob("*.wav"):
             zf.write(wav_file, wav_file.name)
     
-    zip_relative = zip_path.relative_to(project_root)
+    zip_relative = zip_path.relative_to(project_root / "output")
     
     print(f"✅ Voice generation complete: {len(audio_map)}/{len(narrations)} slides")
     
     return {
         "audio_urls": audio_map,
-        "zip_url": f"/static/{zip_relative}",
+        "zip_url": f"/output/{zip_relative}",
         "project_id": project_id,
         "success": len(errors) == 0,
         "errors": errors,
