@@ -43,10 +43,8 @@ export default function MediaWikiExportActions({
                     }}
                     style={{
                         padding: '0.75rem 1.5rem',
-                        background: copiedId === msg.id
-                            ? 'linear-gradient(135deg, #059669, #10b981)'
-                            : 'var(--bg-tertiary)',
-                        color: copiedId === msg.id ? 'white' : 'var(--text-primary)',
+                        background: 'var(--bg-tertiary)',
+                        color: 'var(--text-primary)',
                         border: '1px solid var(--border-color)',
                         borderRadius: '0.75rem',
                         cursor: 'pointer',
@@ -89,7 +87,7 @@ export default function MediaWikiExportActions({
                         alignItems: 'center',
                         gap: '0.5rem',
                         padding: '0.75rem 1.5rem',
-                        background: 'linear-gradient(135deg, #059669, #10b981)',
+                        background: '#065f46',
                         color: 'white',
                         textDecoration: 'none',
                         borderRadius: '0.75rem',

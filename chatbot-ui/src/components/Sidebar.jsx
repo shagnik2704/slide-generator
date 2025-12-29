@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, onVoiceUpload, onScriptUpload }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -15,38 +15,38 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, o
     const voiceInputRef = useRef(null);
     const scriptInputRef = useRef(null);
 
-    // Handle compliance file selection
+    // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
         const file = e.target.files[0];
-        if (file && onComplianceUpload) {
-            onComplianceUpload(file);
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'compliance' });
             e.target.value = '';
         }
     };
 
-    // Handle quality file selection
+    // Handle quality file selection - stage for preview
     const handleQualityFileSelect = (e) => {
         const file = e.target.files[0];
-        if (file && onQualityUpload) {
-            onQualityUpload(file);
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'quality' });
             e.target.value = '';
         }
     };
 
-    // Handle voice file selection
+    // Handle voice file selection - stage for preview
     const handleVoiceFileSelect = (e) => {
         const file = e.target.files[0];
-        if (file && onVoiceUpload) {
-            onVoiceUpload(file);
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'voice' });
             e.target.value = '';
         }
     };
 
-    // Handle script file selection (outline upload)
+    // Handle script file selection (outline upload) - stage for preview
     const handleScriptFileSelect = (e) => {
         const file = e.target.files[0];
-        if (file && onScriptUpload) {
-            onScriptUpload(file);
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'outline' });
             e.target.value = '';
         }
     };

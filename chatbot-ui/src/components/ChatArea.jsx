@@ -58,6 +58,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleClearSession,
         handleSendMessage,
         handleUploadScript,
+        handleScriptToWiki,
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
@@ -73,6 +74,12 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleExportMediaWiki,
         handleSaveScriptEdit,
         handleQualityCheck,
+
+        // Staging
+        stagedFile,
+        setStagedFile,
+        handleConfirmStagedFile,
+        handleCancelStagedFile,
     } = useChatArea();
 
     // Expose handlers for sidebar via ref
@@ -80,7 +87,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
-        handleSidebarScriptUpload
+        handleSidebarScriptUpload,
+        setStagedFile,  // Expose staging for Sidebar
     }));
 
     // Helper to update compliance report in a message
@@ -372,9 +380,14 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 mode={mode}
                 onSendMessage={handleSendMessage}
                 onUploadScript={handleUploadScript}
+                onScriptToWiki={handleScriptToWiki}
                 onSendText={handleSendChatText}
                 disabled={isTyping}
                 isWelcome={mode === 'upload' && uploadMessages.length === 1}
+                stagedFile={stagedFile}
+                setStagedFile={setStagedFile}
+                onConfirmStagedFile={handleConfirmStagedFile}
+                onCancelStagedFile={handleCancelStagedFile}
             />
 
             <style>{`

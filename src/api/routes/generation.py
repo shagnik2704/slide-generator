@@ -163,6 +163,48 @@ async def export_mediawiki_endpoint(request: ExportMediaWikiRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/docx_to_mediawiki")
+async def docx_to_mediawiki(file: UploadFile = File(...)):
+    """Converts a .docx script directly to MediaWiki format in one step."""
+    print(f"Converting .docx to MediaWiki: {file.filename}")
+    
+    try:
+        # Validate file type
+        if not file.filename.endswith('.docx'):
+            raise HTTPException(status_code=400, detail="Only .docx files are allowed")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Step 1: Parse docx → JSON
+        from io import BytesIO
+        json_script = docx_to_json(BytesIO(content))
+        
+        slide_count = len(json_script.get('slides', []))
+        print(f"📝 Parsed script: {slide_count} slides")
+        
+        # Step 2: JSON → MediaWiki
+        result = export_to_mediawiki(json_script)
+        
+        print(f"✅ Converted to MediaWiki: {result['file_path']}")
+        
+        return JSONResponse({
+            "mediawiki_content": result["content"],
+            "mediawiki_file_url": f"/static/{os.path.basename(result['file_path'])}",
+            "file_path": result["file_path"],
+            "slide_count": slide_count,
+            "message": f"Successfully converted {slide_count} slides to MediaWiki format"
+        })
+        
+    except ValueError as e:
+        print(f"Parsing error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in docx_to_mediawiki: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/download_script_docx")
 async def download_script_docx(request: DownloadScriptDocxRequest):
     """Downloads the script as an editable Word document with two-column table format."""

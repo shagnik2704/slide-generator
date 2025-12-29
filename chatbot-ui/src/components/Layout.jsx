@@ -10,31 +10,10 @@ const Layout = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Handle compliance upload from sidebar
-  const handleSidebarComplianceUpload = (file) => {
-    if (chatAreaRef.current?.handleSidebarComplianceUpload) {
-      chatAreaRef.current.handleSidebarComplianceUpload(file);
-    }
-  };
-
-  // Handle quality upload from sidebar
-  const handleSidebarQualityUpload = (file) => {
-    if (chatAreaRef.current?.handleSidebarQualityUpload) {
-      chatAreaRef.current.handleSidebarQualityUpload(file);
-    }
-  };
-
-  // Handle voice upload from sidebar
-  const handleSidebarVoiceUpload = (file) => {
-    if (chatAreaRef.current?.handleSidebarVoiceUpload) {
-      chatAreaRef.current.handleSidebarVoiceUpload(file);
-    }
-  };
-
-  // Handle script upload from sidebar (triggers outline upload flow)
-  const handleSidebarScriptUpload = (file) => {
-    if (chatAreaRef.current?.handleSidebarScriptUpload) {
-      chatAreaRef.current.handleSidebarScriptUpload(file);
+  // Handle staging file from sidebar (stages for preview before upload)
+  const handleStageFile = (stagedData) => {
+    if (chatAreaRef.current?.setStagedFile) {
+      chatAreaRef.current.setStagedFile(stagedData);
     }
   };
 
@@ -44,10 +23,7 @@ const Layout = () => {
         <Sidebar
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
-          onComplianceUpload={handleSidebarComplianceUpload}
-          onQualityUpload={handleSidebarQualityUpload}
-          onVoiceUpload={handleSidebarVoiceUpload}
-          onScriptUpload={handleSidebarScriptUpload}
+          onStageFile={handleStageFile}
         />
         <ChatArea
           ref={chatAreaRef}

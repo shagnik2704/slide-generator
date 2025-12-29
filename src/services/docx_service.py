@@ -135,6 +135,76 @@ def _add_formatted_text(cell, text):
         paragraph.add_run(text[last_end:])
 
 
+def _extract_formatted_text(cell) -> str:
+    """
+    Extract text from a Word cell while preserving bold formatting as markdown.
+    
+    This reads the runs in each paragraph and wraps bold text with **markers**.
+    Handles consecutive bold runs by merging them into a single bold block.
+    Also preserves bullet points from paragraph list formatting.
+    """
+    result_parts = []
+    
+    for paragraph in cell.paragraphs:
+        # Check if this paragraph is a list item (has bullet/numbering)
+        is_list_item = False
+        try:
+            # Check for numbering properties in the paragraph
+            pPr = paragraph._p.pPr
+            if pPr is not None:
+                numPr = pPr.numPr
+                if numPr is not None:
+                    is_list_item = True
+        except (AttributeError, TypeError):
+            pass
+        
+        # Collect runs with their formatting
+        segments = []  # List of (text, is_bold) tuples
+        
+        for run in paragraph.runs:
+            text = run.text
+            if not text:
+                continue
+            
+            is_bold = bool(run.bold)
+            
+            # Merge with previous segment if same formatting
+            if segments and segments[-1][1] == is_bold:
+                segments[-1] = (segments[-1][0] + text, is_bold)
+            else:
+                segments.append((text, is_bold))
+        
+        # Build paragraph text with proper bold markers
+        para_parts = []
+        for text, is_bold in segments:
+            if is_bold and text.strip():  # Only add markers if there's actual content
+                # Handle text that has leading/trailing spaces
+                leading_space = text[:len(text) - len(text.lstrip())]
+                trailing_space = text[len(text.rstrip()):]
+                core_text = text.strip()
+                
+                if core_text:
+                    para_parts.append(f"{leading_space}**{core_text}**{trailing_space}")
+            else:
+                para_parts.append(text)
+        
+        # Join all parts for this paragraph
+        if para_parts:
+            para_text = ''.join(para_parts)
+            # Clean up any double markers from edge cases
+            para_text = para_text.replace('****', '')
+            para_text = para_text.replace('** **', ' ')
+            
+            # Prefix with bullet marker if this is a list item
+            if is_list_item:
+                para_text = '• ' + para_text
+            
+            result_parts.append(para_text)
+    
+    # Join paragraphs with newlines
+    return '\n'.join(result_parts).strip()
+
+
 def docx_to_json(docx_file) -> dict:
     """
     Parse a Word document back to JSON script format.
@@ -173,8 +243,8 @@ def docx_to_json(docx_file) -> dict:
         if len(row.cells) < 2:
             continue
             
-        visual_cue = row.cells[0].text.strip()
-        narration = row.cells[1].text.strip()
+        visual_cue = _extract_formatted_text(row.cells[0])
+        narration = _extract_formatted_text(row.cells[1])
         
         # Skip empty rows
         if not visual_cue and not narration:
@@ -250,24 +320,34 @@ def _format_visual_cue(slide: dict) -> str:
 
 
 def _parse_visual_cue(visual_cue: str) -> tuple:
-    """Parse visual cue back to title and image_prompt."""
+    """Parse visual cue back to title and image_prompt.
+    
+    Preserves all content lines, not just the last one.
+    """
     lines = visual_cue.strip().split('\n')
     
     title = ''
-    image_prompt = ''
+    image_prompt_parts = []
     
     for line in lines:
         line = line.strip()
+        if not line:
+            continue
+            
         # Check for [Title] format
         match = re.match(r'\[(.+)\]', line)
         if match:
             title = match.group(1)
         else:
-            image_prompt = line
+            # Collect all non-title lines as part of image_prompt
+            image_prompt_parts.append(line)
     
-    # If no explicit title found, use the whole visual cue
-    if not title and visual_cue:
-        title = visual_cue.split('\n')[0].strip()
+    # Combine all image_prompt parts
+    image_prompt = '\n'.join(image_prompt_parts) if image_prompt_parts else ''
+    
+    # If no explicit title found, use the first line
+    if not title and image_prompt_parts:
+        title = image_prompt_parts[0]
     
     # If no image_prompt, use title as image_prompt
     if not image_prompt:
