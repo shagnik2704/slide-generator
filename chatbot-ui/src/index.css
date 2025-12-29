@@ -174,6 +174,46 @@ body {
   font-weight: bold;
 }
 
+/* Premium Audio Seekbar Styles */
+.custom-seekbar {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  z-index: 2;
+  position: relative;
+  background-repeat: no-repeat;
+}
+
+[data-theme="dark"] .custom-seekbar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-seekbar::-webkit-slider-thumb {
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+/* Show thumb on card hover */
+.audio-player-card:hover .custom-seekbar::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.custom-seekbar:active::-webkit-slider-thumb {
+  transform: scale(1.3);
+}
+
 /* Spin animation for loaders */
 @keyframes spin {
   from {
