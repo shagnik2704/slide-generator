@@ -396,3 +396,40 @@ async def generate_voice_endpoint(data: dict):
         print(f"ERROR in generate_voice: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.post("/generate_voice_batched")
+async def generate_voice_batched_endpoint(data: dict):
+    """
+    Generate voice narration using BATCHED approach - ~75% fewer API calls!
+    
+    Combines multiple slides per API call, then splits audio using silence detection.
+    
+    Args:
+        json_script: The parsed script JSON
+        project_id: Optional project ID
+    """
+    print("🎤 Starting BATCHED voice generation...")
+    
+    try:
+        json_script = data.get('json_script')
+        project_id = data.get('project_id')
+        
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+        
+        from src.services.voice_service import generate_voice_for_script_batched
+        result = await generate_voice_for_script_batched(
+            json_script=json_script,
+            project_id=project_id,
+        )
+        
+        print(f"✅ Batched voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
+        print(f"📊 API calls saved: {result.get('api_calls_saved')}")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_voice_batched: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

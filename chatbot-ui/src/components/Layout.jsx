@@ -31,6 +31,13 @@ const Layout = () => {
     }
   };
 
+  // Handle script upload from sidebar (triggers outline upload flow)
+  const handleSidebarScriptUpload = (file) => {
+    if (chatAreaRef.current?.handleSidebarScriptUpload) {
+      chatAreaRef.current.handleSidebarScriptUpload(file);
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
@@ -40,6 +47,7 @@ const Layout = () => {
           onComplianceUpload={handleSidebarComplianceUpload}
           onQualityUpload={handleSidebarQualityUpload}
           onVoiceUpload={handleSidebarVoiceUpload}
+          onScriptUpload={handleSidebarScriptUpload}
         />
         <ChatArea
           ref={chatAreaRef}

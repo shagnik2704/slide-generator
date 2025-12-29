@@ -1,0 +1,116 @@
+{
+  "title": "Creating a Database using pgAdmin4",
+  "tutorial_type": "demo",
+  "slides": [
+    {
+      "slide_number": 1,
+      "visual_cue": "Slide 1\nTitle Slide",
+      "narration": "Welcome to the Spoken Tutorial on Creating a Database using pgAdmin4."
+    },
+    {
+      "slide_number": 2,
+      "visual_cue": "Slide 2\nLearning Objectives",
+      "narration": "In this tutorial we will learn to,\nConnect the database to the server, and\nCreate a database."
+    },
+    {
+      "slide_number": 3,
+      "visual_cue": "Slide 3\nSystem Requirements",
+      "narration": "To record this tutorial, I am using \nUbuntu Linux OS v24.04 \nPostgreSQL version 18.1 and \npgAdmin4 version 9.11"
+    },
+    {
+      "slide_number": 4,
+      "visual_cue": "Slide 4\nPre-requisites \n\nhttps://EduPyramids.org",
+      "narration": "To follow this tutorial, \nLearners should have installed PostgreSQL and pgAdmin4.\nFor the pre-requisite, PostgreSQL tutorials, please visit this website."
+    },
+    {
+      "slide_number": 5,
+      "visual_cue": "",
+      "narration": "Let us open the pgAdmin4."
+    },
+    {
+      "slide_number": 6,
+      "visual_cue": "Go to Show Apps and search for pgAdmin4, click on the icon.\n\nCursor on the interface.",
+      "narration": "Go to Show Apps and search for pgAdmin4, click on the icon.\n\npgAdmin 4 interface is open now."
+    },
+    {
+      "slide_number": 7,
+      "visual_cue": "Cursor on Object.\n\n\nZoom in  (Press Ctrl ++)to see the objects clearly while recording.\n\n\nClick on the Properties tab, and show the cursor on the tab.",
+      "narration": "On the left hand side we can see the object browser pane.\nThe various objects of the database  will be displayed here.\nIn the toolbar, the Properties tab shows the relevant properties of each object."
+    },
+    {
+      "slide_number": 8,
+      "visual_cue": "Click on the SQL tab, and show the cursor on the tab.\n\n\nPoint to the text shown brown colour.",
+      "narration": "Besides Properties, we have a SQL tab.\n\nThe tab displays the script of the selected object.\nAs of now no SQL query is shown."
+    },
+    {
+      "slide_number": 9,
+      "visual_cue": "",
+      "narration": "Let us now see how to connect to the server."
+    },
+    {
+      "slide_number": 10,
+      "visual_cue": "Go to the left panel, right click on Servers.\n\nSelect Register and then select Servers.\n\n\nCursor on Register -Server window.",
+      "narration": "In the left panel, right click on Servers.\nA context menu opens. \n\nSelect Register and then select Servers.\n\nRegister -Server window displays."
+    },
+    {
+      "slide_number": 11,
+      "visual_cue": "Under General, in the name tab type localhost.\n\nClick on the Connection tab.\nIn the Host name/address type: localhost.",
+      "narration": "Under General, in the Name field type: localhost.\n\nClick on the Connection tab.\nIn the Host name/address type: localhost."
+    },
+    {
+      "slide_number": 12,
+      "visual_cue": "Leave the other parameters as default.",
+      "narration": "Let us keep all the other parameters as default."
+    },
+    {
+      "slide_number": 13,
+      "visual_cue": "Point the cursor on the Maintenance database name and Username.\n\nEnter password as: postgres\nClick on Save button.",
+      "narration": "Note that, Maintenance database name and Username fields are already filled. \nPlease enter the password which is given during installation.\nClick on Save button at the bottom right corner.\n\nLocalhost Dashboard opens."
+    },
+    {
+      "slide_number": 14,
+      "visual_cue": "In the left panel, point the cursor to the localhost.\n\nClick on the localhost node drop down arrow.\n\nPoint the cursor to the objects.",
+      "narration": "Here, we can see that a connection is  established to the localhost. \n\nClick on the localhost node.\nWe can see the following objects for this particular server."
+    },
+    {
+      "slide_number": 15,
+      "visual_cue": "Now click on the Databases node drop down arrow.\n\nPoint the cursor to the default postgres database",
+      "narration": "Now click on the Databases node. \n\nThe default database postgres created during installation is displayed here."
+    },
+    {
+      "slide_number": 16,
+      "visual_cue": "Slide 5\n\nWhat is Database?",
+      "narration": "A database is a collection of information or data, which is stored in an organized way.\nA Database has objects such as tables, views, procedures, functions and others."
+    },
+    {
+      "slide_number": 17,
+      "visual_cue": "Go back to pgAdmin.\n\n\nRight click on Databases node select Create, from the sub menu select Database.\n\nCursor on Create-Databases window.",
+      "narration": "Now, we will create a new database.\n\nRight click on Databases node select Create, from the sub menu select Database.\n\nCreate-Databases window displays."
+    },
+    {
+      "slide_number": 18,
+      "visual_cue": "Type database name: Studentdb and click Save.\n\n\nCursor on the Studentdb database.",
+      "narration": "Type Studentdb as the database name and click Save.\n\nNow the newly created database is listed under the Database node."
+    },
+    {
+      "slide_number": 19,
+      "visual_cue": "Click on the X button to close the window.\n\n\nPoint to the pop window. \nPoint to the message.\n\nClick the blue Yes button to close the window.",
+      "narration": "Click on the close button to close the window.\n\nA pop window Quit PgAdmin 4 opens.\nIt shows a message Are you sure you want to quit the application?\n\nClick the blue Yes button to close the window."
+    },
+    {
+      "slide_number": 20,
+      "visual_cue": "Slide 5\nSummary\n\nIn this tutorial we will learn to,\nConnect the database to the server and\nCreate a database.",
+      "narration": "With this we come to the end of this tutorial.\nLet us summarize."
+    },
+    {
+      "slide_number": 21,
+      "visual_cue": "Slide 6 \nAssignment",
+      "narration": "As an Assignment, please do the following.\nCreate a Database with the name Empdb."
+    },
+    {
+      "slide_number": 22,
+      "visual_cue": "Slide 7\nThank You",
+      "narration": "This Spoken Tutorial is brought to you by EduPyramids Educational Services Private limited SINE IIT Bombay\n\nThank you for joining"
+    }
+  ]
+}
