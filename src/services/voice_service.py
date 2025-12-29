@@ -5,6 +5,7 @@ Uses Gemini 2.5 Flash TTS for audio narration.
 Designed with abstraction layer for easy migration to Google Cloud TTS with SSML.
 """
 import os
+import re
 import asyncio
 import zipfile
 import wave
@@ -39,39 +40,77 @@ def extract_narration(json_script: dict) -> List[Dict]:
     slides = json_script.get('slides', [])
     narrations = []
     
+    if not slides:
+        print("⚠️ No slides found in script")
+        return narrations
+    
     for i, slide in enumerate(slides):
         narration = slide.get('narration', '')
         
         # Handle list or string
         if isinstance(narration, list):
-            narration = ' '.join(narration)
+            # Filter out empty strings and join
+            narration = ' '.join(str(n) for n in narration if n and str(n).strip())
+        
+        # Ensure narration is a string
+        if not isinstance(narration, str):
+            narration = str(narration) if narration else ''
         
         # Fallback to title if no narration
         if not narration.strip():
             narration = slide.get('title', f'Slide {i+1}')
+            if not narration or not narration.strip():
+                narration = f'Slide {i+1}'  # Final fallback
         
         # Clean markdown formatting for TTS
         narration = clean_text_for_tts(narration)
         
+        # Ensure we have valid narration after cleaning
+        if not narration or not narration.strip():
+            narration = f'Slide {i+1}'  # Final fallback
+        
+        slide_number = slide.get('slide_number', i + 1)
+        # Ensure slide_number is an integer
+        try:
+            slide_number = int(slide_number)
+        except (ValueError, TypeError):
+            slide_number = i + 1
+        
         narrations.append({
-            'slide_number': slide.get('slide_number', i + 1),
+            'slide_number': slide_number,
             'narration': narration
         })
     
+    print(f"📝 Extracted narrations for {len(narrations)} slides")
     return narrations
 
 
 def clean_text_for_tts(text: str) -> str:
     """Remove markdown and special characters not suitable for TTS."""
+    if not text:
+        return ""
+    
     # Remove bold/italic markers
     text = text.replace('**', '').replace('__', '')
     text = text.replace('*', '').replace('_', '')
     text = text.replace('#', '')
-    # Remove bullet points
+    # Remove bullet points but keep the text
     text = text.replace('•', '')
+    text = text.replace('- ', '')  # Remove markdown list markers
+    # Remove code blocks
+    text = text.replace('`', '')
+    # Remove HTML-like tags if any
+    text = re.sub(r'<[^>]+>', '', text)
     # Normalize whitespace (remove \n, \t, multiple spaces)
     text = ' '.join(text.split())
-    return text.strip()
+    # Remove any remaining special characters that might cause issues
+    text = text.strip()
+    
+    # Ensure we have valid text
+    if not text:
+        return ""
+    
+    return text
 
 
 # === Batched TTS Configuration ===
@@ -172,6 +211,16 @@ async def generate_voice_for_batch(
     Returns:
         Path to generated audio file, or None if failed
     """
+    # Validate input text
+    if not combined_text or not combined_text.strip():
+        print(f"⚠️ Batch {batch_num}: Empty combined text, skipping")
+        return None
+    
+    # Ensure text is not too long (API limits)
+    if len(combined_text) > 10000:
+        print(f"⚠️ Batch {batch_num}: Text too long ({len(combined_text)} chars), truncating to 10000")
+        combined_text = combined_text[:10000]
+    
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not set")
@@ -198,25 +247,52 @@ async def generate_voice_for_batch(
             )
         )
         
+        # Check for candidate issues
+        if not response.candidates:
+            print(f"⚠️ Batch {batch_num}: No candidates returned")
+            return None
+        
+        candidate = response.candidates[0]
+        if hasattr(candidate, 'finish_reason'):
+            if candidate.finish_reason not in ('STOP', 'COMPLETE'):
+                print(f"🛑 Batch {batch_num} Finish Reason: {candidate.finish_reason}")
+                return None
+        
         if not response.parts:
             print(f"⚠️ Empty response for batch {batch_num}")
             return None
         
         for part in response.parts:
-            if part.inline_data:
+            if hasattr(part, 'inline_data') and part.inline_data:
                 pcm_data = part.inline_data.data
+                
+                if not pcm_data or len(pcm_data) == 0:
+                    print(f"⚠️ Batch {batch_num}: Empty audio data received")
+                    continue
+                
                 wav_path = output_dir / f"batch_{batch_num}.wav"
                 
                 from src.utils.audio_utils import wave_file
                 wave_file(str(wav_path), pcm_data)
                 
-                print(f"✓ Generated batch {batch_num} audio")
-                return str(wav_path)
+                # Verify file was created and has content
+                if wav_path.exists() and wav_path.stat().st_size > 0:
+                    print(f"✓ Generated batch {batch_num} audio ({wav_path.stat().st_size} bytes)")
+                    return str(wav_path)
+                else:
+                    print(f"⚠️ Batch {batch_num}: Audio file created but is empty or missing")
         
         return None
         
     except Exception as e:
-        print(f"❌ Failed batch {batch_num}: {e}")
+        error_msg = str(e)
+        print(f"❌ Failed batch {batch_num}: {type(e).__name__}: {error_msg}")
+        if "429" in error_msg or "rate limit" in error_msg.lower() or "quota" in error_msg.lower():
+            print("💡 Suggestion: Rate limit error - will retry with longer delay")
+            raise  # Re-raise to trigger retry logic
+        elif "timeout" in error_msg.lower():
+            print("💡 Suggestion: Request timed out - will retry")
+            raise  # Re-raise to trigger retry logic
         return None
 
 
@@ -236,6 +312,16 @@ async def generate_voice_for_slide(
     Returns:
         Path to generated audio file, or None if failed
     """
+    # Validate input text
+    if not text or not text.strip():
+        print(f"⚠️ Slide {slide_num}: Empty narration text, skipping")
+        return None
+    
+    # Ensure text is not too long (API limits)
+    if len(text) > 5000:
+        print(f"⚠️ Slide {slide_num}: Text too long ({len(text)} chars), truncating to 5000")
+        text = text[:5000]
+    
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not set")
@@ -273,10 +359,14 @@ async def generate_voice_for_slide(
             return None
             
         candidate = response.candidates[0]
-        if candidate.finish_reason != 'STOP' and candidate.finish_reason != 'COMPLETE':
-             print(f"🛑 Slide {slide_num} Finish Reason: {candidate.finish_reason}")
-             if candidate.safety_ratings:
-                 print(f"🛡️ Safety Ratings: {[r.category + ': ' + r.probability for r in candidate.safety_ratings]}")
+        
+        # Check finish reason - if not successful, return None
+        if hasattr(candidate, 'finish_reason'):
+            if candidate.finish_reason not in ('STOP', 'COMPLETE'):
+                print(f"🛑 Slide {slide_num} Finish Reason: {candidate.finish_reason}")
+                if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                    print(f"🛡️ Safety Ratings: {[r.category + ': ' + r.probability for r in candidate.safety_ratings]}")
+                return None
         # --- END DEBUG LOGGING ---
 
         # Check if response has parts
@@ -286,28 +376,42 @@ async def generate_voice_for_slide(
         
         # Extract audio data
         for part in response.parts:
-            if part.inline_data:
+            if hasattr(part, 'inline_data') and part.inline_data:
                 # Gemini returns raw PCM data - use wave_file to add proper WAV headers
                 pcm_data = part.inline_data.data
+                
+                if not pcm_data or len(pcm_data) == 0:
+                    print(f"⚠️ Slide {slide_num}: Empty audio data received")
+                    continue
+                
                 wav_path = output_dir / f"slide_{slide_num}.wav"
                 
                 # Use audio_utils to create proper WAV file with headers
                 from src.utils.audio_utils import wave_file
                 wave_file(str(wav_path), pcm_data)
                 
-                print(f"✓ Generated audio for slide {slide_num}")
-                return str(wav_path)
+                # Verify file was created and has content
+                if wav_path.exists() and wav_path.stat().st_size > 0:
+                    print(f"✓ Generated audio for slide {slide_num} ({wav_path.stat().st_size} bytes)")
+                    return str(wav_path)
+                else:
+                    print(f"⚠️ Slide {slide_num}: Audio file created but is empty or missing")
         
         print(f"⚠️ No audio data returned for slide {slide_num}")
         return None
         
     except Exception as e:
         # Log the full error type and message
-        print(f"❌ Detailed Error for slide {slide_num}: {type(e).__name__}: {str(e)}")
-        if "429" in str(e):
-             print("💡 Suggestion: This is a Rate Limit error. We might need to increase sleep duration.")
-        elif "400" in str(e):
+        error_msg = str(e)
+        print(f"❌ Detailed Error for slide {slide_num}: {type(e).__name__}: {error_msg}")
+        if "429" in error_msg or "rate limit" in error_msg.lower() or "quota" in error_msg.lower():
+             print("💡 Suggestion: This is a Rate Limit error. Retrying with longer delay...")
+             raise  # Re-raise to trigger retry logic
+        elif "400" in error_msg or "bad request" in error_msg.lower():
              print("💡 Suggestion: Bad Request. Could be malformed text or unsupported characters.")
+        elif "timeout" in error_msg.lower():
+             print("💡 Suggestion: Request timed out. Retrying...")
+             raise  # Re-raise to trigger retry logic
         return None
 
 
@@ -351,11 +455,16 @@ async def generate_voice_for_script(
         slide_num = item['slide_number']
         text = item['narration']
         
-        # Rate limit: Gemini TTS has ~10 RPM limit
-        await asyncio.sleep(4)
+        # Validate text before processing
+        if not text or not text.strip():
+            errors.append(f"Slide {slide_num}: Empty narration text")
+            continue
+        
+        # Rate limit: Gemini TTS has ~10 RPM limit, use 7 seconds to be safe
+        await asyncio.sleep(7)
         
         # Retry logic for failed attempts
-        max_retries = 3
+        max_retries = 5  # Increased retries for better reliability
         audio_path = None
         
         for attempt in range(max_retries):
@@ -370,21 +479,30 @@ async def generate_voice_for_script(
                     # Success - convert to URL path
                     relative_path = Path(audio_path).relative_to(project_root / "output")
                     audio_map[slide_num] = f"/output/{relative_path}"
+                    print(f"✅ Successfully generated audio for slide {slide_num}")
                     break  # Exit retry loop on success
                 else:
-                    # Empty response - retry after delay
+                    # Empty response - retry after delay with exponential backoff
                     if attempt < max_retries - 1:
-                        print(f"🔄 Retrying slide {slide_num} (attempt {attempt + 2}/{max_retries}) after delay...")
-                        await asyncio.sleep(6)  # Increased delay for reliability
+                        retry_delay = 8 + (attempt * 2)  # 8, 10, 12, 14 seconds
+                        print(f"🔄 Retrying slide {slide_num} (attempt {attempt + 2}/{max_retries}) after {retry_delay}s delay...")
+                        await asyncio.sleep(retry_delay)
                     else:
                         errors.append(f"Slide {slide_num}: No audio after {max_retries} attempts")
                         
             except Exception as e:
-                if attempt < max_retries - 1:
-                    print(f"🔄 Retrying slide {slide_num} after error: {e}")
-                    await asyncio.sleep(6)
+                error_msg = str(e)
+                # Check if it's a rate limit or timeout error that should be retried
+                if attempt < max_retries - 1 and ("429" in error_msg or "rate limit" in error_msg.lower() or "timeout" in error_msg.lower() or "quota" in error_msg.lower()):
+                    retry_delay = 10 + (attempt * 3)  # 10, 13, 16, 19 seconds for rate limits
+                    print(f"🔄 Retrying slide {slide_num} after rate limit/timeout error (attempt {attempt + 2}/{max_retries}) after {retry_delay}s delay...")
+                    await asyncio.sleep(retry_delay)
+                elif attempt < max_retries - 1:
+                    retry_delay = 8 + (attempt * 2)
+                    print(f"🔄 Retrying slide {slide_num} after error: {e} (attempt {attempt + 2}/{max_retries}) after {retry_delay}s delay...")
+                    await asyncio.sleep(retry_delay)
                 else:
-                    errors.append(f"Slide {slide_num}: {str(e)}")
+                    errors.append(f"Slide {slide_num}: {error_msg}")
     
     # Create ZIP of all audio files
     zip_path = audio_dir / f"audio_project_{project_id}.zip"
@@ -444,15 +562,34 @@ async def generate_voice_for_script_batched(
     errors = []
     
     for batch in batches:
-        # Rate limit between batches
-        await asyncio.sleep(7)
+        # Rate limit between batches - increased delay
+        await asyncio.sleep(8)
         
-        # Generate batch audio
-        batch_path = await generate_voice_for_batch(
-            combined_text=batch['combined_text'],
-            batch_num=batch['batch_num'],
-            output_dir=audio_dir,
-        )
+        # Generate batch audio with retry logic
+        max_batch_retries = 3
+        batch_path = None
+        
+        for batch_attempt in range(max_batch_retries):
+            try:
+                batch_path = await generate_voice_for_batch(
+                    combined_text=batch['combined_text'],
+                    batch_num=batch['batch_num'],
+                    output_dir=audio_dir,
+                )
+                
+                if batch_path:
+                    break  # Success
+                elif batch_attempt < max_batch_retries - 1:
+                    retry_delay = 10 + (batch_attempt * 2)
+                    print(f"🔄 Retrying batch {batch['batch_num']} (attempt {batch_attempt + 2}/{max_batch_retries}) after {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+            except Exception as e:
+                if batch_attempt < max_batch_retries - 1:
+                    retry_delay = 10 + (batch_attempt * 2)
+                    print(f"🔄 Retrying batch {batch['batch_num']} after error: {e} (attempt {batch_attempt + 2}/{max_batch_retries}) after {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    print(f"❌ Batch {batch['batch_num']} failed after {max_batch_retries} attempts: {e}")
         
         if batch_path:
             # Split the batch audio into individual slide audios
@@ -468,10 +605,37 @@ async def generate_voice_for_script_batched(
                 relative_path = Path(audio_path).relative_to(project_root / "output")
                 audio_map[slide_num] = f"/output/{relative_path}"
             
-            # Check for missing slides
+            # Check for missing slides and fallback to individual generation
             for slide_num in batch['slide_numbers']:
                 if slide_num not in audio_map:
-                    errors.append(f"Slide {slide_num}: Split failed")
+                    print(f"⚠️ Slide {slide_num}: Split failed, trying individual generation...")
+                    narration = next((n for n in narrations if n['slide_number'] == slide_num), None)
+                    if narration:
+                        # Retry logic for fallback slides
+                        max_fallback_retries = 3
+                        for fallback_attempt in range(max_fallback_retries):
+                            if fallback_attempt > 0:
+                                print(f"🔄 Fallback retry for slide {slide_num} (attempt {fallback_attempt + 1}/{max_fallback_retries})...")
+                            
+                            await asyncio.sleep(7)
+                            try:
+                                audio_path = await generate_voice_for_slide(
+                                    text=narration['narration'],
+                                    slide_num=slide_num,
+                                    output_dir=audio_dir,
+                                )
+                                if audio_path:
+                                    relative_path = Path(audio_path).relative_to(project_root / "output")
+                                    audio_map[slide_num] = f"/output/{relative_path}"
+                                    print(f"✅ Fallback generation succeeded for slide {slide_num}")
+                                    break
+                            except Exception as e:
+                                if fallback_attempt == max_fallback_retries - 1:
+                                    errors.append(f"Slide {slide_num}: Failed after {max_fallback_retries} fallback attempts: {str(e)}")
+                                else:
+                                    await asyncio.sleep(8)
+                    else:
+                        errors.append(f"Slide {slide_num}: Narration not found for fallback")
             
             # Clean up batch file after splitting
             Path(batch_path).unlink(missing_ok=True)
@@ -482,23 +646,32 @@ async def generate_voice_for_script_batched(
                 narration = next((n for n in narrations if n['slide_number'] == slide_num), None)
                 if narration:
                     # Retry logic for fallback slides
-                    max_fallback_retries = 2
+                    max_fallback_retries = 3
                     for fallback_attempt in range(max_fallback_retries):
                         if fallback_attempt > 0:
                             print(f"🔄 Fallback retry for slide {slide_num} (attempt {fallback_attempt + 1}/{max_fallback_retries})...")
                         
                         await asyncio.sleep(7)
-                        audio_path = await generate_voice_for_slide(
-                            text=narration['narration'],
-                            slide_num=slide_num,
-                            output_dir=audio_dir,
-                        )
-                        if audio_path:
-                            relative_path = Path(audio_path).relative_to(project_root / "output")
-                            audio_map[slide_num] = f"/output/{relative_path}"
-                            break
-                        elif fallback_attempt == max_fallback_retries - 1:
-                            errors.append(f"Slide {slide_num}: Failed after fallback retries")
+                        try:
+                            audio_path = await generate_voice_for_slide(
+                                text=narration['narration'],
+                                slide_num=slide_num,
+                                output_dir=audio_dir,
+                            )
+                            if audio_path:
+                                relative_path = Path(audio_path).relative_to(project_root / "output")
+                                audio_map[slide_num] = f"/output/{relative_path}"
+                                print(f"✅ Fallback generation succeeded for slide {slide_num}")
+                                break
+                            elif fallback_attempt == max_fallback_retries - 1:
+                                errors.append(f"Slide {slide_num}: Failed after {max_fallback_retries} fallback attempts")
+                        except Exception as e:
+                            if fallback_attempt == max_fallback_retries - 1:
+                                errors.append(f"Slide {slide_num}: Failed after {max_fallback_retries} fallback attempts: {str(e)}")
+                            else:
+                                await asyncio.sleep(8)
+                else:
+                    errors.append(f"Slide {slide_num}: Narration not found")
     
     # Create ZIP of all audio files
     zip_path = audio_dir / f"audio_project_{project_id}.zip"
