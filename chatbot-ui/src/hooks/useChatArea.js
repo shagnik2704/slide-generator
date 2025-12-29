@@ -51,6 +51,9 @@ export function useChatArea() {
     const [qualityReports, setQualityReports] = useState({});
     const [isQualityLoading, setIsQualityLoading] = useState(false);
 
+    // Global staging state (shared between Sidebar and InputArea)
+    const [stagedFile, setStagedFile] = useState(null);
+
     // Refs
     const messagesEndRef = useRef(null);
     const editedScriptInputRef = useRef(null);
@@ -423,6 +426,94 @@ export function useChatArea() {
         }
     }, []);
 
+    const handleScriptToWiki = useCallback(async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Converting script to MediaWiki format: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_URL}/docx_to_mediawiki`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to convert script to MediaWiki');
+            }
+
+            const data = await response.json();
+
+            const newBotMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✅ ${data.message}`,
+                type: 'mediawiki_export',
+                mediawikiContent: data.mediawiki_content,
+                mediawikiFileUrl: data.mediawiki_file_url,
+                slideCount: data.slide_count
+            };
+            setUploadMessages(prev => [...prev, newBotMessage]);
+
+        } catch (error) {
+            console.error("Script to Wiki error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Conversion failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, []);
+
+    // =========================
+    // STAGING HANDLERS (Shared between Sidebar and InputArea)
+    // =========================
+
+    const handleConfirmStagedFile = useCallback(() => {
+        if (!stagedFile) return;
+
+        const { file, type } = stagedFile;
+
+        switch (type) {
+            case 'script':
+                handleUploadScript(file);
+                break;
+            case 'wiki':
+                handleScriptToWiki(file);
+                break;
+            case 'compliance':
+                handleSidebarComplianceUpload(file);
+                break;
+            case 'quality':
+                handleSidebarQualityUpload(file);
+                break;
+            case 'voice':
+                handleSidebarVoiceUpload(file);
+                break;
+            case 'outline':
+                handleSendMessage(file);
+                break;
+            default:
+                handleSendMessage(file);
+        }
+
+        setStagedFile(null);
+    }, [stagedFile, handleUploadScript, handleScriptToWiki, handleSidebarComplianceUpload, handleSidebarQualityUpload, handleSidebarVoiceUpload, handleSendMessage]);
+
+    const handleCancelStagedFile = useCallback(() => {
+        setStagedFile(null);
+    }, []);
+
     // =========================
     // GENERATION HANDLERS
     // =========================
@@ -615,8 +706,8 @@ export function useChatArea() {
 
             // Update the user message with the field_name that was answered
             if (data.answered_field) {
-                setOutlineMessages(prev => prev.map(msg => 
-                    msg.id === userMessage.id 
+                setOutlineMessages(prev => prev.map(msg =>
+                    msg.id === userMessage.id
                         ? { ...msg, fieldName: data.answered_field, wasEdited: false }
                         : msg
                 ));
@@ -745,7 +836,7 @@ export function useChatArea() {
 
     const handleEditAnswer = useCallback(async (messageId, fieldName, newValue, tutorialNumber = null) => {
         if (mode !== 'outline_chat') return;
-        
+
         if (!outlineSession.projectId) {
             console.error('No project ID available for editing');
             return;
@@ -758,7 +849,7 @@ export function useChatArea() {
                 field_name: fieldName,
                 new_value: newValue,
             };
-            
+
             if (tutorialNumber !== null) {
                 requestBody.tutorial_number = tutorialNumber;
             }
@@ -1055,12 +1146,19 @@ export function useChatArea() {
         // Handlers - Upload
         handleSendMessage,
         handleUploadScript,
+        handleScriptToWiki,
 
         // Handlers - Sidebar
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
         handleSidebarScriptUpload: handleSendMessage, // Reuse same handler as Upload Content
+
+        // Staging (shared between Sidebar and InputArea)
+        stagedFile,
+        setStagedFile,
+        handleConfirmStagedFile,
+        handleCancelStagedFile,
 
         // Handlers - Generation
         handleGenerateScript,
