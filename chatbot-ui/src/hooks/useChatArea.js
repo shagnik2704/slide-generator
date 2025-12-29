@@ -1060,6 +1060,7 @@ export function useChatArea() {
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
+        handleSidebarScriptUpload: handleSendMessage, // Reuse same handler as Upload Content
 
         // Handlers - Generation
         handleGenerateScript,

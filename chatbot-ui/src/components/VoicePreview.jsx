@@ -126,67 +126,173 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
 }
 
 /**
- * Individual audio player for a slide
+ * Individual audio player for a slide with premium seekbar
  */
 function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
     const audioRef = React.useRef(null);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [isSeeking, setIsSeeking] = useState(false);
+
+    // Update time state as audio plays (but not while user is dragging)
+    const handleTimeUpdate = () => {
+        if (audioRef.current && !isSeeking) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    // Initialize duration when metadata loads
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    // Format seconds into M:SS
+    const formatTime = (time) => {
+        if (isNaN(time)) return "0:00";
+        const mins = Math.floor(time / 60);
+        const secs = Math.floor(time % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Handle seeker changes
+    const handleSeek = (e) => {
+        const time = parseFloat(e.target.value);
+        if (audioRef.current) {
+            audioRef.current.currentTime = time;
+            setCurrentTime(time);
+        }
+    };
+
 
     return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.75rem',
-            background: 'var(--bg-tertiary)',
-            borderRadius: '0.5rem',
-            border: isPlaying ? '1px solid var(--accent-primary)' : '1px solid transparent',
-        }}>
-            <button
-                onClick={() => onPlay(slideNum, audioRef.current)}
-                style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    border: 'none',
-                    background: isPlaying ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                    color: isPlaying ? 'white' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease',
-                }}
-            >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
+        <div
+            className="audio-player-card"
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                padding: '1rem',
+                background: 'var(--bg-tertiary)',
+                borderRadius: '0.75rem',
+                border: isPlaying ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                transition: 'all 0.3s ease',
+                boxShadow: isPlaying ? 'var(--shadow-glow)' : 'var(--shadow-sm)',
+            }}
+        >
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+            }}>
+                <button
+                    onClick={() => onPlay(slideNum, audioRef.current)}
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: isPlaying ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: isPlaying ? 'white' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                        boxShadow: 'var(--shadow-sm)',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                >
+                    {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" style={{ marginLeft: '2px' }} />}
+                </button>
 
-            <div style={{ flex: 1 }}>
-                <div style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
-                    color: 'var(--text-primary)'
-                }}>
-                    Slide {slideNum}
+                <div style={{ flex: 1 }}>
+                    <div style={{
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <span>Slide {slideNum}</span>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-secondary)'
+                        }}>
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                    </div>
                 </div>
-                <audio
-                    ref={audioRef}
-                    src={url}
-                    onEnded={onEnded}
-                    style={{ display: 'none' }}
+
+                <a
+                    href={url}
+                    download={`slide_${slideNum}.wav`}
+                    style={{
+                        color: 'var(--text-secondary)',
+                        padding: '0.4rem',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-secondary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                    title="Download"
+                >
+                    <Download size={16} />
+                </a>
+            </div>
+
+            {/* Premium Seekbar */}
+            <div style={{
+                position: 'relative',
+                height: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                marginTop: '0.25rem'
+            }}>
+                <input
+                    type="range"
+                    min="0"
+                    max={duration || 0}
+                    step="0.01"
+                    value={currentTime}
+                    onMouseDown={() => setIsSeeking(true)}
+                    onMouseUp={() => setIsSeeking(false)}
+                    onTouchStart={() => setIsSeeking(true)}
+                    onTouchEnd={() => setIsSeeking(false)}
+                    onChange={handleSeek}
+                    className="custom-seekbar"
+                    style={{
+                        backgroundSize: `${(currentTime / (duration || 1)) * 100}% 100%`,
+                        backgroundImage: `linear-gradient(var(--accent-primary), var(--accent-primary))`,
+                    }}
                 />
             </div>
 
-            <a
-                href={url}
-                download={`slide_${slideNum}.wav`}
-                style={{
-                    color: 'var(--text-secondary)',
-                    padding: '0.25rem',
-                }}
-                title="Download"
-            >
-                <Download size={16} />
-            </a>
+            <audio
+                ref={audioRef}
+                src={url}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onDurationChange={handleLoadedMetadata}
+                onEnded={onEnded}
+                style={{ display: 'none' }}
+            />
         </div>
     );
 }

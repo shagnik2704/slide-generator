@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, onVoiceUpload }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, onVoiceUpload, onScriptUpload }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -13,6 +13,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, o
     const complianceInputRef = useRef(null);
     const qualityInputRef = useRef(null);
     const voiceInputRef = useRef(null);
+    const scriptInputRef = useRef(null);
 
     // Handle compliance file selection
     const handleComplianceFileSelect = (e) => {
@@ -37,6 +38,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, o
         const file = e.target.files[0];
         if (file && onVoiceUpload) {
             onVoiceUpload(file);
+            e.target.value = '';
+        }
+    };
+
+    // Handle script file selection (outline upload)
+    const handleScriptFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onScriptUpload) {
+            onScriptUpload(file);
             e.target.value = '';
         }
     };
@@ -109,6 +119,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, o
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleVoiceFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={scriptInputRef}
+                type="file"
+                accept=".md,.docx,.odt,.txt"
+                onChange={handleScriptFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -200,13 +217,35 @@ const Sidebar = ({ isOpen, toggleSidebar, onComplianceUpload, onQualityUpload, o
                 )}
             </nav>
 
+            {/* Script Generator Button */}
+            <TooltipWrapper text="Script Generator">
+                <button
+                    onClick={() => scriptInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.75rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <FileText size={20} />
+                    {isOpen && <span>Script Generator</span>}
+                </button>
+            </TooltipWrapper>
+
             {/* Voice Generator Button */}
             <TooltipWrapper text="Voice Generator">
                 <button
                     onClick={() => voiceInputRef.current?.click()}
                     style={{
                         ...iconButtonStyle,
-                        marginTop: '0.75rem'
+                        marginTop: '0.5rem'
                     }}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--bg-tertiary)';

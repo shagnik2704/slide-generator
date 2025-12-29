@@ -61,6 +61,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
+        handleSidebarScriptUpload,
         handleGenerateScript,
         handleGenerateSlides,
         handleApprove,
@@ -78,7 +79,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     useImperativeHandle(ref, () => ({
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
-        handleSidebarVoiceUpload
+        handleSidebarVoiceUpload,
+        handleSidebarScriptUpload
     }));
 
     // Helper to update compliance report in a message
@@ -253,115 +255,117 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 </div>
             </header>
 
-            {/* Messages Area */}
-            <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '6rem 1rem 1rem 1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem'
-            }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-                    {activeMessages.map((msg) => (
-                        <div key={msg.id}>
-                            <MessageBubble
-                                message={msg}
-                                onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
-                                onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
-                                mode={mode}
-                            />
-
-                            {/* OutlineCard for outline_chat mode */}
-                            {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
-                                <OutlineCard
-                                    outlineData={msg.outlineData}
-                                    projectId={outlineSession.projectId || msg.outlineData?.project_id}
+            {/* Messages Area - hidden when welcome screen is shown */}
+            {!(mode === 'upload' && uploadMessages.length === 1) && (
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '6rem 1rem 1rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                        {activeMessages.map((msg) => (
+                            <div key={msg.id}>
+                                <MessageBubble
+                                    message={msg}
+                                    onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                                    onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
+                                    mode={mode}
                                 />
-                            )}
 
-                            {/* Message Action Components */}
-                            {mode === 'upload' && msg.type === 'outline_uploaded' && (
-                                <OutlineUploadedActions
-                                    msg={msg}
-                                    isTyping={isTyping}
-                                    onGenerateScript={handleGenerateScript}
-                                />
-                            )}
+                                {/* OutlineCard for outline_chat mode */}
+                                {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
+                                    <OutlineCard
+                                        outlineData={msg.outlineData}
+                                        projectId={outlineSession.projectId || msg.outlineData?.project_id}
+                                    />
+                                )}
 
-                            {mode === 'upload' && msg.type === 'script_uploaded' && (
-                                <ScriptUploadedActions
-                                    msg={msg}
-                                    isTyping={isTyping}
-                                    openReportId={openReportId}
-                                    setOpenReportId={setOpenReportId}
-                                    openQualityId={openQualityId}
-                                    setOpenQualityId={setOpenQualityId}
-                                    qualityReports={qualityReports}
-                                    isQualityLoading={isQualityLoading}
-                                    onGenerateSlides={handleGenerateSlides}
-                                    onQualityCheck={handleQualityCheck}
-                                    onUpdateComplianceReport={handleUpdateComplianceReport}
-                                />
-                            )}
+                                {/* Message Action Components */}
+                                {mode === 'upload' && msg.type === 'outline_uploaded' && (
+                                    <OutlineUploadedActions
+                                        msg={msg}
+                                        isTyping={isTyping}
+                                        onGenerateScript={handleGenerateScript}
+                                    />
+                                )}
 
-                            {mode === 'upload' && msg.type === 'script_review' && (
-                                <ScriptReviewActions
-                                    msg={msg}
-                                    isTyping={isTyping}
-                                    openEditorId={openEditorId}
-                                    setOpenEditorId={setOpenEditorId}
-                                    editedScriptInputRef={editedScriptInputRef}
-                                    onGenerateSlides={handleGenerateSlides}
-                                    onDownloadScriptDocx={handleDownloadScriptDocx}
-                                    onUploadEditedScript={handleUploadEditedScript}
-                                    onExportMediaWiki={handleExportMediaWiki}
-                                    onSaveScriptEdit={handleSaveScriptEdit}
-                                />
-                            )}
+                                {mode === 'upload' && msg.type === 'script_uploaded' && (
+                                    <ScriptUploadedActions
+                                        msg={msg}
+                                        isTyping={isTyping}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        openQualityId={openQualityId}
+                                        setOpenQualityId={setOpenQualityId}
+                                        qualityReports={qualityReports}
+                                        isQualityLoading={isQualityLoading}
+                                        onGenerateSlides={handleGenerateSlides}
+                                        onQualityCheck={handleQualityCheck}
+                                        onUpdateComplianceReport={handleUpdateComplianceReport}
+                                    />
+                                )}
 
-                            {mode === 'upload' && msg.type === 'slides_review' && (
-                                <SlidesReviewActions
-                                    msg={msg}
-                                    isTyping={isTyping}
-                                    onApprove={handleApprove}
-                                />
-                            )}
+                                {mode === 'upload' && msg.type === 'script_review' && (
+                                    <ScriptReviewActions
+                                        msg={msg}
+                                        isTyping={isTyping}
+                                        openEditorId={openEditorId}
+                                        setOpenEditorId={setOpenEditorId}
+                                        editedScriptInputRef={editedScriptInputRef}
+                                        onGenerateSlides={handleGenerateSlides}
+                                        onDownloadScriptDocx={handleDownloadScriptDocx}
+                                        onUploadEditedScript={handleUploadEditedScript}
+                                        onExportMediaWiki={handleExportMediaWiki}
+                                        onSaveScriptEdit={handleSaveScriptEdit}
+                                    />
+                                )}
 
-                            {mode === 'upload' && msg.type === 'video_result' && (
-                                <VideoResultActions msg={msg} />
-                            )}
+                                {mode === 'upload' && msg.type === 'slides_review' && (
+                                    <SlidesReviewActions
+                                        msg={msg}
+                                        isTyping={isTyping}
+                                        onApprove={handleApprove}
+                                    />
+                                )}
 
-                            {msg.type === 'mediawiki_export' && (
-                                <MediaWikiExportActions
-                                    msg={msg}
-                                    copiedId={copiedId}
-                                    setCopiedId={setCopiedId}
-                                />
-                            )}
+                                {mode === 'upload' && msg.type === 'video_result' && (
+                                    <VideoResultActions msg={msg} />
+                                )}
 
-                            {msg.type === 'voice_preview' && msg.voiceData && (
-                                <VoicePreview voiceData={msg.voiceData} isOpen={true} />
-                            )}
-                        </div>
-                    ))}
+                                {msg.type === 'mediawiki_export' && (
+                                    <MediaWikiExportActions
+                                        msg={msg}
+                                        copiedId={copiedId}
+                                        setCopiedId={setCopiedId}
+                                    />
+                                )}
 
-                    {/* Typing Indicator */}
-                    {isTyping && (
-                        <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1rem', marginBottom: '1.5rem' }}>
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '50%',
-                                background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both' }}></div>
-                                <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.16s' }}></div>
-                                <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.32s' }}></div>
+                                {msg.type === 'voice_preview' && msg.voiceData && (
+                                    <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                )}
                             </div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
+                        ))}
+
+                        {/* Typing Indicator */}
+                        {isTyping && (
+                            <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1rem', marginBottom: '1.5rem' }}>
+                                <div style={{
+                                    width: '36px', height: '36px', borderRadius: '50%',
+                                    background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both' }}></div>
+                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.16s' }}></div>
+                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.32s' }}></div>
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Input Area */}
             <InputArea
@@ -370,6 +374,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 onUploadScript={handleUploadScript}
                 onSendText={handleSendChatText}
                 disabled={isTyping}
+                isWelcome={mode === 'upload' && uploadMessages.length === 1}
             />
 
             <style>{`
