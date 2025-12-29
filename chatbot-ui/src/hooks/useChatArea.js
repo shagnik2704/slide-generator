@@ -581,12 +581,6 @@ export function useChatArea() {
     // OUTLINE CHAT HANDLERS
     // =========================
 
-    const handleConfirmation = useCallback(async (confirmed) => {
-        if (mode !== 'outline_chat') return;
-        const confirmationText = confirmed ? 'yes' : 'no';
-        await handleSendChatText(confirmationText);
-    }, [mode]);
-
     const handleSendChatText = useCallback(async (text) => {
         if (mode !== 'outline_chat') return;
         const userMessage = { id: Date.now(), role: 'user', content: text };
@@ -618,6 +612,15 @@ export function useChatArea() {
                 outlineData: data.outline_data || outlineSession.outlineData,
                 phase: data.phase || outlineSession.phase
             });
+
+            // Update the user message with the field_name that was answered
+            if (data.answered_field) {
+                setOutlineMessages(prev => prev.map(msg => 
+                    msg.id === userMessage.id 
+                        ? { ...msg, fieldName: data.answered_field, wasEdited: false }
+                        : msg
+                ));
+            }
 
             let assistantContent = data.assistant_message || 'Here is the updated outline.';
 
@@ -672,6 +675,151 @@ export function useChatArea() {
             setIsTyping(false);
         }
     }, [mode, outlineMessages, outlineSession]);
+
+    const handleConfirmation = useCallback(async (confirmed) => {
+        if (mode !== 'outline_chat') return;
+        const confirmationText = confirmed ? 'yes' : 'no';
+        // Call handleSendChatText directly to avoid circular dependency
+        const userMessage = { id: Date.now(), role: 'user', content: confirmationText };
+        const conversationForApi = [...outlineMessages, userMessage].map(({ role, content }) => ({ role, content }));
+        setOutlineMessages(prev => [...prev, userMessage]);
+        setIsTyping(true);
+
+        try {
+            const response = await fetch(`${API_URL}/outline_chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversation: conversationForApi,
+                    outline_data: outlineSession.outlineData || null,
+                    project_id: outlineSession.projectId,
+                    phase: outlineSession.phase || null,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to update outline');
+            }
+
+            const data = await response.json();
+
+            setOutlineSession({
+                projectId: data.project_id || outlineSession.projectId,
+                outlineData: data.outline_data || outlineSession.outlineData,
+                phase: data.phase || outlineSession.phase
+            });
+
+            let assistantContent = data.assistant_message || 'Here is the updated outline.';
+
+            const assistantMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: assistantContent,
+                outlineData: data.outline_data,
+                isDraftReady: data.is_draft_ready,
+                isApproved: data.is_approved,
+                phase: data.phase,
+                needsConfirmation: data.needs_confirmation || false,
+                confirmationField: data.confirmation_field,
+                confirmationValue: data.confirmation_value
+            };
+
+            setOutlineMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            console.error("Error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: error.message || "Sorry, something went wrong in outline chat."
+            };
+            setOutlineMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, [mode, outlineMessages, outlineSession]);
+
+    // =========================
+    // OUTLINE CHAT EDIT HANDLER
+    // =========================
+
+    const handleEditAnswer = useCallback(async (messageId, fieldName, newValue, tutorialNumber = null) => {
+        if (mode !== 'outline_chat') return;
+        
+        if (!outlineSession.projectId) {
+            console.error('No project ID available for editing');
+            return;
+        }
+
+        setIsTyping(true);
+
+        try {
+            const requestBody = {
+                field_name: fieldName,
+                new_value: newValue,
+            };
+            
+            if (tutorialNumber !== null) {
+                requestBody.tutorial_number = tutorialNumber;
+            }
+
+            const response = await fetch(`${API_URL}/outline_chat/${outlineSession.projectId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || errorData.error || 'Failed to edit answer');
+            }
+
+            const data = await response.json();
+
+            // Update session with new outline data
+            setOutlineSession({
+                projectId: data.project_id || outlineSession.projectId,
+                outlineData: data.outline_data || outlineSession.outlineData,
+                phase: data.phase || outlineSession.phase
+            });
+
+            // Update the edited message
+            setOutlineMessages(prev => prev.map(msg => {
+                if (msg.id === messageId) {
+                    return {
+                        ...msg,
+                        content: newValue,
+                        wasEdited: true,
+                        editedAt: Date.now()
+                    };
+                }
+                return msg;
+            }));
+
+            // Add assistant response about the update
+            const assistantMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: data.assistant_message || 'Answer updated successfully.',
+                outlineData: data.outline_data,
+                phase: data.phase,
+                isDraftReady: data.is_draft_ready,
+            };
+
+            setOutlineMessages(prev => [...prev, assistantMessage]);
+
+        } catch (error) {
+            console.error("Edit error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Failed to update answer: ${error.message}`
+            };
+            setOutlineMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, [mode, outlineSession]);
 
     // =========================
     // EXPORT/EDIT HANDLERS
@@ -921,6 +1069,7 @@ export function useChatArea() {
         // Handlers - Outline Chat
         handleConfirmation,
         handleSendChatText,
+        handleEditAnswer,
 
         // Handlers - Export/Edit
         handleDownloadScriptDocx,

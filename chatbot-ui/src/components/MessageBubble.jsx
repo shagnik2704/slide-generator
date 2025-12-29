@@ -1,29 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { User, Bot, Check, X } from 'lucide-react';
+import { User, Bot, Check, X, Edit2, Save, XCircle } from 'lucide-react';
 
-const MessageBubble = ({ message, onConfirmation }) => {
+const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode }) => {
     const isUser = message.role === 'user';
     const needsConfirmation = message.needsConfirmation && !isUser;
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(message.content);
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Show edit button only for user messages in outline_chat mode that have a fieldName
+    const canEdit = isUser && mode === 'outline_chat' && message.fieldName && !isEditing;
+    
+    const handleEdit = () => {
+        setIsEditing(true);
+        setEditValue(message.content);
+    };
+    
+    const handleCancel = () => {
+        setIsEditing(false);
+        setEditValue(message.content);
+    };
+    
+    const handleSave = async () => {
+        if (!onEditAnswer || !message.fieldName) return;
+        
+        setIsSaving(true);
+        try {
+            // Determine tutorial number if it's a tutorial field
+            let tutorialNumber = null;
+            if (message.fieldName.startsWith('tutorial_')) {
+                // Extract tutorial number from fieldName or message metadata
+                // For tutorial fields, we may need to track which tutorial it belongs to
+                // For now, we'll let the backend handle it or use message.tutorialNumber if available
+                tutorialNumber = message.tutorialNumber || null;
+            }
+            
+            await onEditAnswer(message.id, message.fieldName, editValue, tutorialNumber);
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Failed to save edit:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div style={{
             display: 'flex',
             justifyContent: isUser ? 'flex-end' : 'flex-start',
-            marginBottom: '1.5rem',
+            marginBottom: '1rem',
             padding: '0 1rem',
-            animation: 'fadeIn 0.3s ease-out'
+            animation: 'fadeIn 0.3s ease-out',
+            position: 'relative',
+            alignItems: 'flex-start'
         }}>
             <div style={{
                 display: 'flex',
                 flexDirection: isUser ? 'row-reverse' : 'row',
-                maxWidth: '80%',
-                gap: '0.75rem'
+                maxWidth: isUser ? '70%' : '85%',
+                gap: '0.5rem',
+                width: isUser ? 'fit-content' : '100%',
+                position: 'relative',
+                alignItems: 'flex-start'
             }}>
                 {/* Avatar */}
                 <div style={{
-                    width: '36px',
-                    height: '36px',
+                    width: '32px',
+                    height: '32px',
                     borderRadius: '50%',
                     backgroundColor: isUser ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
                     display: 'flex',
@@ -32,26 +76,159 @@ const MessageBubble = ({ message, onConfirmation }) => {
                     flexShrink: 0,
                     boxShadow: 'var(--shadow-sm)'
                 }}>
-                    {isUser ? <User size={20} color="white" /> : <Bot size={20} color="var(--accent-primary)" />}
+                    {isUser ? <User size={18} color="white" /> : <Bot size={18} color="var(--accent-primary)" />}
                 </div>
 
+                {/* Edit Button - Outside bubble (placed before bubble for row-reverse to work correctly) */}
+                {canEdit && !isEditing && (
+                    <button
+                        onClick={handleEdit}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '28px',
+                            height: '28px',
+                            padding: '0',
+                            background: 'var(--bg-tertiary)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            transition: 'all 0.2s ease',
+                            boxShadow: 'var(--shadow-sm)',
+                            opacity: 0.7,
+                            flexShrink: 0,
+                            alignSelf: 'flex-start',
+                            marginTop: '2px'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.background = 'var(--bg-secondary)';
+                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '0.7';
+                            e.currentTarget.style.background = 'var(--bg-tertiary)';
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title={`Edit ${message.fieldName?.replace(/_/g, ' ')}`}
+                    >
+                        <Edit2 size={14} />
+                    </button>
+                )}
+
                 {/* Message Content */}
-                <div style={{
-                    backgroundColor: isUser ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                    color: isUser ? 'var(--bg-primary)' : 'var(--text-primary)',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: isUser ? '1.25rem 1.25rem 0.25rem 1.25rem' : '1.25rem 1.25rem 1.25rem 0.25rem',
-                    boxShadow: 'var(--shadow-md)',
-                    lineHeight: 1.6,
-                    fontSize: '0.95rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: needsConfirmation ? '0.75rem' : '0'
-                }}>
-                    <div className="markdown-content">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                        {message.isStreaming && <span className="streaming-cursor">▌</span>}
-                    </div>
+                <div 
+                    style={{
+                        backgroundColor: isUser ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: isUser ? 'var(--bg-primary)' : 'var(--text-primary)',
+                        padding: isUser ? '0.6rem 1rem' : '0.75rem 1.25rem',
+                        borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
+                        boxShadow: 'var(--shadow-md)',
+                        lineHeight: 1.5,
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: needsConfirmation || isEditing ? '0.75rem' : '0',
+                        position: 'relative',
+                        width: isUser ? 'fit-content' : '100%',
+                        minWidth: isUser ? 'auto' : '200px',
+                        maxWidth: '100%'
+                    }}
+                    className="message-bubble-container"
+                >
+                    {isEditing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <textarea
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                        handleSave();
+                                    } else if (e.key === 'Escape') {
+                                        handleCancel();
+                                    }
+                                }}
+                                style={{
+                                    width: '100%',
+                                    minHeight: '60px',
+                                    padding: '0.5rem',
+                                    borderRadius: '0.5rem',
+                                    border: '1px solid var(--border-color)',
+                                    backgroundColor: 'var(--bg-primary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.95rem',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical'
+                                }}
+                                disabled={isSaving}
+                                autoFocus
+                            />
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={isSaving}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.35rem',
+                                        padding: '0.4rem 0.75rem',
+                                        background: 'var(--bg-tertiary)',
+                                        color: 'var(--text-primary)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '0.5rem',
+                                        cursor: isSaving ? 'not-allowed' : 'pointer',
+                                        fontSize: '0.85rem',
+                                        opacity: isSaving ? 0.5 : 1
+                                    }}
+                                >
+                                    <XCircle size={14} />
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving || !editValue.trim()}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.35rem',
+                                        padding: '0.4rem 0.75rem',
+                                        background: isSaving || !editValue.trim() ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #059669, #10b981)',
+                                        color: isSaving || !editValue.trim() ? 'var(--text-secondary)' : 'white',
+                                        border: 'none',
+                                        borderRadius: '0.5rem',
+                                        cursor: isSaving || !editValue.trim() ? 'not-allowed' : 'pointer',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    <Save size={14} />
+                                    {isSaving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                            <div style={{ position: 'relative', width: '100%' }}>
+                            <div className="markdown-content">
+                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                                {message.isStreaming && <span className="streaming-cursor">▌</span>}
+                                {message.wasEdited && (
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        opacity: 0.7,
+                                        marginLeft: '0.5rem',
+                                        fontStyle: 'italic'
+                                    }}>✓ Updated</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Confirmation Buttons */}
                     {needsConfirmation && onConfirmation && (

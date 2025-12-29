@@ -188,3 +188,26 @@ body {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* Message bubble markdown content styling */
+.message-bubble-container .markdown-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.message-bubble-container .markdown-content p {
+  margin: 0;
+  padding: 0;
+}
+
+.message-bubble-container .markdown-content p:not(:last-child) {
+  margin-bottom: 0.5rem;
+}
+
+.message-bubble-container .markdown-content strong {
+  font-weight: 600;
+}
+
+.message-bubble-container .markdown-content em {
+  font-style: italic;
+}

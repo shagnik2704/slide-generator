@@ -31,6 +31,7 @@ from .outline_chat_models import (
     ChatMessage,
     OutlineChatRequest,
 )
+from .outline_chat_edit import process_field_edit
 from .outline_chat_processing import (
     handle_review_phase,
     process_user_input,
@@ -136,18 +137,33 @@ async def outline_chat(request: OutlineChatRequest):
                 "is_draft_ready": True
             })
         
+        # Track which field was answered (for frontend to store with message)
+        answered_field = None
+        
         # Process the conversation - extract information from last user message
         if last_message and last_message.role == "user" and user_content and user_content != "approve":
+            # Determine which field we're collecting before processing
+            outline_type = outline_data.get("outline_type", "FOSS").upper()
+            from .outline_chat_extraction import determine_current_field
+            answered_field, _ = determine_current_field(phase, outline_data, outline_type)
+            
             # Process user input using the extraction module
             outline_data, phase, pending_confirmation, early_response = process_user_input(
                 last_message, outline_data, phase, project_id, request.conversation
             )
             
             if early_response:
+                # Add answered_field to early_response if it's a JSONResponse
+                if isinstance(early_response, JSONResponse):
+                    response_body = json.loads(early_response.body.decode())
+                    response_body["answered_field"] = answered_field
+                    return JSONResponse(response_body)
                 return early_response
             
             if pending_confirmation:
-                return JSONResponse(build_confirmation_response(project_id, pending_confirmation, outline_data, phase))
+                confirmation_response = build_confirmation_response(project_id, pending_confirmation, outline_data, phase)
+                confirmation_response["answered_field"] = answered_field
+                return JSONResponse(confirmation_response)
         
         # Handle review phase
         if phase == "review":
@@ -193,7 +209,8 @@ async def outline_chat(request: OutlineChatRequest):
             "is_approved": phase == "approved",
             "needs_confirmation": pending_confirmation is not None,
             "confirmation_field": pending_confirmation.get("field") if pending_confirmation else None,
-            "confirmation_value": str(pending_confirmation.get("value", "")) if pending_confirmation else None
+            "confirmation_value": str(pending_confirmation.get("value", "")) if pending_confirmation else None,
+            "answered_field": answered_field  # Field that was just answered
         })
     
     except Exception as e:
@@ -284,6 +301,86 @@ async def export_outline(project_id: int, format: str = "json"):
         })
     else:
         raise HTTPException(status_code=400, detail="Format must be 'json', 'pdf', or 'docx'")
+
+
+@router.post("/outline_chat/{project_id}/edit")
+async def edit_outline_field(project_id: int, request: dict):
+    """Edit a specific field in the outline data.
+    
+    Request body:
+    {
+        "field_name": "outline_name",
+        "new_value": "New Course Name",
+        "tutorial_number": 1  # Optional, for tutorial fields
+    }
+    """
+    try:
+        field_name = request.get("field_name")
+        new_value = request.get("new_value")
+        tutorial_number = request.get("tutorial_number")
+        
+        if not field_name or new_value is None:
+            raise HTTPException(status_code=400, detail="field_name and new_value are required")
+        
+        # Load current session
+        outline_data, phase, pending_confirmation = load_session(project_id, "warmup")
+        
+        # Process the edit
+        updated_outline_data, new_phase, error_response = process_field_edit(
+            field_name=field_name,
+            new_value=str(new_value),
+            outline_data=outline_data,
+            phase=phase,
+            project_id=project_id,
+            conversation=[],  # Empty conversation for edit endpoint
+            tutorial_number=tutorial_number,
+        )
+        
+        if error_response:
+            return error_response
+        
+        # Determine next question after edit
+        phase, next_question = determine_next_question(updated_outline_data, new_phase, [])
+        
+        # Build assistant message
+        outline_type = updated_outline_data.get("outline_type", "FOSS").upper()
+        field_display = field_name.replace("_", " ").title()
+        
+        # Format the value for display
+        if isinstance(new_value, list):
+            value_display = "; ".join(str(v) for v in new_value)
+        else:
+            value_display = str(new_value)
+        
+        assistant_message = f"✓ Updated **{field_display}** to: `{value_display}`\n\n"
+        
+        if next_question:
+            from .outline_chat_llm_utils import friendly_rewrite_question, get_example_answer_hint
+            rewritten = friendly_rewrite_question(next_question, outline_type, new_phase)
+            example_hint = get_example_answer_hint(outline_type, new_phase, next_question)
+            if example_hint:
+                assistant_message += f"{rewritten}\n\nExample answer: {example_hint}"
+            else:
+                assistant_message += rewritten
+        else:
+            assistant_message += "All information collected. Reviewing outline..."
+        
+        return JSONResponse({
+            "project_id": project_id,
+            "assistant_message": assistant_message,
+            "follow_up_question": next_question if new_phase != "review" else None,
+            "phase": new_phase,
+            "outline_data": updated_outline_data,
+            "validation_errors": [],
+            "pedagogy_compliance": {},
+            "is_draft_ready": new_phase == "review",
+            "is_approved": False,
+            "needs_confirmation": False,
+        })
+    
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/outline_chat_stream")

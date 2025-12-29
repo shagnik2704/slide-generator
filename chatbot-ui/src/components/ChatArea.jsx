@@ -66,6 +66,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleApprove,
         handleConfirmation,
         handleSendChatText,
+        handleEditAnswer,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
         handleExportMediaWiki,
@@ -267,6 +268,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                             <MessageBubble
                                 message={msg}
                                 onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                                onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
+                                mode={mode}
                             />
 
                             {/* OutlineCard for outline_chat mode */}
