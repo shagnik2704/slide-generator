@@ -7,6 +7,8 @@ import InputArea from './InputArea';
 import ThemeToggle from './ThemeToggle';
 import OutlineCard from './OutlineCard';
 import VoicePreview from './VoicePreview';
+import ImagePromptReview from './ImagePromptReview';
+import ImageGallery from './ImageGallery';
 
 // Message Action Components
 import {
@@ -353,6 +355,34 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
 
                                 {msg.type === 'voice_preview' && msg.voiceData && (
                                     <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                )}
+
+                                {msg.type === 'image_prompt_review' && msg.enhancedPrompts && (
+                                    <ImagePromptReview
+                                        enhancedPrompts={msg.enhancedPrompts}
+                                        projectId={msg.projectId}
+                                        onGenerateComplete={(result) => {
+                                            // Add gallery message when images are generated
+                                            const galleryMessage = {
+                                                id: Date.now(),
+                                                role: 'assistant',
+                                                content: `🖼️ Images Generated!\n\n` +
+                                                    `Generated: ${result.generated} images\n` +
+                                                    `Failed: ${result.failed}`,
+                                                type: 'image_gallery',
+                                                imageData: result,
+                                                projectId: msg.projectId
+                                            };
+                                            setUploadMessages(prev => [...prev, galleryMessage]);
+                                        }}
+                                    />
+                                )}
+
+                                {msg.type === 'image_gallery' && msg.imageData && (
+                                    <ImageGallery
+                                        imageData={msg.imageData}
+                                        projectId={msg.projectId}
+                                    />
                                 )}
                             </div>
                         ))}

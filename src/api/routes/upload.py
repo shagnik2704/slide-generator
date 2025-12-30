@@ -433,3 +433,76 @@ async def generate_voice_batched_endpoint(data: dict):
         print(f"ERROR in generate_voice_batched: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.post("/enhance_prompts")
+async def enhance_prompts_endpoint(data: dict):
+    """
+    Enhance visual cues from a script into detailed image generation prompts.
+    
+    Args:
+        json_script: The parsed script JSON with slides containing image_prompt fields
+        project_id: Optional project ID for tracking
+    
+    Returns:
+        enhanced_prompts: List of {slide_number, title, original, enhanced, skip_reason}
+    """
+    print("🎨 Enhancing visual prompts...")
+    
+    try:
+        json_script = data.get('json_script')
+        project_id = data.get('project_id')
+        
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+        
+        from src.services.prompt_enhancer import enhance_prompts
+        result = enhance_prompts(json_script, project_id)
+        
+        print(f"✅ Enhanced {result.get('enhanced_count', 0)} prompts, skipped {result.get('skipped_count', 0)}")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in enhance_prompts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate_images")
+async def generate_images_endpoint(data: dict):
+    """
+    Generate images from approved prompts.
+    
+    Args:
+        project_id: Project ID for file naming
+        prompts: List of {slide_number, prompt} objects
+        aspect_ratio: Optional, defaults to "1:1"
+    
+    Returns:
+        images: List of {slide_number, url, success}
+        zip_url: URL to download all images as ZIP
+    """
+    print("🖼️ Generating images from prompts...")
+    
+    try:
+        project_id = data.get('project_id')
+        prompts = data.get('prompts', [])
+        aspect_ratio = data.get('aspect_ratio', '1:1')
+        
+        if not project_id:
+            raise HTTPException(status_code=400, detail="project_id is required")
+        
+        if not prompts:
+            raise HTTPException(status_code=400, detail="prompts list is required")
+        
+        from src.services.image_service import generate_images
+        result = generate_images(prompts, project_id, aspect_ratio)
+        
+        print(f"✅ Generated {result.get('generated', 0)} images, {result.get('failed', 0)} failed")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_images: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

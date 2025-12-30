@@ -426,6 +426,84 @@ export function useChatArea() {
         }
     }, []);
 
+    const handleSidebarImageUpload = useCallback(async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Parsing script for image generation: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the script
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!parseResponse.ok) {
+                const errorData = await parseResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to parse script file');
+            }
+
+            const parseData = await parseResponse.json();
+            setCurrentProjectId(parseData.project_id);
+
+            // Update message to show enhancing
+            const enhancingMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✨ Enhancing visual cues with AI...`
+            };
+            setUploadMessages(prev => [...prev, enhancingMessage]);
+
+            // Step 2: Enhance prompts
+            const enhanceResponse = await fetch(`${API_URL}/enhance_prompts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: parseData.json_script,
+                    project_id: parseData.project_id
+                })
+            });
+
+            if (!enhanceResponse.ok) {
+                const errorData = await enhanceResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to enhance prompts');
+            }
+
+            const enhanceData = await enhanceResponse.json();
+            const messageId = Date.now() + 2;
+
+            // Create message with review component
+            const reviewMessage = {
+                id: messageId,
+                role: 'assistant',
+                content: `Review and edit the prompts below, then click Generate.`,
+                jsonScript: parseData.json_script,
+                projectId: parseData.project_id,
+                type: 'image_prompt_review',
+                enhancedPrompts: enhanceData.enhanced_prompts
+            };
+            setUploadMessages(prev => [...prev, reviewMessage]);
+
+        } catch (error) {
+            console.error("Image generation error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, []);
+
     const handleScriptToWiki = useCallback(async (file) => {
         const uploadMessage = {
             id: Date.now(),
@@ -500,6 +578,9 @@ export function useChatArea() {
             case 'voice':
                 handleSidebarVoiceUpload(file);
                 break;
+            case 'images':
+                handleSidebarImageUpload(file);
+                break;
             case 'outline':
                 handleSendMessage(file);
                 break;
@@ -508,7 +589,7 @@ export function useChatArea() {
         }
 
         setStagedFile(null);
-    }, [stagedFile, handleUploadScript, handleScriptToWiki, handleSidebarComplianceUpload, handleSidebarQualityUpload, handleSidebarVoiceUpload, handleSendMessage]);
+    }, [stagedFile, handleUploadScript, handleScriptToWiki, handleSidebarComplianceUpload, handleSidebarQualityUpload, handleSidebarVoiceUpload, handleSidebarImageUpload, handleSendMessage]);
 
     const handleCancelStagedFile = useCallback(() => {
         setStagedFile(null);
