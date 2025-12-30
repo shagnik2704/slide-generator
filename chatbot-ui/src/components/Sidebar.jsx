@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image } from 'lucide-react';
 import Tooltip from './Tooltip';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
@@ -14,6 +14,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
     const qualityInputRef = useRef(null);
     const voiceInputRef = useRef(null);
     const scriptInputRef = useRef(null);
+    const imageInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
@@ -47,6 +48,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'outline' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle image generation file selection - stage for preview
+    const handleImageFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'images' });
             e.target.value = '';
         }
     };
@@ -126,6 +136,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                 type="file"
                 accept=".md,.docx,.odt,.txt"
                 onChange={handleScriptFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={imageInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleImageFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -258,6 +275,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                 >
                     <Mic size={20} />
                     {isOpen && <span>Voice Generator</span>}
+                </button>
+            </TooltipWrapper>
+
+            {/* Image Generator Button */}
+            <TooltipWrapper text="Image Generator">
+                <button
+                    onClick={() => imageInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Image size={20} />
+                    {isOpen && <span>Image Generator</span>}
                 </button>
             </TooltipWrapper>
 
