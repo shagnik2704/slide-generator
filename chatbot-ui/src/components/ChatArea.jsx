@@ -68,6 +68,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarScriptUpload,
         handleGenerateScript,
         handleGenerateSlides,
+        handleCreateSlides,
         handleApprove,
         handleConfirmation,
         handleSendChatText,
@@ -91,6 +92,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
         handleSidebarScriptUpload,
+        handleCreateSlides,
         setStagedFile,  // Expose staging for Sidebar
     }));
 
@@ -383,6 +385,12 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     <ImageGallery
                                         imageData={msg.imageData}
                                         projectId={msg.projectId}
+                                    />
+                                )}
+
+                                {msg.type === 'slides_result' && msg.slidesData && (
+                                    <SlidesPreview
+                                        slidesData={msg.slidesData}
                                     />
                                 )}
                             </div>

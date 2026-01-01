@@ -381,7 +381,7 @@ export function useChatArea() {
             const parseData = await parseResponse.json();
             setCurrentProjectId(parseData.project_id);
 
-            // Generate voice
+            // Generate voice (standard approach - batched is experimental)
             const voiceResponse = await fetch(`${API_URL}/generate_voice`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -553,6 +553,76 @@ export function useChatArea() {
         }
     }, []);
 
+    // Handle slides generation from uploaded file
+    const handleSlidesUpload = useCallback(async (file) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `🎴 Generating slides from: ${file.name}...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the script
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!parseResponse.ok) {
+                const errorData = await parseResponse.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to parse script file');
+            }
+
+            const parseData = await parseResponse.json();
+            setCurrentProjectId(parseData.project_id);
+
+            // Step 2: Generate slides from the parsed script
+            const response = await fetch(`${API_URL}/generate_slides`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: parseData.json_script,
+                    tutorial_name: parseData.json_script?.title || file.name.replace(/\.[^/.]+$/, '')
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to generate slides');
+            }
+
+            const data = await response.json();
+
+            const resultMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✅ Beamer template generated from "${file.name}"!\n\n` +
+                    `📄 ${data.filename}\n` +
+                    `📊 ${data.total_slides} total slides (${data.num_boilerplate_slides} boilerplate + ${data.num_content_slides} content)\n` +
+                    `✨ Auto-filled from script!`,
+                type: 'slides_result',
+                slidesData: data
+            };
+            setUploadMessages(prev => [...prev, resultMessage]);
+
+        } catch (error) {
+            console.error("Slides generation error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, []);
+
     // =========================
     // STAGING HANDLERS (Shared between Sidebar and InputArea)
     // =========================
@@ -581,6 +651,9 @@ export function useChatArea() {
             case 'images':
                 handleSidebarImageUpload(file);
                 break;
+            case 'slides':
+                handleSlidesUpload(file);
+                break;
             case 'outline':
                 handleSendMessage(file);
                 break;
@@ -589,11 +662,74 @@ export function useChatArea() {
         }
 
         setStagedFile(null);
-    }, [stagedFile, handleUploadScript, handleScriptToWiki, handleSidebarComplianceUpload, handleSidebarQualityUpload, handleSidebarVoiceUpload, handleSidebarImageUpload, handleSendMessage]);
+    }, [stagedFile, handleUploadScript, handleScriptToWiki, handleSidebarComplianceUpload, handleSidebarQualityUpload, handleSidebarVoiceUpload, handleSidebarImageUpload, handleSlidesUpload, handleSendMessage]);
 
     const handleCancelStagedFile = useCallback(() => {
         setStagedFile(null);
     }, []);
+
+    // =========================
+    // SLIDES GENERATION
+    // =========================
+
+    const handleCreateSlides = useCallback(async () => {
+        // Find the most recent message with a jsonScript (loaded script data)
+        const scriptMessage = [...uploadMessages].reverse().find(msg => msg.jsonScript);
+        const jsonScript = scriptMessage?.jsonScript;
+
+        const tutorialName = jsonScript?.title || jsonScript?.metadata?.title || 'Tutorial Name';
+
+        const generatingMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: jsonScript
+                ? `🎴 Generating Beamer slides from "${tutorialName}"...`
+                : `🎴 Generating Beamer slides template...`
+        };
+        setUploadMessages(prev => [...prev, generatingMessage]);
+        setIsTyping(true);
+
+        try {
+            const response = await fetch(`${API_URL}/generate_slides`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: jsonScript || null,  // Pass script if available
+                    tutorial_name: tutorialName
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to generate slides');
+            }
+
+            const data = await response.json();
+
+            const resultMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `✅ Beamer template generated!\n\n` +
+                    `📄 ${data.filename}\n` +
+                    `📊 ${data.total_slides} total slides (${data.num_boilerplate_slides} boilerplate + ${data.num_content_slides} content)` +
+                    (jsonScript ? `\n✨ Auto-filled from script!` : ''),
+                type: 'slides_result',
+                slidesData: data
+            };
+            setUploadMessages(prev => [...prev, resultMessage]);
+
+        } catch (error) {
+            console.error("Slides generation error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Slides generation failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, [uploadMessages]);
 
     // =========================
     // GENERATION HANDLERS
@@ -1244,6 +1380,7 @@ export function useChatArea() {
         // Handlers - Generation
         handleGenerateScript,
         handleGenerateSlides,
+        handleCreateSlides,
         handleApprove,
 
         // Handlers - Outline Chat

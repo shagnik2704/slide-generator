@@ -58,7 +58,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.5rem'
                     }}>
-                        {generated_slides}/{total_slides} slides
+                        {generated_slides}/{total_slides} Rows
                     </span>
                 </div>
 
@@ -113,7 +113,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                     fontSize: '0.85rem',
                     color: '#ef4444',
                 }}>
-                    <strong>Failed slides:</strong>
+                    <strong>Failed rows:</strong>
                     <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
                         {errors.map((err, i) => (
                             <li key={i}>{err}</li>
@@ -221,7 +221,7 @@ function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <span>Slide {slideNum}</span>
+                        <span>Row {slideNum}</span>
                         <span style={{
                             fontSize: '0.75rem',
                             color: 'var(--text-secondary)'
@@ -233,7 +233,7 @@ function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
 
                 <a
                     href={url}
-                    download={`slide_${slideNum}.wav`}
+                    download={`row_${slideNum}.wav`}
                     style={{
                         color: 'var(--text-secondary)',
                         padding: '0.4rem',

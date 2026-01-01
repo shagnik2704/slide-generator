@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -15,6 +15,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
     const voiceInputRef = useRef(null);
     const scriptInputRef = useRef(null);
     const imageInputRef = useRef(null);
+    const slidesInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
@@ -57,6 +58,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'images' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle slides generation file selection - stage for preview
+    const handleSlidesFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'slides' });
             e.target.value = '';
         }
     };
@@ -143,6 +153,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleImageFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={slidesInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleSlidesFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -297,6 +314,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                 >
                     <Image size={20} />
                     {isOpen && <span>Image Generator</span>}
+                </button>
+            </TooltipWrapper>
+
+            {/* Slides Generator Button */}
+            <TooltipWrapper text="Slides Generator">
+                <button
+                    onClick={() => slidesInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Presentation size={20} />
+                    {isOpen && <span>Slides Generator</span>}
                 </button>
             </TooltipWrapper>
 
