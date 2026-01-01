@@ -132,7 +132,7 @@ async def check_compliance_endpoint(data: dict):
             tutorial_type = _detect_tutorial_type(json_script)
         
         from src.services.compliance_service import check_compliance
-        compliance_report = check_compliance(json_script, tutorial_type)
+        compliance_report = await check_compliance(json_script, tutorial_type)
         
         summary = compliance_report.get('summary', {})
         print(f"✅ Compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
@@ -177,7 +177,7 @@ async def upload_script(file: UploadFile = File(...)):
         
         # Run compliance checks
         from src.services.compliance_service import check_compliance
-        compliance_report = check_compliance(json_script, tutorial_type)
+        compliance_report = await check_compliance(json_script, tutorial_type)
         
         # Generate project ID
         project_id = int(time.time())
@@ -345,7 +345,7 @@ async def check_quality_endpoint(data: dict):
             raise HTTPException(status_code=400, detail="json_script is required")
         
         from src.services.quality_service import check_quality
-        result = check_quality(json_script)
+        result = await check_quality(json_script)
         
         summary = result.get('summary', {})
         print(f"✅ Quality check complete: {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
@@ -621,6 +621,7 @@ async def generate_slides_endpoint(data: dict):
         traceback.print_exc()
         print(f"ERROR in generate_slides: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
