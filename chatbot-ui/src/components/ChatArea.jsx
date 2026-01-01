@@ -9,7 +9,7 @@ import OutlineCard from './OutlineCard';
 import VoicePreview from './VoicePreview';
 import ImagePromptReview from './ImagePromptReview';
 import ImageGallery from './ImageGallery';
-import SlidesPreview from './SlidesPreview';
+import AskAIChat from './AskAIChat';
 
 // Message Action Components
 import {
@@ -428,6 +428,9 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 onConfirmStagedFile={handleConfirmStagedFile}
                 onCancelStagedFile={handleCancelStagedFile}
             />
+
+            {/* Ask AI Chat - only show in outline_chat mode */}
+            {mode === 'outline_chat' && <AskAIChat />}
 
             <style>{`
                 @keyframes bounce {

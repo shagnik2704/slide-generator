@@ -77,3 +77,8 @@ class OutlineChatResponse(BaseModel):
     is_draft_ready: bool = False
     is_approved: bool = False
 
+
+class GeneralChatRequest(BaseModel):
+    """Request model for general chat."""
+    question: str = Field(..., description="The question to ask the AI")
+
