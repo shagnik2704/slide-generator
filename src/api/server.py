@@ -5,27 +5,18 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-
 # Get project root
 project_root = Path(__file__).parent.parent.parent
-DB_PATH = str(project_root / "checkpoints.sqlite")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize AsyncSqliteSaver at startup, cleanup at shutdown."""
-    async with AsyncSqliteSaver.from_conn_string(DB_PATH) as checkpointer:
-        # Store checkpointer in app.state for routes to access
-        app.state.checkpointer = checkpointer
-        
-        # Rebuild graph with checkpointer (lazy import to avoid circular deps)
-        from src.core.agent import build_graph
-        app.state.graph = build_graph(checkpointer)
-        
-        print(f"✅ Checkpointer initialized: {DB_PATH}")
-        yield
-        print("🔒 Checkpointer closed")
+    """Initialize the LangGraph agent at startup."""
+    from src.core.agent import build_graph
+    app.state.graph = build_graph()
+    print("✅ LangGraph agent initialized")
+    yield
+    print("🔒 Server shutting down")
 
 
 app = FastAPI(title="Slide Generator API", lifespan=lifespan)

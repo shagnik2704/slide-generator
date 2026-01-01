@@ -1,84 +1,184 @@
-## Slide Generator
+# Slide Generator
 
-FastAPI backend plus a Vite/React chatbot UI for generating lesson outlines, narration, slides, and media. This README documents setup using **uv** for Python dependency management and **uvx** for Node/NPM binaries.
+AI-powered tool for generating Spoken Tutorial content: scripts, slides, and narrated videos from simple outlines.
 
-**Production URLs**
+**Live Demo**
 - Backend API: `https://slide-generator-1.onrender.com`
 - Frontend UI: `https://slide-generator-61ic.onrender.com`
 
-## Prerequisites
-- uv installed: `curl -Ls https://astral.sh/uv/install.sh | sh`
-- Python 3.10–3.12 (repo targets 3.11). Install with uv if needed: `uv python install 3.11`
-- System packages: LaTeX (texlive-base/extra) and `ffmpeg` for PDF/video generation  
-  - macOS (Homebrew): `brew install --cask mactex-no-gui` and `brew install ffmpeg`
-  - Ubuntu/Debian: `sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra ffmpeg`
-- (Optional) For Node without a global install, uvx can fetch a portable binary via `nodejs-bin`.
+---
 
-## Backend (FastAPI)
-1) From repo root, create a virtual env and install deps:
-```
-uv sync
-```
-2) Configure secrets in `.env`:
-```
-GOOGLE_API_KEY=your_key_here
-```
-3) Run the API (reload enabled):
-```
-uv run uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload
-```
-Or use the entry point:
-```
-uv run python -m src.api
-```
-Static assets are served from `static/` at `/static/*`.
+## Features
 
-## Frontend (Vite/React chatbot UI)
-The UI lives in `chatbot-ui/`. You can run Node via uvx + nodejs-bin (no global Node required):
+| Feature | Description |
+|:--------|:------------|
+| **Script Generation** | LangGraph pipeline: outline → structured content → narration → visual cues |
+| **Voice Generation** | Gemini TTS with WebSocket streaming, pause/resume, slide-by-slide preview |
+| **Slides Generation** | Beamer LaTeX templates, auto-populated from scripts |
+| **Compliance Checks** | Admin compliance (formatting) + Quality compliance (pedagogy) |
+| **MediaWiki Export** | One-click export to Spoken Tutorial wiki table format |
+| **Image Prompt Enhancement** | AI-enhanced prompts for slide visuals with review UI |
+| **Outline Chat** | Interactive wizard to build course outlines step-by-step |
+
+---
+
+## Quick Start
+
+### Prerequisites
+- **Python 3.11** via [uv](https://github.com/astral-sh/uv): `curl -Ls https://astral.sh/uv/install.sh | sh`
+- **Node.js 18+** (or use `uvx --from nodejs-bin@22`)
+- **LaTeX** for PDF generation: `brew install --cask mactex-no-gui` (macOS) or `apt install texlive-full` (Linux)
+- **FFmpeg** for video: `brew install ffmpeg` or `apt install ffmpeg`
+
+### Backend
+```bash
+cd slide-generator
+uv sync                          # Install Python deps
+echo "GOOGLE_API_KEY=your_key" > .env
+uv run python -m src.api         # Starts on http://localhost:8000
 ```
+
+### Frontend
+```bash
 cd chatbot-ui
-uvx --from nodejs-bin@22 npm install
-uvx --from nodejs-bin@22 npm run dev -- --host --port 5173
+npm install && npm run dev       # Starts on http://localhost:5173
 ```
-Production build:
-```
-uvx --from nodejs-bin@22 npm run build
-```
-The build output lands in `chatbot-ui/dist/` (served statically in deployment).
 
-## Running full stack locally
-- Start backend: `uv run uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload`
-- Start frontend: `cd chatbot-ui && uvx --from nodejs-bin@22 npm run dev -- --host --port 5173`
-- The frontend expects the API at `http://localhost:8000`; CORS is open by default.
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend (React)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ ChatArea.jsx │──│ useChatArea  │──│ Modular Hooks        │  │
+│  └──────────────┘  └──────────────┘  │ • useUploadHandlers  │  │
+│                                       │ • useSidebarHandlers │  │
+│                                       │ • useGenerationHndlr │  │
+│                                       │ • useOutlineChat     │  │
+│                                       │ • useExportHandlers  │  │
+│                                       └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │ HTTP/WebSocket
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Backend (FastAPI)                          │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────┐  │
+│  │ upload.py  │  │generation.py│  │outline_chat│  │download  │  │
+│  └────────────┘  └────────────┘  └────────────┘  └──────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    LangGraph Agent Pipeline                     │
+│  detect_type → generate_structure → expand_narration →          │
+│  generate_visuals → evaluator ⟳ optimiser → generate_pdf        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## Project Structure
+
 ```
 slide-generator/
-├── src/                    # Main application source code
-│   ├── api/               # FastAPI server and routes
-│   ├── core/              # Core business logic (agent, state)
-│   ├── nodes/             # Processing nodes
-│   ├── routing/            # Routing logic
-│   ├── services/          # Business services (PDF, LaTeX, outline)
-│   └── utils/             # Utility functions
-├── chatbot-ui/            # Frontend React application
-├── static/                # Static files served by API
-├── output/                # Generated files (PDFs, videos, images)
-│   ├── pdfs/
-│   ├── videos/
-│   └── images/
-├── uploads/               # User uploads
-├── data/                  # Sample data and templates
-│   └── sample_scripts/
-└── docs/                  # Documentation
+├── src/
+│   ├── api/
+│   │   ├── server.py              # FastAPI app, CORS, static mounts
+│   │   ├── models.py              # Pydantic request/response models
+│   │   └── routes/
+│   │       ├── upload.py          # File uploads, parsing, compliance
+│   │       ├── generation.py      # Script/slides/video generation
+│   │       ├── download.py        # File downloads
+│   │       └── outline_chat/      # Interactive outline wizard
+│   ├── core/
+│   │   ├── agent.py               # LangGraph workflow definition
+│   │   └── state.py               # AgentState TypedDict
+│   ├── nodes/                     # LangGraph processing nodes
+│   └── services/                  # Business logic (PDF, LaTeX, TTS)
+├── chatbot-ui/
+│   └── src/
+│       ├── components/            # React components
+│       ├── hooks/                 # Modular React hooks (6 files)
+│       └── services/api.js        # Centralized fetch wrapper
+├── static/                        # Generated PDFs, videos
+├── output/                        # Audio files, images
+└── data/sample_scripts/           # Example scripts
 ```
 
-## Useful commands
-- Format/ruff-equivalent not configured; rely on uv sync for dependency locks.
-- Regenerate lock after dependency changes: `uv lock`
-- Clean installs: remove `.venv` and rerun `uv sync`
+---
 
-## Notes
-- Generated PDFs/videos are written under `static/` and `output/`.
-- Sample outlines/scripts live under `data/sample_scripts/`.
-- User uploads are stored in `uploads/`.
+## API Reference
+
+### Upload & Parse
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/upload_outline` | POST | Parse outline file (TXT/DOCX) |
+| `/upload_script` | POST | Parse script + run compliance |
+| `/parse_script` | POST | Parse script only (no compliance) |
+
+### Generation
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/generate_script` | POST | Outline → JSON script via LangGraph |
+| `/generate_slides` | POST | JSON script → Beamer PDF |
+| `/generate_video` | POST | Script + PDF → narrated video |
+| `/ws/generate_voice` | WS | Streaming TTS with pause/resume |
+
+### Compliance & Quality
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/check_compliance` | POST | Admin compliance checks |
+| `/check_quality` | POST | Quality/pedagogy checks |
+
+### Export
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/export_mediawiki` | POST | JSON → MediaWiki table format |
+| `/download_script_docx` | POST | JSON → DOCX download |
+| `/docx_to_mediawiki` | POST | DOCX → MediaWiki directly |
+
+### Outline Chat
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/outline_chat` | POST | Multi-turn outline builder |
+| `/outline_chat/{id}/edit` | POST | Edit a previous answer |
+| `/outline_chat/{id}/export` | GET | Export completed outline |
+
+---
+
+## Development
+
+```bash
+# Format Python (if configured)
+uv run ruff format src/
+
+# Run tests (if available)
+uv run pytest
+
+# Regenerate lock file
+uv lock
+
+# Production frontend build
+cd chatbot-ui && npm run build
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|:------|:-----------|
+| Backend | Python 3.11, FastAPI, LangGraph, Pydantic |
+| Frontend | React 18, Vite, Lucide Icons |
+| AI/LLM | Google Gemini (text + TTS) |
+| PDF | LaTeX (Beamer), python-docx |
+| Video | FFmpeg |
+| Package Mgmt | uv (Python), npm (JS) |
+
+---
+
+## License
+
+MIT

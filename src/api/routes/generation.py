@@ -34,12 +34,9 @@ async def generate_script(request: GenerateScriptRequest, req: Request):
             "evaluation_feedback": None,
         }
         
-        # Use graph from app.state (with checkpointer)
+        # Use graph from app.state
         graph = req.app.state.graph
-        result = await graph.ainvoke(
-            initial_state,
-            config={"configurable": {"thread_id": request.thread_id or f"script_{int(time.time())}"}}
-        )
+        result = await graph.ainvoke(initial_state)
         
         script_pdf_path = result.get("script_pdf_path")
         json_script = result.get("json_script")
@@ -81,12 +78,9 @@ async def generate_slides(request: GenerateSlidesRequest, req: Request):
     }
     
     try:
-        # Use graph from app.state (with checkpointer)
+        # Use graph from app.state
         graph = req.app.state.graph
-        result = await graph.ainvoke(
-            initial_state,
-            config={"configurable": {"thread_id": request.thread_id or f"slides_{int(time.time())}"}}
-        )
+        result = await graph.ainvoke(initial_state)
         
         pdf_path = result.get("pdf_path")
         if pdf_path and os.path.exists(pdf_path):
@@ -119,10 +113,9 @@ async def generate_video(request: GenerateVideoRequest, req: Request):
             "mode": "video_production",
             "pdf_path": request.pdf_path or "output.pdf"
         }
-        # Use graph from app.state (with checkpointer)
+        # Use graph from app.state
         graph = req.app.state.graph
-        config = {"configurable": {"thread_id": request.thread_id or f"video_{int(time.time())}"}}
-        result = await graph.ainvoke(initial_state, config)
+        result = await graph.ainvoke(initial_state)
         
         video_path = result.get("video_path")
         
@@ -260,53 +253,3 @@ async def upload_edited_script(file: UploadFile = File(...)):
         traceback.print_exc()
         print(f"ERROR in upload_edited_script: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# === DEBUG ENDPOINTS FOR CHECKPOINTER ===
-
-@router.get("/debug/threads")
-async def list_threads():
-    """Debug endpoint to list all stored thread IDs."""
-    import sqlite3
-    from pathlib import Path
-    
-    db_path = Path(__file__).parent.parent.parent.parent / "checkpoints.sqlite"
-    
-    if not db_path.exists():
-        return {"threads": [], "message": "No checkpoints database yet"}
-    
-    try:
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT thread_id FROM checkpoints ORDER BY thread_id")
-        threads = [row[0] for row in cursor.fetchall()]
-        conn.close()
-        return {"threads": threads, "count": len(threads)}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@router.get("/debug/threads/{thread_id}")
-async def get_thread_history(thread_id: str, req: Request):
-    """Debug endpoint to get state history for a specific thread."""
-    config = {"configurable": {"thread_id": thread_id}}
-    
-    try:
-        graph = req.app.state.graph
-        history = []
-        async for state in graph.aget_state_history(config):
-            history.append({
-                "checkpoint_id": state.config["configurable"].get("checkpoint_id"),
-                "created_at": str(state.created_at) if state.created_at else None,
-                "state_keys": list(state.values.keys()) if state.values else []
-            })
-        
-        return {
-            "thread_id": thread_id,
-            "checkpoint_count": len(history),
-            "history": history[:10]  # Limit to last 10 checkpoints
-        }
-    except Exception as e:
-        traceback.print_exc()
-        return {"error": str(e)}
-
