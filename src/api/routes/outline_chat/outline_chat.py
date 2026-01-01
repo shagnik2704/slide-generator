@@ -30,6 +30,7 @@ from .outline_chat_llm_utils import (
 from .outline_chat_models import (
     ChatMessage,
     OutlineChatRequest,
+    GeneralChatRequest,
 )
 from .outline_chat_edit import process_field_edit
 from .outline_chat_processing import (
@@ -376,6 +377,36 @@ async def edit_outline_field(project_id: int, request: dict):
             "is_draft_ready": new_phase == "review",
             "is_approved": False,
             "needs_confirmation": False,
+        })
+    
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/general_chat")
+async def general_chat(request: GeneralChatRequest):
+    """General chat endpoint for asking any questions."""
+    try:
+        question = request.question.strip()
+        if not question:
+            raise HTTPException(status_code=400, detail="Question is required")
+        
+        from .outline_chat_llm_utils import generate_llm_text
+        
+        # Use a friendly system prompt for general questions
+        system_prompt = "You are a helpful AI assistant. Answer questions clearly and concisely. Be friendly and professional."
+        
+        answer = generate_llm_text(
+            question,
+            temperature=0.7,
+            max_tokens=1024,
+            system_prompt=system_prompt,
+        )
+        
+        return JSONResponse({
+            "answer": answer,
+            "question": question
         })
     
     except Exception as e:
