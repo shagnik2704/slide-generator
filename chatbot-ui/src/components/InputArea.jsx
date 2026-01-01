@@ -494,8 +494,8 @@ const InputArea = ({
                                 style={pillButtonStyle(true)}
                                 title="Coming soon"
                             >
-                                <Video size={16} />
-                                Create Video
+                                <FileText size={16} />
+                                Create Slides
                             </button>
                         </div>
                     </>

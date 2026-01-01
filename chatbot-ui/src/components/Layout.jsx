@@ -17,6 +17,13 @@ const Layout = () => {
     }
   };
 
+  // Handle create slides from sidebar
+  const handleCreateSlides = () => {
+    if (chatAreaRef.current?.handleCreateSlides) {
+      chatAreaRef.current.handleCreateSlides();
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
@@ -24,6 +31,7 @@ const Layout = () => {
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
           onStageFile={handleStageFile}
+          onCreateSlides={handleCreateSlides}
         />
         <ChatArea
           ref={chatAreaRef}
