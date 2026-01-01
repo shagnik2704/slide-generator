@@ -9,6 +9,7 @@ import OutlineCard from './OutlineCard';
 import VoicePreview from './VoicePreview';
 import ImagePromptReview from './ImagePromptReview';
 import ImageGallery from './ImageGallery';
+import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 
 // Message Action Components

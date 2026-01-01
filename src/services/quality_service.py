@@ -44,7 +44,7 @@ class ComparisonResults(BaseModel):
     comparisons: List[MeaningComparison] = Field(description="Per-slide comparison results")
 
 
-def check_quality(json_script: dict) -> dict:
+async def check_quality(json_script: dict) -> dict:
     """
     Run quality checks using back-translation approach.
     
@@ -92,7 +92,7 @@ Translate ONLY the narration text from English to Hindi. Follow these rules:
 Return the Hindi translation for each slide."""
 
         forward_llm = llm.with_structured_output(TranslationBatch)
-        forward_result = forward_llm.invoke(forward_prompt)
+        forward_result = await forward_llm.ainvoke(forward_prompt)
         
         if not forward_result or not forward_result.slides:
             return _get_error_response("Forward translation failed")
@@ -115,7 +115,7 @@ Translate these Hindi narrations back to English. Be literal and accurate - do N
 Return the English translation for each slide."""
 
         back_llm = llm.with_structured_output(BackTranslationBatch)
-        back_result = back_llm.invoke(back_prompt)
+        back_result = await back_llm.ainvoke(back_prompt)
         
         if not back_result or not back_result.slides:
             return _get_error_response("Back translation failed")
@@ -152,7 +152,7 @@ For each slide, determine if the MEANING is preserved:
 Overall quality passes if average score >= 4."""
 
         compare_llm = llm.with_structured_output(ComparisonResults)
-        compare_result = compare_llm.invoke(compare_prompt)
+        compare_result = await compare_llm.ainvoke(compare_prompt)
         
         if not compare_result:
             return _get_error_response("Comparison failed")
@@ -190,7 +190,7 @@ Overall quality passes if average score >= 4."""
         # Build translated script with comparison data
         translated_script = {
             "title": json_script.get("presentation_title", json_script.get("title", "Untitled")),
-            "title_hindi": _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm),
+            "title_hindi": await _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm),
             "slides": []
         }
         
@@ -232,12 +232,12 @@ Overall quality passes if average score >= 4."""
         return _get_error_response(str(e))
 
 
-def _translate_title(title: str, llm) -> str:
+async def _translate_title(title: str, llm) -> str:
     """Translate just the title to Hindi."""
     if not title:
         return ""
     try:
-        response = llm.invoke(f"Translate this tutorial title to Hindi (Devanagari script). Only output the Hindi translation, nothing else: {title}")
+        response = await llm.ainvoke(f"Translate this tutorial title to Hindi (Devanagari script). Only output the Hindi translation, nothing else: {title}")
         return response.content.strip()
     except:
         return title

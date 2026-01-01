@@ -124,7 +124,7 @@ def check_links(json_script: dict) -> dict:
         }
 
 
-def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> dict:
+async def check_compliance(json_script: dict, tutorial_type: str = "conceptual") -> dict:
     """
     Run AI-powered compliance checks on a script.
     
@@ -205,7 +205,7 @@ For each check, provide:
 """
 
     try:
-        result = structured_llm.invoke(prompt)
+        result = await structured_llm.ainvoke(prompt)
         
         if result is None:
             return _get_error_response("AI returned no result")
