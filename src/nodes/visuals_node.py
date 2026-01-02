@@ -106,31 +106,45 @@ SECTION HEADERS:
 - When introducing a new topic → "Section Header: [Topic Name]"
 - Example: "Section Header: Clarity"
 
-DEMO SLIDES:
+DEMO SLIDES EXAMPLE:
 - User typing a prompt → "Screen close-up: user typing '[first few words of prompt]...'"
 - AI generating response → "AI generating response on screen"
 - Opening a tool → "Browser showing ChatGPT/Gemini interface"
 - Clicking submit → "User clicking Submit button"
 
-COMPARISON SLIDES:
+COMPARISON SLIDES EXAMPLE:
 - Showing vague vs improved → "Side-by-side: vague prompt output vs improved prompt output"
 - Before/after comparison → "Three outputs shown side by side"
 
-CONCEPT EXPLANATION:
+CONCEPT EXPLANATION EXAMPLE:
 - Explaining a concept → "Person at laptop, [relevant visual]"
 - Showing frustration → "Person scratching head, confused at screen"
 - Showing success → "Person at laptop, smiling at improved output"
 - Abstract concept → "Illustration showing [concept] with simple icons"
 
-REACTION/REFLECTION:
+REACTION/REFLECTION EXAMPLE:
 - Asking to think → "Person thinking with thought bubble"
 - Emphasizing a point → "Close-up of screen showing key element"
+
+=== STYLE GUIDELINES ===
+
+FOR SOFTWARE/SCREENSHOTS:
+- Keep realistic software UI aesthetic
+- Describe the actual interface accurately
+- Example: "Screen showing VS Code with Python code, dark theme"
+
+FOR PEOPLE/CONCEPTS/ABSTRACT:
+- Use FLAT DESIGN ILLUSTRATION style (not photorealistic)
+- Simple cartoon characters, 2D vector art, educational infographic style
+- Example: "Flat illustration of cartoon person thinking, vibrant colors"
 
 === RULES ===
 1. Every slide MUST have an image_prompt (never null for content slides)
 2. Match the visual to the narration content
 3. Keep descriptions concise but specific
-4. For demo slides, reference what's being typed/shown
+4. For software demos, describe the UI/screen accurately
+5. For people/concepts, specify "flat design", "cartoon", or "2D illustration"
+6. Do NOT include text that should appear in the image (AI is bad at text)
 
 Add image_prompt to EVERY slide. Keep title and narration unchanged."""
 

@@ -159,13 +159,12 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
-            // Step 2: Generate voice
-            const voiceData = await apiJson('/generate_voice', {
+            // Step 2: Generate voice (combined - single file for entire script)
+            const voiceData = await apiJson('/generate_voice_combined', {
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
-                    project_id: parseData.project_id,
-                    target_audience: 'general'
+                    project_id: parseData.project_id
                 }),
             });
 
@@ -175,7 +174,8 @@ export function useSidebarHandlers(
                 role: 'assistant',
                 content: `🎤 Voice Generation Complete!\n\n` +
                     `File: ${file.name}\n` +
-                    `Generated: ${voiceData.generated_slides}/${voiceData.total_slides} slides`,
+                    `Slides: ${voiceData.total_slides}\n` +
+                    `Duration: ${voiceData.duration_estimate}`,
                 jsonScript: parseData.json_script,
                 projectId: parseData.project_id,
                 type: 'voice_preview',
