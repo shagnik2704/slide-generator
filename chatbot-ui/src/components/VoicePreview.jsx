@@ -5,13 +5,20 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * VoicePreview - Displays audio players for generated voice files
+ * Supports both:
+ * - audio_urls: Multiple files (one per slide)
+ * - audio_url: Single combined file (entire script)
  */
 export default function VoicePreview({ voiceData, isOpen = true }) {
     const [playingSlide, setPlayingSlide] = useState(null);
 
     if (!voiceData || !isOpen) return null;
 
-    const { audio_urls, zip_url, generated_slides, total_slides, errors } = voiceData;
+    // Support both formats
+    const { audio_urls, audio_url, zip_url, generated_slides, total_slides, errors, duration_estimate } = voiceData;
+
+    // Check if this is a combined (single file) response
+    const isCombined = audio_url && !audio_urls;
 
     const handlePlay = (slideNum, audioRef) => {
         if (playingSlide === slideNum) {
@@ -49,7 +56,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Volume2 size={20} style={{ color: 'var(--accent-primary)' }} />
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Audio Preview
+                        {isCombined ? 'Full Audio' : 'Audio Preview'}
                     </span>
                     <span style={{
                         fontSize: '0.85rem',
@@ -58,13 +65,25 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.5rem'
                     }}>
-                        {generated_slides}/{total_slides} Rows
+                        {isCombined ? `${total_slides} Rows` : `${generated_slides}/${total_slides} Rows`}
                     </span>
+                    {duration_estimate && (
+                        <span style={{
+                            fontSize: '0.85rem',
+                            color: 'var(--accent-primary)',
+                            background: 'var(--bg-tertiary)',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.5rem'
+                        }}>
+                            {duration_estimate}
+                        </span>
+                    )}
                 </div>
 
-                {zip_url && (
+                {/* Download button - works for both zip_url and audio_url */}
+                {(zip_url || audio_url) && (
                     <a
-                        href={`${API_URL}${zip_url}`}
+                        href={`${API_URL}${zip_url || audio_url}`}
                         download
                         style={{
                             display: 'flex',
@@ -80,28 +99,42 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                         }}
                     >
                         <Download size={16} />
-                        Download All
+                        {isCombined ? 'Download Audio' : 'Download All'}
                     </a>
                 )}
             </div>
 
-            {/* Audio Players Grid */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: '0.75rem',
-            }}>
-                {audio_urls && Object.entries(audio_urls).map(([slideNum, url]) => (
-                    <AudioPlayer
-                        key={slideNum}
-                        slideNum={slideNum}
-                        url={`${API_URL}${url}`}
-                        isPlaying={playingSlide === slideNum}
-                        onPlay={handlePlay}
-                        onEnded={handleEnded}
-                    />
-                ))}
-            </div>
+            {/* Combined Audio - Single Player */}
+            {isCombined && (
+                <AudioPlayer
+                    slideNum="full"
+                    url={`${API_URL}${audio_url}`}
+                    isPlaying={playingSlide === 'full'}
+                    onPlay={handlePlay}
+                    onEnded={handleEnded}
+                    isCombined={true}
+                />
+            )}
+
+            {/* Multiple Audio Players Grid */}
+            {!isCombined && audio_urls && (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                    gap: '0.75rem',
+                }}>
+                    {Object.entries(audio_urls).map(([slideNum, url]) => (
+                        <AudioPlayer
+                            key={slideNum}
+                            slideNum={slideNum}
+                            url={`${API_URL}${url}`}
+                            isPlaying={playingSlide === slideNum}
+                            onPlay={handlePlay}
+                            onEnded={handleEnded}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Errors */}
             {errors && errors.length > 0 && (
@@ -128,7 +161,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
 /**
  * Individual audio player for a slide with premium seekbar
  */
-function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
+function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded, isCombined = false }) {
     const audioRef = React.useRef(null);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -221,7 +254,7 @@ function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <span>Row {slideNum}</span>
+                        <span>{isCombined ? 'Full Narration' : `Row ${slideNum}`}</span>
                         <span style={{
                             fontSize: '0.75rem',
                             color: 'var(--text-secondary)'
@@ -233,7 +266,7 @@ function AudioPlayer({ slideNum, url, isPlaying, onPlay, onEnded }) {
 
                 <a
                     href={url}
-                    download={`row_${slideNum}.wav`}
+                    download={isCombined ? 'full_narration.wav' : `row_${slideNum}.wav`}
                     style={{
                         color: 'var(--text-secondary)',
                         padding: '0.4rem',

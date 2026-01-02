@@ -25,7 +25,7 @@ class ComplianceResults(BaseModel):
     utility_explained: CheckResult = Field(description="Is the utility of the topic explained briefly?")
     abbreviations_avoided: CheckResult = Field(description="Are abbreviations/acronyms avoided or explained?")
     bold_technical_terms: CheckResult = Field(description="Are technical words and UI elements displayed in **bold**?")
-    demo_75_percent: CheckResult = Field(description="Is 75% of the tutorial devoted to demonstration?")
+    demo_75_percent: CheckResult = Field(description="Is 75% of the tutorial devoted to demonstration or analogies?")
     sufficient_slides: CheckResult = Field(description="Are there sufficient slides for the content?")
     recap_at_end: CheckResult = Field(description="Is there a quick recap at the end of the script?")
     visual_narration_consistent: CheckResult = Field(description="Are Visual Cues consistent with Narration?")
@@ -159,10 +159,11 @@ async def check_compliance(json_script: dict, tutorial_type: str = "conceptual")
 4. **Utility Explained**: Is there a brief explanation of WHY this topic is useful or important?
 5. **Abbreviations Avoided**: Are abbreviations either avoided or properly explained when first used?
 6. **Bold Technical Terms**: Are technical terms, UI elements, buttons, and keywords marked in **bold**?
-7. **75% Demonstration**: Is at least 75% of the content focused on hands-on demonstration (not just theory)?
+7. **75% Demonstration/Analogies**: Is at least 75% of the content focused on hands-on demonstration OR relatable analogies (not just dry theory)?
+    - Demonstrations: step-by-step actions, clicking, typing, running code
+    - Analogies: relatable examples, comparisons, real-world scenarios that explain concepts
     - SKIP this check for: Learning Objectives, System Requirements, Prerequisites, Summary, Assignment, and Thank You slides
-    - These slides typically have bullet points that naturally exceed 80 characters
-    - Only check content/demonstration slides
+    - Only check content slides
 
 8. **Sufficient Slides**: Are there enough slides to cover the content adequately (typically 8-15 for a 3-4 min tutorial)? More slides are okay,less are not.
 9. **Recap at End**: Is there a summary or recap slide near the end?
@@ -218,7 +219,7 @@ For each check, provide:
             _format_check("utility_explained", "Is the utility of the topic explained briefly?", result.utility_explained),
             _format_check("abbreviations", "Are abbreviations/acronyms avoided or explained?", result.abbreviations_avoided),
             _format_check("bold_technical", "Are technical words/UI elements in **bold**?", result.bold_technical_terms),
-            _format_check("demo_percentage", "Is 75% of the tutorial devoted to demonstration?", result.demo_75_percent),
+            _format_check("demo_percentage", "Is 75% of the tutorial devoted to demonstration/analogies?", result.demo_75_percent),
             _format_check("sufficient_slides", "Are there sufficient slides for the content?", result.sufficient_slides),
             _format_check("recap", "Is a quick recap given at the end of the script?", result.recap_at_end),
             _format_check("visual_narration", "Are Visual Cues consistent with Narration?", result.visual_narration_consistent),

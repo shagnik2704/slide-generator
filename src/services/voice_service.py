@@ -696,6 +696,138 @@ async def generate_voice_for_script_batched(
         "api_calls_saved": len(narrations) - len(batches)
     }
 
+async def generate_voice_combined(
+    json_script: dict,
+    project_id: Optional[int] = None,
+) -> Dict:
+    """
+    Generate a SINGLE audio file for the entire script.
+    
+    Combines all slide narrations with pauses between them into one audio file.
+    
+    Args:
+        json_script: The parsed script JSON
+        project_id: Optional project ID for file naming
+    
+    Returns:
+        {
+            "audio_url": "/output/audio/project_123/full_narration.wav",
+            "success": True/False,
+            "total_slides": 15,
+            "duration_estimate": "~5 minutes"
+        }
+    """
+    import time
+    
+    if project_id is None:
+        project_id = int(time.time())
+    
+    # Setup output directory
+    project_root = Path(__file__).parent.parent.parent
+    audio_dir = project_root / "output" / "audio" / f"project_{project_id}"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Extract all narrations
+    narrations = extract_narration(json_script)
+    
+    if not narrations:
+        return {
+            "audio_url": None,
+            "success": False,
+            "error": "No narrations found in script",
+            "total_slides": 0
+        }
+    
+    # Combine all narrations with pause markers
+    combined_text = f" {PAUSE_MARKER} ".join([n['narration'] for n in narrations])
+    
+    # Estimate duration (~150 words per minute for clear speech)
+    word_count = len(combined_text.split())
+    duration_minutes = word_count / 150
+    
+    print(f"📝 Combining {len(narrations)} slides into single audio (~{duration_minutes:.1f} min, {word_count} words)")
+    
+    # Check text length - Gemini TTS has limits
+    if len(combined_text) > 10000:
+        print(f"⚠️ Text too long ({len(combined_text)} chars), may need to be chunked")
+        # For now, truncate (you could also split into multiple TTS calls and concatenate)
+        combined_text = combined_text[:10000]
+    
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        return {"audio_url": None, "success": False, "error": "GOOGLE_API_KEY not set"}
+    
+    client = genai.Client(api_key=api_key)
+    
+    full_prompt = f"{DEFAULT_PROMPT}\n\n{combined_text}"
+    
+    try:
+        print(f"🎤 Generating combined audio for {len(narrations)} slides...")
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash-preview-tts',
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=DEFAULT_VOICE
+                        )
+                    )
+                )
+            )
+        )
+        
+        if not response.candidates or not response.parts:
+            return {
+                "audio_url": None,
+                "success": False,
+                "error": "No audio returned from TTS API",
+                "total_slides": len(narrations)
+            }
+        
+        for part in response.parts:
+            if hasattr(part, 'inline_data') and part.inline_data:
+                pcm_data = part.inline_data.data
+                
+                if not pcm_data or len(pcm_data) == 0:
+                    continue
+                
+                wav_path = audio_dir / f"full_narration.wav"
+                
+                from src.utils.audio_utils import wave_file
+                wave_file(str(wav_path), pcm_data)
+                
+                if wav_path.exists() and wav_path.stat().st_size > 0:
+                    relative_path = wav_path.relative_to(project_root / "output")
+                    print(f"✅ Generated combined audio ({wav_path.stat().st_size} bytes)")
+                    
+                    return {
+                        "audio_url": f"/output/{relative_path}",
+                        "project_id": project_id,
+                        "success": True,
+                        "total_slides": len(narrations),
+                        "word_count": word_count,
+                        "duration_estimate": f"~{duration_minutes:.1f} minutes"
+                    }
+        
+        return {
+            "audio_url": None,
+            "success": False,
+            "error": "No audio data in response",
+            "total_slides": len(narrations)
+        }
+        
+    except Exception as e:
+        print(f"❌ Combined voice generation failed: {e}")
+        return {
+            "audio_url": None,
+            "success": False,
+            "error": str(e),
+            "total_slides": len(narrations)
+        }
+
 
 # === Future: Google Cloud TTS with SSML ===
 # 

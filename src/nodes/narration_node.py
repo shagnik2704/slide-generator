@@ -122,7 +122,7 @@ For pre-requisite tutorials, please visit this website."
 
 Summary Slide: "Let us summarize what we learned.\\n[brief recap]"
 
-Assignment Slide: "Now as an assignment,\\n[simple practice task].\\nCompare the results."
+Assignment Slide: Create an assignment from the learning objectves.
 
 Thank You Slide: "This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
 
@@ -246,7 +246,7 @@ For pre-requisite tutorials, please visit this website."
 
 Summary Slide: "Let us summarize what we have learnt.\\n[recap of key actions]"
 
-Assignment Slide: "Now as an assignment,\\n[practice task].\\nCompare the results."
+Assignment Slide: Create an assignment based on the learning objectives.
 
 Thank You Slide: "This Spoken Tutorial is brought to you by\\n**EduPyramids Educational Services Private Limited**, **SINE**, **IIT Bombay**.\\nThank you for joining."
 

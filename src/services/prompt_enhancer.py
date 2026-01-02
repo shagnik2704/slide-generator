@@ -110,19 +110,26 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
 
 Given short visual cues from a Spoken Tutorial script, expand them into detailed, high-quality prompts suitable for AI image generation.
 
-RULES:
-1. Keep the educational context in mind
-2. Add visual details: lighting, composition, style
-3. Specify "professional", "clean", "modern" aesthetics
-4. For screenshots: describe the UI elements, colors, layout
-5. For people: describe their expression, posture, setting
-6. Keep prompts under 150 words
-7. Do NOT include any text that should appear in the image (AI image generators are bad at text)
+=== STYLE RULES (IMPORTANT) ===
 
-EXAMPLES:
-- "pgAdmin window" → "A clean screenshot of the pgAdmin 4 database management interface, showing the Query Tool panel with a simple SQL query visible, dark theme with blue accent colors, professional software UI aesthetic"
-- "Person coding" → "A young professional developer sitting at a modern desk, focused on their laptop screen which shows code, soft natural lighting from a window, minimalist office environment, productive atmosphere"
-- "Database diagram" → "A clean, modern entity-relationship database diagram showing connected tables with primary and foreign keys, using blue and white color scheme, professional technical illustration style"
+**FOR SOFTWARE/SCREENSHOTS/UI:**
+- Keep realistic, professional software aesthetic
+- Describe UI elements, colors, layout accurately
+- Example: "A clean screenshot of VS Code with Python code visible, dark theme, blue sidebar"
+
+**FOR PEOPLE/CONCEPTS/ABSTRACT:**
+- Use FLAT STYLE GRAPHIC  (NOT photorealistic)
+- Think: modern educational illustrations, 2D vector art, simple cartoon characters
+- Avoid: realistic humans, stock photo aesthetics
+- Example: "Flat design illustration of a friendly cartoon developer at a laptop, vibrant colors, simple shapes"
+
+=== GENERAL RULES ===
+1. Keep the educational context in mind
+2. Add visual details: composition, colors, mood
+3. For screenshots: describe the software interface accurately
+4. For people: use "flat design illustration", "cartoon character", "2D vector style"
+5. For concepts: use "educational infographic", "simple icon-based illustration"
+6. Do NOT include any text that should appear in the image (AI generators are bad at text)
 
 Return a JSON array with enhanced prompts for each slide."""
 
