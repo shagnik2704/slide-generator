@@ -386,22 +386,32 @@ async def edit_outline_field(project_id: int, request: dict):
 
 @router.post("/general_chat")
 async def general_chat(request: GeneralChatRequest):
-    """General chat endpoint for asking any questions."""
+    """General chat endpoint for asking any questions with web search capabilities."""
     try:
         question = request.question.strip()
         if not question:
             raise HTTPException(status_code=400, detail="Question is required")
         
-        from .outline_chat_llm_utils import generate_llm_text
+        from .outline_chat_llm_utils import generate_llm_text_with_tools
         
-        # Use a friendly system prompt for general questions
-        system_prompt = "You are a helpful AI assistant. Answer questions clearly and concisely. Be friendly and professional."
+        # Use a friendly system prompt that encourages using web search for current info
+        system_prompt = """You are a helpful AI assistant. Answer questions clearly and concisely. Be friendly and professional.
+
+IMPORTANT: If the user asks about:
+- Current events, news, or recent developments
+- Latest information, updates, or recent changes
+- Current dates, times, or time-sensitive information
+- Real-time data or statistics
+- Anything that might have changed recently
+
+Then you MUST use the web_search tool to get the most up-to-date information before answering. Always cite your sources when using web search results."""
         
-        answer = generate_llm_text(
+        answer = generate_llm_text_with_tools(
             question,
             temperature=0.7,
-            max_tokens=1024,
+            max_tokens=2048,
             system_prompt=system_prompt,
+            use_web_search=True,
         )
         
         return JSONResponse({
