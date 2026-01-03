@@ -84,7 +84,7 @@ Translate ONLY the narration text from English to Hindi. Follow these rules:
 **Translation Rules:**
 - Use natural, conversational Hindi (Devanagari script)
 - Keep technical terms in English/transliterated (e.g., Python, Linux, File menu, click)
-- If text has **bold** markers, keep them around technical terms
+- If text has **bold** markers, transliterate them to Hindi (e.g., **bold** → **बॉल्ड**)
 - Each sentence should be speakable in one breath
 
 **Script to translate:**

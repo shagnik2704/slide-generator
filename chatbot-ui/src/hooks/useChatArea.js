@@ -263,6 +263,7 @@ export function useChatArea() {
         handleSidebarImageUpload: sidebarHandlers.handleSidebarImageUpload,
         handleSidebarSlidesUpload: sidebarHandlers.handleSlidesUpload,
         handleSidebarBatchComplianceUpload: sidebarHandlers.handleSidebarBatchComplianceUpload,
+        handleSidebarBatchQualityUpload: sidebarHandlers.handleSidebarBatchQualityUpload,
         handleSidebarScriptUpload: uploadHandlers.handleSendMessage, // Reuse upload handler
 
         // Generation handlers

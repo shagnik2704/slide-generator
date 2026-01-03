@@ -31,6 +31,13 @@ const Layout = () => {
     }
   };
 
+  // Handle open batch quality modal
+  const handleOpenBatchQualityModal = () => {
+    if (chatAreaRef.current?.openBatchQualityModal) {
+      chatAreaRef.current.openBatchQualityModal();
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
@@ -40,6 +47,7 @@ const Layout = () => {
           onStageFile={handleStageFile}
           onCreateSlides={handleCreateSlides}
           onOpenBatchModal={handleOpenBatchModal}
+          onOpenBatchQualityModal={handleOpenBatchQualityModal}
         />
         <ChatArea
           ref={chatAreaRef}
