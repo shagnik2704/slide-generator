@@ -24,6 +24,13 @@ const Layout = () => {
     }
   };
 
+  // Handle open batch modal
+  const handleOpenBatchModal = () => {
+    if (chatAreaRef.current?.openBatchModal) {
+      chatAreaRef.current.openBatchModal();
+    }
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
@@ -32,6 +39,7 @@ const Layout = () => {
           toggleSidebar={toggleSidebar}
           onStageFile={handleStageFile}
           onCreateSlides={handleCreateSlides}
+          onOpenBatchModal={handleOpenBatchModal}
         />
         <ChatArea
           ref={chatAreaRef}

@@ -287,3 +287,64 @@ def _get_error_response(error_msg: str) -> dict:
             "total": 1
         }
     }
+
+
+async def batch_check_compliance(
+    scripts: list[dict],
+    tutorial_types: list[str] = None
+) -> list[dict]:
+    """
+    Check multiple scripts for compliance in parallel.
+    
+    Args:
+        scripts: List of JSON scripts to check
+        tutorial_types: Optional list of tutorial types (one per script).
+                       Defaults to 'conceptual' for all.
+    
+    Returns:
+        List of compliance check results, one per script.
+        
+    Example:
+        results = await batch_check_compliance([script1, script2, script3])
+        # results[0] = compliance result for script1
+        # results[1] = compliance result for script2
+        # etc.
+    """
+    import asyncio
+    
+    if not scripts:
+        return []
+    
+    # Default all to conceptual if not specified
+    if tutorial_types is None:
+        tutorial_types = ['conceptual'] * len(scripts)
+    elif len(tutorial_types) != len(scripts):
+        # Pad with 'conceptual' if lengths don't match
+        tutorial_types = list(tutorial_types) + ['conceptual'] * (len(scripts) - len(tutorial_types))
+    
+    print(f"📋 Batch compliance check: {len(scripts)} scripts in parallel")
+    
+    # Run all checks in parallel
+    tasks = [
+        check_compliance(script, tutorial_type)
+        for script, tutorial_type in zip(scripts, tutorial_types)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Convert exceptions to error responses
+    processed_results = []
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            print(f"⚠️ Script {i+1} failed: {result}")
+            processed_results.append(_get_error_response(str(result)))
+        else:
+            processed_results.append(result)
+    
+    passed_count = sum(
+        1 for r in processed_results 
+        if r.get('summary', {}).get('ai_failed', 1) == 0
+    )
+    print(f"✓ Batch complete: {passed_count}/{len(scripts)} scripts passed all checks")
+    
+    return processed_results

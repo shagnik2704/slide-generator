@@ -145,6 +145,63 @@ async def check_compliance_endpoint(data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/batch_check_compliance")
+async def batch_check_compliance_endpoint(data: dict):
+    """
+    Check multiple scripts for compliance in parallel.
+    
+    Args (in data):
+        scripts: List of JSON scripts to check
+        tutorial_types: Optional list of tutorial types (one per script)
+    
+    Returns:
+        results: List of compliance check results, one per script
+        summary: Overall batch summary
+    
+    Example request:
+        {
+            "scripts": [script1_json, script2_json, script3_json],
+            "tutorial_types": ["conceptual", "demo", "conceptual"]  // optional
+        }
+    """
+    try:
+        scripts = data.get('scripts', [])
+        tutorial_types = data.get('tutorial_types')
+        
+        if not scripts:
+            raise HTTPException(status_code=400, detail="No scripts provided")
+        
+        if not isinstance(scripts, list):
+            raise HTTPException(status_code=400, detail="scripts must be a list")
+        
+        print(f"📋 Batch compliance check: {len(scripts)} scripts")
+        
+        from src.services.compliance_service import batch_check_compliance
+        results = await batch_check_compliance(scripts, tutorial_types)
+        
+        # Calculate overall summary
+        total_passed = sum(
+            1 for r in results 
+            if r.get('summary', {}).get('ai_failed', 1) == 0
+        )
+        
+        return {
+            "results": results,
+            "batch_summary": {
+                "total_scripts": len(scripts),
+                "scripts_passed": total_passed,
+                "scripts_with_issues": len(scripts) - total_passed
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in batch_check_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/upload_script")
 async def upload_script(file: UploadFile = File(...)):
     """Upload a script file (.json, .docx, or .odt) and run compliance check."""

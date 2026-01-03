@@ -11,6 +11,8 @@ import ImagePromptReview from './ImagePromptReview';
 import ImageGallery from './ImageGallery';
 import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
+import BatchUploadModal from './BatchUploadModal';
+import BatchResultsList from './BatchResultsList';
 
 // Message Action Components
 import {
@@ -67,6 +69,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
         handleSidebarScriptUpload,
+        handleSidebarBatchComplianceUpload, // Add handler from useChatArea
         handleGenerateScript,
         handleGenerateSlides,
         handleCreateSlides,
@@ -87,6 +90,15 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleCancelStagedFile,
     } = useChatArea();
 
+    // Batch Modal State
+    const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
+
+    // Handler to close modal and start upload
+    const handleBatchUpload = (files) => {
+        handleSidebarBatchComplianceUpload(files);
+        setIsBatchModalOpen(false);
+    };
+
     // Expose handlers for sidebar via ref
     useImperativeHandle(ref, () => ({
         handleSidebarComplianceUpload,
@@ -95,6 +107,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarScriptUpload,
         handleCreateSlides,
         setStagedFile,  // Expose staging for Sidebar
+        openBatchModal: () => setIsBatchModalOpen(true) // Expose modal trigger
     }));
 
     // Helper to update compliance report in a message
@@ -394,6 +407,13 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                         slidesData={msg.slidesData}
                                     />
                                 )}
+
+                                {msg.type === 'batch_compliance_result' && msg.batchResults && (
+                                    <BatchResultsList
+                                        batchResults={msg.batchResults}
+                                        batchSummary={msg.batchSummary}
+                                    />
+                                )}
                             </div>
                         ))}
 
@@ -428,6 +448,13 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 setStagedFile={setStagedFile}
                 onConfirmStagedFile={handleConfirmStagedFile}
                 onCancelStagedFile={handleCancelStagedFile}
+            />
+
+            {/* Batch Upload Modal */}
+            <BatchUploadModal
+                isOpen={isBatchModalOpen}
+                onClose={() => setIsBatchModalOpen(false)}
+                onUpload={handleBatchUpload}
             />
 
             {/* Ask AI Chat - only show in outline_chat mode */}
