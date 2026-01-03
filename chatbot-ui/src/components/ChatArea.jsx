@@ -69,7 +69,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
         handleSidebarScriptUpload,
-        handleSidebarBatchComplianceUpload, // Add handler from useChatArea
+        handleSidebarBatchComplianceUpload,
+        handleSidebarBatchQualityUpload,
         handleGenerateScript,
         handleGenerateSlides,
         handleCreateSlides,
@@ -92,10 +93,15 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
 
     // Batch Modal State
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
+    const [batchMode, setBatchMode] = React.useState('compliance'); // 'compliance' | 'quality'
 
-    // Handler to close modal and start upload
+    // Handler to close modal and start upload based on mode
     const handleBatchUpload = (files) => {
-        handleSidebarBatchComplianceUpload(files);
+        if (batchMode === 'quality') {
+            handleSidebarBatchQualityUpload(files);
+        } else {
+            handleSidebarBatchComplianceUpload(files);
+        }
         setIsBatchModalOpen(false);
     };
 
@@ -107,7 +113,14 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarScriptUpload,
         handleCreateSlides,
         setStagedFile,  // Expose staging for Sidebar
-        openBatchModal: () => setIsBatchModalOpen(true) // Expose modal trigger
+        openBatchModal: () => {
+            setBatchMode('compliance');
+            setIsBatchModalOpen(true);
+        },
+        openBatchQualityModal: () => {
+            setBatchMode('quality');
+            setIsBatchModalOpen(true);
+        }
     }));
 
     // Helper to update compliance report in a message
@@ -412,6 +425,15 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     <BatchResultsList
                                         batchResults={msg.batchResults}
                                         batchSummary={msg.batchSummary}
+                                        type="compliance"
+                                    />
+                                )}
+
+                                {msg.type === 'batch_quality_result' && msg.batchResults && (
+                                    <BatchResultsList
+                                        batchResults={msg.batchResults}
+                                        batchSummary={msg.batchSummary}
+                                        type="quality"
                                     />
                                 )}
                             </div>

@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { FileText, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import ComplianceReport from './ComplianceReport';
+import QualityReport from './QualityReport';
 
 /**
- * BatchResultsList - Displays a list of batch compliance results
+ * BatchResultsList - Displays a list of batch compliance or quality results
  * with expandable rows to view individual reports.
+ * @param {string} type - 'compliance' or 'quality' to determine which report to render
  */
-const BatchResultsList = ({ batchResults, batchSummary }) => {
+const BatchResultsList = ({ batchResults, batchSummary, type = 'compliance' }) => {
     // Use a Set to allow multiple reports open at the same time
     const [expandedIndices, setExpandedIndices] = useState(new Set());
 
@@ -44,6 +46,15 @@ const BatchResultsList = ({ batchResults, batchSummary }) => {
     const isExpanded = (index) => expandedIndices.has(index);
 
     const getStatusIcon = (result) => {
+        if (type === 'quality') {
+            // For quality: passed if avg score >= 4
+            const score = result?.summary?.avg_quality_score || 0;
+            if (score >= 4) {
+                return <CheckCircle2 size={18} style={{ color: 'var(--accent-success, #22c55e)' }} />;
+            }
+            return <AlertTriangle size={18} style={{ color: 'var(--accent-warning, #f59e0b)' }} />;
+        }
+        // For compliance
         const failed = result?.summary?.ai_failed || 0;
         if (failed === 0) {
             return <CheckCircle2 size={18} style={{ color: 'var(--accent-success, #22c55e)' }} />;
@@ -52,6 +63,10 @@ const BatchResultsList = ({ batchResults, batchSummary }) => {
     };
 
     const getStatusText = (result) => {
+        if (type === 'quality') {
+            const score = result?.summary?.avg_quality_score || 0;
+            return `Score: ${score}/5`;
+        }
         const passed = result?.summary?.ai_passed || 0;
         const failed = result?.summary?.ai_failed || 0;
         return `${passed} passed, ${failed} issues`;
@@ -167,11 +182,19 @@ const BatchResultsList = ({ batchResults, batchSummary }) => {
                                 ? 'none'
                                 : '1px solid var(--border-color)'
                         }}>
-                            <ComplianceReport
-                                report={result}
-                                isOpen={true}
-                                onToggle={() => { }}
-                            />
+                            {type === 'quality' ? (
+                                <QualityReport
+                                    report={result}
+                                    isOpen={true}
+                                    onClose={() => { }}
+                                />
+                            ) : (
+                                <ComplianceReport
+                                    report={result}
+                                    isOpen={true}
+                                    onToggle={() => { }}
+                                />
+                            )}
                         </div>
                     )}
                 </div>

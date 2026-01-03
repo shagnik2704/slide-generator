@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -264,6 +264,25 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                             >
                                 <ListChecks size={18} />
                                 {isOpen && <span>Batch Compliance</span>}
+                            </button>
+                        </TooltipWrapper>
+
+                        {/* Batch Quality */}
+                        <TooltipWrapper text="Batch Quality">
+                            <button
+                                onClick={() => onOpenBatchQualityModal && onOpenBatchQualityModal()}
+                                style={dropdownItemStyle}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                    e.currentTarget.style.color = 'var(--accent-primary)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                }}
+                            >
+                                <Languages size={18} />
+                                {isOpen && <span>Batch Quality</span>}
                             </button>
                         </TooltipWrapper>
                     </div>
