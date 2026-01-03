@@ -1,5 +1,5 @@
 """Upload route handlers."""
-from fastapi import APIRouter, HTTPException, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from pathlib import Path
 import os
 import json
@@ -416,6 +416,42 @@ async def check_quality_endpoint(data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/batch_check_quality")
+async def batch_check_quality_endpoint(data: dict):
+    """
+    Run quality checks for multiple scripts in parallel.
+    
+    Args:
+        scripts: List of script JSON objects to check
+    
+    Returns:
+        results: List of quality check results (one per script)
+        batch_summary: Overall batch statistics
+    """
+    print("📋 Batch quality check requested...")
+    
+    try:
+        scripts = data.get('scripts', [])
+        
+        if not scripts:
+            raise HTTPException(status_code=400, detail="scripts list is required")
+        
+        print(f"   Processing {len(scripts)} scripts...")
+        
+        from src.services.quality_service import batch_check_quality
+        result = await batch_check_quality(scripts)
+        
+        summary = result.get('batch_summary', {})
+        print(f"✅ Batch quality check complete: {summary.get('scripts_passed', 0)}/{summary.get('total_scripts', 0)} passed")
+        
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in batch_check_quality: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/generate_voice")
 async def generate_voice_endpoint(data: dict):
     """
@@ -566,6 +602,43 @@ async def enhance_prompts_endpoint(data: dict):
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in enhance_prompts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload_reference_image")
+async def upload_reference_image(
+    file: UploadFile = File(...),
+    project_id: int = Form(...),
+    slide_number: int = Form(...)
+):
+    """
+    Upload a reference image for image-to-image generation.
+    
+    Returns the path where the image was saved.
+    """
+    print(f"📎 Uploading reference image for slide {slide_number}...")
+    
+    try:
+        # Create reference images directory
+        project_root = Path(__file__).parent.parent.parent.parent
+        ref_dir = project_root / "output" / "images" / str(project_id) / "references"
+        ref_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save the file
+        file_ext = Path(file.filename).suffix or ".png"
+        ref_path = ref_dir / f"slide_{slide_number}_ref{file_ext}"
+        
+        content = await file.read()
+        with open(ref_path, "wb") as f:
+            f.write(content)
+        
+        print(f"  ✓ Saved reference image: {ref_path}")
+        
+        return {"path": str(ref_path), "slide_number": slide_number}
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in upload_reference_image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

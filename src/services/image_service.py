@@ -33,15 +33,17 @@ def get_output_dir(project_id: int) -> Path:
 def generate_single_image(
     prompt: str,
     output_path: Path,
-    aspect_ratio: str = "1:1"
+    aspect_ratio: str = "1:1",
+    reference_image_path: Optional[Path] = None
 ) -> bool:
     """
-    Generate a single image from a prompt.
+    Generate a single image from a prompt, optionally using a reference image.
     
     Args:
         prompt: The image generation prompt
         output_path: Path to save the generated image
         aspect_ratio: Image aspect ratio (1:1, 16:9, 4:3)
+        reference_image_path: Optional path to a reference image for image-to-image generation
     
     Returns:
         True if successful, False otherwise
@@ -53,11 +55,20 @@ def generate_single_image(
     client = genai.Client(api_key=api_key)
     
     try:
-        print(f"  🎨 Generating image: {prompt[:50]}...")
+        # Build contents: reference image (if provided) + prompt
+        if reference_image_path and reference_image_path.exists():
+            print(f"  🎨 Editing image with prompt: {prompt[:50]}...")
+            # Load reference image using PIL
+            from PIL import Image
+            ref_image = Image.open(reference_image_path)
+            contents = [ref_image, prompt]
+        else:
+            print(f"  🎨 Generating image: {prompt[:50]}...")
+            contents = prompt
         
         response = client.models.generate_content(
             model='gemini-3-pro-image-preview',
-            contents=prompt,
+            contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
                 image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
@@ -111,6 +122,7 @@ def generate_images(
     for item in prompts:
         slide_number = item.get('slide_number')
         prompt = item.get('prompt', '')
+        reference_image = item.get('reference_image_path')  # Optional reference image
         
         if not prompt:
             results.append({
@@ -124,8 +136,11 @@ def generate_images(
         
         output_path = output_dir / f"slide_{slide_number}.png"
         
+        # Convert reference_image string to Path if provided
+        ref_path = Path(reference_image) if reference_image else None
+        
         try:
-            success = generate_single_image(prompt, output_path, aspect_ratio)
+            success = generate_single_image(prompt, output_path, aspect_ratio, ref_path)
             
             if success:
                 # Build URL relative to output directory
