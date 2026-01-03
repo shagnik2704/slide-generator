@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Check, X, Edit2, Image, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Check, X, Edit2, Image, Loader2, Paperclip, XCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -38,11 +38,16 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
             ...p,
             selected: !p.skip_reason,
             editedPrompt: p.enhanced || p.original,
-            isEditing: false
+            isEditing: false,
+            referenceImage: null,  // For image-to-image generation
+            referenceImagePreview: null
         }))
     );
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationProgress, setGenerationProgress] = useState(null);
+
+    // Refs for hidden file inputs (one per slide)
+    const fileInputRefs = useRef({});
 
     const selectedCount = prompts.filter(p => p.selected && !p.skip_reason).length;
     const totalGeneratable = prompts.filter(p => !p.skip_reason).length;
@@ -74,24 +79,77 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
     const selectAll = () => setPrompts(prev => prev.map(p => ({ ...p, selected: !p.skip_reason })));
     const deselectAll = () => setPrompts(prev => prev.map(p => ({ ...p, selected: false })));
 
-    const handleGenerate = async () => {
-        const selectedPrompts = prompts
-            .filter(p => p.selected && !p.skip_reason)
-            .map(p => ({ slide_number: p.slide_number, prompt: p.editedPrompt }));
+    // Handle reference image selection
+    const handleReferenceImageSelect = (slideNumber, file) => {
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            setPrompts(prev => prev.map(p =>
+                p.slide_number === slideNumber
+                    ? { ...p, referenceImage: file, referenceImagePreview: previewUrl }
+                    : p
+            ));
+        }
+    };
 
-        if (selectedPrompts.length === 0) {
+    const removeReferenceImage = (slideNumber) => {
+        setPrompts(prev => prev.map(p => {
+            if (p.slide_number === slideNumber && p.referenceImagePreview) {
+                URL.revokeObjectURL(p.referenceImagePreview);
+            }
+            return p.slide_number === slideNumber
+                ? { ...p, referenceImage: null, referenceImagePreview: null }
+                : p;
+        }));
+    };
+
+    const handleGenerate = async () => {
+        const selectedPromptsData = prompts
+            .filter(p => p.selected && !p.skip_reason);
+
+        if (selectedPromptsData.length === 0) {
             alert('Please select at least one prompt to generate.');
             return;
         }
 
         setIsGenerating(true);
-        setGenerationProgress(`Generating images...`);
+        setGenerationProgress(`Preparing images...`);
 
         try {
+            // First, upload any reference images
+            const promptsWithRefs = [];
+            for (const p of selectedPromptsData) {
+                let referencePath = null;
+
+                if (p.referenceImage) {
+                    const formData = new FormData();
+                    formData.append('file', p.referenceImage);
+                    formData.append('project_id', projectId);
+                    formData.append('slide_number', p.slide_number);
+
+                    const uploadRes = await fetch(`${API_URL}/upload_reference_image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (uploadRes.ok) {
+                        const uploadData = await uploadRes.json();
+                        referencePath = uploadData.path;
+                    }
+                }
+
+                promptsWithRefs.push({
+                    slide_number: p.slide_number,
+                    prompt: p.editedPrompt,
+                    reference_image_path: referencePath
+                });
+            }
+
+            setGenerationProgress(`Generating ${promptsWithRefs.length} images...`);
+
             const response = await fetch(`${API_URL}/generate_images`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ project_id: projectId, prompts: selectedPrompts, aspect_ratio: '1:1' })
+                body: JSON.stringify({ project_id: projectId, prompts: promptsWithRefs, aspect_ratio: '1:1' })
             });
 
             if (!response.ok) {
@@ -103,7 +161,7 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
 
             // Enrich result with the prompts used
             const enrichedImages = result.images ? result.images.map(img => {
-                const originalPrompt = selectedPrompts.find(p => p.slide_number === img.slide_number);
+                const originalPrompt = promptsWithRefs.find(p => p.slide_number === img.slide_number);
                 return {
                     ...img,
                     prompt: originalPrompt ? originalPrompt.prompt : ''
@@ -115,7 +173,7 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                 images: enrichedImages
             };
 
-            setGenerationProgress(`Generated ${result.generated}/${selectedPrompts.length} images!`);
+            setGenerationProgress(`Generated ${result.generated}/${promptsWithRefs.length} images!`);
             if (onGenerateComplete) onGenerateComplete(enrichedResult);
         } catch (error) {
             console.error('Image generation error:', error);
@@ -180,9 +238,9 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                         <th style={{ ...thStyle, width: '40px' }}></th>
                         <th style={{ ...thStyle, width: '50px' }}>#</th>
                         <th style={{ ...thStyle, width: '180px' }}>Title</th>
-                        <th style={{ ...thStyle, width: '250px' }}>Visual Cue</th>
+                        <th style={{ ...thStyle, width: '200px' }}>Visual Cue</th>
                         <th style={thStyle}>AI Enhanced Prompt</th>
-                        <th style={{ ...thStyle, width: '60px' }}>Actions</th>
+                        <th style={{ ...thStyle, width: '100px' }}>Add Image</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -253,11 +311,64 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                                     </div>
                                 )}
                             </td>
-                            <td style={tdStyle}>
-                                {!prompt.skip_reason && !prompt.isEditing && (
-                                    <button onClick={() => startEditing(prompt.slide_number)} style={iconButtonStyle} title="Edit prompt"><Edit2 size={16} /></button>
+                            <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                {!prompt.skip_reason && (
+                                    <>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            ref={el => fileInputRefs.current[prompt.slide_number] = el}
+                                            style={{ display: 'none' }}
+                                            onChange={(e) => handleReferenceImageSelect(prompt.slide_number, e.target.files[0])}
+                                        />
+                                        {prompt.referenceImagePreview ? (
+                                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                <img
+                                                    src={prompt.referenceImagePreview}
+                                                    alt="Reference"
+                                                    style={{
+                                                        width: '48px',
+                                                        height: '48px',
+                                                        objectFit: 'cover',
+                                                        borderRadius: '6px',
+                                                        border: '2px solid var(--accent-primary)'
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={() => removeReferenceImage(prompt.slide_number)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-6px',
+                                                        right: '-6px',
+                                                        background: 'var(--bg-primary)',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        cursor: 'pointer',
+                                                        padding: 0,
+                                                        display: 'flex'
+                                                    }}
+                                                    title="Remove reference image"
+                                                >
+                                                    <XCircle size={16} style={{ color: 'var(--accent-danger, #ef4444)' }} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => fileInputRefs.current[prompt.slide_number]?.click()}
+                                                style={{
+                                                    ...iconButtonStyle,
+                                                    padding: '8px',
+                                                    border: '1px dashed var(--border-color)',
+                                                    borderRadius: '6px'
+                                                }}
+                                                title="Add reference image for image-to-image generation"
+                                            >
+                                                <Paperclip size={16} />
+                                            </button>
+                                        )}
+                                    </>
                                 )}
-                            </td>
+                            </td>  
                         </tr>
                     ))}
                 </tbody>

@@ -586,7 +586,7 @@ const InputArea = ({
                                 color: 'var(--text-secondary)',
                                 padding: '1rem',
                             }}>
-                                    Upload content to generate script, or upload existing script to skip to slides.
+                                Upload content to generate script, or upload existing script to skip to slides.
                             </div>
                         )}
                     </>

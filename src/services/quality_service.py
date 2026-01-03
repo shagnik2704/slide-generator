@@ -2,6 +2,7 @@
 Quality checking service for Spoken Tutorial scripts.
 Uses back-translation (English → Hindi → English) for quality verification.
 """
+import asyncio
 import json
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
@@ -261,3 +262,81 @@ def _get_error_response(error_msg: str) -> dict:
         },
         "translated_script": None
     }
+
+
+async def batch_check_quality(scripts: List[dict]) -> dict:
+    """
+    Run quality checks for multiple scripts in parallel.
+    
+    Each script's internal quality check (3-step back-translation) runs sequentially,
+    but all scripts run in parallel with each other.
+    
+    Args:
+        scripts: List of parsed script JSON objects
+    
+    Returns:
+        Dictionary with:
+        - results: List of quality check results (one per script)
+        - batch_summary: Overall batch statistics
+    """
+    print(f"📋 Batch quality check: {len(scripts)} scripts in parallel")
+    
+    if not scripts:
+        return {
+            "results": [],
+            "batch_summary": {
+                "total_scripts": 0,
+                "scripts_passed": 0,
+                "scripts_with_issues": 0,
+                "avg_quality_score": 0
+            }
+        }
+    
+    # Run all quality checks in parallel
+    results = await asyncio.gather(*[
+        check_quality(script) for script in scripts
+    ], return_exceptions=True)
+    
+    # Process results
+    processed_results = []
+    passed_count = 0
+    total_scores = []
+    
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            # Handle failed checks
+            processed_results.append({
+                "script_index": i,
+                "success": False,
+                "error": str(result),
+                "checks": [],
+                "summary": {"ai_passed": 0, "ai_failed": 0, "total": 0, "avg_quality_score": 0}
+            })
+        else:
+            # Quality check succeeded
+            result["script_index"] = i
+            result["success"] = True
+            processed_results.append(result)
+            
+            # Track stats
+            summary = result.get("summary", {})
+            score = summary.get("avg_quality_score", 0)
+            total_scores.append(score)
+            if score >= 4:
+                passed_count += 1
+    
+    # Calculate batch summary
+    avg_score = sum(total_scores) / len(total_scores) if total_scores else 0
+    
+    print(f"✓ Batch complete: {passed_count}/{len(scripts)} scripts passed (avg score: {avg_score:.1f})")
+    
+    return {
+        "results": processed_results,
+        "batch_summary": {
+            "total_scripts": len(scripts),
+            "scripts_passed": passed_count,
+            "scripts_with_issues": len(scripts) - passed_count,
+            "avg_quality_score": round(avg_score, 1)
+        }
+    }
+
