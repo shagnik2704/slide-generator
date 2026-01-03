@@ -164,7 +164,7 @@ export function useChatArea() {
     const handleConfirmStagedFile = useCallback(() => {
         if (!stagedFile) return;
 
-        const { file, type } = stagedFile;
+        const { file, files, type } = stagedFile;
 
         switch (type) {
             case 'script':
@@ -187,6 +187,10 @@ export function useChatArea() {
                 break;
             case 'slides':
                 sidebarHandlers.handleSlidesUpload(file);
+                break;
+            case 'batch_compliance':
+                // Multiple files for batch processing
+                sidebarHandlers.handleSidebarBatchComplianceUpload(files);
                 break;
             case 'outline':
             default:
@@ -256,6 +260,9 @@ export function useChatArea() {
         handleSidebarComplianceUpload: sidebarHandlers.handleSidebarComplianceUpload,
         handleSidebarQualityUpload: sidebarHandlers.handleSidebarQualityUpload,
         handleSidebarVoiceUpload: sidebarHandlers.handleSidebarVoiceUpload,
+        handleSidebarImageUpload: sidebarHandlers.handleSidebarImageUpload,
+        handleSidebarSlidesUpload: sidebarHandlers.handleSlidesUpload,
+        handleSidebarBatchComplianceUpload: sidebarHandlers.handleSidebarBatchComplianceUpload,
         handleSidebarScriptUpload: uploadHandlers.handleSendMessage, // Reuse upload handler
 
         // Generation handlers

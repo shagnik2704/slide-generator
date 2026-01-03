@@ -567,26 +567,8 @@ const InputArea = ({
                     </div>
                 ) : (
                     <>
-                        {/* Hidden file inputs */}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".md,.docx,.txt,.odt"
-                            onChange={handleFileSelect}
-                            disabled={disabled}
-                            style={{ display: 'none' }}
-                        />
-                        <input
-                            ref={scriptInputRef}
-                            type="file"
-                            accept=".json,.docx,.odt"
-                            onChange={handleScriptSelect}
-                            disabled={disabled}
-                            style={{ display: 'none' }}
-                        />
-
-                        {/* Show staged file preview if a file is selected */}
-                        {stagedFile ? (
+                        {/* Show staged file preview if a file is selected (from sidebar triggers) */}
+                        {stagedFile && (
                             <FilePreviewCard
                                 file={stagedFile.file}
                                 uploadType={stagedFile.type}
@@ -594,66 +576,18 @@ const InputArea = ({
                                 onCancel={handleCancelUpload}
                                 disabled={disabled}
                             />
-                        ) : (
-                            <>
-                                {/* Button row */}
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    {/* Upload Outline Button */}
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={disabled}
-                                        style={primaryButtonStyle(disabled)}
-                                        onMouseEnter={(e) => {
-                                            if (!disabled) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!disabled) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <Upload size={20} />
-                                        Upload Content
-                                    </button>
+                        )}
 
-                                    {/* Upload Script Button */}
-                                    <button
-                                        type="button"
-                                        onClick={() => scriptInputRef.current?.click()}
-                                        disabled={disabled}
-                                        style={primaryButtonStyle(disabled)}
-                                        onMouseEnter={(e) => {
-                                            if (!disabled) {
-                                                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!disabled) {
-                                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }
-                                        }}
-                                    >
-                                        <FileJson size={20} />
-                                        Upload Script
-                                    </button>
-                                </div>
-
-                                <div style={{
-                                    textAlign: 'center',
-                                    fontSize: '0.75rem',
-                                    color: 'var(--text-secondary)',
-                                    marginTop: '0.75rem'
-                                }}>
+                        {/* No redundant buttons - use sidebar or welcome screen for uploads */}
+                        {!stagedFile && (
+                            <div style={{
+                                textAlign: 'center',
+                                fontSize: '0.85rem',
+                                color: 'var(--text-secondary)',
+                                padding: '1rem',
+                            }}>
                                     Upload content to generate script, or upload existing script to skip to slides.
-                                </div>
-                            </>
+                            </div>
                         )}
                     </>
                 )}

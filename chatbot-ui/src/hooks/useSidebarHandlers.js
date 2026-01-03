@@ -310,11 +310,81 @@ export function useSidebarHandlers(
         }
     }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
 
+    /**
+     * Run Batch Compliance check on multiple script files in parallel.
+     * @param {File[]} files - Array of files to check
+     */
+    const handleSidebarBatchComplianceUpload = useCallback(async (files) => {
+        const uploadMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Running Batch Compliance check on ${files.length} files...`
+        };
+        setUploadMessages(prev => [...prev, uploadMessage]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse all files to get JSON scripts
+            const parsePromises = files.map(async (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                const parseData = await apiFormData('/parse_script', formData);
+                return {
+                    filename: file.name,
+                    json_script: parseData.json_script,
+                    tutorial_type: parseData.tutorial_type || 'conceptual'
+                };
+            });
+
+            const parsedScripts = await Promise.all(parsePromises);
+
+            // Step 2: Run batch compliance check
+            const batchResult = await apiJson('/batch_check_compliance', {
+                method: 'POST',
+                body: JSON.stringify({
+                    scripts: parsedScripts.map(s => s.json_script),
+                    tutorial_types: parsedScripts.map(s => s.tutorial_type)
+                }),
+            });
+
+            // Create result message
+            const messageId = Date.now() + 1;
+            const summary = batchResult.batch_summary;
+            const newBotMessage = {
+                id: messageId,
+                role: 'assistant',
+                content: `📋 Batch Compliance Check Complete\n\n` +
+                    `Scripts Checked: ${summary.total_scripts}\n` +
+                    `✅ Passed: ${summary.scripts_passed}\n` +
+                    `⚠️ With Issues: ${summary.scripts_with_issues}`,
+                type: 'batch_compliance_result',
+                batchResults: batchResult.results.map((result, i) => ({
+                    filename: parsedScripts[i].filename,
+                    ...result
+                })),
+                batchSummary: summary
+            };
+            setUploadMessages(prev => [...prev, newBotMessage]);
+
+        } catch (error) {
+            console.error("Batch compliance check error:", error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Batch compliance check failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    }, [setUploadMessages, setIsTyping]);
+
     return {
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
         handleSidebarVoiceUpload,
         handleSidebarImageUpload,
         handleSlidesUpload,
+        handleSidebarBatchComplianceUpload,
     };
 }

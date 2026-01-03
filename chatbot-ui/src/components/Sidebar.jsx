@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -243,8 +243,27 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides }) => {
                                     e.currentTarget.style.color = 'var(--text-secondary)';
                                 }}
                             >
-                                <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '-1px' }}>अத</span>
+                                <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.5px' }}>अத</span>
                                 {isOpen && <span>Quality Compliance</span>}
+                            </button>
+                        </TooltipWrapper>
+
+                        {/* Batch Compliance */}
+                        <TooltipWrapper text="Batch Compliance">
+                            <button
+                                onClick={() => onOpenBatchModal && onOpenBatchModal()}
+                                style={dropdownItemStyle}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                    e.currentTarget.style.color = 'var(--accent-primary)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = 'var(--text-secondary)';
+                                }}
+                            >
+                                <ListChecks size={18} />
+                                {isOpen && <span>Batch Compliance</span>}
                             </button>
                         </TooltipWrapper>
                     </div>
