@@ -65,7 +65,7 @@ async def check_quality(json_script: dict) -> dict:
         temperature=0.3,
     )
     
-    slides = json_script.get("slides", [])
+    slides = json_script.get("slides", [])[:-1]
     if not slides:
         return _get_error_response("No slides found in script")
     
