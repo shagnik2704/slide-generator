@@ -307,15 +307,7 @@ export default function TranslationResults({ results }) {
                                                     </div>
                                                     {formatText(slide.narration)}
                                                 </div>
-                                                {slide.visual_cue && (
-                                                    <div style={{
-                                                        fontSize: '0.85rem',
-                                                        color: 'var(--text-secondary)',
-                                                        fontStyle: 'italic',
-                                                    }}>
-                                                        <span style={{ fontWeight: 500 }}>Visual:</span> {slide.visual_cue}
-                                                    </div>
-                                                )}
+                                                {/* Visual cue hidden from UI - still translated for DOCX export */}
                                             </td>
                                             <td style={{ ...tdStyle, fontFamily: 'system-ui' }}>
                                                 <div style={{ marginBottom: '0.5rem' }}>
@@ -331,18 +323,7 @@ export default function TranslationResults({ results }) {
                                                         {formatText(slide[`narration_${result.language_code}`]) || '—'}
                                                     </span>
                                                 </div>
-                                                {slide[`visual_cue_${result.language_code}`] && (
-                                                    <div style={{
-                                                        fontSize: '0.85rem',
-                                                        color: 'var(--text-secondary)',
-                                                        fontStyle: 'italic',
-                                                    }}>
-                                                        <span style={{ fontWeight: 500 }}>Visual:</span>{' '}
-                                                        <span style={{ color: 'var(--accent-secondary)' }}>
-                                                            {slide[`visual_cue_${result.language_code}`]}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                {/* Translated visual cue hidden from UI - still included in DOCX export */}
                                             </td>
                                         </tr>
                                     ))}
