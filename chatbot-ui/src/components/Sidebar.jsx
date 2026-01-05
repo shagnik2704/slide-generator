@@ -16,6 +16,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     const scriptInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const slidesInputRef = useRef(null);
+    const translationInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
@@ -58,6 +59,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'images' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle translation file selection - stage for preview
+    const handleTranslationFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'translation' });
             e.target.value = '';
         }
     };
@@ -160,6 +170,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleSlidesFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={translationInputRef}
+                type="file"
+                accept=".json,.docx,.odt"
+                onChange={handleTranslationFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -374,6 +391,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 >
                     <Presentation size={20} />
                     {isOpen && <span>Slides Generator</span>}
+                </button>
+            </TooltipWrapper>
+
+            {/* Translation Button */}
+            <TooltipWrapper text="Translate Script">
+                <button
+                    onClick={() => translationInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Languages size={20} />
+                    {isOpen && <span>Translate Script</span>}
                 </button>
             </TooltipWrapper>
 
