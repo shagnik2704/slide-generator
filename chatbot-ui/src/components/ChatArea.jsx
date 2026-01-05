@@ -13,6 +13,8 @@ import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 import BatchUploadModal from './BatchUploadModal';
 import BatchResultsList from './BatchResultsList';
+import TranslationModal from './TranslationModal';
+import TranslationResults from './TranslationResults';
 
 // Message Action Components
 import {
@@ -95,6 +97,19 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
     const [batchMode, setBatchMode] = React.useState('compliance'); // 'compliance' | 'quality'
 
+    // Translation Modal State
+    const [isTranslationModalOpen, setIsTranslationModalOpen] = React.useState(false);
+    const [translationFile, setTranslationFile] = React.useState(null);
+
+    // Auto-open translation modal when a translation file is staged
+    React.useEffect(() => {
+        if (stagedFile?.type === 'translation') {
+            setTranslationFile(stagedFile.file);
+            setIsTranslationModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        }
+    }, [stagedFile, setStagedFile]);
+
     // Handler to close modal and start upload based on mode
     const handleBatchUpload = (files) => {
         if (batchMode === 'quality') {
@@ -103,6 +118,64 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
             handleSidebarBatchComplianceUpload(files);
         }
         setIsBatchModalOpen(false);
+    };
+
+    // Translation handler
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+    const handleTranslation = async ({ file, languages, translateVisualCues }) => {
+        // Show loading message
+        const loadingMessage = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `🌐 Translating script to ${languages.length} language(s)...`
+        };
+        setUploadMessages(prev => [...prev, loadingMessage]);
+
+        try {
+            // Step 1: Parse the script
+            const formData = new FormData();
+            formData.append('file', file);
+            const parseResponse = await fetch(`${API_URL}/parse_script`, {
+                method: 'POST',
+                body: formData
+            });
+            const parseData = await parseResponse.json();
+
+            // Step 2: Batch translate
+            const translateResponse = await fetch(`${API_URL}/translation/batch_translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    json_script: parseData.json_script,
+                    languages: languages,
+                    translate_visual_cues: translateVisualCues
+                })
+            });
+            const translationResults = await translateResponse.json();
+
+            // Add results message
+            const resultMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `🌍 Translation Complete!\n\n` +
+                    `File: ${file.name}\n` +
+                    `Languages: ${translationResults.total_success}/${translationResults.total_requested} successful`,
+                type: 'translation_result',
+                translationResults: translationResults
+            };
+            setUploadMessages(prev => [...prev, resultMessage]);
+
+        } catch (error) {
+            console.error('Translation error:', error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                role: 'assistant',
+                content: `❌ Translation failed: ${error.message}`
+            };
+            setUploadMessages(prev => [...prev, errorMessage]);
+            throw error;
+        }
     };
 
     // Expose handlers for sidebar via ref
@@ -120,6 +193,10 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         openBatchQualityModal: () => {
             setBatchMode('quality');
             setIsBatchModalOpen(true);
+        },
+        openTranslationModal: (file) => {
+            setTranslationFile(file);
+            setIsTranslationModalOpen(true);
         }
     }));
 
@@ -387,6 +464,10 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     <VoicePreview voiceData={msg.voiceData} isOpen={true} />
                                 )}
 
+                                {msg.type === 'translation_result' && msg.translationResults && (
+                                    <TranslationResults results={msg.translationResults} />
+                                )}
+
                                 {msg.type === 'image_prompt_review' && msg.enhancedPrompts && (
                                     <ImagePromptReview
                                         enhancedPrompts={msg.enhancedPrompts}
@@ -477,6 +558,17 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 isOpen={isBatchModalOpen}
                 onClose={() => setIsBatchModalOpen(false)}
                 onUpload={handleBatchUpload}
+            />
+
+            {/* Translation Modal */}
+            <TranslationModal
+                isOpen={isTranslationModalOpen}
+                onClose={() => {
+                    setIsTranslationModalOpen(false);
+                    setTranslationFile(null);
+                }}
+                file={translationFile}
+                onTranslate={handleTranslation}
             />
 
             {/* Ask AI Chat - only show in outline_chat mode */}
