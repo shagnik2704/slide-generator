@@ -24,12 +24,10 @@ const DEFAULT_UPLOAD_MESSAGE = {
  * Main hook for ChatArea state and business logic.
  * Composes smaller, focused hooks for each feature area.
  */
-export function useChatArea() {
+export function useChatArea(mode = 'upload') {
     // =========================
     // CORE STATE
     // =========================
-
-    const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
 
     // Initialize uploadMessages from localStorage or default
     const [uploadMessages, setUploadMessages] = useState(() => {
@@ -211,7 +209,6 @@ export function useChatArea() {
     return {
         // Core State
         mode,
-        setMode,
         uploadMessages,
         setUploadMessages,
         isTyping,

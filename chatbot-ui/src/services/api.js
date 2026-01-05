@@ -17,8 +17,14 @@ function getToken() {
 /**
  * Handle authentication errors (401/403).
  * @param {Response} response - Fetch response object
+ * @param {string} endpoint - API endpoint to check if it's public
  */
-function handleAuthError(response) {
+function handleAuthError(response, endpoint = '') {
+    // Skip auth error handling for public outline_chat endpoints
+    if (endpoint.includes('/outline_chat') || endpoint.includes('/general_chat')) {
+        return; // Don't redirect for public endpoints
+    }
+    
     if (response.status === 401) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem(TOKEN_KEY);
@@ -55,8 +61,8 @@ export async function apiRequest(endpoint, options = {}) {
         headers,
     });
 
-    // Handle auth errors before checking response.ok
-    handleAuthError(response);
+    // Handle auth errors before checking response.ok (skip for public endpoints)
+    handleAuthError(response, endpoint);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -98,8 +104,8 @@ export async function apiFormData(endpoint, formData) {
         body: formData,
     });
 
-    // Handle auth errors before checking response.ok
-    handleAuthError(response);
+    // Handle auth errors before checking response.ok (skip for public endpoints)
+    handleAuthError(response, endpoint);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
