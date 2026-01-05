@@ -282,7 +282,7 @@ export default function TranslationResults({ results }) {
                             <table style={tableStyle}>
                                 <thead>
                                     <tr>
-                                        <th style={{ ...thStyle, width: '60px' }}>Slide</th>
+                                        <th style={{ ...thStyle, width: '60px' }}>Row</th>
                                         <th style={{ ...thStyle, width: '45%' }}>English (Original)</th>
                                         <th style={{ ...thStyle, width: '45%' }}>{result.language}</th>
                                     </tr>

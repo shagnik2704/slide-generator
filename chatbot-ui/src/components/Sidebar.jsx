@@ -265,8 +265,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                             </button>
                         </TooltipWrapper>
 
-                        {/* Batch Compliance */}
-                        <TooltipWrapper text="Batch Compliance">
+                        {/* Batch Admin */}
+                        <TooltipWrapper text="Batch Admin">
                             <button
                                 onClick={() => onOpenBatchModal && onOpenBatchModal()}
                                 style={dropdownItemStyle}
@@ -280,7 +280,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 }}
                             >
                                 <ListChecks size={18} />
-                                {isOpen && <span>Batch Compliance</span>}
+                                {isOpen && <span>Batch Admin</span>}
                             </button>
                         </TooltipWrapper>
 

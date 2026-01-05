@@ -237,8 +237,8 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                     <tr>
                         <th style={{ ...thStyle, width: '40px' }}></th>
                         <th style={{ ...thStyle, width: '50px' }}>#</th>
-                        <th style={{ ...thStyle, width: '180px' }}>Title</th>
-                        <th style={{ ...thStyle, width: '200px' }}>Visual Cue</th>
+                        <th style={{ ...thStyle, width: '180px' }}>Visual Cue</th>
+                        <th style={{ ...thStyle, width: '220px' }}>Narration</th>
                         <th style={thStyle}>AI Enhanced Prompt</th>
                         <th style={{ ...thStyle, width: '100px' }}>Add Image</th>
                     </tr>
@@ -256,8 +256,8 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                                 />
                             </td>
                             <td style={tdStyle}>{prompt.slide_number}</td>
-                            <td style={{ ...tdStyle, fontWeight: 500 }}>{stripMarkdown(prompt.title)}</td>
                             <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{formatSentences(stripMarkdown(prompt.original)) || '—'}</td>
+                            <td style={{ ...tdStyle, fontSize: '0.85rem', lineHeight: 1.6 }}>{formatSentences(stripMarkdown(prompt.narration)) || '—'}</td>
                             <td style={tdStyle}>
                                 {prompt.skip_reason ? (
                                     <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>{prompt.skip_reason}</span>
@@ -368,7 +368,7 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                                         )}
                                     </>
                                 )}
-                            </td>  
+                            </td>
                         </tr>
                     ))}
                 </tbody>

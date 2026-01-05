@@ -81,6 +81,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": original_prompt,
+                "narration": slide.get('narration', ''),
                 "enhanced": None,
                 "skip_reason": "Boilerplate slide (no image needed)"
             })
@@ -89,6 +90,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": "",
+                "narration": slide.get('narration', ''),
                 "enhanced": None,
                 "skip_reason": "No visual cue provided"
             })
@@ -97,7 +99,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": original_prompt,
-                "narration": slide.get('narration', '')[:200]  # Include context (truncated)
+                "narration": slide.get('narration', '')
             })
     
     if not slides_to_enhance:
@@ -172,6 +174,7 @@ Return a JSON object with this structure:
                 "slide_number": slide_num,
                 "title": slide_info["title"],
                 "original": slide_info["original"],
+                "narration": slide_info.get("narration", ""),
                 "enhanced": enhanced_map.get(slide_num, slide_info["original"]),
                 "skip_reason": None
             })
@@ -197,6 +200,7 @@ Return a JSON object with this structure:
                 "slide_number": slide_info["slide_number"],
                 "title": slide_info["title"],
                 "original": slide_info["original"],
+                "narration": slide_info.get("narration", ""),
                 "enhanced": slide_info["original"],  # Use original as fallback
                 "skip_reason": None
             })
