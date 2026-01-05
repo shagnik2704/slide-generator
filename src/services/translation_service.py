@@ -122,7 +122,7 @@ async def translate_script(
 
 **Translation Rules:**
 1. Use natural, conversational {lang_name} ({lang_native} script)
-2. Keep technical terms in English or transliterate them (e.g., Python, Linux, Terminal, click, file)
+2. Transliterate technical terms (e.g., Python, Linux, Terminal, click, file)
 3. IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script (e.g., **File** becomes **ఫైల్** in Telugu, **click** becomes **क्लिक** in Hindi)
 4. Each sentence should be speakable in one breath (under 100 characters)
 {visual_cue_instruction}
