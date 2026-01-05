@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import asyncio
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from src.api.auth import get_current_user, TokenData
 
 from .outline_chat_field_extraction import extract_json_block
 from .outline_chat_handlers import (
@@ -44,6 +46,7 @@ from .outline_chat_session import (
     save_session,
 )
 from .outline_chat_validation import validate_outline
+from .outline_chat_draft_generation import generate_draft_outline
 
 router = APIRouter(tags=["outline_chat"])
 
@@ -53,7 +56,7 @@ router = APIRouter(tags=["outline_chat"])
 
 
 @router.post("/outline_chat")
-async def outline_chat(request: OutlineChatRequest):
+async def outline_chat(request: OutlineChatRequest, current_user: TokenData = Depends(get_current_user)):
     """Chat endpoint that guides SME through Course Outline creation."""
     try:
         if not request.conversation:
@@ -239,7 +242,7 @@ async def outline_chat_options():
 
 
 @router.get("/outline_chat/{project_id}/export")
-async def export_outline(project_id: int, format: str = "json"):
+async def export_outline(project_id: int, format: str = "json", current_user: TokenData = Depends(get_current_user)):
     """Export the finalized outline in JSON or PDF-ready format."""
     project_root = Path(__file__).parent.parent.parent
     session_dir = project_root / "output" / "outline_sessions"
@@ -305,7 +308,7 @@ async def export_outline(project_id: int, format: str = "json"):
 
 
 @router.post("/outline_chat/{project_id}/edit")
-async def edit_outline_field(project_id: int, request: dict):
+async def edit_outline_field(project_id: int, request: dict, current_user: TokenData = Depends(get_current_user)):
     """Edit a specific field in the outline data.
     
     Request body:
@@ -385,7 +388,7 @@ async def edit_outline_field(project_id: int, request: dict):
 
 
 @router.post("/general_chat")
-async def general_chat(request: GeneralChatRequest):
+async def general_chat(request: GeneralChatRequest, current_user: TokenData = Depends(get_current_user)):
     """General chat endpoint for asking any questions with web search capabilities."""
     try:
         question = request.question.strip()
@@ -425,7 +428,7 @@ Then you MUST use the web_search tool to get the most up-to-date information bef
 
 
 @router.post("/outline_chat_stream")
-async def outline_chat_stream(request: OutlineChatRequest):
+async def outline_chat_stream(request: OutlineChatRequest, current_user: TokenData = Depends(get_current_user)):
     """Streaming version of outline chat - streams assistant response token by token."""
     
     async def generate():

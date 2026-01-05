@@ -1,9 +1,15 @@
 import React from 'react';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
 function App() {
   return (
-    <Layout />
+    <AuthProvider>
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

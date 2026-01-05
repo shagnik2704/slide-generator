@@ -1,13 +1,15 @@
 """Download route handlers."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from pathlib import Path
+
+from src.api.auth import get_current_user, TokenData
 
 router = APIRouter(prefix="/download", tags=["download"])
 
 
 @router.get("/outline/{filename}")
-async def download_outline(filename: str):
+async def download_outline(filename: str, current_user: TokenData = Depends(get_current_user)):
     """Serve outline files directly."""
     try:
         # Get project root (3 levels up from src/api/routes/download.py)

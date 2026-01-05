@@ -13,6 +13,7 @@ import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 import BatchUploadModal from './BatchUploadModal';
 import BatchResultsList from './BatchResultsList';
+import UserProfile from './UserProfile';
 
 // Message Action Components
 import {
@@ -33,7 +34,7 @@ import { useChatArea } from '../hooks/useChatArea';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen }, ref) => {
     const {
         // State
         mode,
@@ -292,6 +293,13 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     )}
 
                     <ThemeToggle />
+                    
+                    {/* User Profile - Compact version in header */}
+                    {!isSidebarOpen && (
+                        <div style={{ marginLeft: '0.5rem' }}>
+                            <UserProfile compact={true} />
+                        </div>
+                    )}
                 </div>
             </header>
 

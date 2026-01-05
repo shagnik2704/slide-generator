@@ -1,18 +1,19 @@
 """Upload route handlers."""
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from pathlib import Path
 import os
 import json
 import time
 import traceback
 
+from src.api.auth import get_current_user, TokenData
 from src.services.outline_service import parse_docx_outline
 
 router = APIRouter(tags=["upload"])
 
 
 @router.post("/upload_outline")
-async def upload_outline(file: UploadFile = File(...)):
+async def upload_outline(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Upload an edited outline file (.md or .docx)."""
     try:
         # Validate file type
@@ -49,7 +50,7 @@ async def upload_outline(file: UploadFile = File(...)):
 
 
 @router.post("/parse_script")
-async def parse_script(file: UploadFile = File(...)):
+async def parse_script(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Parse a script file (.json, .docx, or .odt) WITHOUT running any checks."""
     try:
         filename = file.filename.lower()
@@ -107,7 +108,7 @@ async def parse_script(file: UploadFile = File(...)):
 
 
 @router.post("/check_compliance")
-async def check_compliance_endpoint(data: dict):
+async def check_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Run compliance checks on a parsed script.
     
@@ -146,7 +147,7 @@ async def check_compliance_endpoint(data: dict):
 
 
 @router.post("/batch_check_compliance")
-async def batch_check_compliance_endpoint(data: dict):
+async def batch_check_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Check multiple scripts for compliance in parallel.
     
@@ -203,7 +204,7 @@ async def batch_check_compliance_endpoint(data: dict):
 
 
 @router.post("/upload_script")
-async def upload_script(file: UploadFile = File(...)):
+async def upload_script(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Upload a script file (.json, .docx, or .odt) and run compliance check."""
     try:
         filename = file.filename.lower()
@@ -285,7 +286,7 @@ def _detect_tutorial_type(json_script: dict) -> str:
 
 
 @router.post("/export_compliance_report")
-async def export_compliance_report(data: dict):
+async def export_compliance_report(data: dict, current_user: TokenData = Depends(get_current_user)):
     """Export compliance report as DOCX or ODT file."""
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
@@ -385,7 +386,7 @@ async def export_compliance_report(data: dict):
 
 
 @router.post("/check_quality")
-async def check_quality_endpoint(data: dict):
+async def check_quality_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Run quality checks and translate script to Hindi.
     
@@ -417,7 +418,7 @@ async def check_quality_endpoint(data: dict):
 
 
 @router.post("/batch_check_quality")
-async def batch_check_quality_endpoint(data: dict):
+async def batch_check_quality_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Run quality checks for multiple scripts in parallel.
     
@@ -453,7 +454,7 @@ async def batch_check_quality_endpoint(data: dict):
 
 
 @router.post("/generate_voice")
-async def generate_voice_endpoint(data: dict):
+async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate voice narration for a JSON script.
     
@@ -491,7 +492,7 @@ async def generate_voice_endpoint(data: dict):
 
 
 @router.post("/generate_voice_batched")
-async def generate_voice_batched_endpoint(data: dict):
+async def generate_voice_batched_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate voice narration using BATCHED approach - ~75% fewer API calls!
     
@@ -527,7 +528,7 @@ async def generate_voice_batched_endpoint(data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate_voice_combined")
-async def generate_voice_combined_endpoint(data: dict):
+async def generate_voice_combined_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate a SINGLE audio file for the entire script.
     
@@ -572,7 +573,7 @@ async def generate_voice_combined_endpoint(data: dict):
 
 
 @router.post("/enhance_prompts")
-async def enhance_prompts_endpoint(data: dict):
+async def enhance_prompts_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Enhance visual cues from a script into detailed image generation prompts.
     
@@ -609,7 +610,8 @@ async def enhance_prompts_endpoint(data: dict):
 async def upload_reference_image(
     file: UploadFile = File(...),
     project_id: int = Form(...),
-    slide_number: int = Form(...)
+    slide_number: int = Form(...),
+    current_user: TokenData = Depends(get_current_user)
 ):
     """
     Upload a reference image for image-to-image generation.
@@ -643,7 +645,7 @@ async def upload_reference_image(
 
 
 @router.post("/generate_images")
-async def generate_images_endpoint(data: dict):
+async def generate_images_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate images from approved prompts.
     
@@ -683,7 +685,7 @@ async def generate_images_endpoint(data: dict):
 
 
 @router.post("/generate_slides")
-async def generate_slides_endpoint(data: dict):
+async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate a Beamer LaTeX template for presentation slides.
     

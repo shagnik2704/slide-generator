@@ -4,22 +4,59 @@
  */
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const TOKEN_KEY = 'auth_token';
 
 /**
- * Base fetch wrapper with error handling.
+ * Get JWT token from localStorage.
+ * @returns {string|null} - JWT token or null
+ */
+function getToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Handle authentication errors (401/403).
+ * @param {Response} response - Fetch response object
+ */
+function handleAuthError(response) {
+    if (response.status === 401) {
+        // Unauthorized - clear token and redirect to login
+        localStorage.removeItem(TOKEN_KEY);
+        window.location.href = '/';
+    } else if (response.status === 403) {
+        // Forbidden - show access denied message
+        const error = new Error('Access denied: Invalid email domain');
+        error.status = 403;
+        throw error;
+    }
+}
+
+/**
+ * Base fetch wrapper with error handling and JWT token injection.
  * @param {string} endpoint - API endpoint (e.g., '/upload_script')
  * @param {RequestInit} options - Fetch options
  * @returns {Promise<Response>} - Raw response object
  * @throws {Error} - With error detail from API
  */
 export async function apiRequest(endpoint, options = {}) {
+    const token = getToken();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
+    // Add Authorization header if token exists
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
+        headers,
     });
+
+    // Handle auth errors before checking response.ok
+    handleAuthError(response);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -47,10 +84,22 @@ export async function apiJson(endpoint, options = {}) {
  * @returns {Promise<any>} - Parsed JSON response
  */
 export async function apiFormData(endpoint, formData) {
+    const token = getToken();
+    const headers = {};
+
+    // Add Authorization header if token exists
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
+        headers,
         body: formData,
     });
+
+    // Handle auth errors before checking response.ok
+    handleAuthError(response);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
