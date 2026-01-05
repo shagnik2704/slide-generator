@@ -37,3 +37,17 @@ class ExportMediaWikiRequest(BaseModel):
 
 class DownloadScriptDocxRequest(BaseModel):
     json_script: dict
+
+
+class TutorialRequest(BaseModel):
+    foss_name: str
+    language: str = "English"
+    export: bool = True
+    user_emails: list[str] = []
+    user_role: str = "writer" 
+
+
+class TutorialResponse(BaseModel):
+    status: str
+    url: str
+    response: dict
