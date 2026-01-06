@@ -7,7 +7,6 @@ from typing import Optional, List
 
 def generate_beamer_template(
     tutorial_name: str = "Tutorial Name",
-    num_content_slides: int = 10,
     learning_objectives: Optional[List[str]] = None,
     learning_objectives_intro: Optional[str] = None,
     prerequisites: Optional[List[str]] = None,
@@ -28,7 +27,6 @@ def generate_beamer_template(
     
     Args:
         tutorial_name: Name of the tutorial (appears on title slide)
-        num_content_slides: Number of blank content slides to generate
         learning_objectives: List of learning objective bullet points
         learning_objectives_intro: Custom intro phrase (e.g., "In this tutorial, you will learn how to")
         prerequisites: List of prerequisite bullet points
@@ -69,9 +67,6 @@ def generate_beamer_template(
     
     # Clean up tutorial name (remove trailing punctuation and markdown)
     tutorial_name = tutorial_name.replace('**', '').replace('*', '').rstrip('.!?').strip()
-    
-    # Validate content slides count
-    num_content_slides = max(0, min(num_content_slides, 100))  # Clamp between 0 and 100
     
     # Build the LaTeX document
     tex_content = rf'''\documentclass[17pt,xcolor=table]{{beamer}} 
@@ -181,16 +176,6 @@ This file is provided in the Code Files link of this tutorial page
     tex_content += r'''% ============================================
 % CONTENT SLIDES - Add your content here
 % ============================================
-
-'''
-    
-    # Add blank content slides
-    for i in range(1, num_content_slides + 1):
-        tex_content += f'''% ---- Content Slide {i} ----
-\\begin{{frame}}
-\\frametitle{{Slide Title}}
-% Add your content here
-\\end{{frame}}
 
 '''
     

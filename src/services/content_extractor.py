@@ -61,10 +61,6 @@ class ExtractedSlideContent(BaseModel):
         default=None,
         description="Code file description if a code file slide exists"
     )
-    
-    num_content_slides: int = Field(
-        description="Count of main content slides (excluding boilerplate: title, LO, prerequisites, system req, summary, assignment, thank you)"
-    )
 
 
 def extract_slide_content(json_script: dict) -> ExtractedSlideContent:
@@ -153,17 +149,6 @@ Extract:
 - intro: "In this tutorial, you learned about"
 - items: ["How to open Ubuntu Software Center", "Installing applications", "Uninstalling applications"]
 
-### Content Slide Counting:
-Count slides that are NOT:
-- Title slide
-- Learning Objectives
-- Prerequisites / Pre-requisites
-- System Requirements
-- Summary
-- Assignment
-- Thank You / Acknowledgement
-- About Spoken Tutorial
-
 ### Prerequisites Footer Extraction:
 Look for a line in the Prerequisites slide like "For the prerequisite tutorials please visit this website" or similar.
 This is a footer line that appears after the bullet items and before the website URL.
@@ -193,8 +178,7 @@ For each section (learning_objectives, prerequisites, system_requirements, summa
 Also extract:
 - tutorial_name (clean, no markdown or punctuation)
 - domain_expert and domain_expert_org (if mentioned)
-- code_file_info (if there's a code file slide)
-- num_content_slides (count of main content slides only)"""
+- code_file_info (if there's a code file slide)"""
 
     # Use structured output
     structured_llm = llm.with_structured_output(ExtractedSlideContent)
@@ -234,8 +218,7 @@ Also extract:
             assignment=SectionContent(
                 intro="As an assignment",
                 items=["Practice exercise"]
-            ),
-            num_content_slides=10
+            )
         )
 
 
@@ -267,7 +250,6 @@ def extract_slide_content_with_fallback(json_script: dict) -> dict:
             "domain_expert": content.domain_expert,
             "domain_expert_org": content.domain_expert_org,
             "code_file_info": content.code_file_info,
-            "num_content_slides": content.num_content_slides,
         }
         
     except Exception as e:
@@ -296,7 +278,6 @@ def _fallback_extraction(json_script: dict) -> dict:
         "domain_expert": None,
         "domain_expert_org": None,
         "code_file_info": None,
-        "num_content_slides": max(1, len(slides) - 6),  # Rough estimate
     }
     
     # Try to extract from slides
