@@ -1,5 +1,5 @@
-from state import AgentState
-from nodes.extract_links import fetch_links
+from src.core.state import VCAgentState
+from src.nodes.extract_links import fetch_links
 import requests
 from bs4 import BeautifulSoup
 
@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 def extract(url: str) -> dict:
     response = requests.get(url)
     response.raise_for_status()
-
     soup = BeautifulSoup(response.text, "html.parser")
 
     extracted_data = {
@@ -46,7 +45,7 @@ def extract(url: str) -> dict:
     return extracted_data
 
 
-def extract_tutorials(state: AgentState,foss: str, language: str) -> AgentState:
+def extract_tutorials(state: VCAgentState,foss: str, language: str) -> VCAgentState:
     url = state["legacy_raw_data"]
     links = fetch_links(foss,language)
     print (f"Tutorials found: {len(links)}")

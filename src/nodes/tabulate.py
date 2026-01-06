@@ -1,6 +1,6 @@
 import pandas as pd
-from state import AgentState
-from inputs import foss_name,language
+from src.core.state import VCAgentState
+# from inputs import foss_name,language
 import re
 
 
@@ -19,7 +19,7 @@ def empty_row():
     }
 
 
-def form_final_table(state: AgentState):
+def form_final_table(state: VCAgentState):
     table = []
     new_t_counter = 1
 

@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from inputs import *
+# from inputs import *
 
 def fetch_links(tutorial: str, language: str) -> BeautifulSoup:
     BASE_URL = "https://spoken-tutorial.org"

@@ -85,6 +85,18 @@ class AgentState(TypedDict):
     problematic_slides: List[int]  # Slide indices that need fixing
 
 
+class ExtractedTutorialRow(TypedDict):
+    title: str
+    subtopics: str
+    duration: str
+
+class VCAgentState(TypedDict):
+    legacy_raw_data: str  # The input URL or text
+    structured_legacy: List[ExtractedTutorialRow]
+    tech_updates: List
+    final_table: List
+
+
 # === FINAL OUTPUT SCHEMAS (existing) ===
 
 class SlideModel(BaseModel):

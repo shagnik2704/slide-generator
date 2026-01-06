@@ -1,37 +1,84 @@
-from state import AgentState
-from utils import llm_openRouter, search_tool
-from langchain.agents import create_agent
+from src.core.state import VCAgentState
+from src.utils.VC_utils import llm, search_tool
 import json
+from langchain.schema import SystemMessage, HumanMessage
+
+SYSTEM_PROMPT = SystemMessage(
+    content=(
+        '''
+        You are a tech intelligence agent that provides the latest updates on version changes and modificaions on topics based on user queries.
+        Use the response provided by search tool to find relevant and recent information.
+        You are given tutorial title and subtopics. Return latest stable version name in updated title and version updates corresponding to the subtopics in updated subtopics.
+        Maintain a log by clearly highlighting what changes are made from older version to newer version. Make an entry only when there is some change.
+        If you cannot find newer updates, tag the older subtopics as 'deprecated' in the log, and if possible find an alternative and present it in one line.
+        Return the output in the JSON format:
+            {
+                "updated_title": "<updated title or same title if no change>" <return type: str>,
+                "updated_subtopics": "<updated subtopics with desired version changes>" <return type: str>
+                "logs": "<List of updates numbered sequentially>" <return type: List>
+            }
+        Follow the format strictly.
+        Return only the resultant JSON and nothing else.
+        '''   
+    )
+)
+
+# def tech_intelligence_agent(state: VCAgentState):
+#     query = f"""
+#     Find latest stable version of {state['title']} and version updates corresponding to the subtopics: {state['subtopics']}.
+#     """
+    
+#     response = llm_openRouter.invoke([
+#         SYSTEM_PROMPT,
+#         HumanMessage(content=query),
+#     ])
+
+#     state["tech_updates"] = response.content
+#     return state
 
 
-agent = create_agent(llm_openRouter,
-                     tools=[search_tool],
-                     system_prompt='''
-                     You are a tech intelligence agent that provides the latest updates on version changes and modificaions on topics based on user queries.
-                     Use the search tool to find relevant and recent information.
-                     You are given tutorial title and subtopics. Return latest stable version name in updated title and version updates corresponding to the subtopics in updated subtopics.
-                     Maintain a log by clearly highlighting what changes are made from older version to newer version. Make an entry only when there is some change.
-                     If you cannot find newer updates, tag the older subtopics as 'deprecated' in the log, and if possible find an alternative and present it in one line.
-                     Return the output in the JSON format:
-                        {
-                            "updated_title": "<updated title or same title if no change>" <return type: str>,
-                            "updated_subtopics": "<updated subtopics with desired version changes>" <return type: str>
-                            "logs": "<List of updates numbered sequentially>" <return type: List>
-                        }
-                    Follow the format strictly.
-                    Return only the resultant JSON and nothing else.
-                    ''')
-def tech_intelligence_agent(state: AgentState):
+
+# agent = create_agent(llm_openRouter,
+#                      tools=[search_tool],
+#                      system_prompt='''
+#                      You are a tech intelligence agent that provides the latest updates on version changes and modificaions on topics based on user queries.
+#                      Use the search tool to find relevant and recent information.
+#                      You are given tutorial title and subtopics. Return latest stable version name in updated title and version updates corresponding to the subtopics in updated subtopics.
+#                      Maintain a log by clearly highlighting what changes are made from older version to newer version. Make an entry only when there is some change.
+#                      If you cannot find newer updates, tag the older subtopics as 'deprecated' in the log, and if possible find an alternative and present it in one line.
+#                      Return the output in the JSON format:
+#                         {
+#                             "updated_title": "<updated title or same title if no change>" <return type: str>,
+#                             "updated_subtopics": "<updated subtopics with desired version changes>" <return type: str>
+#                             "logs": "<List of updates numbered sequentially>" <return type: List>
+#                         }
+#                     Follow the format strictly.
+#                     Return only the resultant JSON and nothing else.
+#                     ''')
+
+def tech_intelligence_agent(state: VCAgentState):
 #     # This agent would ideally use a search tool. 
 #     # Here, it provides a mapping for Linux 24.04 features.
 
     for i,tutorial in enumerate(state['structured_legacy']):
-        print (f"Updating contents regarding version changes: {i+1}/{len(state['structured_legacy'])}")
-        query = f"Find the latest stable version updates for the tutorial titled '{tutorial['title']}' with subtopics {tutorial['subtopics']} and maintain a log registering the changes in points."
-        search_result = agent.invoke({"messages": [{"role": "user", "content": query}]})
-        
+        print(f"Updating tutorials and its contents to latest version: {i+1}/{len(state['structured_legacy'])}")
+        query = f"""
+        Find latest stable version of {tutorial['title']} and version updates corresponding to the subtopics: {tutorial['subtopics']}.
+        """
+        search_result = search_tool(query)
+        task = f'''
+        Here are the search results from the search tool:{search_result}.
+        Update the tutorial title and the subtopics taking resferrnce to the search results.
+        Maintain logs and return JSON in required format.
+        '''
+        result = llm.invoke([
+            SYSTEM_PROMPT,
+            HumanMessage(content=task),
+        ])
+        # print (search_result)
         # raw_content = (search_result['messages'][-1].content[-1]['text'])     # use when using gemini
-        raw_content = (search_result['messages'][-1].content)                   # use when using openRouter
+        # raw_content = (search_result['messages'][-1].content)                   # use when using openRouter
+        raw_content = result.content
         if "```json" in raw_content:
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()
             

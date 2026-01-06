@@ -2,21 +2,21 @@ from fastapi import APIRouter, HTTPException
 from src.api.models import TutorialRequest, TutorialResponse
 from src.workflow import run_pipeline
 
-router = APIRouter()
+router = APIRouter(tags=["redesign"])
 
 @router.get("/")
 def health_check():
     return {"status": "OK", "message": "Pipeline is alive."}
 
-@router.post("/redesign", response_model=TutorialResponse)
+@router.post("/sharing", response_model=TutorialResponse)
 def redesign_tutorial(request: TutorialRequest):
     try:
         state, url = run_pipeline(
             foss_name=request.foss_name,
             language=request.language,
             export=request.export,
-            recipet_emails=request.user_emails,
-            reciept_roles=request.user_role
+            reciept_emails=request.user_emails,
+            reciept_role=request.user_role
         )
 
         return {
@@ -27,3 +27,4 @@ def redesign_tutorial(request: TutorialRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    

@@ -2,9 +2,9 @@ import pandas as pd
 import gspread
 from google.auth import default
 from googleapiclient.discovery import build
-from state import AgentState
-from utils import template_id
-from inputs import *
+from src.core.state import VCAgentState
+from src.utils.VC_utils import template_id
+
 
 
 #------------------------AUTH---------------------------------
@@ -20,7 +20,7 @@ drive_service = build(serviceName="drive",version="v3",credentials=creds)
 
 #--------------------------------------------------------------
 
-def export_to_sheets(state: AgentState,
+def export_to_sheets(state: VCAgentState,
                      foss_name: str,
                      language: str,
                      user_emails: list[str],
