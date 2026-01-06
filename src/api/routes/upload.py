@@ -705,12 +705,10 @@ async def generate_slides_endpoint(data: dict):
     try:
         json_script = data.get('json_script')
         tutorial_name = data.get('tutorial_name', 'Tutorial Name')
-        num_content_slides = data.get('num_content_slides', 10)
         
         # Initialize template parameters
         template_params = {
             "tutorial_name": tutorial_name,
-            "num_content_slides": num_content_slides,
         }
         
         # Extract content from script using LLM if provided
@@ -723,7 +721,6 @@ async def generate_slides_endpoint(data: dict):
             # Update template params with extracted content
             template_params.update({
                 "tutorial_name": extracted.get("tutorial_name", tutorial_name),
-                "num_content_slides": extracted.get("num_content_slides", num_content_slides),
                 "learning_objectives": extracted.get("learning_objectives"),
                 "learning_objectives_intro": extracted.get("learning_objectives_intro"),
                 "prerequisites": extracted.get("prerequisites"),
@@ -785,9 +782,7 @@ async def generate_slides_endpoint(data: dict):
             "filename": tex_filename,
             "zip_filename": zip_filename,
             "zip_url": f"/output/slides/{zip_filename}",
-            "num_boilerplate_slides": 8,  # Title, LO, SysReq, Prereq, Summary, Assignment, Thanks
-            "num_content_slides": template_params["num_content_slides"],
-            "total_slides": 8 + template_params["num_content_slides"],
+            "num_boilerplate_slides": 8,  # Title, LO, SysReq, Prereq, Code, Summary, Assignment, Thanks
             "auto_filled": auto_filled
         }
         
