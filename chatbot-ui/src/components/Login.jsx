@@ -1,8 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
+  const [showHi, setShowHi] = useState(false);
+  const [welcomeText, setWelcomeText] = useState('');
+
+  const fullWelcomeText = 'Welcome to ';
+  const brandText = 'EduPyramids';
+
+  useEffect(() => {
+    // Show Hi! first
+    const hiTimer = setTimeout(() => setShowHi(true), 300);
+
+    // Start typewriter effect after Hi appears
+    let charIndex = 0;
+    const typewriterDelay = 1200; // Start after Hi appears
+
+    const startTypewriter = setTimeout(() => {
+      const typeInterval = setInterval(() => {
+        if (charIndex < fullWelcomeText.length + brandText.length) {
+          if (charIndex < fullWelcomeText.length) {
+            setWelcomeText(fullWelcomeText.slice(0, charIndex + 1));
+          } else {
+            setWelcomeText(fullWelcomeText + brandText.slice(0, charIndex - fullWelcomeText.length + 1));
+          }
+          charIndex++;
+        } else {
+          clearInterval(typeInterval);
+        }
+      }, 60); // Speed of each character
+
+      return () => clearInterval(typeInterval);
+    }, typewriterDelay);
+
+    return () => {
+      clearTimeout(hiTimer);
+      clearTimeout(startTypewriter);
+    };
+  }, []);
+
+  // Split welcomeText into "Welcome to " and "EduPyramids" parts for coloring
+  const displayedWelcome = welcomeText.slice(0, fullWelcomeText.length);
+  const displayedBrand = welcomeText.slice(fullWelcomeText.length);
 
   return (
     <div style={{
@@ -11,17 +51,66 @@ export default function Login() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'var(--bg-primary)',
       padding: '2rem',
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
     }}>
+      {/* Animated Greeting - Horizontal Row */}
+      <div style={{
+        marginBottom: '2rem',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '1rem',
+        flexWrap: 'wrap',
+      }}>
+        <h1 style={{
+          fontSize: '2.5rem',
+          fontWeight: '600',
+          color: 'var(--accent-primary, #4285F4)',
+          margin: 0,
+          opacity: showHi ? 1 : 0,
+          transform: showHi ? 'translateX(0)' : 'translateX(-20px)',
+          transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+        }}>
+          Hi! 👋
+        </h1>
+        <p style={{
+          fontSize: '2.5rem',
+          fontWeight: '500',
+          color: 'var(--text-primary, #202124)',
+          margin: 0,
+          minWidth: '1ch',
+        }}>
+          {displayedWelcome}
+          <span style={{ color: 'var(--accent-secondary, #34A853)' }}>{displayedBrand}</span>
+          <span style={{
+            display: welcomeText.length > 0 && welcomeText.length < fullWelcomeText.length + brandText.length ? 'inline-block' : 'none',
+            width: '3px',
+            height: '2.5rem',
+            backgroundColor: 'var(--accent-primary, #4285F4)',
+            marginLeft: '2px',
+            animation: 'blink 0.8s infinite',
+          }} />
+        </p>
+      </div>
+
+      <style>{`
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+      `}</style>
+
+      {/* Login Card - Always Visible */}
       <div style={{
         maxWidth: '420px',
         width: '100%',
         background: '#fff',
         borderRadius: '12px',
         padding: '3rem 2.5rem',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
         textAlign: 'center',
       }}>
         {/* Google Logo */}
@@ -51,22 +140,22 @@ export default function Login() {
           </svg>
         </div>
 
-        <h1 style={{
-          fontSize: '1.75rem',
+        <h2 style={{
+          fontSize: '1.5rem',
           marginBottom: '0.5rem',
           fontWeight: '400',
           color: '#202124',
           letterSpacing: '0',
         }}>
-          Welcome
-        </h1>
+          Sign In
+        </h2>
         <p style={{
           fontSize: '0.875rem',
           marginBottom: '2rem',
           color: '#5f6368',
           lineHeight: '1.5',
         }}>
-          Sign in to continue to Slide Generator
+          Continue to Slide Generator
         </p>
 
         <button
@@ -152,7 +241,7 @@ export default function Login() {
             color: '#5f6368',
             margin: 0,
           }}>
-            Slide Generator by Spoken Tutorial
+            brought to you by EduPyramids Educational Services Private Limited,SINE,IIT Bombay
           </p>
         </div>
       </div>

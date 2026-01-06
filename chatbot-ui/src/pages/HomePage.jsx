@@ -60,7 +60,7 @@ const HomePage = () => {
           fontFamily: 'var(--font-sans)',
           letterSpacing: '-0.02em',
         }}>
-          Welcome to Slide Generator
+          Welcome!
         </h1>
         <p style={{
           fontSize: '1.125rem',
@@ -150,7 +150,7 @@ const HomePage = () => {
               lineHeight: '1.6',
               textAlign: 'center',
             }}>
-              Upload your tutorial content to generate scripts, slides, and videos.
+              Upload your content to generate scripts, slides, audio, and generate compliance reports.
               Requires authentication.
             </p>
             <div style={{
