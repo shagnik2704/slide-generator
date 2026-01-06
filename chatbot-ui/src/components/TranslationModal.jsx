@@ -147,7 +147,6 @@ export default function TranslationModal({
     const buttonStyle = (isPrimary, isDisabled) => ({
         padding: '0.75rem 1.5rem',
         borderRadius: '10px',
-        border: 'none',
         fontWeight: 600,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         display: 'flex',

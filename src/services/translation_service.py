@@ -46,6 +46,11 @@ SUPPORTED_LANGUAGES = {
     "mr": {"name": "Marathi", "native": "मराठी"},
     "bn": {"name": "Bengali", "native": "বাংলা"},
     "kn": {"name": "Kannada", "native": "ಕನ್ನಡ"},
+    "gu": {"name": "Gujarati", "native": "ગુજરાતી"},
+    "ml": {"name": "Malayalam", "native": "മലയാളം"},
+    "pa": {"name": "Punjabi", "native": "ਪੰਜਾਬੀ"},
+    "or": {"name": "Odia", "native": "ଓଡ଼ିଆ"},
+    "as": {"name": "Assamese", "native": "অসমীয়া"},
 }
 
 
@@ -121,10 +126,8 @@ async def translate_script(
         prompt = f"""You are an expert English-to-{lang_name} translator for Spoken Tutorial scripts.
 
 **Translation Rules:**
-1. Use natural, conversational {lang_name} ({lang_native} script)
-2. Transliterate technical terms (e.g., Python, Linux, Terminal, click, file)
-3. IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script (e.g., **File** becomes **ఫైల్** in Telugu, **click** becomes **क्लिक** in Hindi)
-4. Each sentence should be speakable in one breath (under 100 characters)
+1. Use natural, conversational {lang_name} ({lang_native} script) while preserving the context
+2. IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script.(e.g., Python → पायथन, Terminal → టెర్మినల్)
 {visual_cue_instruction}
 
 **Content to translate:**
