@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Check, X, Edit2, Image, Loader2, Paperclip, XCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -33,18 +33,53 @@ const formatSentences = (text) => {
  * ImagePromptReview - Review and edit AI-enhanced image prompts before generation.
  */
 const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onClose }) => {
-    const [prompts, setPrompts] = useState(
-        enhancedPrompts.map(p => ({
+    const STORAGE_KEY = `image_prompts_${projectId}`;
+
+    // Load from localStorage if available, otherwise use props
+    const [prompts, setPrompts] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Merge saved edits with fresh data (in case structure changed)
+                return enhancedPrompts.map(p => {
+                    const savedPrompt = parsed.find(s => s.slide_number === p.slide_number);
+                    return {
+                        ...p,
+                        selected: savedPrompt?.selected ?? !p.skip_reason,
+                        editedPrompt: savedPrompt?.editedPrompt || p.enhanced || p.original,
+                        isEditing: false,
+                        referenceImage: null,
+                        referenceImagePreview: null
+                    };
+                });
+            } catch (e) {
+                console.warn('Failed to parse saved prompts:', e);
+            }
+        }
+        // Default: fresh from props
+        return enhancedPrompts.map(p => ({
             ...p,
             selected: !p.skip_reason,
             editedPrompt: p.enhanced || p.original,
             isEditing: false,
-            referenceImage: null,  // For image-to-image generation
+            referenceImage: null,
             referenceImagePreview: null
-        }))
-    );
+        }));
+    });
+
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationProgress, setGenerationProgress] = useState(null);
+
+    // Save to localStorage whenever prompts change
+    useEffect(() => {
+        const toSave = prompts.map(p => ({
+            slide_number: p.slide_number,
+            selected: p.selected,
+            editedPrompt: p.editedPrompt
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }, [prompts, STORAGE_KEY]);
 
     // Refs for hidden file inputs (one per slide)
     const fileInputRefs = useRef({});
@@ -190,8 +225,6 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
         border: '1px solid var(--border-color)',
         padding: '1.5rem',
         marginTop: '1rem',
-        maxHeight: '70vh',
-        overflow: 'auto',
         minWidth: '900px'
     };
 
@@ -235,12 +268,12 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
             <table style={tableStyle}>
                 <thead>
                     <tr>
-                        <th style={{ ...thStyle, width: '40px' }}></th>
-                        <th style={{ ...thStyle, width: '50px' }}>#</th>
-                        <th style={{ ...thStyle, width: '180px' }}>Visual Cue</th>
-                        <th style={{ ...thStyle, width: '220px' }}>Narration</th>
+                        <th style={{ ...thStyle, minWidth: '40px' }}></th>
+                        <th style={{ ...thStyle, minWidth: '40px' }}>#</th>
+                        <th style={thStyle}>Visual Cue</th>
+                        <th style={thStyle}>Narration</th>
                         <th style={thStyle}>AI Enhanced Prompt</th>
-                        <th style={{ ...thStyle, width: '100px' }}>Add Image</th>
+                        <th style={{ ...thStyle, minWidth: '80px' }}>Add Image</th>
                     </tr>
                 </thead>
                 <tbody>

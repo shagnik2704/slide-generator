@@ -337,7 +337,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     </div>
 
                     {/* Clear Session button */}
-                    {mode === 'upload' && uploadMessages.length > 1 && (
+                    {mode === 'upload' && uploadMessages.length > 0 && (
                         <button
                             onClick={handleClearSession}
                             style={{
@@ -373,7 +373,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
             </header>
 
             {/* Messages Area - hidden when welcome screen is shown */}
-            {!(mode === 'upload' && uploadMessages.length === 1) && (
+            {!(mode === 'upload' && uploadMessages.length === 0) && (
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -546,7 +546,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 onScriptToWiki={handleScriptToWiki}
                 onSendText={handleSendChatText}
                 disabled={isTyping}
-                isWelcome={mode === 'upload' && uploadMessages.length === 1}
+                isWelcome={mode === 'upload' && uploadMessages.length === 0}
                 stagedFile={stagedFile}
                 setStagedFile={setStagedFile}
                 onConfirmStagedFile={handleConfirmStagedFile}
