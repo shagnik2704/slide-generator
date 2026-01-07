@@ -290,5 +290,8 @@ export function useChatArea() {
         handleExportMediaWiki: exportHandlers.handleExportMediaWiki,
         handleSaveScriptEdit: exportHandlers.handleSaveScriptEdit,
         handleQualityCheck: exportHandlers.handleQualityCheck,
+
+        // Redesign handlers
+        handleRedesignSubmit: redesignHandlers.handleRedesignSubmit,
     };
 }
