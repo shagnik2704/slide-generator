@@ -507,7 +507,7 @@ const InputArea = ({
     // Regular input area (for when messages exist)
     return (
         <div style={{
-            padding: '1.5rem',
+            padding: '0.5rem',
             background: 'linear-gradient(to top, var(--bg-primary) 80%, transparent)',
             position: 'relative',
             zIndex: 10
