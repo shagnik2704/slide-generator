@@ -12,6 +12,7 @@ import { useSidebarHandlers } from './useSidebarHandlers';
 import { useGenerationHandlers } from './useGenerationHandlers';
 import { useOutlineChat } from './useOutlineChat';
 import { useExportHandlers } from './useExportHandlers';
+import { useRedesignHandlers } from './useRedesignHandlers';
 
 // Default messages
 const DEFAULT_UPLOAD_MESSAGE = {
@@ -29,7 +30,7 @@ export function useChatArea() {
     // CORE STATE
     // =========================
 
-    const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat'
+    const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat' | 'redesign'
 
     // Initialize uploadMessages from localStorage or default
     const [uploadMessages, setUploadMessages] = useState(() => {
@@ -115,6 +116,12 @@ export function useChatArea() {
         setQualityReports,
         setOpenQualityId,
         setIsQualityLoading
+    );
+
+    // Redesign handlers
+    const redesignHandlers = useRedesignHandlers(
+        setUploadMessages,
+        setIsTyping
     );
 
     // =========================

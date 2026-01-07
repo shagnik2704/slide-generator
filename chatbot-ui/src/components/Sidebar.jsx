@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, RefreshCw } from 'lucide-react';
 import Tooltip from './Tooltip';
 
-const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign }) => {
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -413,6 +413,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 >
                     <Languages size={20} />
                     {isOpen && <span>Translate Script</span>}
+                </button>
+            </TooltipWrapper>
+
+            {/* Redesign Tutorial Button */}
+            <TooltipWrapper text="Tutorial Redesign">
+                <button
+                    onClick={() => onSwitchToRedesign && onSwitchToRedesign()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <RefreshCw size={20} />
+                    {isOpen && <span>Tutorial Redesign</span>}
                 </button>
             </TooltipWrapper>
 

@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { Menu, UploadCloud, MessageSquare, Trash2 } from 'lucide-react';
+import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw } from 'lucide-react';
 
 // Components
 import MessageBubble from './MessageBubble';
@@ -15,6 +15,7 @@ import BatchUploadModal from './BatchUploadModal';
 import BatchResultsList from './BatchResultsList';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
+import RedesignForm from './RedesignForm';
 
 // Message Action Components
 import {
@@ -85,6 +86,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleExportMediaWiki,
         handleSaveScriptEdit,
         handleQualityCheck,
+        handleRedesignSubmit,
 
         // Staging
         stagedFile,
@@ -186,6 +188,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleSidebarScriptUpload,
         handleCreateSlides,
         setStagedFile,  // Expose staging for Sidebar
+        setMode,  // Expose setMode for mode switching
         openBatchModal: () => {
             setBatchMode('compliance');
             setIsBatchModalOpen(true);
@@ -334,6 +337,27 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                             <MessageSquare size={18} />
                             Outline Chat
                         </button>
+                        <button
+                            onClick={() => setMode('redesign')}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                padding: '0.4rem 0.75rem',
+                                borderRadius: '0.75rem',
+                                border: 'none',
+                                background: mode === 'redesign'
+                                    ? 'var(--accent-primary)'
+                                    : 'transparent',
+                                color: mode === 'redesign' ? 'white' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                boxShadow: mode === 'redesign' ? 'var(--shadow-sm)' : 'none'
+                            }}
+                        >
+                            <RefreshCw size={18} />
+                            Redesign
+                        </button>
                     </div>
 
                     {/* Clear Session button */}
@@ -383,6 +407,14 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     gap: '0.5rem'
                 }}>
                     <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                        {/* Redesign Form - show when in redesign mode */}
+                        {mode === 'redesign' && (
+                            <RedesignForm
+                                onSubmit={handleRedesignSubmit}
+                                onCancel={() => setMode('upload')}
+                            />
+                        )}
+                        
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
                                 <MessageBubble
@@ -538,20 +570,22 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 </div>
             )}
 
-            {/* Input Area */}
-            <InputArea
-                mode={mode}
-                onSendMessage={handleSendMessage}
-                onUploadScript={handleUploadScript}
-                onScriptToWiki={handleScriptToWiki}
-                onSendText={handleSendChatText}
-                disabled={isTyping}
-                isWelcome={mode === 'upload' && uploadMessages.length === 1}
-                stagedFile={stagedFile}
-                setStagedFile={setStagedFile}
-                onConfirmStagedFile={handleConfirmStagedFile}
-                onCancelStagedFile={handleCancelStagedFile}
-            />
+            {/* Input Area - hidden in redesign mode */}
+            {mode !== 'redesign' && (
+                <InputArea
+                    mode={mode}
+                    onSendMessage={handleSendMessage}
+                    onUploadScript={handleUploadScript}
+                    onScriptToWiki={handleScriptToWiki}
+                    onSendText={handleSendChatText}
+                    disabled={isTyping}
+                    isWelcome={mode === 'upload' && uploadMessages.length === 1}
+                    stagedFile={stagedFile}
+                    setStagedFile={setStagedFile}
+                    onConfirmStagedFile={handleConfirmStagedFile}
+                    onCancelStagedFile={handleCancelStagedFile}
+                />
+            )}
 
             {/* Batch Upload Modal */}
             <BatchUploadModal
