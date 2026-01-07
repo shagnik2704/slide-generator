@@ -60,11 +60,22 @@ def export_to_sheets(state: VCAgentState,
     
     return new_sheet.url
     
-# import json
-# with open("logs/final_output.json","r") as f:
-#     state = json.load(f)
-
-# export_to_sheets(state=state,
-#                  foss_name=foss_name,
-#                  language=language,
-#                  user_email="aayush.231ee101@nitk.edu.in")
+def share_sheet(sheet_url: str, recipients: list[dict]):
+    # Extract sheet ID from URL
+    sheet_id = sheet_url.split('/d/')[1].split('/')[0]
+    
+    for recipient in recipients:
+        email = recipient['email']
+        role = recipient.get('role', 'writer')
+        drive_service.permissions().create(
+            fileId=sheet_id,
+            body={
+                "type": "user",
+                "role": role,
+                "emailAddress": email
+            },
+            sendNotificationEmail=True).execute()
+        
+        print(f"Sheet shared to {email} as {role}")
+    
+    return f"Sheet shared to {len(recipients)} recipients"

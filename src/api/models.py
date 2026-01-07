@@ -47,7 +47,27 @@ class TutorialRequest(BaseModel):
     user_role: str = "writer" 
 
 
+class GenerateTutorialRequest(BaseModel):
+    foss_name: str
+    language: str = "English"
+
+
+class ShareTutorialRequest(BaseModel):
+    url: str
+    recipients: list[dict]  # [{"email": str, "role": str}]
+
+
 class TutorialResponse(BaseModel):
     status: str
     url: str
     response: dict
+
+
+class GenerateTutorialResponse(BaseModel):
+    status: str
+    url: str
+
+
+class ShareTutorialResponse(BaseModel):
+    status: str
+    message: str
