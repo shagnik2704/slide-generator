@@ -55,16 +55,21 @@ def generate_single_image(
     client = genai.Client(api_key=api_key)
     
     try:
-        # Build contents: reference image (if provided) + prompt
+        # Import shared style prefix for consistent image generation
+        from src.services.image_styles import IMAGE_STYLE_PREFIX
+        
+        # Build contents: reference image (if provided) + style-prefixed prompt
+        styled_prompt = IMAGE_STYLE_PREFIX + prompt
+        
         if reference_image_path and reference_image_path.exists():
             print(f"  🎨 Editing image with prompt: {prompt[:50]}...")
             # Load reference image using PIL
             from PIL import Image
             ref_image = Image.open(reference_image_path)
-            contents = [ref_image, prompt]
+            contents = [ref_image, styled_prompt]
         else:
             print(f"  🎨 Generating image: {prompt[:50]}...")
-            contents = prompt
+            contents = styled_prompt
         
         response = client.models.generate_content(
             model='gemini-3-pro-image-preview',
