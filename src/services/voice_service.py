@@ -21,7 +21,7 @@ load_dotenv()
 # === TTS Configuration ===
 
 # Single voice and prompt for consistent narration
-DEFAULT_VOICE = "Laomedeia"
+DEFAULT_VOICE = "Leda"
 DEFAULT_PROMPT = """Speak as an instructor for a Spoken Tutorial video. Use an Indian English accent.
 Follow these guidelines:
 - Speak clearly, at a pace that allows learners to follow along on their computers.
