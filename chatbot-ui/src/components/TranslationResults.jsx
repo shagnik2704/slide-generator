@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, Download, Languages, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Check, X, Download, Languages, ChevronDown, ChevronUp, FileText, List, Grid3X3 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -9,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export default function TranslationResults({ results }) {
     const [expandedLang, setExpandedLang] = React.useState(null);
     const [downloadingLang, setDownloadingLang] = React.useState(null);
+    const [viewMode, setViewMode] = React.useState('list'); // 'list' | 'compare'
 
     if (!results || !results.results || results.results.length === 0) {
         return null;
@@ -57,6 +58,15 @@ export default function TranslationResults({ results }) {
         border: '1px solid var(--border-primary)',
         overflow: 'hidden',
         marginTop: '1rem',
+        // Expand width in Compare mode for better multi-column view
+        ...(viewMode === 'compare' ? {
+            position: 'relative',
+            width: 'calc(100vw - 140px)',
+            maxWidth: '1400px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+        } : {}),
+        transition: 'all 0.3s ease',
     };
 
     const headerStyle = {
@@ -167,6 +177,33 @@ export default function TranslationResults({ results }) {
         });
     };
 
+    // Calculate word count from text
+    const getWordCount = (text) => {
+        if (!text) return 0;
+        return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    };
+
+    // Format seconds to MM:SS
+    const formatTimestamp = (totalSeconds) => {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // Calculate cumulative timestamps for slides (135 WPM)
+    const WPM = 135;
+    const SECONDS_PER_WORD = 60 / WPM; // ~0.44 seconds per word
+
+    const calculateTimestamps = (slides) => {
+        let cumulativeTime = 0;
+        return slides.map(slide => {
+            const timestamp = formatTimestamp(cumulativeTime);
+            const wordCount = getWordCount(slide.narration);
+            cumulativeTime += wordCount * SECONDS_PER_WORD;
+            return timestamp;
+        });
+    };
+
     const toggleExpanded = (langCode) => {
         setExpandedLang(prev => prev === langCode ? null : langCode);
     };
@@ -184,10 +221,61 @@ export default function TranslationResults({ results }) {
                         {total_success} of {total_requested} language{total_requested !== 1 ? 's' : ''} successful
                     </div>
                 </div>
+                {/* View Mode Toggle */}
+                <div style={{
+                    display: 'flex',
+                    gap: '0.25rem',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '8px',
+                    padding: '0.25rem',
+                    border: '1px solid var(--border-primary)',
+                }}>
+                    <button
+                        onClick={() => setViewMode('list')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: viewMode === 'list' ? 'var(--accent-primary)' : 'transparent',
+                            color: viewMode === 'list' ? 'white' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <List size={14} />
+                        List
+                    </button>
+                    <button
+                        onClick={() => setViewMode('compare')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: viewMode === 'compare' ? 'var(--accent-primary)' : 'transparent',
+                            color: viewMode === 'compare' ? 'white' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <Grid3X3 size={14} />
+                        Compare
+                    </button>
+                </div>
             </div>
 
-            {/* Results */}
-            {translations.map((result, index) => (
+
+            {/* LIST VIEW - Per-language expandable cards */}
+            {viewMode === 'list' && translations.map((result, index) => (
                 <div
                     key={result.language_code || index}
                     style={resultCardStyle(result.success)}
@@ -307,7 +395,6 @@ export default function TranslationResults({ results }) {
                                                     </div>
                                                     {formatText(slide.narration)}
                                                 </div>
-                                                {/* Visual cue hidden from UI - still translated for DOCX export */}
                                             </td>
                                             <td style={{ ...tdStyle, fontFamily: 'system-ui' }}>
                                                 <div style={{ marginBottom: '0.5rem' }}>
@@ -323,7 +410,6 @@ export default function TranslationResults({ results }) {
                                                         {formatText(slide[`narration_${result.language_code}`]) || '—'}
                                                     </span>
                                                 </div>
-                                                {/* Translated visual cue hidden from UI - still included in DOCX export */}
                                             </td>
                                         </tr>
                                     ))}
@@ -333,6 +419,73 @@ export default function TranslationResults({ results }) {
                     )}
                 </div>
             ))}
+
+            {/* COMPARE VIEW - Multi-column table with all languages */}
+            {viewMode === 'compare' && (
+                <div style={{ padding: '1rem 1.25rem' }}>
+
+                    {/* Multi-column comparison table */}
+                    <div style={{
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        overflowX: 'auto',
+                    }}>
+                        <table style={{ ...tableStyle, minWidth: `${200 + translations.filter(t => t.success).length * 250}px` }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ ...thStyle, width: '70px', position: 'sticky', left: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>Time</th>
+                                    <th style={{ ...thStyle, minWidth: '200px' }}>English</th>
+                                    {translations.filter(t => t.success).map(result => (
+                                        <th key={result.language_code} style={{ ...thStyle, minWidth: '200px' }}>
+                                            {result.language}
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 400, color: 'var(--text-secondary)' }}>
+                                                {result.language_native}
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* Use first successful translation as source for slides */}
+                                {(() => {
+                                    const slides = translations.find(t => t.success)?.translated_script?.slides || [];
+                                    const timestamps = calculateTimestamps(slides);
+                                    return slides.map((slide, i) => (
+                                        <tr key={i} style={{
+                                            background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)'
+                                        }}>
+                                            <td style={{
+                                                ...tdStyle,
+                                                fontWeight: 500,
+                                                textAlign: 'center',
+                                                position: 'sticky',
+                                                left: 0,
+                                                background: i % 2 === 0 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                                                zIndex: 1,
+                                                fontFamily: 'monospace',
+                                                fontSize: '0.85rem',
+                                            }}>
+                                                {timestamps[i]}
+                                            </td>
+                                            <td style={tdStyle}>
+                                                {formatText(slide.narration)}
+                                            </td>
+                                            {translations.filter(t => t.success).map(result => (
+                                                <td key={result.language_code} style={{ ...tdStyle, fontFamily: 'system-ui' }}>
+                                                    <span style={{ color: 'var(--accent-primary)' }}>
+                                                        {formatText(result.translated_script?.slides?.[i]?.[`narration_${result.language_code}`]) || '—'}
+                                                    </span>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ));
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
