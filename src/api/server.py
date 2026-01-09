@@ -22,12 +22,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Slide Generator API", lifespan=lifespan)
 
 # CORS middleware
-# Allow any origin (no credentials used) to avoid preflight failures when
-# frontends are served from new hosts or previews.
+# Allow any origin with credentials for OAuth flow
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -53,8 +52,10 @@ from src.api.routes import (
     outline_chat_router,
     translation_router,
 )
+from src.api.routes.auth import router as auth_router
 
 # Include routers
+app.include_router(auth_router)
 app.include_router(upload_router)
 app.include_router(generation_router)
 app.include_router(download_router)

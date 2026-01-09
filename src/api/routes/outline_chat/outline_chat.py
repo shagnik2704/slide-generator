@@ -16,6 +16,8 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 
+# Authentication removed for outline_chat endpoints - public access
+
 from .outline_chat_field_extraction import extract_json_block
 from .outline_chat_handlers import (
     handle_approval,
@@ -44,6 +46,7 @@ from .outline_chat_session import (
     save_session,
 )
 from .outline_chat_validation import validate_outline
+from .outline_chat_draft_generation import generate_draft_outline
 
 router = APIRouter(tags=["outline_chat"])
 

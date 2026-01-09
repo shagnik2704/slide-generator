@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 
-const Layout = () => {
+const Layout = ({ mode = 'upload' }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const chatAreaRef = useRef(null);
 
@@ -38,21 +38,27 @@ const Layout = () => {
     }
   };
 
+  const showSidebar = mode !== 'outline_chat';
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-        <Sidebar
-          isOpen={isSidebarOpen}
-          toggleSidebar={toggleSidebar}
-          onStageFile={handleStageFile}
-          onCreateSlides={handleCreateSlides}
-          onOpenBatchModal={handleOpenBatchModal}
-          onOpenBatchQualityModal={handleOpenBatchQualityModal}
-        />
+        {showSidebar && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            toggleSidebar={toggleSidebar}
+            onStageFile={handleStageFile}
+            onCreateSlides={handleCreateSlides}
+            onOpenBatchModal={handleOpenBatchModal}
+            onOpenBatchQualityModal={handleOpenBatchQualityModal}
+          />
+        )}
         <ChatArea
           ref={chatAreaRef}
           toggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
+          mode={mode}
+          showSidebarToggle={showSidebar}
         />
       </div>
     </div>

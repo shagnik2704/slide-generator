@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
 import Tooltip from './Tooltip';
+import UserProfile from './UserProfile';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal }) => {
     const collapsedWidth = '60px';
@@ -428,6 +429,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 flexDirection: 'column',
                 gap: '0.5rem'
             }}>
+                {/* User Profile */}
+                {isOpen && (
+                    <div style={{ marginBottom: '0.5rem' }}>
+                        <UserProfile />
+                    </div>
+                )}
+
                 <TooltipWrapper text="Settings">
                     <button
                         style={iconButtonStyle}

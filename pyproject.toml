@@ -104,6 +104,7 @@ dependencies = [
   "aiosqlite<0.22.0",
   "langchain-openai>=0.3.35",
   "pydub>=0.25.1",
+  "python-jose[cryptography]>=3.5.0",
 ]
 
 [tool.hatch.build.targets.wheel]
