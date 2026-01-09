@@ -115,8 +115,6 @@ async def google_callback(code: str):
             
             # Redirect to frontend with token
             frontend_url = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
-            # Remove trailing slash to avoid double slashes
-            frontend_url = frontend_url.rstrip('/')
             redirect_url = f"{frontend_url}/auth/callback?token={jwt_token}"
             
             return RedirectResponse(url=redirect_url)
