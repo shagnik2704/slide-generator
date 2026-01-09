@@ -81,6 +81,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": original_prompt,
+                "narration": slide.get('narration', ''),
                 "enhanced": None,
                 "skip_reason": "Boilerplate slide (no image needed)"
             })
@@ -89,6 +90,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": "",
+                "narration": slide.get('narration', ''),
                 "enhanced": None,
                 "skip_reason": "No visual cue provided"
             })
@@ -97,7 +99,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "slide_number": slide_number,
                 "title": title,
                 "original": original_prompt,
-                "narration": slide.get('narration', '')[:200]  # Include context (truncated)
+                "narration": slide.get('narration', '')
             })
     
     if not slides_to_enhance:
@@ -106,34 +108,11 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
     # Call LLM to enhance prompts
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
     
-    system_prompt = """You are an expert at writing image generation prompts for educational tutorials.
+    # Import shared system prompt for enhancement
+    from src.services.image_styles import ENHANCEMENT_SYSTEM_PROMPT
+    system_prompt = ENHANCEMENT_SYSTEM_PROMPT
 
-Given short visual cues from a Spoken Tutorial script, expand them into detailed, high-quality prompts suitable for AI image generation.
-
-=== STYLE RULES (IMPORTANT) ===
-
-**FOR SOFTWARE/SCREENSHOTS/UI:**
-- Keep realistic, professional software aesthetic
-- Describe UI elements, colors, layout accurately
-- Example: "A clean screenshot of VS Code with Python code visible, dark theme, blue sidebar"
-
-**FOR PEOPLE/CONCEPTS/ABSTRACT:**
-- Use FLAT STYLE GRAPHIC  (NOT photorealistic)
-- Think: modern educational illustrations, 2D vector art, simple cartoon characters
-- Avoid: realistic humans, stock photo aesthetics
-- Example: "Flat design illustration of a friendly cartoon developer at a laptop, vibrant colors, simple shapes"
-
-=== GENERAL RULES ===
-1. Keep the educational context in mind
-2. Add visual details: composition, colors, mood
-3. For screenshots: describe the software interface accurately
-4. For people: use "flat design illustration", "cartoon character", "2D vector style"
-5. For concepts: use "educational infographic", "simple icon-based illustration"
-6. Do NOT include any text that should appear in the image (AI generators are bad at text)
-
-Return a JSON array with enhanced prompts for each slide."""
-
-    human_prompt = f"""Enhance these visual cues into detailed image generation prompts:
+    human_prompt = f"""Create image generation prompts for these slides:
 
 {json.dumps(slides_to_enhance, indent=2)}
 
@@ -172,6 +151,7 @@ Return a JSON object with this structure:
                 "slide_number": slide_num,
                 "title": slide_info["title"],
                 "original": slide_info["original"],
+                "narration": slide_info.get("narration", ""),
                 "enhanced": enhanced_map.get(slide_num, slide_info["original"]),
                 "skip_reason": None
             })
@@ -197,6 +177,7 @@ Return a JSON object with this structure:
                 "slide_number": slide_info["slide_number"],
                 "title": slide_info["title"],
                 "original": slide_info["original"],
+                "narration": slide_info.get("narration", ""),
                 "enhanced": slide_info["original"],  # Use original as fallback
                 "skip_reason": None
             })

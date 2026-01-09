@@ -62,9 +62,9 @@ def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
     for i, slide in enumerate(slides):
         row = table.add_row()
         
-        # Visual Cue column (slide title + image prompt)
+        # Visual Cue column (slide title + image prompt) - with bold markdown parsing
         visual_cue = _format_visual_cue(slide)
-        row.cells[0].text = visual_cue
+        _add_formatted_text(row.cells[0], visual_cue)
         
         # Narration column (with bold markdown parsing)
         narration = slide.get('narration', '')

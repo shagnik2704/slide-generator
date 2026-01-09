@@ -50,6 +50,7 @@ from src.api.routes import (
     generation_router,
     download_router,
     outline_chat_router,
+    translation_router,
 )
 from src.api.routes.auth import router as auth_router
 
@@ -59,6 +60,7 @@ app.include_router(upload_router)
 app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
+app.include_router(translation_router)
 
 # Basic health/root endpoints for uptime checks
 @app.get("/")

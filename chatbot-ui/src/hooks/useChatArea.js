@@ -13,13 +13,6 @@ import { useGenerationHandlers } from './useGenerationHandlers';
 import { useOutlineChat } from './useOutlineChat';
 import { useExportHandlers } from './useExportHandlers';
 
-// Default messages
-const DEFAULT_UPLOAD_MESSAGE = {
-    id: 1,
-    role: 'assistant',
-    content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.'
-};
-
 /**
  * Main hook for ChatArea state and business logic.
  * Composes smaller, focused hooks for each feature area.
@@ -36,7 +29,7 @@ export function useChatArea(mode = 'upload') {
             console.log('📂 Restored session from localStorage');
             return saved.uploadMessages;
         }
-        return [DEFAULT_UPLOAD_MESSAGE];
+        return [];
     });
 
     const [isTyping, setIsTyping] = useState(false);
@@ -147,7 +140,7 @@ export function useChatArea(mode = 'upload') {
     const handleClearSession = useCallback(() => {
         if (window.confirm('Clear all upload data and start fresh? This cannot be undone.')) {
             clearStorage();
-            setUploadMessages([DEFAULT_UPLOAD_MESSAGE]);
+            setUploadMessages([]);
             setCurrentProjectId(null);
             setOpenEditorId(null);
             setSessionRestored(false);

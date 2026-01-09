@@ -507,7 +507,7 @@ const InputArea = ({
     // Regular input area (for when messages exist)
     return (
         <div style={{
-            padding: '1.5rem',
+            padding: '0.5rem',
             background: 'linear-gradient(to top, var(--bg-primary) 80%, transparent)',
             position: 'relative',
             zIndex: 10
@@ -582,11 +582,11 @@ const InputArea = ({
                         {!stagedFile && (
                             <div style={{
                                 textAlign: 'center',
-                                fontSize: '0.85rem',
+                                fontSize: '0.8rem',
                                 color: 'var(--text-secondary)',
-                                padding: '1rem',
+                                padding: '0.5rem',
                             }}>
-                                Upload content to generate script, or upload existing script to skip to slides.
+                                Use the sidebar to generate voice,slides,images or run compliance checks
                             </div>
                         )}
                     </>
