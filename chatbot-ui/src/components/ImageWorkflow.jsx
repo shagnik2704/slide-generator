@@ -13,66 +13,94 @@ const stripMarkdown = (text) => {
 };
 
 /**
- * Format text with line breaks after each sentence
- */
-const formatSentences = (text) => {
-    if (!text) return null;
-    const sentences = text.split(/(?<=[.!?])\s+/);
-    return sentences.map((sentence, i) => (
-        <span key={i} style={{ display: 'block', marginBottom: i < sentences.length - 1 ? '0.5rem' : 0 }}>
-            {sentence}
-        </span>
-    ));
-};
-
-/**
- * ImageWorkflow - Unified component for reviewing prompts AND displaying generated images.
- * Table-based grid layout matching TranslationResults style.
+ * ImageWorkflow - Sentence-based image generation workflow.
+ * Each row's narration is split into sentences, with one image per sentence.
  */
 const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
-    const STORAGE_KEY = `image_workflow_${projectId}`;
+    const STORAGE_KEY = `image_workflow_v2_${projectId}`;
 
-    // Initialize slides with prompt data and empty image slots
-    const [slides, setSlides] = useState(() => {
+    // Flatten sentences into displayable rows
+    // Each "sentence row" has: rowNumber, sentenceIndex, sentenceText, enhancedPrompt, imageUrl, etc.
+    const [sentenceRows, setSentenceRows] = useState(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
+        let savedMap = {};
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                return enhancedPrompts.map(p => {
-                    const savedSlide = parsed.find(s => s.slide_number === p.slide_number);
-                    return {
-                        ...p,
-                        selected: savedSlide?.selected ?? !p.skip_reason,
-                        editedPrompt: savedSlide?.editedPrompt || p.enhanced || p.original,
-                        isEditing: false,
-                        referenceImage: null,
-                        referenceImagePreview: null,
-                        imageUrl: savedSlide?.imageUrl || null,
-                        imageStatus: savedSlide?.imageUrl ? 'success' : 'pending',
-                        imageError: null,
-                    };
+                // Build a map: "rowNumber_sentenceIndex" -> saved data
+                parsed.forEach(s => {
+                    savedMap[`${s.rowNumber}_${s.sentenceIndex}`] = s;
                 });
             } catch (e) {
                 console.warn('Failed to parse saved workflow:', e);
             }
         }
-        return enhancedPrompts.map(p => ({
-            ...p,
-            selected: !p.skip_reason,
-            editedPrompt: p.enhanced || p.original,
-            isEditing: false,
-            referenceImage: null,
-            referenceImagePreview: null,
-            imageUrl: null,
-            imageStatus: 'pending',
-            imageError: null,
-        }));
+
+        // Flatten the new sentence-based structure
+        const rows = [];
+        enhancedPrompts.forEach(prompt => {
+            if (prompt.skip_reason) {
+                // Skipped rows get a single entry
+                rows.push({
+                    rowNumber: prompt.slide_number,
+                    sentenceIndex: -1, // -1 indicates skipped row
+                    title: prompt.title,
+                    visualCue: prompt.original,
+                    sentenceText: null,
+                    enhancedPrompt: null,
+                    skipReason: prompt.skip_reason,
+                    selected: false,
+                    isEditing: false,
+                    imageUrl: null,
+                    imageStatus: 'skipped',
+                    imageError: null
+                });
+            } else if (prompt.sentences && prompt.sentences.length > 0) {
+                // Each sentence becomes its own row
+                prompt.sentences.forEach(sent => {
+                    const key = `${prompt.slide_number}_${sent.index}`;
+                    const savedRow = savedMap[key];
+                    rows.push({
+                        rowNumber: prompt.slide_number,
+                        sentenceIndex: sent.index,
+                        title: prompt.title,
+                        visualCue: prompt.original,
+                        sentenceText: sent.text,
+                        enhancedPrompt: savedRow?.enhancedPrompt || sent.enhanced || sent.text,
+                        skipReason: null,
+                        selected: savedRow?.selected ?? true,
+                        isEditing: false,
+                        imageUrl: savedRow?.imageUrl || null,
+                        imageStatus: savedRow?.imageUrl ? 'success' : 'pending',
+                        imageError: null
+                    });
+                });
+            } else {
+                // Fallback: no sentences, create single row from visual cue
+                const key = `${prompt.slide_number}_0`;
+                const savedRow = savedMap[key];
+                rows.push({
+                    rowNumber: prompt.slide_number,
+                    sentenceIndex: 0,
+                    title: prompt.title,
+                    visualCue: prompt.original,
+                    sentenceText: prompt.original,
+                    enhancedPrompt: savedRow?.enhancedPrompt || prompt.original,
+                    skipReason: null,
+                    selected: savedRow?.selected ?? true,
+                    isEditing: false,
+                    imageUrl: savedRow?.imageUrl || null,
+                    imageStatus: savedRow?.imageUrl ? 'success' : 'pending',
+                    imageError: null
+                });
+            }
+        });
+        return rows;
     });
 
     const [isGeneratingAll, setIsGeneratingAll] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [isCharPanelOpen, setIsCharPanelOpen] = useState(false);
-    const fileInputRefs = useRef({});
     const charRefInputRef = useRef(null);
 
     // Global character reference state
@@ -99,94 +127,75 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         localStorage.setItem(CHAR_REF_KEY, JSON.stringify(globalCharRef));
     }, [globalCharRef, CHAR_REF_KEY]);
 
-    // Save to localStorage on change
+    // Save sentence rows to localStorage on change
     useEffect(() => {
-        const toSave = slides.map(s => ({
-            slide_number: s.slide_number,
+        const toSave = sentenceRows.map(s => ({
+            rowNumber: s.rowNumber,
+            sentenceIndex: s.sentenceIndex,
             selected: s.selected,
-            editedPrompt: s.editedPrompt,
+            enhancedPrompt: s.enhancedPrompt,
             imageUrl: s.imageUrl,
         }));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    }, [slides, STORAGE_KEY]);
+    }, [sentenceRows, STORAGE_KEY]);
 
-    const selectedCount = slides.filter(s => s.selected && !s.skip_reason).length;
-    const generatedCount = slides.filter(s => s.imageStatus === 'success').length;
-    const totalGeneratable = slides.filter(s => !s.skip_reason).length;
+    // Counts
+    const selectedCount = sentenceRows.filter(s => s.selected && !s.skipReason).length;
+    const generatedCount = sentenceRows.filter(s => s.imageStatus === 'success').length;
+    const totalGeneratable = sentenceRows.filter(s => !s.skipReason).length;
+
+    // Helper to create unique key for a sentence
+    const getSentenceKey = (rowNumber, sentenceIndex) => `${rowNumber}_${sentenceIndex}`;
 
     // Toggle selection
-    const toggleSelection = (slideNumber) => {
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber ? { ...s, selected: !s.selected } : s
-        ));
-    };
-
-    // Editing functions
-    const startEditing = (slideNumber) => {
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber ? { ...s, isEditing: true } : s
-        ));
-    };
-
-    const saveEdit = (slideNumber, newPrompt) => {
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber ? { ...s, editedPrompt: newPrompt, isEditing: false } : s
-        ));
-    };
-
-    const cancelEdit = (slideNumber) => {
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber ? { ...s, isEditing: false } : s
-        ));
-    };
-
-    // Reference image handling
-    const handleReferenceImageSelect = (slideNumber, file) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setSlides(prev => prev.map(s =>
-                s.slide_number === slideNumber
-                    ? { ...s, referenceImage: file, referenceImagePreview: reader.result }
-                    : s
-            ));
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const removeReferenceImage = (slideNumber) => {
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber
-                ? { ...s, referenceImage: null, referenceImagePreview: null }
+    const toggleSelection = (rowNumber, sentenceIndex) => {
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, selected: !s.selected }
                 : s
         ));
     };
 
-    // Generate single image
-    const generateSingleImage = async (slideNumber) => {
-        const slide = slides.find(s => s.slide_number === slideNumber);
-        if (!slide) return;
+    // Editing functions
+    const startEditing = (rowNumber, sentenceIndex) => {
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, isEditing: true }
+                : s
+        ));
+    };
 
-        setSlides(prev => prev.map(s =>
-            s.slide_number === slideNumber ? { ...s, imageStatus: 'generating', imageError: null } : s
+    const saveEdit = (rowNumber, sentenceIndex, newPrompt) => {
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, enhancedPrompt: newPrompt, isEditing: false }
+                : s
+        ));
+    };
+
+    const cancelEdit = (rowNumber, sentenceIndex) => {
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, isEditing: false }
+                : s
+        ));
+    };
+
+    // Generate single image for a sentence
+    const generateSingleImage = async (rowNumber, sentenceIndex) => {
+        const row = sentenceRows.find(s => s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex);
+        if (!row) return;
+
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, imageStatus: 'generating', imageError: null }
+                : s
         ));
 
         try {
-            let referenceImagePath = null;
-            if (slide.referenceImage) {
-                const formData = new FormData();
-                formData.append('file', slide.referenceImage);
-                formData.append('project_id', projectId);
-                formData.append('slide_number', slideNumber);
-                const refRes = await fetch(`${API_URL}/upload_reference_image`, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (refRes.ok) {
-                    const refData = await refRes.json();
-                    referenceImagePath = refData.path;
-                }
-            }
+            const promptToUse = globalCharRef.enabled && globalCharRef.description
+                ? `${globalCharRef.description}\n\n${row.enhancedPrompt}`
+                : row.enhancedPrompt;
 
             const response = await fetch(`${API_URL}/generate_images`, {
                 method: 'POST',
@@ -194,37 +203,36 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 body: JSON.stringify({
                     project_id: projectId,
                     prompts: [{
-                        slide_number: slideNumber,
-                        prompt: globalCharRef.enabled && globalCharRef.description
-                            ? `${globalCharRef.description}\n\n${slide.editedPrompt}`
-                            : slide.editedPrompt,
-                        reference_image_path: globalCharRef.enabled && globalCharRef.imagePath
-                            ? globalCharRef.imagePath
-                            : referenceImagePath
+                        slide_number: rowNumber,
+                        sentence_index: sentenceIndex,
+                        prompt: promptToUse,
+                        reference_image_path: globalCharRef.enabled ? globalCharRef.imagePath : null
                     }],
                     aspect_ratio: '16:9'
                 })
             });
 
             const result = await response.json();
-            const generatedImage = result.images?.find(img => img.slide_number === slideNumber);
+            const generatedImage = result.images?.find(
+                img => img.slide_number === rowNumber && (img.sentence_index === sentenceIndex || img.sentence_index === undefined)
+            );
 
             if (generatedImage?.success) {
-                setSlides(prev => prev.map(s =>
-                    s.slide_number === slideNumber
+                setSentenceRows(prev => prev.map(s =>
+                    s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
                         ? { ...s, imageUrl: generatedImage.url, imageStatus: 'success', imageError: null }
                         : s
                 ));
             } else {
-                setSlides(prev => prev.map(s =>
-                    s.slide_number === slideNumber
+                setSentenceRows(prev => prev.map(s =>
+                    s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
                         ? { ...s, imageStatus: 'error', imageError: generatedImage?.error || 'Generation failed' }
                         : s
                 ));
             }
         } catch (error) {
-            setSlides(prev => prev.map(s =>
-                s.slide_number === slideNumber
+            setSentenceRows(prev => prev.map(s =>
+                s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
                     ? { ...s, imageStatus: 'error', imageError: error.message }
                     : s
             ));
@@ -233,38 +241,24 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
 
     // Generate all selected images
     const generateAllSelected = async () => {
-        const selectedSlides = slides.filter(s => s.selected && !s.skip_reason);
-        if (selectedSlides.length === 0) return;
+        const selectedRows = sentenceRows.filter(s => s.selected && !s.skipReason);
+        if (selectedRows.length === 0) return;
 
         setIsGeneratingAll(true);
-        setSlides(prev => prev.map(s =>
-            s.selected && !s.skip_reason
+        setSentenceRows(prev => prev.map(s =>
+            s.selected && !s.skipReason
                 ? { ...s, imageStatus: 'generating', imageError: null }
                 : s
         ));
 
         try {
-            const promptsWithRefs = await Promise.all(selectedSlides.map(async (slide) => {
-                let referenceImagePath = null;
-                if (slide.referenceImage) {
-                    const formData = new FormData();
-                    formData.append('file', slide.referenceImage);
-                    formData.append('project_id', projectId);
-                    formData.append('slide_number', slide.slide_number);
-                    const refRes = await fetch(`${API_URL}/upload_reference_image`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (refRes.ok) {
-                        const refData = await refRes.json();
-                        referenceImagePath = refData.path;
-                    }
-                }
-                return {
-                    slide_number: slide.slide_number,
-                    prompt: slide.editedPrompt,
-                    reference_image_path: referenceImagePath
-                };
+            const prompts = selectedRows.map(row => ({
+                slide_number: row.rowNumber,
+                sentence_index: row.sentenceIndex,
+                prompt: globalCharRef.enabled && globalCharRef.description
+                    ? `${globalCharRef.description}\n\n${row.enhancedPrompt}`
+                    : row.enhancedPrompt,
+                reference_image_path: globalCharRef.enabled ? globalCharRef.imagePath : null
             }));
 
             const response = await fetch(`${API_URL}/generate_images`, {
@@ -272,14 +266,17 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_id: projectId,
-                    prompts: promptsWithRefs,
+                    prompts: prompts,
                     aspect_ratio: '16:9'
                 })
             });
 
             const result = await response.json();
-            setSlides(prev => prev.map(s => {
-                const generated = result.images?.find(img => img.slide_number === s.slide_number);
+            setSentenceRows(prev => prev.map(s => {
+                const generated = result.images?.find(
+                    img => img.slide_number === s.rowNumber &&
+                        (img.sentence_index === s.sentenceIndex || img.sentence_index === undefined)
+                );
                 if (!generated) return s;
                 return {
                     ...s,
@@ -289,8 +286,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 };
             }));
         } catch (error) {
-            setSlides(prev => prev.map(s =>
-                s.selected && !s.skip_reason
+            setSentenceRows(prev => prev.map(s =>
+                s.selected && !s.skipReason
                     ? { ...s, imageStatus: 'error', imageError: error.message }
                     : s
             ));
@@ -303,6 +300,12 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
         return `${API_URL}${url}`;
+    };
+
+    // Check if this is the first sentence of a new row (for visual grouping)
+    const isFirstSentenceOfRow = (index) => {
+        if (index === 0) return true;
+        return sentenceRows[index].rowNumber !== sentenceRows[index - 1].rowNumber;
     };
 
     // Styles matching TranslationResults
@@ -381,13 +384,12 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '1rem' }}>Image Workflow</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        {generatedCount}/{totalGeneratable} generated
+                        {generatedCount}/{totalGeneratable} generated (sentence-wise)
                         {isSelectionMode && ` • ${selectedCount} selected`}
                     </div>
                 </div>
 
                 {!isSelectionMode ? (
-                    /* Normal Mode - just Select button */
                     <button
                         onClick={() => setIsSelectionMode(true)}
                         style={primaryButtonStyle}
@@ -395,16 +397,15 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         Select
                     </button>
                 ) : (
-                    /* Selection Mode - bulk actions */
                     <>
                         <button
-                            onClick={() => setSlides(prev => prev.map(s => ({ ...s, selected: !s.skip_reason })))}
+                            onClick={() => setSentenceRows(prev => prev.map(s => ({ ...s, selected: !s.skipReason })))}
                             style={buttonStyle}
                         >
                             Select All
                         </button>
                         <button
-                            onClick={() => setSlides(prev => prev.map(s => ({ ...s, selected: false })))}
+                            onClick={() => setSentenceRows(prev => prev.map(s => ({ ...s, selected: false })))}
                             style={buttonStyle}
                         >
                             Deselect All
@@ -485,7 +486,6 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     const file = e.target.files?.[0];
                                     if (!file) return;
 
-                                    // Upload to server
                                     const formData = new FormData();
                                     formData.append('file', file);
                                     formData.append('project_id', projectId);
@@ -542,13 +542,13 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                             </label>
                         </div>
 
-                        {/* Use generated image */}
+                        {/* Use generated image as reference */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Use generated image:</span>
                             <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                                {slides.filter(s => s.imageUrl && s.imageStatus === 'success').slice(0, 5).map(s => (
+                                {sentenceRows.filter(s => s.imageUrl && s.imageStatus === 'success').slice(0, 8).map(s => (
                                     <button
-                                        key={s.slide_number}
+                                        key={getSentenceKey(s.rowNumber, s.sentenceIndex)}
                                         onClick={() => setGlobalCharRef(prev => ({
                                             ...prev,
                                             imageUrl: getImageUrl(s.imageUrl),
@@ -557,9 +557,14 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                         }))}
                                         style={{ ...buttonStyle, padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                                     >
-                                        Row {s.slide_number}
+                                        {s.rowNumber}.{s.sentenceIndex + 1}
                                     </button>
                                 ))}
+                                {sentenceRows.filter(s => s.imageUrl && s.imageStatus === 'success').length === 0 && (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                        No images generated yet
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -582,12 +587,13 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {slides.map((slide, i) => (
+                        {sentenceRows.map((row, i) => (
                             <tr
-                                key={slide.slide_number}
+                                key={getSentenceKey(row.rowNumber, row.sentenceIndex)}
                                 style={{
                                     background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)',
-                                    opacity: slide.skip_reason ? 0.5 : 1,
+                                    opacity: row.skipReason ? 0.5 : 1,
+                                    borderTop: isFirstSentenceOfRow(i) ? '2px solid var(--border-color)' : 'none'
                                 }}
                             >
                                 {/* Checkbox - only in selection mode */}
@@ -595,54 +601,56 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'middle' }}>
                                         <input
                                             type="checkbox"
-                                            checked={slide.selected}
-                                            onChange={() => toggleSelection(slide.slide_number)}
-                                            disabled={!!slide.skip_reason}
+                                            checked={row.selected}
+                                            onChange={() => toggleSelection(row.rowNumber, row.sentenceIndex)}
+                                            disabled={!!row.skipReason}
                                             style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                         />
                                     </td>
                                 )}
 
-                                {/* Slide Number */}
+                                {/* Row.Sentence Number */}
                                 <td style={{ ...tdStyle, fontWeight: 600, textAlign: 'center', verticalAlign: 'middle' }}>
-                                    {slide.slide_number}
+                                    {row.sentenceIndex >= 0 ? `${row.rowNumber}.${row.sentenceIndex + 1}` : row.rowNumber}
                                 </td>
 
-                                {/* Visual Cue (Original) */}
+                                {/* Visual Cue (same for all sentences in a row) */}
                                 <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                    {slide.skip_reason ? (
-                                        <span style={{ fontStyle: 'italic' }}>{slide.skip_reason}</span>
+                                    {row.skipReason ? (
+                                        <span style={{ fontStyle: 'italic' }}>{row.skipReason}</span>
                                     ) : (
-                                        stripMarkdown(slide.original) || '—'
+                                        stripMarkdown(row.visualCue) || '—'
                                     )}
                                 </td>
 
-                                {/* Narration */}
+                                {/* Narration (the sentence text) */}
                                 <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                    {slide.skip_reason ? (
+                                    {row.skipReason ? (
                                         <span style={{ fontStyle: 'italic' }}>—</span>
                                     ) : (
-                                        formatSentences(stripMarkdown(slide.narration)) || '—'
+                                        stripMarkdown(row.sentenceText) || '—'
                                     )}
                                 </td>
 
                                 {/* Image Prompt (Editable) */}
                                 <td style={tdStyle}>
-                                    {slide.skip_reason ? (
+                                    {row.skipReason ? (
                                         <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>—</span>
-                                    ) : slide.isEditing ? (
+                                    ) : row.isEditing ? (
                                         <textarea
                                             autoFocus
-                                            value={slide.editedPrompt}
-                                            onChange={(e) => setSlides(prev => prev.map(s =>
-                                                s.slide_number === slide.slide_number ? { ...s, editedPrompt: e.target.value } : s
+                                            value={row.enhancedPrompt}
+                                            onChange={(e) => setSentenceRows(prev => prev.map(s =>
+                                                s.rowNumber === row.rowNumber && s.sentenceIndex === row.sentenceIndex
+                                                    ? { ...s, enhancedPrompt: e.target.value }
+                                                    : s
                                             ))}
-                                            onBlur={() => saveEdit(slide.slide_number, slide.editedPrompt)}
+                                            onBlur={() => saveEdit(row.rowNumber, row.sentenceIndex, row.enhancedPrompt)}
                                             onKeyDown={(e) => {
-                                                if (e.key === 'Escape') cancelEdit(slide.slide_number);
+                                                if (e.key === 'Escape') cancelEdit(row.rowNumber, row.sentenceIndex);
                                                 if (e.key === 'Enter' && !e.shiftKey) {
                                                     e.preventDefault();
-                                                    saveEdit(slide.slide_number, slide.editedPrompt);
+                                                    saveEdit(row.rowNumber, row.sentenceIndex, row.enhancedPrompt);
                                                 }
                                             }}
                                             style={{
@@ -653,111 +661,83 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                                 background: 'transparent',
                                                 color: 'var(--text-primary)',
                                                 resize: 'vertical',
-                                                minHeight: '100px',
-                                                fontSize: '0.9rem',
-                                                lineHeight: '1.6',
+                                                minHeight: '80px',
+                                                fontSize: '0.85rem',
+                                                lineHeight: '1.5',
                                                 fontFamily: 'inherit',
                                                 outline: 'none'
                                             }}
                                         />
                                     ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <div
-                                                onClick={() => startEditing(slide.slide_number)}
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    borderRadius: '6px',
-                                                    border: '2px solid transparent',
-                                                    cursor: 'pointer',
-                                                    color: 'var(--accent-primary)',
-                                                    transition: 'border-color 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
-                                            >
-                                                {formatSentences(slide.editedPrompt)}
-                                            </div>
-                                            {/* Reference Image */}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    ref={el => fileInputRefs.current[slide.slide_number] = el}
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => handleReferenceImageSelect(slide.slide_number, e.target.files[0])}
-                                                />
-                                                {slide.referenceImagePreview ? (
-                                                    <>
-                                                        <img
-                                                            src={slide.referenceImagePreview}
-                                                            alt="Reference"
-                                                            style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '4px' }}
-                                                        />
-                                                        <button
-                                                            onClick={() => removeReferenceImage(slide.slide_number)}
-                                                            style={{ ...buttonStyle, padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                                        >
-                                                            <XCircle size={12} />
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => fileInputRefs.current[slide.slide_number]?.click()}
-                                                        style={{ ...buttonStyle, padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                                    >
-                                                        <Paperclip size={12} /> Add Reference Image
-                                                    </button>
-                                                )}
-                                            </div>
+                                        <div
+                                            onClick={() => startEditing(row.rowNumber, row.sentenceIndex)}
+                                            style={{
+                                                padding: '0.5rem',
+                                                borderRadius: '6px',
+                                                border: '2px solid transparent',
+                                                cursor: 'pointer',
+                                                color: 'var(--accent-primary)',
+                                                fontSize: '0.85rem',
+                                                lineHeight: 1.5,
+                                                transition: 'border-color 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+                                        >
+                                            {row.enhancedPrompt}
                                         </div>
                                     )}
                                 </td>
 
                                 {/* Generated Image */}
                                 <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'middle' }}>
-                                    {slide.skip_reason ? (
+                                    {row.skipReason ? (
                                         <span style={{ color: 'var(--text-secondary)' }}>—</span>
-                                    ) : slide.imageStatus === 'pending' ? (
-                                        <button onClick={() => generateSingleImage(slide.slide_number)} style={primaryButtonStyle}>
+                                    ) : row.imageStatus === 'pending' ? (
+                                        <button
+                                            onClick={() => generateSingleImage(row.rowNumber, row.sentenceIndex)}
+                                            style={primaryButtonStyle}
+                                        >
                                             <Image size={14} /> Generate
                                         </button>
-                                    ) : slide.imageStatus === 'generating' ? (
+                                    ) : row.imageStatus === 'generating' ? (
                                         <div style={{ color: 'var(--text-secondary)' }}>
                                             <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
                                             <p style={{ marginTop: '0.25rem', fontSize: '0.8rem' }}>Generating...</p>
                                         </div>
-                                    ) : slide.imageStatus === 'success' && slide.imageUrl ? (
+                                    ) : row.imageStatus === 'success' && row.imageUrl ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                                             <img
-                                                src={getImageUrl(slide.imageUrl)}
-                                                alt={`Row ${slide.slide_number}`}
-                                                style={{ maxWidth: '160px', maxHeight: '120px', borderRadius: '6px' }}
+                                                src={getImageUrl(row.imageUrl)}
+                                                alt={`Row ${row.rowNumber}.${row.sentenceIndex + 1}`}
+                                                style={{ maxWidth: '140px', maxHeight: '100px', borderRadius: '6px' }}
                                             />
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <Tooltip text="Regenerate" position="bottom">
                                                     <button
-                                                        onClick={() => generateSingleImage(slide.slide_number)}
-                                                        style={{ ...buttonStyle, padding: '0.4rem 0.5rem', fontSize: '0.8rem' }}
+                                                        onClick={() => generateSingleImage(row.rowNumber, row.sentenceIndex)}
+                                                        style={{ ...buttonStyle, padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
                                                     >
-                                                        <RefreshCw size={16} />
+                                                        <RefreshCw size={14} />
                                                     </button>
                                                 </Tooltip>
                                                 <Tooltip text="Download" position="bottom">
                                                     <a
-                                                        href={`${API_URL}/download/image/${projectId}/slide_${slide.slide_number}.png`}
-                                                        style={{ ...buttonStyle, padding: '0.4rem 0.5rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                                                        href={getImageUrl(row.imageUrl)}
+                                                        download={`row_${row.rowNumber}_sentence_${row.sentenceIndex + 1}.png`}
+                                                        style={{ ...buttonStyle, padding: '0.3rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
                                                     >
-                                                        <Download size={16} />
+                                                        <Download size={14} />
                                                     </a>
                                                 </Tooltip>
                                             </div>
                                         </div>
-                                    ) : slide.imageStatus === 'error' ? (
+                                    ) : row.imageStatus === 'error' ? (
                                         <div style={{ color: '#ef4444' }}>
                                             <AlertCircle size={20} />
-                                            <p style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>{slide.imageError}</p>
+                                            <p style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>{row.imageError}</p>
                                             <button
-                                                onClick={() => generateSingleImage(slide.slide_number)}
+                                                onClick={() => generateSingleImage(row.rowNumber, row.sentenceIndex)}
                                                 style={{ ...buttonStyle, padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginTop: '0.25rem' }}
                                             >
                                                 <RefreshCw size={12} /> Retry

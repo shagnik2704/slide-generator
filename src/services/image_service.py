@@ -105,13 +105,13 @@ def generate_images(
     Generate images for multiple prompts.
     
     Args:
-        prompts: List of dicts with 'slide_number' and 'prompt' keys
+        prompts: List of dicts with 'slide_number', 'prompt', and optionally 'sentence_index' keys
         project_id: Project ID for file naming
         aspect_ratio: Image aspect ratio
     
     Returns:
         Dictionary with:
-        - images: List of {slide_number, url, success}
+        - images: List of {slide_number, sentence_index, url, success}
         - zip_url: URL to download all images as ZIP
         - generated: Count of successfully generated images
         - failed: Count of failed generations
@@ -126,12 +126,14 @@ def generate_images(
     
     for item in prompts:
         slide_number = item.get('slide_number')
+        sentence_index = item.get('sentence_index', None)  # None for backwards compatibility
         prompt = item.get('prompt', '')
         reference_image = item.get('reference_image_path')  # Optional reference image
         
         if not prompt:
             results.append({
                 "slide_number": slide_number,
+                "sentence_index": sentence_index,
                 "url": None,
                 "success": False,
                 "error": "No prompt provided"
@@ -139,7 +141,13 @@ def generate_images(
             failed_count += 1
             continue
         
-        output_path = output_dir / f"slide_{slide_number}.png"
+        # Generate filename based on whether sentence_index is provided
+        if sentence_index is not None:
+            filename = f"row_{slide_number}_sent_{sentence_index}.png"
+        else:
+            filename = f"slide_{slide_number}.png"
+        
+        output_path = output_dir / filename
         
         # Convert reference_image string to Path if provided
         ref_path = Path(reference_image) if reference_image else None
@@ -149,9 +157,10 @@ def generate_images(
             
             if success:
                 # Build URL relative to output directory
-                url = f"/output/images/{project_id}/slide_{slide_number}.png"
+                url = f"/output/images/{project_id}/{filename}"
                 results.append({
                     "slide_number": slide_number,
+                    "sentence_index": sentence_index,
                     "url": url,
                     "success": True
                 })
@@ -159,6 +168,7 @@ def generate_images(
             else:
                 results.append({
                     "slide_number": slide_number,
+                    "sentence_index": sentence_index,
                     "url": None,
                     "success": False,
                     "error": "No image returned from API"
@@ -168,6 +178,7 @@ def generate_images(
         except Exception as e:
             results.append({
                 "slide_number": slide_number,
+                "sentence_index": sentence_index,
                 "url": None,
                 "success": False,
                 "error": str(e)
