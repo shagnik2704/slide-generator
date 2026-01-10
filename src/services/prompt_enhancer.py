@@ -46,7 +46,7 @@ class EnhancedPromptsResponse(BaseModel):
 def is_boilerplate(prompt: str) -> bool:
     """Check if a prompt is a boilerplate slide that should be skipped."""
     if not prompt:
-        return True
+        return False  # Empty prompts are NOT boilerplate - let user add one
     prompt_lower = prompt.lower().strip()
     return any(bp in prompt_lower for bp in BOILERPLATE_PROMPTS)
 
@@ -85,20 +85,12 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
                 "enhanced": None,
                 "skip_reason": "Boilerplate slide (no image needed)"
             })
-        elif not original_prompt:
-            skip_results.append({
-                "slide_number": slide_number,
-                "title": title,
-                "original": "",
-                "narration": slide.get('narration', ''),
-                "enhanced": None,
-                "skip_reason": "No visual cue provided"
-            })
         else:
+            # Include slides with empty prompts - user can add one
             slides_to_enhance.append({
                 "slide_number": slide_number,
                 "title": title,
-                "original": original_prompt,
+                "original": original_prompt or "(No visual cue - add one below)",
                 "narration": slide.get('narration', '')
             })
     
