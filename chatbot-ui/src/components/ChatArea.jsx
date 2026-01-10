@@ -10,6 +10,7 @@ import OutlineCard from './OutlineCard';
 import VoicePreview from './VoicePreview';
 import ImagePromptReview from './ImagePromptReview';
 import ImageGallery from './ImageGallery';
+import ImageWorkflow from './ImageWorkflow';
 import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 import BatchUploadModal from './BatchUploadModal';
@@ -495,23 +496,9 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 )}
 
                                 {msg.type === 'image_prompt_review' && msg.enhancedPrompts && (
-                                    <ImagePromptReview
+                                    <ImageWorkflow
                                         enhancedPrompts={msg.enhancedPrompts}
                                         projectId={msg.projectId}
-                                        onGenerateComplete={(result) => {
-                                            // Add gallery message when images are generated
-                                            const galleryMessage = {
-                                                id: Date.now(),
-                                                role: 'assistant',
-                                                content: `🖼️ Images Generated!\n\n` +
-                                                    `Generated: ${result.generated} images\n` +
-                                                    `Failed: ${result.failed}`,
-                                                type: 'image_gallery',
-                                                imageData: result,
-                                                projectId: msg.projectId
-                                            };
-                                            setUploadMessages(prev => [...prev, galleryMessage]);
-                                        }}
                                     />
                                 )}
 
