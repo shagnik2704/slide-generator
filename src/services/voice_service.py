@@ -23,10 +23,15 @@ load_dotenv()
 # Single voice and prompt for consistent narration
 DEFAULT_VOICE = "Leda"
 DEFAULT_PROMPT = """Speak as an instructor for a Spoken Tutorial video. Use an Indian English accent.
-Follow these guidelines:
-- Speak clearly, at a pace that allows learners to follow along on their computers.
-- Pause briefly after each sentence to give learners time to process.
-- Use a tone as if teaching a student one-on-one."""
+
+SPEAKING STYLE:
+- Be ENERGETIC and Speak SLOWLY and clearly, at about 135 words per minute.
+- Allow learners time to follow along on their computers.
+- Pause for 1 full second after each sentence.
+- When you see [PAUSE], stop speaking for 2 seconds before continuing.
+- Use a calm, patient, teaching tone as if guiding a beginner one-on-one.
+"""
+
 
 
 
@@ -115,7 +120,7 @@ def clean_text_for_tts(text: str) -> str:
 
 # === Batched TTS Configuration ===
 BATCH_SIZE = 5  # Number of slides per batch
-PAUSE_MARKER = "... ... ..."  # Creates ~1.5s pause in TTS
+PAUSE_MARKER = "\n[PAUSE]\n"  # Explicit pause marker
 
 
 def batch_narrations(narrations: List[Dict], batch_size: int = BATCH_SIZE) -> List[Dict]:
@@ -761,8 +766,18 @@ async def generate_voice_combined(
     
     full_prompt = f"{DEFAULT_PROMPT}\n\n{combined_text}"
     
+    # DEBUG: Print exactly what we're sending to TTS
+    print("\n" + "="*80)
+    print("🔍 DEBUG: Full prompt being sent to TTS:")
+    print("="*80)
+    print(full_prompt[:2000])  # First 2000 chars
+    if len(full_prompt) > 2000:
+        print(f"\n... [{len(full_prompt) - 2000} more characters]")
+    print("="*80 + "\n")
+    
     try:
         print(f"🎤 Generating combined audio for {len(narrations)} slides...")
+
         
         response = client.models.generate_content(
             model='gemini-2.5-flash-preview-tts',

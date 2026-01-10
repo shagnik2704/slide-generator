@@ -142,12 +142,15 @@ export function useSidebarHandlers(
 
     /**
      * Generate voice audio for a script file.
+     * @param {File} file - Script file to generate voice for
+     * @param {string} voiceMode - 'combined' for single file, 'rowwise' for per-row files
      */
-    const handleSidebarVoiceUpload = useCallback(async (file) => {
+    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined') => {
+        const modeLabel = voiceMode === 'combined' ? '(Full Audio)' : '(Row-wise)';
         const uploadMessage = {
             id: Date.now(),
             role: 'assistant',
-            content: `🎤 Generating voice for: ${file.name}...`
+            content: `🎤 Generating voice for: ${file.name} ${modeLabel}...`
         };
         setUploadMessages(prev => [...prev, uploadMessage]);
         setIsTyping(true);
@@ -159,8 +162,12 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
-            // Step 2: Generate voice (combined - single file for entire script)
-            const voiceData = await apiJson('/generate_voice_combined', {
+            // Step 2: Generate voice based on mode
+            const endpoint = voiceMode === 'combined'
+                ? '/generate_voice_combined'
+                : '/generate_voice';
+
+            const voiceData = await apiJson(endpoint, {
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
@@ -172,10 +179,14 @@ export function useSidebarHandlers(
             const newBotMessage = {
                 id: messageId,
                 role: 'assistant',
-                content: `🎤 Voice Generation Complete!\n\n` +
+                content: voiceMode === 'combined'
+                    ? `🎤 Voice Generation Complete! ${modeLabel}\n\n` +
                     `File: ${file.name}\n` +
                     `Slides: ${voiceData.total_slides}\n` +
-                    `Duration: ${voiceData.duration_estimate}`,
+                    `Duration: ${voiceData.duration_estimate}`
+                    : `🎤 Voice Generation Complete! ${modeLabel}\n\n` +
+                    `File: ${file.name}\n` +
+                    `Generated: ${voiceData.generated_slides}/${voiceData.total_slides} rows`,
                 jsonScript: parseData.json_script,
                 projectId: parseData.project_id,
                 type: 'voice_preview',
@@ -195,6 +206,7 @@ export function useSidebarHandlers(
             setIsTyping(false);
         }
     }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
+
 
     /**
      * Parse script and enhance image prompts for review.

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen } from 'lucide-react';
+import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers } from 'lucide-react';
 
 // Helper to format file size
 const formatFileSize = (bytes) => {
@@ -19,6 +19,19 @@ const getFileExtension = (filename) => {
 const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) => {
     const extension = getFileExtension(file.name);
     const isScript = uploadType === 'script';
+    const isVoice = uploadType === 'voice';
+
+    // Voice mode state - 'combined' or 'rowwise'
+    const [voiceMode, setVoiceMode] = useState('combined');
+
+    // Wrap onConfirm to include voiceMode for voice uploads
+    const handleConfirm = () => {
+        if (isVoice) {
+            onConfirm({ voiceMode });
+        } else {
+            onConfirm();
+        }
+    };
 
     return (
         <div style={{
@@ -86,6 +99,75 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                 </div>
             </div>
 
+            {/* Voice Mode Selector - Only for voice uploads */}
+            {isVoice && (
+                <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    marginBottom: '1rem',
+                    padding: '0.5rem',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '0.75rem',
+                }}>
+                    <button
+                        onClick={() => setVoiceMode('combined')}
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.6rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: 'none',
+                            background: voiceMode === 'combined' ? 'var(--accent-primary)' : 'transparent',
+                            color: voiceMode === 'combined' ? 'white' : 'var(--text-secondary)',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <FileAudio size={16} />
+                        Combined
+                    </button>
+                    <button
+                        onClick={() => setVoiceMode('rowwise')}
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.6rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: 'none',
+                            background: voiceMode === 'rowwise' ? 'var(--accent-primary)' : 'transparent',
+                            color: voiceMode === 'rowwise' ? 'white' : 'var(--text-secondary)',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <Layers size={16} />
+                        Row-wise
+                    </button>
+                </div>
+            )}
+            {isVoice && (
+                <div style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.75rem',
+                    textAlign: 'center',
+                }}>
+                    {voiceMode === 'combined'
+                        ? '📢 One audio file for the entire script'
+                        : '🎵 Separate audio file for each row'}
+                </div>
+            )}
+
             {/* Action buttons */}
             <div style={{
                 display: 'flex',
@@ -126,7 +208,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     Cancel
                 </button>
                 <button
-                    onClick={onConfirm}
+                    onClick={handleConfirm}
                     disabled={disabled}
                     style={{
                         flex: 1,
