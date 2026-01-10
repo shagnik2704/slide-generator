@@ -124,10 +124,7 @@ async def translate_script(
             visual_cue_instruction = "- Also translate the visual_cue field if present"
         
         prompt = f"""You are an expert English-to-{lang_name} translator for Spoken Tutorial scripts.
-
-**Translation Rules:**
-1. Use natural, conversational {lang_name} ({lang_native} script) while preserving the context
-2. IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script.(e.g., Python → पायथन, Terminal → టెర్మినల్)
+        IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script.(e.g., Python → पायथन, Terminal → టెర్మినల్)
 {visual_cue_instruction}
 
 **Content to translate:**

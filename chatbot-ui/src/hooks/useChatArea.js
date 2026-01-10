@@ -152,7 +152,7 @@ export function useChatArea(mode = 'upload') {
     // STAGING HANDLERS
     // =========================
 
-    const handleConfirmStagedFile = useCallback(() => {
+    const handleConfirmStagedFile = useCallback((options = {}) => {
         if (!stagedFile) return;
 
         const { file, files, type } = stagedFile;
@@ -171,7 +171,8 @@ export function useChatArea(mode = 'upload') {
                 sidebarHandlers.handleSidebarQualityUpload(file);
                 break;
             case 'voice':
-                sidebarHandlers.handleSidebarVoiceUpload(file);
+                // Pass voiceMode from options
+                sidebarHandlers.handleSidebarVoiceUpload(file, options.voiceMode || 'combined');
                 break;
             case 'images':
                 sidebarHandlers.handleSidebarImageUpload(file);
@@ -190,6 +191,7 @@ export function useChatArea(mode = 'upload') {
 
         setStagedFile(null);
     }, [stagedFile, uploadHandlers, sidebarHandlers]);
+
 
     const handleCancelStagedFile = useCallback(() => {
         setStagedFile(null);
