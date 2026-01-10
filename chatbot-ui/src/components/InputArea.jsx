@@ -26,7 +26,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
 
     // Wrap onConfirm to include voiceMode for voice uploads
     const handleConfirm = () => {
-        if (isVoice) {
+        if (isVoice) {      
             onConfirm({ voiceMode });
         } else {
             onConfirm();
@@ -293,10 +293,10 @@ const InputArea = ({
         }
     };
 
-    // Confirm upload - use shared handler
-    const handleConfirmUpload = () => {
+    // Confirm upload - use shared handler (pass through options from FilePreviewCard)
+    const handleConfirmUpload = (options) => {
         if (onConfirmStagedFile) {
-            onConfirmStagedFile();
+            onConfirmStagedFile(options);
         }
     };
 
