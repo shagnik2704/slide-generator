@@ -38,6 +38,18 @@ class BatchTranslateResponse(BaseModel):
     results: List[TranslationResult]
     total_requested: int
     total_success: int
+    project_id: Optional[int] = None
+
+class UpdateCellRequest(BaseModel):
+    """Request to update a single translation cell."""
+    slide_id: int
+    language_code: str
+    text: Optional[str] = None
+    visual_cue: Optional[str] = None
+
+class GenerateAudioRequest(BaseModel):
+    """Request to generate audio for a specific translation cell."""
+    translation_id: int
 
 
 # ============================================
@@ -98,11 +110,90 @@ async def translate_batch(data: BatchTranslateRequest) -> BatchTranslateResponse
         translate_visual_cues=data.translate_visual_cues
     )
     
+    # Persist to DB
+    from src.services.database import save_project_results
+    project_id = None
+    try:
+        project_id = save_project_results(data.json_script, results)
+        print(f"🏠 Project and translations saved to DB with ID: {project_id}")
+    except Exception as e:
+        print(f"⚠️ Warning: Failed to save results to DB: {e}")
+    
     return BatchTranslateResponse(
         results=results,
         total_requested=len(data.languages),
-        total_success=sum(1 for r in results if r.success)
+        total_success=sum(1 for r in results if r.success),
+        project_id=project_id
     )
+
+@router.post("/update_cell")
+async def update_cell(data: UpdateCellRequest):
+    """Update a specific cell in the translation grid."""
+    from src.services.database import update_translation_cell
+    success = update_translation_cell(
+        slide_id=data.slide_id,
+        language_code=data.language_code,
+        text=data.text,
+        visual_cue=data.visual_cue
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Cell not found")
+    return {"status": "success"}
+
+@router.get("/project_data/{project_id}")
+async def get_project_data(project_id: int):
+    """Retrieve the flattened grid data for a project."""
+    from src.services.database import get_project_grid_data
+    data = get_project_grid_data(project_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return data
+
+@router.post("/generate_cell_audio")
+async def generate_cell_audio(data: GenerateAudioRequest):
+    """
+    Generate audio for a specific translation cell.
+    
+    1. Looks up the text from the database
+    2. Generates audio using TTS
+    3. Saves audio file and updates database with URL
+    """
+    from pathlib import Path
+    from src.services.database import get_translation_by_id, update_translation_audio
+    from src.services.voice_service import generate_voice_for_slide
+    
+    # 1. Get the translation text
+    translation = get_translation_by_id(data.translation_id)
+    if not translation:
+        raise HTTPException(status_code=404, detail="Translation not found")
+    
+    text = translation["text"]
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="No text to generate audio for")
+    
+    # 2. Generate audio
+    output_dir = Path(__file__).parent.parent.parent.parent / "output" / "cell_audio"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Use translation_id as the identifier for the audio file
+    audio_path = await generate_voice_for_slide(
+        text=text,
+        slide_num=data.translation_id,  # Using translation_id for unique naming
+        output_dir=output_dir
+    )
+    
+    if not audio_path:
+        raise HTTPException(status_code=500, detail="Failed to generate audio")
+    
+    # 3. Update database with audio URL
+    audio_url = f"/output/cell_audio/{Path(audio_path).name}"
+    update_translation_audio(data.translation_id, audio_url)
+    
+    return {
+        "status": "success",
+        "audio_url": audio_url,
+        "translation_id": data.translation_id
+    }
 
 
 class ExportDocxRequest(BaseModel):

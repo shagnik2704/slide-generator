@@ -12,6 +12,11 @@ project_root = Path(__file__).parent.parent.parent
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize the LangGraph agent at startup."""
+    # Initialize DB
+    from src.services.database import init_db
+    init_db()
+    print("✅ Database initialized")
+    
     from src.core.agent import build_graph
     app.state.graph = build_graph()
     print("✅ LangGraph agent initialized")
