@@ -32,6 +32,13 @@ SPEAKING STYLE:
 - Use a calm, patient, teaching tone as if guiding a beginner one-on-one.
 """
 
+DEFAULT_PROMPT_ROWWISE = """Speak as an instructor for a Spoken Tutorial video. Use an Indian English accent.
+
+SPEAKING STYLE:
+- Speak Clearly.
+- Use a calm,instructional tone as if guiding a beginner one-on-one.
+- Pause after every sentence so that learner gets time to reflect.
+"""
 
 
 
@@ -333,7 +340,7 @@ async def generate_voice_for_slide(
     
     client = genai.Client(api_key=api_key)
     
-    full_prompt = f"{DEFAULT_PROMPT} {text}"
+    full_prompt = f"{DEFAULT_PROMPT_ROWWISE} {text}"
     
     try:
         print(f"🎤 Generating audio for slide {slide_num}...")
