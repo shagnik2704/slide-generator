@@ -36,6 +36,7 @@ class TokenData(BaseModel):
     email: str
     name: str
     sub: str
+    picture: str = ""  # Google profile picture URL
 
 
 def validate_email_domain(email: str) -> bool:
@@ -47,13 +48,14 @@ def validate_email_domain(email: str) -> bool:
     return email_lower.endswith(domain_lower)
 
 
-def create_access_token(email: str, name: str) -> str:
+def create_access_token(email: str, name: str, picture: str = "") -> str:
     """Create a JWT access token."""
     expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
     payload = {
         "sub": email,
         "email": email,
         "name": name,
+        "picture": picture,
         "exp": expire,
         "iat": datetime.utcnow(),
     }
@@ -67,11 +69,12 @@ def verify_token(token: str) -> Optional[TokenData]:
         email: str = payload.get("email")
         name: str = payload.get("name", "")
         sub: str = payload.get("sub")
+        picture: str = payload.get("picture", "")
         
         if email is None or sub is None:
             return None
             
-        return TokenData(email=email, name=name, sub=sub)
+        return TokenData(email=email, name=name, sub=sub, picture=picture)
     except JWTError:
         return None
 
