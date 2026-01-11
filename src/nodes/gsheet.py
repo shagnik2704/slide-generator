@@ -34,7 +34,7 @@ def export_to_sheets(state: VCAgentState,
 
     worksheet = new_sheet.sheet1
 
-    worksheet.batch_clear(["A3:Z1000"])
+    worksheet.batch_clear(["A4:Z1000"])
 
 
     # df = pd.read_csv(f"results/temp_{foss_name}_{language}.csv")
@@ -44,7 +44,7 @@ def export_to_sheets(state: VCAgentState,
 
     # 6. Update the Sheet
     # value_input_option='USER_ENTERED' ensures numbers/dates aren't stored as strings
-    worksheet.update(values=data_to_upload, range_name="A2", value_input_option="USER_ENTERED")
+    worksheet.update(values=data_to_upload, range_name="A3", value_input_option="USER_ENTERED")
 
     for email in user_emails:
         drive_service.permissions().create(

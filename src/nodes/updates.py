@@ -55,6 +55,16 @@ SYSTEM_PROMPT = SystemMessage(
 #                     Follow the format strictly.
 #                     Return only the resultant JSON and nothing else.
 #                     ''')
+def chunk_text(text, max_len=250):
+    chunks, current = [], ""
+    for item in text.split(","):
+        if len(current) + len(item) < max_len:
+            current += item + ","
+        else:
+            chunks.append(current.strip(","))
+            current = item + ","
+    chunks.append(current.strip(","))
+    return chunks
 
 def tech_intelligence_agent(state: VCAgentState):
 #     # This agent would ideally use a search tool. 
@@ -62,12 +72,16 @@ def tech_intelligence_agent(state: VCAgentState):
 
     for i,tutorial in enumerate(state['structured_legacy']):
         print(f"Updating tutorials and its contents to latest version: {i+1}/{len(state['structured_legacy'])}")
-        query = f"""
-        Find latest stable version of {tutorial['title']} and version updates corresponding to the subtopics: {tutorial['subtopics']}.
-        """
-        search_result = search_tool(query)
+        chunks = chunk_text(tutorial['subtopics'])
+
+        search_results = []
+        for chunk in chunks:
+            query = f"""
+            Find latest stable version of {tutorial['title']} and version updates corresponding to the subtopics: {chunk}.
+            """
+            search_results.append(search_tool(query))
         task = f'''
-        Here are the search results from the search tool:{search_result}.
+        Here are the search results from the search tool:{search_results}.
         Update the tutorial title and the subtopics taking resferrnce to the search results.
         Maintain logs and return JSON in required format.
         '''
