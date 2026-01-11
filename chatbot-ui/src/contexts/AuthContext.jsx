@@ -26,13 +26,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
-    
+
     if (tokenFromUrl) {
       // Store token and verify
       localStorage.setItem(TOKEN_KEY, tokenFromUrl);
       setToken(tokenFromUrl);
       verifyToken(tokenFromUrl);
-      
+
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         const data = await response.json();
         setToken(tokenToVerify);
-        setUser({ email: data.email, name: data.name });
+        setUser({ email: data.email, name: data.name, picture: data.picture });
         setIsAuthenticated(true);
       } else {
         // Token invalid, clear it

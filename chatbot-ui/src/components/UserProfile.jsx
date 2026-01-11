@@ -66,13 +66,13 @@ export default function UserProfile({ compact = false }) {
           }
         }}
       >
-        {/* Avatar */}
+        {/* Avatar - Shows Google picture if available, otherwise initials */}
         <div
           style={{
             width: compact ? '36px' : '32px',
             height: compact ? '36px' : '32px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
+            background: user.picture ? 'transparent' : 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -80,9 +80,19 @@ export default function UserProfile({ compact = false }) {
             fontSize: compact ? '0.875rem' : '0.75rem',
             fontWeight: '600',
             flexShrink: 0,
+            overflow: 'hidden',
           }}
         >
-          {getInitials(user.name)}
+          {user.picture ? (
+            <img
+              src={user.picture}
+              alt={user.name || 'User'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            getInitials(user.name)
+          )}
         </div>
         {!compact && (
           <>
@@ -172,16 +182,26 @@ export default function UserProfile({ compact = false }) {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: user.picture ? 'transparent' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#fff',
                   fontSize: '0.875rem',
                   fontWeight: '600',
+                  overflow: 'hidden',
                 }}
               >
-                {getInitials(user.name)}
+                {user.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name || 'User'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  getInitials(user.name)
+                )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div

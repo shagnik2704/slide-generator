@@ -96,6 +96,7 @@ async def google_callback(code: str):
             
             email = user_info.get("email", "")
             name = user_info.get("name", "")
+            picture = user_info.get("picture", "")  # Google profile picture URL
             
             if not email:
                 raise HTTPException(
@@ -110,8 +111,8 @@ async def google_callback(code: str):
                     detail=f"Access denied: Email must be from {os.getenv('ALLOWED_EMAIL_DOMAIN', '@edupyramids.org')} domain",
                 )
             
-            # Create JWT token
-            jwt_token = create_access_token(email=email, name=name)
+            # Create JWT token with picture
+            jwt_token = create_access_token(email=email, name=name, picture=picture)
             
             # Redirect to frontend with token
             frontend_url = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
@@ -153,6 +154,7 @@ async def verify_token_endpoint(request: VerifyTokenRequest):
         "valid": True,
         "email": token_data.email,
         "name": token_data.name,
+        "picture": token_data.picture,
     })
 
 

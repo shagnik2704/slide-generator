@@ -302,20 +302,20 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                     <div style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
-                        borderRadius: '1rem',
-                        padding: '0.25rem',
+                        borderRadius: '0.75rem',
+                        padding: '0.2rem',
                         boxShadow: 'var(--shadow-sm)',
                         border: '1px solid var(--border-color)',
-                        gap: '0.25rem'
+                        gap: '0.2rem'
                     }}>
                         <Link
                             to="/upload"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
                                 background: location.pathname === '/upload'
                                     ? 'var(--accent-primary)'
@@ -323,12 +323,13 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 color: location.pathname === '/upload' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
+                                fontSize: '0.85rem',
                                 boxShadow: location.pathname === '/upload' ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            <UploadCloud size={18} />
+                            <UploadCloud size={16} />
                             Upload Mode
                         </Link>
                         <Link
@@ -336,9 +337,9 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
                                 background: location.pathname === '/outline-chat'
                                     ? 'var(--accent-primary)'
@@ -346,12 +347,13 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 color: location.pathname === '/outline-chat' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
+                                fontSize: '0.85rem',
                                 boxShadow: location.pathname === '/outline-chat' ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            <MessageSquare size={18} />
+                            <MessageSquare size={16} />
                             Outline Chat
                         </Link>
                     </div>
@@ -389,7 +391,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                     )}
 
                     <ThemeToggle />
-                    
+
                     {/* User Profile - Compact version in header */}
                     {showSidebarToggle && !isSidebarOpen && (
                         <div style={{ marginLeft: '0.5rem' }}>
