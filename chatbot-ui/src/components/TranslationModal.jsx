@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Languages, Check, Loader2, FileText, Download } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { apiJson } from '../services/api';
 
 /**
  * TranslationModal - Modal for selecting languages and translating scripts
@@ -27,11 +26,8 @@ export default function TranslationModal({
 
     const fetchLanguages = async () => {
         try {
-            const response = await fetch(`${API_URL}/translation/languages`);
-            if (response.ok) {
-                const data = await response.json();
-                setLanguages(data);
-            }
+            const data = await apiJson('/translation/languages');
+            setLanguages(data);
         } catch (err) {
             console.error('Failed to fetch languages:', err);
             setError('Failed to load languages');

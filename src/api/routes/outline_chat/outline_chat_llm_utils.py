@@ -1,13 +1,16 @@
 """LLM utility functions for outline chat."""
 import os
 import json
+from pathlib import Path
 from typing import List, Dict, Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
 import requests
 
-load_dotenv()
+# Load .env from project root (5 levels up from this file: outline_chat -> routes -> api -> src -> root)
+project_root = Path(__file__).parent.parent.parent.parent.parent
+load_dotenv(dotenv_path=project_root / ".env")
 
 
 def generate_llm_text(
@@ -15,7 +18,7 @@ def generate_llm_text(
     *,
     temperature: float = 0.2,
     max_tokens: int = 2048,
-    system_prompt: str = "You are a helpful assistant used inside a Spoken Tutorial course outline creation system.",
+    system_prompt: str = "You are a helpful assistant used inside the Spoken Tutorial Generator system for course outline creation.",
 ) -> str:
     """
     Generate text using OpenAI chat completions.

@@ -1,4 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, UploadCloud, MessageSquare, Trash2 } from 'lucide-react';
 
 // Components
@@ -14,6 +15,7 @@ import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 import BatchUploadModal from './BatchUploadModal';
 import BatchResultsList from './BatchResultsList';
+import UserProfile from './UserProfile';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
 
@@ -29,6 +31,7 @@ import {
 
 // Custom Hook
 import { useChatArea } from '../hooks/useChatArea';
+import { apiJson, apiFormData } from '../services/api';
 
 /**
  * ChatArea - Main chat interface component
@@ -36,11 +39,10 @@ import { useChatArea } from '../hooks/useChatArea';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', showSidebarToggle = true }, ref) => {
+    const location = useLocation();
     const {
         // State
-        mode,
-        setMode,
         uploadMessages,
         setUploadMessages,
         outlineSession,
@@ -92,7 +94,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         setStagedFile,
         handleConfirmStagedFile,
         handleCancelStagedFile,
-    } = useChatArea();
+    } = useChatArea(mode);
 
     // Batch Modal State
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
@@ -122,8 +124,6 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     };
 
     // Translation handler
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
     const handleTranslation = async ({ file, languages, translateVisualCues }) => {
         // Show loading message
         const loadingMessage = {
@@ -137,23 +137,17 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
             // Step 1: Parse the script
             const formData = new FormData();
             formData.append('file', file);
-            const parseResponse = await fetch(`${API_URL}/parse_script`, {
-                method: 'POST',
-                body: formData
-            });
-            const parseData = await parseResponse.json();
+            const parseData = await apiFormData('/parse_script', formData);
 
             // Step 2: Batch translate
-            const translateResponse = await fetch(`${API_URL}/translation/batch_translate`, {
+            const translationResults = await apiJson('/translation/batch_translate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     json_script: parseData.json_script,
                     languages: languages,
                     translate_visual_cues: translateVisualCues
                 })
             });
-            const translationResults = await translateResponse.json();
 
             // Add results message
             const resultMessage = {
@@ -233,108 +227,128 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        onClick={toggleSidebar}
+                    {showSidebarToggle && (
+                        <button
+                            onClick={toggleSidebar}
+                            style={{
+                                background: 'var(--bg-tertiary)',
+                                border: 'none',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0.5rem',
+                                borderRadius: '50%',
+                                width: '40px',
+                                height: '40px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: 'var(--shadow-sm)',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--accent-primary)';
+                                e.currentTarget.style.color = 'white';
+                                e.currentTarget.style.transform = 'scale(1.15)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                            }}
+                        >
+                            <Menu size={24} strokeWidth={2.5} />
+                        </button>
+                    )}
+                    <Link
+                        to="/"
                         style={{
-                            background: 'var(--bg-tertiary)',
-                            border: 'none',
-                            color: 'var(--text-primary)',
-                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.5rem',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            transition: 'all 0.3s ease',
-                            boxShadow: 'var(--shadow-sm)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--accent-primary)';
-                            e.currentTarget.style.color = 'white';
-                            e.currentTarget.style.transform = 'scale(1.15)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                            gap: '0.5rem',
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
                         }}
                     >
-                        <Menu size={24} strokeWidth={2.5} />
-                    </button>
-                    <img
-                        src="/favicon.png"
-                        alt="EduPyramids"
-                        style={{ height: '36px', marginRight: '0.5rem' }}
-                    />
-                    <div style={{
-                        fontWeight: 600,
-                        fontSize: '1.25rem',
-                        fontFamily: '"Outfit", sans-serif',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                    }}>
-                        <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
-                        <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
-                    </div>
+                        <img
+                            src="/favicon.png"
+                            alt="EduPyramids"
+                            style={{ height: '36px' }}
+                        />
+                        <div style={{
+                            fontWeight: 600,
+                            fontSize: '1.25rem',
+                            fontFamily: '"Outfit", sans-serif',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                        }}>
+                            <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
+                            <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
+                        </div>
+                    </Link>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Mode Toggle */}
+                    {/* Mode Navigation */}
                     <div style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
-                        borderRadius: '1rem',
-                        padding: '0.25rem',
+                        borderRadius: '0.75rem',
+                        padding: '0.2rem',
                         boxShadow: 'var(--shadow-sm)',
                         border: '1px solid var(--border-color)',
-                        gap: '0.25rem'
+                        gap: '0.2rem'
                     }}>
-                        <button
-                            onClick={() => setMode('upload')}
+                        <Link
+                            to="/upload"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
-                                background: mode === 'upload'
+                                background: location.pathname === '/upload'
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: mode === 'upload' ? 'white' : 'var(--text-primary)',
+                                color: location.pathname === '/upload' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                boxShadow: mode === 'upload' ? 'var(--shadow-sm)' : 'none'
+                                fontSize: '0.85rem',
+                                boxShadow: location.pathname === '/upload' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <UploadCloud size={18} />
+                            <UploadCloud size={16} />
                             Upload Mode
-                        </button>
-                        <button
-                            onClick={() => setMode('outline_chat')}
+                        </Link>
+                        <Link
+                            to="/outline-chat"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
-                                background: mode === 'outline_chat'
+                                background: location.pathname === '/outline-chat'
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: mode === 'outline_chat' ? 'white' : 'var(--text-primary)',
+                                color: location.pathname === '/outline-chat' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                boxShadow: mode === 'outline_chat' ? 'var(--shadow-sm)' : 'none'
+                                fontSize: '0.85rem',
+                                boxShadow: location.pathname === '/outline-chat' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <MessageSquare size={18} />
+                            <MessageSquare size={16} />
                             Outline Chat
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Clear Session button */}
@@ -370,6 +384,13 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     )}
 
                     <ThemeToggle />
+
+                    {/* User Profile - Compact version in header */}
+                    {showSidebarToggle && !isSidebarOpen && (
+                        <div style={{ marginLeft: '0.5rem' }}>
+                            <UserProfile compact={true} />
+                        </div>
+                    )}
                 </div>
             </header>
 

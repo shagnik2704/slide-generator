@@ -1,4 +1,8 @@
-"""API routes package."""
+"""
+API Routes Package.
+
+Centralized exports for all route routers.
+"""
 from src.api.routes.upload import router as upload_router
 from src.api.routes.generation import router as generation_router
 from src.api.routes.download import router as download_router

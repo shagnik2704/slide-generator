@@ -1,7 +1,9 @@
 """Download route handlers."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from pathlib import Path
+
+from src.api.auth import get_current_user, TokenData
 
 router = APIRouter(prefix="/download", tags=["download"])
 
@@ -10,7 +12,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 
 
 @router.get("/outline/{filename}")
-async def download_outline(filename: str):
+async def download_outline(filename: str, current_user: TokenData = Depends(get_current_user)):
     """Serve outline files directly."""
     try:
         filepath = project_root / "static" / filename
@@ -28,7 +30,7 @@ async def download_outline(filename: str):
 
 
 @router.get("/image/{project_id}/{filename}")
-async def download_image(project_id: str, filename: str):
+async def download_image(project_id: str, filename: str, current_user: TokenData = Depends(get_current_user)):
     """Serve image with Content-Disposition: attachment header for download."""
     try:
         filepath = project_root / "output" / "images" / project_id / filename

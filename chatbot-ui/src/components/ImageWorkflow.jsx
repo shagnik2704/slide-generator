@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Image, Download, Loader2, Paperclip, XCircle, RefreshCw, AlertCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
 import Tooltip from './Tooltip';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { apiJson, API_URL, apiFormData } from '../services/api';
 
 /**
  * Strip markdown formatting from text
@@ -197,9 +196,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 ? `${globalCharRef.description}\n\n${row.enhancedPrompt}`
                 : row.enhancedPrompt;
 
-            const response = await fetch(`${API_URL}/generate_images`, {
+            const result = await apiJson('/generate_images', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_id: projectId,
                     prompts: [{
@@ -211,8 +209,6 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     aspect_ratio: '16:9'
                 })
             });
-
-            const result = await response.json();
             const generatedImage = result.images?.find(
                 img => img.slide_number === rowNumber && (img.sentence_index === sentenceIndex || img.sentence_index === undefined)
             );
@@ -261,17 +257,14 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 reference_image_path: globalCharRef.enabled ? globalCharRef.imagePath : null
             }));
 
-            const response = await fetch(`${API_URL}/generate_images`, {
+            const result = await apiJson('/generate_images', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_id: projectId,
                     prompts: prompts,
                     aspect_ratio: '16:9'
                 })
             });
-
-            const result = await response.json();
             setSentenceRows(prev => prev.map(s => {
                 const generated = result.images?.find(
                     img => img.slide_number === s.rowNumber &&
@@ -492,19 +485,13 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     formData.append('slide_number', 0);
 
                                     try {
-                                        const res = await fetch(`${API_URL}/upload_reference_image`, {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-                                        if (res.ok) {
-                                            const data = await res.json();
-                                            setGlobalCharRef(prev => ({
-                                                ...prev,
-                                                imageUrl: URL.createObjectURL(file),
-                                                imagePath: data.path,
-                                                enabled: true
-                                            }));
-                                        }
+                                        const data = await apiFormData('/upload_reference_image', formData);
+                                        setGlobalCharRef(prev => ({
+                                            ...prev,
+                                            imageUrl: URL.createObjectURL(file),
+                                            imagePath: data.path,
+                                            enabled: true
+                                        }));
                                     } catch (err) {
                                         console.error('Failed to upload character ref:', err);
                                     }
