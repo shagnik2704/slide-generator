@@ -1,5 +1,5 @@
 """
-Main agent workflow for the slide generator.
+Main agent workflow for the Spoken Tutorial Generator.
 All business logic has been modularized into separate files.
 
 4-NODE PIPELINE:

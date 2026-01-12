@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "slide-generator"
+name = "spoken-tutorial-generator"
 version = "0.1.0"
-description = "Slide generator application"
+description = "Spoken Tutorial Generator application"
 requires-python = ">=3.10,<3.13"
 dependencies = [
   "aiohappyeyeballs==2.6.1",
