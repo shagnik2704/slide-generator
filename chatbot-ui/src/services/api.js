@@ -18,6 +18,7 @@ function getToken() {
  * Handle authentication errors (401/403).
  * @param {Response} response - Fetch response object
  * @param {string} endpoint - API endpoint to check if it's public
+ * @throws {Error} - If authentication/authorization error occurs
  */
 function handleAuthError(response, endpoint = '') {
     // Skip auth error handling for public outline_chat endpoints
@@ -28,11 +29,15 @@ function handleAuthError(response, endpoint = '') {
     if (response.status === 401) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem(TOKEN_KEY);
-        window.location.href = '/';
+        // Use replaceState to avoid adding to history
+        if (window.location.pathname !== '/') {
+            window.location.replace('/');
+        }
     } else if (response.status === 403) {
         // Forbidden - show access denied message
         const error = new Error('Access denied: Invalid email domain');
         error.status = 403;
+        error.name = 'AuthorizationError';
         throw error;
     }
 }
@@ -65,8 +70,18 @@ export async function apiRequest(endpoint, options = {}) {
     handleAuthError(response, endpoint);
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Request failed: ${endpoint}`);
+        let errorData;
+        try {
+            errorData = await response.json();
+        } catch {
+            errorData = { detail: `Request failed: ${endpoint}` };
+        }
+        
+        const error = new Error(errorData.detail || errorData.message || `Request failed: ${endpoint}`);
+        error.status = response.status;
+        error.code = errorData.error_code;
+        error.name = errorData.error_code || 'APIError';
+        throw error;
     }
 
     return response;
@@ -108,8 +123,18 @@ export async function apiFormData(endpoint, formData) {
     handleAuthError(response, endpoint);
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Upload failed: ${endpoint}`);
+        let errorData;
+        try {
+            errorData = await response.json();
+        } catch {
+            errorData = { detail: `Upload failed: ${endpoint}` };
+        }
+        
+        const error = new Error(errorData.detail || errorData.message || `Upload failed: ${endpoint}`);
+        error.status = response.status;
+        error.code = errorData.error_code;
+        error.name = errorData.error_code || 'APIError';
+        throw error;
     }
 
     return response.json();

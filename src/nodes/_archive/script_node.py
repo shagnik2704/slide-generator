@@ -1,5 +1,5 @@
 """
-Script generation node for the slide generator agent.
+Script generation node for the Spoken Tutorial Generator agent.
 Uses LangChain's ChatGoogleGenerativeAI with few-shot sample scripts.
 """
 import os

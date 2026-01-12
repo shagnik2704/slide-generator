@@ -18,7 +18,7 @@ def generate_llm_text(
     *,
     temperature: float = 0.2,
     max_tokens: int = 2048,
-    system_prompt: str = "You are a helpful assistant used inside a Spoken Tutorial course outline creation system.",
+    system_prompt: str = "You are a helpful assistant used inside the Spoken Tutorial Generator system for course outline creation.",
 ) -> str:
     """
     Generate text using OpenAI chat completions.

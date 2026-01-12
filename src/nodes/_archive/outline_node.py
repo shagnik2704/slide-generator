@@ -1,5 +1,5 @@
 """
-Outline generation node for the slide generator agent.
+Outline generation node for the Spoken Tutorial Generator agent.
 
 This module generates structured, educational presentation outlines following
 Spoken Tutorial pedagogy principles. It creates outlines optimized for hands-on,

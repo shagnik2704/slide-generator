@@ -1,20 +1,22 @@
 """Authentication routes for Google OAuth."""
-import os
+import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 import httpx
 
-from src.api.auth import (
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URI,
-    create_access_token,
-    validate_email_domain,
-    verify_token,
+from src.api.config import settings
+from src.api.auth import create_access_token, validate_email_domain, verify_token
+from src.api.exceptions import (
+    ValidationError,
+    AuthenticationError,
+    AuthorizationError,
+    InternalServerError,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,19 +34,16 @@ class VerifyTokenRequest(BaseModel):
 @router.get("/google")
 async def google_auth():
     """Initiate Google OAuth flow by redirecting to Google."""
-    if not GOOGLE_CLIENT_ID:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "error": "Google OAuth not configured",
-                "detail": "Please set GOOGLE_CLIENT_ID environment variable. Create a .env file in the project root with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
-            }
+    if not settings.google_client_id:
+        raise InternalServerError(
+            "Google OAuth not configured",
+            "Please set GOOGLE_CLIENT_ID environment variable",
         )
     
     # Build OAuth URL
     params = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "client_id": settings.google_client_id,
+        "redirect_uri": settings.google_redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "online",
@@ -58,10 +57,7 @@ async def google_auth():
 async def google_callback(code: str):
     """Handle Google OAuth callback and issue JWT token."""
     if not code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorization code not provided",
-        )
+        raise ValidationError("Authorization code not provided")
     
     try:
         # Exchange authorization code for access token
@@ -70,9 +66,9 @@ async def google_callback(code: str):
                 GOOGLE_TOKEN_URL,
                 data={
                     "code": code,
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": GOOGLE_REDIRECT_URI,
+                    "client_id": settings.google_client_id,
+                    "client_secret": settings.google_client_secret,
+                    "redirect_uri": settings.google_redirect_uri,
                     "grant_type": "authorization_code",
                 },
             )
@@ -81,10 +77,7 @@ async def google_callback(code: str):
             access_token = token_data.get("access_token")
             
             if not access_token:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Failed to obtain access token from Google",
-                )
+                raise ValidationError("Failed to obtain access token from Google")
             
             # Get user info from Google
             userinfo_response = await client.get(
@@ -96,40 +89,34 @@ async def google_callback(code: str):
             
             email = user_info.get("email", "")
             name = user_info.get("name", "")
-            picture = user_info.get("picture", "")  # Google profile picture URL
+            picture = user_info.get("picture", "")
             
             if not email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email not provided by Google",
-                )
+                raise ValidationError("Email not provided by Google")
             
             # Validate email domain
             if not validate_email_domain(email):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Access denied: Email must be from {os.getenv('ALLOWED_EMAIL_DOMAIN', '@edupyramids.org')} domain",
+                logger.warning(f"OAuth access denied for email: {email}")
+                raise AuthorizationError(
+                    f"Email domain must be {settings.allowed_email_domain}"
                 )
             
             # Create JWT token with picture
             jwt_token = create_access_token(email=email, name=name, picture=picture)
             
             # Redirect to frontend with token
-            frontend_url = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
-            redirect_url = f"{frontend_url}/auth/callback?token={jwt_token}"
+            redirect_url = f"{settings.frontend_url}/auth/callback?token={jwt_token}"
             
             return RedirectResponse(url=redirect_url)
             
+    except (ValidationError, AuthorizationError):
+        raise
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"OAuth error: {e.response.text}",
-        )
+        logger.error(f"OAuth HTTP error: {e.response.text}")
+        raise ValidationError("OAuth authentication failed")
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Authentication failed: {str(e)}",
-        )
+        logger.error(f"OAuth error: {str(e)}", exc_info=True)
+        raise InternalServerError("Authentication failed")
 
 
 @router.post("/verify")
@@ -138,17 +125,11 @@ async def verify_token_endpoint(request: VerifyTokenRequest):
     token_data = verify_token(request.token)
     
     if token_data is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
+        raise AuthenticationError("Invalid or expired token")
     
     # Validate email domain
     if not validate_email_domain(token_data.email):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied: Invalid email domain",
-        )
+        raise AuthorizationError("Invalid email domain")
     
     return JSONResponse({
         "valid": True,

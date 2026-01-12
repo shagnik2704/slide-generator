@@ -155,7 +155,7 @@ export default function Login() {
           color: '#5f6368',
           lineHeight: '1.5',
         }}>
-          Continue to Slide Generator
+          Continue to Spoken Tutorial Generator
         </p>
 
         <button

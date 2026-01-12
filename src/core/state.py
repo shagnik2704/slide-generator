@@ -1,5 +1,5 @@
 """
-Data models for the slide generator agent.
+Data models for the Spoken Tutorial Generator agent.
 Contains TypedDict and Pydantic model definitions.
 """
 from typing import TypedDict, Optional, List, Literal
