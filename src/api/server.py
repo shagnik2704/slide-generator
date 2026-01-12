@@ -94,6 +94,7 @@ app.include_router(translation_router)
 @app.exception_handler(APIException)
 async def api_exception_handler(request: Request, exc: APIException):
     """Handle custom API exceptions with consistent format."""
+    headers = exc.headers if hasattr(exc, 'headers') and exc.headers else {}
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -101,7 +102,7 @@ async def api_exception_handler(request: Request, exc: APIException):
             "error_code": exc.error_code,
             "detail": exc.detail,
         },
-        headers=exc.headers,
+        headers=headers,
     )
 
 

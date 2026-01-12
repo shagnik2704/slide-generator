@@ -1,9 +1,6 @@
 """Custom exception classes for better error handling."""
-import logging
 from fastapi import HTTPException, status
 from typing import Optional, Dict, Any
-
-logger = logging.getLogger(__name__)
 
 
 class APIException(HTTPException):
@@ -19,7 +16,6 @@ class APIException(HTTPException):
         detail: str,
         error_code: Optional[str] = None,
         headers: Optional[Dict[str, Any]] = None,
-        log_level: int = logging.WARNING,
     ):
         """Initialize API exception.
         
@@ -28,17 +24,9 @@ class APIException(HTTPException):
             detail: Error message (user-facing)
             error_code: Optional error code for client handling
             headers: Optional HTTP headers
-            log_level: Logging level for this exception
         """
-        super().__init__(status_code=status_code, detail=detail, headers=headers)
+        super().__init__(status_code=status_code, detail=detail, headers=headers or {})
         self.error_code = error_code or self.__class__.__name__
-        self.log_level = log_level
-        self._log_exception()
-    
-    def _log_exception(self) -> None:
-        """Log the exception at appropriate level."""
-        message = f"{self.error_code}: {self.detail}"
-        logger.log(self.log_level, message)
 
 
 class ValidationError(APIException):

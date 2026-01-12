@@ -52,8 +52,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "max-age=31536000; includeSubDomains; preload"
             )
         
-        # Remove server header for security
-        response.headers.pop("Server", None)
+        # Remove server header for security (if it exists)
+        if "Server" in response.headers:
+            del response.headers["Server"]
         
         return response
 
