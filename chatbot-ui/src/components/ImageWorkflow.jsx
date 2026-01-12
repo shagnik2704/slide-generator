@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Image, Download, Loader2, Paperclip, XCircle, RefreshCw, AlertCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
 import Tooltip from './Tooltip';
-import { apiJson } from '../services/api';
+import { apiJson, API_URL, apiFormData } from '../services/api';
 
 /**
  * Strip markdown formatting from text
@@ -485,19 +485,13 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     formData.append('slide_number', 0);
 
                                     try {
-                                        const res = await fetch(`${API_URL}/upload_reference_image`, {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-                                        if (res.ok) {
-                                            const data = await res.json();
-                                            setGlobalCharRef(prev => ({
-                                                ...prev,
-                                                imageUrl: URL.createObjectURL(file),
-                                                imagePath: data.path,
-                                                enabled: true
-                                            }));
-                                        }
+                                        const data = await apiFormData('/upload_reference_image', formData);
+                                        setGlobalCharRef(prev => ({
+                                            ...prev,
+                                            imageUrl: URL.createObjectURL(file),
+                                            imagePath: data.path,
+                                            enabled: true
+                                        }));
                                     } catch (err) {
                                         console.error('Failed to upload character ref:', err);
                                     }
