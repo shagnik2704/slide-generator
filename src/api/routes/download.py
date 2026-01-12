@@ -30,7 +30,7 @@ async def download_outline(filename: str, current_user: TokenData = Depends(get_
 
 
 @router.get("/image/{project_id}/{filename}")
-async def download_image(project_id: str, filename: str):
+async def download_image(project_id: str, filename: str, current_user: TokenData = Depends(get_current_user)):
     """Serve image with Content-Disposition: attachment header for download."""
     try:
         filepath = project_root / "output" / "images" / project_id / filename

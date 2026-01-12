@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, X, Edit2, Image, Loader2, Paperclip, XCircle } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { apiJson, apiFormData } from '../services/api';
 
 /**
  * Strip markdown formatting from text (bold, italic, etc.)
@@ -161,15 +160,8 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
                     formData.append('project_id', projectId);
                     formData.append('slide_number', p.slide_number);
 
-                    const uploadRes = await fetch(`${API_URL}/upload_reference_image`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (uploadRes.ok) {
-                        const uploadData = await uploadRes.json();
-                        referencePath = uploadData.path;
-                    }
+                    const uploadData = await apiFormData('/upload_reference_image', formData);
+                    referencePath = uploadData.path;
                 }
 
                 promptsWithRefs.push({
@@ -181,18 +173,10 @@ const ImagePromptReview = ({ enhancedPrompts, projectId, onGenerateComplete, onC
 
             setGenerationProgress(`Generating ${promptsWithRefs.length} images...`);
 
-            const response = await fetch(`${API_URL}/generate_images`, {
+            const result = await apiJson('/generate_images', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ project_id: projectId, prompts: promptsWithRefs, aspect_ratio: '1:1' })
             });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Failed to generate images');
-            }
-
-            const result = await response.json();
 
             // Enrich result with the prompts used
             const enrichedImages = result.images ? result.images.map(img => {

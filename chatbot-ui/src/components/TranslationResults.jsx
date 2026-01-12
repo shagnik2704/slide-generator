@@ -1,7 +1,6 @@
 import React from 'react';
 import { Check, X, Download, Languages, ChevronDown, ChevronUp, FileText, List, Grid3X3 } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { apiRequest } from '../services/api';
 
 /**
  * TranslationResults - Displays translation results with side-by-side comparison
@@ -24,9 +23,8 @@ export default function TranslationResults({ results }) {
         setDownloadingLang(result.language_code);
 
         try {
-            const response = await fetch(`${API_URL}/translation/export_docx`, {
+            const response = await apiRequest('/translation/export_docx', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     translated_script: result.translated_script,
                     language_code: result.language_code,
@@ -34,8 +32,7 @@ export default function TranslationResults({ results }) {
                 })
             });
 
-            if (response.ok) {
-                const blob = await response.blob();
+            const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;

@@ -31,6 +31,7 @@ import {
 
 // Custom Hook
 import { useChatArea } from '../hooks/useChatArea';
+import { apiJson, apiFormData } from '../services/api';
 
 /**
  * ChatArea - Main chat interface component
@@ -123,8 +124,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
     };
 
     // Translation handler
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
     const handleTranslation = async ({ file, languages, translateVisualCues }) => {
         // Show loading message
         const loadingMessage = {
@@ -138,23 +137,17 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
             // Step 1: Parse the script
             const formData = new FormData();
             formData.append('file', file);
-            const parseResponse = await fetch(`${API_URL}/parse_script`, {
-                method: 'POST',
-                body: formData
-            });
-            const parseData = await parseResponse.json();
+            const parseData = await apiFormData('/parse_script', formData);
 
             // Step 2: Batch translate
-            const translateResponse = await fetch(`${API_URL}/translation/batch_translate`, {
+            const translationResults = await apiJson('/translation/batch_translate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     json_script: parseData.json_script,
                     languages: languages,
                     translate_visual_cues: translateVisualCues
                 })
             });
-            const translationResults = await translateResponse.json();
 
             // Add results message
             const resultMessage = {

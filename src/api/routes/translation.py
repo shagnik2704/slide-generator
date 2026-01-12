@@ -1,8 +1,9 @@
 """Translation API endpoints for multi-language script translation."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 
+from src.api.auth import get_current_user, TokenData
 from src.services.translation_service import (
     translate_script,
     batch_translate,
@@ -45,7 +46,7 @@ class BatchTranslateResponse(BaseModel):
 # ============================================
 
 @router.get("/languages")
-async def get_languages():
+async def get_languages(current_user: TokenData = Depends(get_current_user)):
     """
     Return list of supported languages for translation.
     
@@ -56,7 +57,7 @@ async def get_languages():
 
 
 @router.post("/translate")
-async def translate_single(data: TranslateRequest) -> TranslationResult:
+async def translate_single(data: TranslateRequest, current_user: TokenData = Depends(get_current_user)) -> TranslationResult:
     """
     Translate a script to a single target language.
     
@@ -79,7 +80,7 @@ async def translate_single(data: TranslateRequest) -> TranslationResult:
 
 
 @router.post("/batch_translate")
-async def translate_batch(data: BatchTranslateRequest) -> BatchTranslateResponse:
+async def translate_batch(data: BatchTranslateRequest, current_user: TokenData = Depends(get_current_user)) -> BatchTranslateResponse:
     """
     Translate a script to multiple languages in parallel.
     
@@ -113,7 +114,7 @@ class ExportDocxRequest(BaseModel):
 
 
 @router.post("/export_docx")
-async def export_docx(data: ExportDocxRequest):
+async def export_docx(data: ExportDocxRequest, current_user: TokenData = Depends(get_current_user)):
     """
     Export a translated script to DOCX in proper script format.
     Uses the same format as the main docx_service (Visual Cue | Narration).
