@@ -30,19 +30,15 @@ async def generate_script(request: GenerateScriptRequest, req: Request, current_
         initial_state = {
             "outline": request.outline,
             "mode": getattr(request, 'mode', 'script_only'),
-            "evaluation_iteration": 0,
-            "evaluation_passed": False,
-            "evaluation_feedback": None,
         }
         
         # Use graph from app.state
         graph = req.app.state.graph
         result = await graph.ainvoke(initial_state)
         
-        script_pdf_path = result.get("script_pdf_path")
         json_script = result.get("json_script")
         
-        if script_pdf_path:
+        if json_script:
             project_id = int(time.time())
             
             # Save JSON script
@@ -52,15 +48,15 @@ async def generate_script(request: GenerateScriptRequest, req: Request, current_
             with open(str(json_path), 'w') as f:
                 json.dump(json_script, f, indent=2)
             
-            print(f"✅ Saved script PDF and JSON for project #{project_id}")
+            print(f"✅ Saved script JSON for project #{project_id}")
+            print(f"   Slides: {len(json_script.get('slides', []))}")
             
             return JSONResponse({
-                "script_pdf_url": f"/static/{os.path.basename(script_pdf_path)}",
                 "json_script": json_script,
                 "outline": request.outline
             })
         else:
-            raise HTTPException(status_code=500, detail="Failed to generate script PDF")
+            raise HTTPException(status_code=500, detail="Failed to generate script")
             
     except Exception as e:
         traceback.print_exc()
