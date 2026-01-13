@@ -120,6 +120,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     };
                 }
                 return parsed;
+
             } catch (e) {
                 console.warn('Failed to parse saved char ref:', e);
             }
@@ -127,6 +128,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         return {
             imageUrls: [],    // Array of preview URLs
             imagePaths: [],   // Array of server paths
+
             description: '',
             enabled: false
         };
@@ -287,7 +289,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     imageUrl: generated.success ? generated.url : s.imageUrl,
                     imageStatus: generated.success ? 'success' : 'error',
                     imageError: generated.success ? null : generated.error,
-                    imageTimestamp: generated.success ? Date.now() : s.imageTimestamp
+                    imageTimestamp: generated.success ? Date.now() : s.imageTimestamp,
+
                 };
             }));
         } catch (error) {
@@ -310,6 +313,9 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     };
 
     // Build download URL that triggers Content-Disposition: attachment header
+
+
+    // Build download URL that triggers Content-Disposition: attachment header
     const getDownloadUrl = (url) => {
         if (!url) return null;
         // Extract project_id and filename from URL like /output/images/123/file.png
@@ -320,6 +326,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         }
         return getImageUrl(url);
     };
+
+
 
     // Check if this is the first sentence of a new row (for visual grouping)
     const isFirstSentenceOfRow = (index) => {
