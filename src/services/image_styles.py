@@ -19,18 +19,12 @@ Generate an educational illustration using the following strict style rules.
 
 STYLE & RENDERING:
 - Flat 2D vector illustration (NOT photorealistic)
-- Clean geometric shapes with smooth edges
-- Minimal shading, no textures, no depth-of-field
 - Modern educational / infographic aesthetic
-- Vibrant but professional color palette
 - Consistent visual style across all images
 
 HUMAN CHARACTERS (if present):
 - Simple cartoon-style illustrated people
 - Indian appearance when depicting humans
-- Friendly, neutral expressions
-- Age-appropriate and culturally respectful
-- No exaggerated facial features
 
 SOFTWARE / UI ELEMENTS (if present):
 - Simplified but realistic interface layouts
@@ -84,3 +78,4 @@ Return a JSON array with enhanced prompts for each slide."""
 
 
 
+CHARACTER_PROMPT = "Use the exact same characters with the same facial details."
