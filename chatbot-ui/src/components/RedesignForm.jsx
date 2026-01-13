@@ -318,13 +318,24 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                     {/* Language */}
                     <div style={{ marginBottom: '1.25rem' }}>
                         <label style={labelStyle}>Language</label>
-                        <input
-                            type="text"
+                        <select
                             value={language}
                             onChange={(e) => setLanguage(e.target.value)}
                             style={inputStyle}
-                            placeholder="English"
-                        />
+                        >
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Telugu">Telugu</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Kannada">Kannada</option>
+                            <option value="Gujarati">Gujarati</option>
+                            <option value="Malayalam">Malayalam</option>
+                            <option value="Punjabi">Punjabi</option>
+                            <option value="Odia">Odia</option>
+                            <option value="Assamese">Assamese</option>
+                        </select>
                     </div>
 
                     {/* Submit Button */}
