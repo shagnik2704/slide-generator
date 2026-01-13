@@ -147,7 +147,7 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
 
 
 @router.post("/check_outline_compliance")
-async def check_outline_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+async def check_outline_compliance_endpoint(data: dict):
     """
     Run compliance checks on an outline/tutorial design.
     
