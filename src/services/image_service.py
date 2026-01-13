@@ -34,16 +34,16 @@ def generate_single_image(
     prompt: str,
     output_path: Path,
     aspect_ratio: str = "1:1",
-    reference_image_path: Optional[Path] = None
+    reference_image_paths: Optional[List[Path]] = None
 ) -> bool:
     """
-    Generate a single image from a prompt, optionally using a reference image.
+    Generate a single image from a prompt, optionally using reference images.
     
     Args:
         prompt: The image generation prompt
         output_path: Path to save the generated image
         aspect_ratio: Image aspect ratio (1:1, 16:9, 4:3)
-        reference_image_path: Optional path to a reference image for image-to-image generation
+        reference_image_paths: Optional list of paths to reference images for image-to-image generation
     
     Returns:
         True if successful, False otherwise
@@ -56,17 +56,26 @@ def generate_single_image(
     
     try:
         # Import shared style prefix for consistent image generation
-        from src.services.image_styles import IMAGE_STYLE_PREFIX
+        from src.services.image_styles import IMAGE_STYLE_PREFIX, CHARACTER_PROMPT
         
-        # Build contents: reference image (if provided) + style-prefixed prompt
-        styled_prompt = IMAGE_STYLE_PREFIX + prompt
         
-        if reference_image_path and reference_image_path.exists():
-            print(f"  🎨 Editing image with prompt: {prompt[:50]}...")
-            # Load reference image using PIL
+        # Build contents: reference images (if provided) + style-prefixed prompt
+        styled_prompt = IMAGE_STYLE_PREFIX + prompt + CHARACTER_PROMPT
+        
+        if reference_image_paths:
+            # Load all valid reference images
             from PIL import Image
-            ref_image = Image.open(reference_image_path)
-            contents = [ref_image, styled_prompt]
+            ref_images = []
+            for path in reference_image_paths:
+                if path and path.exists():
+                    ref_images.append(Image.open(path))
+            
+            if ref_images:
+                print(f"  🎨 Editing with {len(ref_images)} reference image(s): {prompt[:50]}...")
+                contents = [*ref_images, styled_prompt]  # Multiple images + prompt
+            else:
+                print(f"  🎨 Generating image: {prompt[:50]}...")
+                contents = styled_prompt
         else:
             print(f"  🎨 Generating image: {prompt[:50]}...")
             contents = styled_prompt
@@ -128,7 +137,7 @@ def generate_images(
         slide_number = item.get('slide_number')
         sentence_index = item.get('sentence_index', None)  # None for backwards compatibility
         prompt = item.get('prompt', '')
-        reference_image = item.get('reference_image_path')  # Optional reference image
+        reference_images = item.get('reference_image_paths', [])  # List of reference image paths
         
         if not prompt:
             results.append({
@@ -149,11 +158,11 @@ def generate_images(
         
         output_path = output_dir / filename
         
-        # Convert reference_image string to Path if provided
-        ref_path = Path(reference_image) if reference_image else None
+        # Convert reference_image strings to Path list
+        ref_paths = [Path(p) for p in reference_images if p] if reference_images else None
         
         try:
-            success = generate_single_image(prompt, output_path, aspect_ratio, ref_path)
+            success = generate_single_image(prompt, output_path, aspect_ratio, ref_paths)
             
             if success:
                 # Build URL relative to output directory

@@ -102,20 +102,31 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     const [isCharPanelOpen, setIsCharPanelOpen] = useState(false);
     const charRefInputRef = useRef(null);
 
-    // Global character reference state
+    // Global character reference state - supports multiple images
     const CHAR_REF_KEY = `char_ref_${projectId}`;
+    const MAX_REFERENCE_IMAGES = 4;
     const [globalCharRef, setGlobalCharRef] = useState(() => {
         const saved = localStorage.getItem(CHAR_REF_KEY);
         if (saved) {
             try {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                // Migrate from old single-image format to new array format
+                if (parsed.imagePath && !parsed.imagePaths) {
+                    return {
+                        imageUrls: parsed.imageUrl ? [parsed.imageUrl] : [],
+                        imagePaths: parsed.imagePath ? [parsed.imagePath] : [],
+                        description: parsed.description || '',
+                        enabled: parsed.enabled || false
+                    };
+                }
+                return parsed;
             } catch (e) {
                 console.warn('Failed to parse saved char ref:', e);
             }
         }
         return {
-            imageUrl: null,
-            imagePath: null,
+            imageUrls: [],    // Array of preview URLs
+            imagePaths: [],   // Array of server paths
             description: '',
             enabled: false
         };
@@ -204,7 +215,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         slide_number: rowNumber,
                         sentence_index: sentenceIndex,
                         prompt: promptToUse,
-                        reference_image_path: globalCharRef.enabled ? globalCharRef.imagePath : null
+                        reference_image_paths: globalCharRef.enabled && globalCharRef.imagePaths?.length > 0 ? globalCharRef.imagePaths : []
                     }],
                     aspect_ratio: '16:9'
                 })
@@ -216,7 +227,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
             if (generatedImage?.success) {
                 setSentenceRows(prev => prev.map(s =>
                     s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
-                        ? { ...s, imageUrl: generatedImage.url, imageStatus: 'success', imageError: null }
+                        ? { ...s, imageUrl: generatedImage.url, imageStatus: 'success', imageError: null, imageTimestamp: Date.now() }
                         : s
                 ));
             } else {
@@ -254,7 +265,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 prompt: globalCharRef.enabled && globalCharRef.description
                     ? `${globalCharRef.description}\n\n${row.enhancedPrompt}`
                     : row.enhancedPrompt,
-                reference_image_path: globalCharRef.enabled ? globalCharRef.imagePath : null
+                reference_image_paths: globalCharRef.enabled && globalCharRef.imagePaths?.length > 0 ? globalCharRef.imagePaths : []
             }));
 
             const result = await apiJson('/generate_images', {
@@ -275,7 +286,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     ...s,
                     imageUrl: generated.success ? generated.url : s.imageUrl,
                     imageStatus: generated.success ? 'success' : 'error',
-                    imageError: generated.success ? null : generated.error
+                    imageError: generated.success ? null : generated.error,
+                    imageTimestamp: generated.success ? Date.now() : s.imageTimestamp
                 };
             }));
         } catch (error) {
@@ -289,10 +301,12 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         }
     };
 
-    const getImageUrl = (url) => {
+    const getImageUrl = (url, cacheKey = null) => {
         if (!url) return null;
-        if (url.startsWith('http')) return url;
-        return `${API_URL}${url}`;
+        // Add cache-busting parameter to force reload of regenerated images
+        const cacheBuster = cacheKey ? `?t=${cacheKey}` : '';
+        if (url.startsWith('http')) return url + cacheBuster;
+        return `${API_URL}${url}${cacheBuster}`;
     };
 
     // Build download URL that triggers Content-Disposition: attachment header
@@ -475,31 +489,44 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
 
                 {isCharPanelOpen && (
                     <div style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        {/* Reference Image */}
+                        {/* Reference Images Grid */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {globalCharRef.imageUrl ? (
-                                <div style={{ position: 'relative' }}>
-                                    <img
-                                        src={globalCharRef.imageUrl}
-                                        alt="Character reference"
-                                        style={{ width: 80, height: 80, borderRadius: '8px', objectFit: 'cover' }}
-                                    />
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {/* Display uploaded images */}
+                                {(globalCharRef.imageUrls || []).map((url, idx) => (
+                                    <div key={idx} style={{ position: 'relative' }}>
+                                        <img
+                                            src={url}
+                                            alt={`Reference ${idx + 1}`}
+                                            style={{ width: 70, height: 70, borderRadius: '8px', objectFit: 'cover' }}
+                                        />
+                                        <button
+                                            onClick={() => setGlobalCharRef(prev => ({
+                                                ...prev,
+                                                imageUrls: prev.imageUrls.filter((_, i) => i !== idx),
+                                                imagePaths: prev.imagePaths.filter((_, i) => i !== idx)
+                                            }))}
+                                            style={{ position: 'absolute', top: -6, right: -6, background: 'var(--bg-primary)', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: '2px' }}
+                                        >
+                                            <XCircle size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Add button - only show if under max limit */}
+                                {(globalCharRef.imageUrls?.length || 0) < MAX_REFERENCE_IMAGES && (
                                     <button
-                                        onClick={() => setGlobalCharRef(prev => ({ ...prev, imageUrl: null, imagePath: null }))}
-                                        style={{ position: 'absolute', top: -8, right: -8, background: 'var(--bg-primary)', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: '2px' }}
+                                        onClick={() => charRefInputRef.current?.click()}
+                                        style={{ ...buttonStyle, width: 70, height: 70, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
                                     >
-                                        <XCircle size={16} />
+                                        <Paperclip size={18} />
+                                        <span style={{ fontSize: '0.65rem' }}>Add</span>
                                     </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => charRefInputRef.current?.click()}
-                                    style={{ ...buttonStyle, width: 80, height: 80, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
-                                >
-                                    <Paperclip size={20} />
-                                    <span style={{ fontSize: '0.7rem' }}>Upload</span>
-                                </button>
-                            )}
+                                )}
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                {globalCharRef.imageUrls?.length || 0}/{MAX_REFERENCE_IMAGES} reference images
+                            </span>
                             <input
                                 ref={charRefInputRef}
                                 type="file"
@@ -518,13 +545,14 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                         const data = await apiFormData('/upload_reference_image', formData);
                                         setGlobalCharRef(prev => ({
                                             ...prev,
-                                            imageUrl: URL.createObjectURL(file),
-                                            imagePath: data.path,
+                                            imageUrls: [...(prev.imageUrls || []), URL.createObjectURL(file)],
+                                            imagePaths: [...(prev.imagePaths || []), data.path],
                                             enabled: true
                                         }));
                                     } catch (err) {
                                         console.error('Failed to upload character ref:', err);
                                     }
+                                    e.target.value = ''; // Reset input
                                 }}
                             />
                         </div>
@@ -555,27 +583,71 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     onChange={(e) => setGlobalCharRef(prev => ({ ...prev, enabled: e.target.checked }))}
                                     style={{ width: 16, height: 16 }}
                                 />
-                                <span style={{ fontSize: '0.85rem' }}>Apply to all images</span>
+                                <span style={{ fontSize: '0.85rem' }}>Apply</span>
                             </label>
                         </div>
 
-                        {/* Use generated image as reference */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Use generated image:</span>
-                            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                                {sentenceRows.filter(s => s.imageUrl && s.imageStatus === 'success').slice(0, 8).map(s => (
-                                    <button
+                        {/* Use generated image as reference - Thumbnail Grid */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '220px' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Add from generated:</span>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 50px)',
+                                gap: '0.5rem',
+                                justifyContent: 'start'
+                            }}>
+                                {sentenceRows.filter(s => s.imageUrl && s.imageStatus === 'success').slice(0, 12).map(s => (
+                                    <div
                                         key={getSentenceKey(s.rowNumber, s.sentenceIndex)}
-                                        onClick={() => setGlobalCharRef(prev => ({
-                                            ...prev,
-                                            imageUrl: getImageUrl(s.imageUrl),
-                                            imagePath: s.imageUrl,
-                                            enabled: true
-                                        }))}
-                                        style={{ ...buttonStyle, padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                        onClick={() => {
+                                            if ((globalCharRef.imageUrls?.length || 0) >= MAX_REFERENCE_IMAGES) {
+                                                alert(`Maximum ${MAX_REFERENCE_IMAGES} reference images allowed`);
+                                                return;
+                                            }
+                                            const fullUrl = getImageUrl(s.imageUrl, s.imageTimestamp);
+                                            const serverPath = s.imageUrl.replace('/output/', 'output/');
+                                            setGlobalCharRef(prev => ({
+                                                ...prev,
+                                                imageUrls: [...(prev.imageUrls || []), fullUrl],
+                                                imagePaths: [...(prev.imagePaths || []), serverPath],
+                                                enabled: true
+                                            }));
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                            cursor: (globalCharRef.imageUrls?.length || 0) >= MAX_REFERENCE_IMAGES ? 'not-allowed' : 'pointer',
+                                            opacity: (globalCharRef.imageUrls?.length || 0) >= MAX_REFERENCE_IMAGES ? 0.4 : 1,
+                                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if ((globalCharRef.imageUrls?.length || 0) < MAX_REFERENCE_IMAGES) {
+                                                e.currentTarget.style.transform = 'scale(1.05)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                        }}
+                                        title={`Add Row ${s.rowNumber}, Sentence ${s.sentenceIndex + 1} as reference`}
                                     >
-                                        {s.rowNumber}.{s.sentenceIndex + 1}
-                                    </button>
+                                        <img
+                                            src={getImageUrl(s.imageUrl, s.imageTimestamp)}
+                                            alt={`Row ${s.rowNumber}.${s.sentenceIndex + 1}`}
+                                            style={{
+                                                width: 50,
+                                                height: 50,
+                                                borderRadius: '6px',
+                                                objectFit: 'cover',
+                                                border: '2px solid var(--border-primary)',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                                            {s.rowNumber}.{s.sentenceIndex + 1}
+                                        </span>
+                                    </div>
                                 ))}
                                 {sentenceRows.filter(s => s.imageUrl && s.imageStatus === 'success').length === 0 && (
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
@@ -691,17 +763,31 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                             style={{
                                                 padding: '0.5rem',
                                                 borderRadius: '6px',
-                                                border: '2px solid transparent',
+                                                border: '1px dashed transparent',
                                                 cursor: 'pointer',
                                                 color: 'var(--accent-primary)',
                                                 fontSize: '0.85rem',
                                                 lineHeight: 1.5,
-                                                transition: 'border-color 0.2s'
+                                                transition: 'all 0.2s',
+                                                position: 'relative'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                                e.currentTarget.style.background = 'rgba(var(--accent-primary-rgb), 0.05)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.borderColor = 'transparent';
+                                                e.currentTarget.style.background = 'transparent';
+                                            }}
+                                            title="Click to edit prompt"
                                         >
                                             {row.enhancedPrompt}
+                                            <span style={{
+                                                marginLeft: '0.5rem',
+                                                opacity: 0.5,
+                                                fontSize: '0.75rem',
+                                                color: 'var(--text-secondary)'
+                                            }}>✎</span>
                                         </div>
                                     )}
                                 </td>
@@ -725,7 +811,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     ) : row.imageStatus === 'success' && row.imageUrl ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                                             <img
-                                                src={getImageUrl(row.imageUrl)}
+                                                src={getImageUrl(row.imageUrl, row.imageTimestamp)}
                                                 alt={`Row ${row.rowNumber}.${row.sentenceIndex + 1}`}
                                                 style={{ maxWidth: '140px', maxHeight: '100px', borderRadius: '6px' }}
                                             />
