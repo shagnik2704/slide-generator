@@ -1,23 +1,16 @@
 // LocalStorage helpers for ChatArea persistence
 
 const STORAGE_KEY = 'spokentutorial_upload_state';
-const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Load state from localStorage
- * @returns {Object|null} Saved state or null if expired/missing
+ * @returns {Object|null} Saved state or null if missing
  */
 export const loadFromLocalStorage = () => {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
-            const state = JSON.parse(saved);
-            // Check if data is not too old
-            if (Date.now() - state.savedAt < MAX_AGE_MS) {
-                return state;
-            }
-            // Data expired, clear it
-            localStorage.removeItem(STORAGE_KEY);
+            return JSON.parse(saved);
         }
     } catch (e) {
         console.error('Error loading from localStorage:', e);

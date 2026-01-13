@@ -24,6 +24,18 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
         return `${API_URL}${url}`;
     };
 
+    // Build download URL that triggers Content-Disposition: attachment header
+    const getDownloadUrl = (url) => {
+        if (!url) return null;
+        // Extract project_id and filename from URL like /output/images/123/file.png
+        const match = url.match(/\/output\/images\/([^/]+)\/([^/]+)$/);
+        if (match) {
+            const [, projectId, filename] = match;
+            return `${API_URL}/download/image/${projectId}/${filename}`;
+        }
+        return getImageUrl(url);
+    };
+
     // Styles
     const containerStyle = {
         background: 'var(--bg-secondary)',
@@ -147,8 +159,7 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
                     </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <a
-                            href={getImageUrl(image.url)}
-                            download={`slide_${image.slide_number}.png`}
+                            href={getDownloadUrl(image.url)}
                             style={{ ...secondaryButtonStyle, textDecoration: 'none' }}
                         >
                             <Download size={16} /> Download
@@ -193,15 +204,21 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {zip_url && (
-                        <a
-                            href={getImageUrl(zip_url)}
-                            download
-                            style={{ ...primaryButtonStyle, textDecoration: 'none' }}
-                        >
-                            <Download size={16} /> Download All (ZIP)
-                        </a>
-                    )}
+                    {zip_url && (() => {
+                        // Build download URL for ZIP
+                        const match = zip_url.match(/\/output\/images\/([^/]+)\/([^/]+)$/);
+                        const downloadUrl = match
+                            ? `${API_URL}/download/zip/${match[1]}/${match[2]}`
+                            : getImageUrl(zip_url);
+                        return (
+                            <a
+                                href={downloadUrl}
+                                style={{ ...primaryButtonStyle, textDecoration: 'none' }}
+                            >
+                                <Download size={16} /> Download All (ZIP)
+                            </a>
+                        );
+                    })()}
                     {onClose && (
                         <button onClick={onClose} style={secondaryButtonStyle}>
                             Close
@@ -270,8 +287,7 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
                                 </h4>
                                 {image.success && (
                                     <a
-                                        href={getImageUrl(image.url)}
-                                        download={`slide_${image.slide_number}.png`}
+                                        href={getDownloadUrl(image.url)}
                                         style={{ color: 'var(--text-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
                                         title="Download Image"
                                     >
