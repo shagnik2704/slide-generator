@@ -321,17 +321,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         return getImageUrl(url);
     };
 
-    // Build download URL that triggers Content-Disposition: attachment header
-    const getDownloadUrl = (url) => {
-        if (!url) return null;
-        // Extract project_id and filename from URL like /output/images/123/file.png
-        const match = url.match(/\/output\/images\/([^/]+)\/([^/]+)$/);
-        if (match) {
-            const [, projectId, filename] = match;
-            return `${API_URL}/download/image/${projectId}/${filename}`;
-        }
-        return getImageUrl(url);
-    };
+
 
     // Check if this is the first sentence of a new row (for visual grouping)
     const isFirstSentenceOfRow = (index) => {
