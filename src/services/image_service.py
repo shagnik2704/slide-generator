@@ -191,13 +191,11 @@ def generate_images(
         zip_path = output_dir / f"project_{project_id}_images.zip"
         try:
             with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for result in results:
-                    if result.get("success"):
-                        img_path = output_dir / f"slide_{result['slide_number']}.png"
-                        if img_path.exists():
-                            zipf.write(str(img_path), img_path.name)
+                # Add all PNG files in the directory (supports both naming conventions)
+                for png_file in output_dir.glob("*.png"):
+                    zipf.write(str(png_file), png_file.name)
             zip_url = f"/output/images/{project_id}/project_{project_id}_images.zip"
-            print(f"\n📦 Created ZIP: {zip_path.name}")
+            print(f"\n📦 Created ZIP: {zip_path.name} with {len(list(output_dir.glob('*.png')))} images")
         except Exception as e:
             print(f"⚠️ Failed to create ZIP: {e}")
     

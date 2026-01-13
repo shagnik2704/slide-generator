@@ -295,6 +295,18 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         return `${API_URL}${url}`;
     };
 
+    // Build download URL that triggers Content-Disposition: attachment header
+    const getDownloadUrl = (url) => {
+        if (!url) return null;
+        // Extract project_id and filename from URL like /output/images/123/file.png
+        const match = url.match(/\/output\/images\/([^/]+)\/([^/]+)$/);
+        if (match) {
+            const [, projectId, filename] = match;
+            return `${API_URL}/download/image/${projectId}/${filename}`;
+        }
+        return getImageUrl(url);
+    };
+
     // Check if this is the first sentence of a new row (for visual grouping)
     const isFirstSentenceOfRow = (index) => {
         if (index === 0) return true;
@@ -383,14 +395,32 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 </div>
 
                 {!isSelectionMode ? (
-                    <button
-                        onClick={() => setIsSelectionMode(true)}
-                        style={primaryButtonStyle}
-                    >
-                        Select
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {generatedCount > 0 && (
+                            <a
+                                href={`${API_URL}/download/zip/${projectId}/project_${projectId}_images.zip`}
+                                style={{ ...buttonStyle, textDecoration: 'none' }}
+                            >
+                                <Download size={16} /> Download All
+                            </a>
+                        )}
+                        <button
+                            onClick={() => setIsSelectionMode(true)}
+                            style={primaryButtonStyle}
+                        >
+                            Select
+                        </button>
+                    </div>
                 ) : (
                     <>
+                        {generatedCount > 0 && (
+                            <a
+                                href={`${API_URL}/download/zip/${projectId}/project_${projectId}_images.zip`}
+                                style={{ ...buttonStyle, textDecoration: 'none' }}
+                            >
+                                <Download size={16} /> Download All
+                            </a>
+                        )}
                         <button
                             onClick={() => setSentenceRows(prev => prev.map(s => ({ ...s, selected: !s.skipReason })))}
                             style={buttonStyle}
@@ -710,8 +740,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                                 </Tooltip>
                                                 <Tooltip text="Download" position="bottom">
                                                     <a
-                                                        href={getImageUrl(row.imageUrl)}
-                                                        download={`row_${row.rowNumber}_sentence_${row.sentenceIndex + 1}.png`}
+                                                        href={getDownloadUrl(row.imageUrl)}
                                                         style={{ ...buttonStyle, padding: '0.3rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
                                                     >
                                                         <Download size={14} />

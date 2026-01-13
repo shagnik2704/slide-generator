@@ -30,8 +30,13 @@ async def download_outline(filename: str, current_user: TokenData = Depends(get_
 
 
 @router.get("/image/{project_id}/{filename}")
-async def download_image(project_id: str, filename: str, current_user: TokenData = Depends(get_current_user)):
-    """Serve image with Content-Disposition: attachment header for download."""
+async def download_image(project_id: str, filename: str):
+    """
+    Serve image with Content-Disposition: attachment header for download.
+    
+    Note: No auth required - files are protected by random project IDs,
+    and direct link clicks don't include JWT tokens.
+    """
     try:
         filepath = project_root / "output" / "images" / project_id / filename
         
@@ -53,6 +58,30 @@ async def download_image(project_id: str, filename: str, current_user: TokenData
             path=str(filepath),
             filename=filename,
             media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/zip/{project_id}/{filename}")
+async def download_zip(project_id: str, filename: str):
+    """
+    Serve ZIP file with Content-Disposition: attachment header for download.
+    
+    Note: No auth required - files are protected by random project IDs,
+    and direct link clicks don't include JWT tokens.
+    """
+    try:
+        filepath = project_root / "output" / "images" / project_id / filename
+        
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="ZIP file not found")
+        
+        return FileResponse(
+            path=str(filepath),
+            filename=filename,
+            media_type='application/zip',
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
     except Exception as e:
