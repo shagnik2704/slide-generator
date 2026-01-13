@@ -146,6 +146,39 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/check_outline_compliance")
+async def check_outline_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """
+    Run compliance checks on an outline/tutorial design.
+    
+    Args:
+        outline_data: The outline JSON data (CourseOutlineData format)
+    
+    Returns:
+        Compliance report with checks and summary for outline design
+    """
+    print("Running outline compliance checks...")
+    
+    try:
+        outline_data = data.get('outline_data')
+        
+        if not outline_data:
+            raise HTTPException(status_code=400, detail="outline_data is required")
+        
+        from src.services.compliance_service import check_outline_compliance
+        compliance_report = await check_outline_compliance(outline_data)
+        
+        summary = compliance_report.get('summary', {})
+        print(f"✅ Outline compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
+        
+        return compliance_report
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in check_outline_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/batch_check_compliance")
 async def batch_check_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """

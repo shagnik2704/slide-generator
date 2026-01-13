@@ -247,6 +247,47 @@ export function useOutlineChat(mode, setIsTyping) {
         }
     }, [mode, outlineSession, setIsTyping]);
 
+    /**
+     * Check compliance for an outline.
+     */
+    const handleCheckCompliance = useCallback(async (outlineData, messageId) => {
+        if (mode !== 'outline_chat' || !outlineData) return;
+
+        setIsTyping(true);
+
+        try {
+            const complianceReport = await apiJson('/check_outline_compliance', {
+                method: 'POST',
+                body: JSON.stringify({
+                    outline_data: outlineData
+                }),
+            });
+
+            // Update the message with compliance report
+            setOutlineMessages(prev => prev.map(msg =>
+                msg.id === messageId
+                    ? { ...msg, complianceReport: complianceReport }
+                    : msg
+            ));
+
+            return complianceReport;
+        } catch (error) {
+            console.error("Compliance check error:", error);
+            throw error;
+        } finally {
+            setIsTyping(false);
+        }
+    }, [mode, setIsTyping]);
+
+    /**
+     * Update compliance report in a message.
+     */
+    const handleUpdateComplianceReport = useCallback((messageId, updatedReport) => {
+        setOutlineMessages(prev => prev.map(msg =>
+            msg.id === messageId ? { ...msg, complianceReport: updatedReport } : msg
+        ));
+    }, []);
+
     return {
         outlineMessages,
         setOutlineMessages,
@@ -255,5 +296,7 @@ export function useOutlineChat(mode, setIsTyping) {
         handleSendChatText,
         handleConfirmation,
         handleEditAnswer,
+        handleCheckCompliance,
+        handleUpdateComplianceReport,
     };
 }

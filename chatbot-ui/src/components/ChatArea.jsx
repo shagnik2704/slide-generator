@@ -83,6 +83,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         handleConfirmation,
         handleSendChatText,
         handleEditAnswer,
+        handleCheckCompliance,
+        handleUpdateOutlineComplianceReport,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
         handleExportMediaWiki,
@@ -195,11 +197,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         }
     }));
 
-    // Helper to update compliance report in a message
+    // Helper to update compliance report in a message (for upload mode)
     const handleUpdateComplianceReport = (messageId, updatedReport) => {
-        setUploadMessages(prev => prev.map(m =>
-            m.id === messageId ? { ...m, complianceReport: updatedReport } : m
-        ));
+        if (mode === 'upload') {
+            setUploadMessages(prev => prev.map(m =>
+                m.id === messageId ? { ...m, complianceReport: updatedReport } : m
+            ));
+        }
+        // For outline_chat mode, use handleUpdateOutlineComplianceReport
     };
 
     return (
@@ -419,6 +424,13 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                     <OutlineCard
                                         outlineData={msg.outlineData}
                                         projectId={outlineSession.projectId || msg.outlineData?.project_id}
+                                        messageId={msg.id}
+                                        complianceReport={msg.complianceReport}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        onCheckCompliance={handleCheckCompliance}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        isTyping={isTyping}
                                     />
                                 )}
 

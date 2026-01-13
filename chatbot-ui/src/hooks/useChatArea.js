@@ -268,6 +268,8 @@ export function useChatArea(mode = 'upload') {
         handleSendChatText: outlineChat.handleSendChatText,
         handleConfirmation: outlineChat.handleConfirmation,
         handleEditAnswer: outlineChat.handleEditAnswer,
+        handleCheckCompliance: outlineChat.handleCheckCompliance,
+        handleUpdateOutlineComplianceReport: outlineChat.handleUpdateComplianceReport,
 
         // Export handlers
         handleDownloadScriptDocx: exportHandlers.handleDownloadScriptDocx,

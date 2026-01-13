@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import { Download, FileText, Users, Target, BookOpen, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import ComplianceReport from './ComplianceReport';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-const OutlineCard = ({ outlineData, projectId }) => {
+const OutlineCard = ({ 
+    outlineData, 
+    projectId, 
+    messageId,
+    complianceReport,
+    openReportId,
+    setOpenReportId,
+    onCheckCompliance,
+    onUpdateComplianceReport,
+    isTyping = false
+}) => {
     const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [isDownloadingDOCX, setIsDownloadingDOCX] = useState(false);
+    const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
 
     if (!outlineData) return null;
 
@@ -38,6 +50,24 @@ const OutlineCard = ({ outlineData, projectId }) => {
             console.error('Failed to download DOCX:', error);
         } finally {
             setIsDownloadingDOCX(false);
+        }
+    };
+
+    const handleCheckComplianceClick = async () => {
+        if (!onCheckCompliance || !messageId) return;
+        
+        setIsCheckingCompliance(true);
+        try {
+            await onCheckCompliance(outlineData, messageId);
+            // Open the report after checking
+            if (setOpenReportId) {
+                setOpenReportId(messageId);
+            }
+        } catch (error) {
+            console.error('Failed to check compliance:', error);
+            alert(`Failed to check compliance: ${error.message}`);
+        } finally {
+            setIsCheckingCompliance(false);
         }
     };
 
@@ -344,6 +374,75 @@ const OutlineCard = ({ outlineData, projectId }) => {
                     ))}
                 </div>
             )}
+
+            {/* Compliance Check Section */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+                {complianceReport ? (
+                    <button
+                        onClick={() => setOpenReportId && setOpenReportId(openReportId === messageId ? null : messageId)}
+                        style={{
+                            ...buttonStyle,
+                            background: openReportId === messageId ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                            color: openReportId === messageId ? 'white' : 'var(--text-primary)',
+                            border: '1px solid var(--border-color)',
+                        }}
+                        onMouseEnter={(e) => {
+                            if (openReportId !== messageId) {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (openReportId !== messageId) {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }
+                        }}
+                    >
+                        📋 {openReportId === messageId ? 'Close Compliance Report' : 'View Compliance Report'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleCheckComplianceClick}
+                        disabled={isCheckingCompliance || isTyping}
+                        style={{
+                            ...buttonStyle,
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            opacity: (isCheckingCompliance || isTyping) ? 0.6 : 1,
+                            cursor: (isCheckingCompliance || isTyping) ? 'wait' : 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isCheckingCompliance && !isTyping) {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isCheckingCompliance && !isTyping) {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }
+                        }}
+                    >
+                        {isCheckingCompliance ? (
+                            <><Loader2 size={16} className="animate-spin" /> Checking Compliance...</>
+                        ) : (
+                            <>📋 Check Compliance</>
+                        )}
+                    </button>
+                )}
+
+                {/* Compliance Report */}
+                {complianceReport && (
+                    <ComplianceReport
+                        report={complianceReport}
+                        isOpen={openReportId === messageId}
+                        onSave={(updated) => onUpdateComplianceReport && onUpdateComplianceReport(messageId, updated)}
+                        onClose={() => setOpenReportId && setOpenReportId(null)}
+                    />
+                )}
+            </div>
         </div>
     );
 };
