@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { Download, FileText, Users, Target, BookOpen, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Download, FileText, Users, Target, BookOpen, CheckCircle, XCircle, Loader2, Upload } from 'lucide-react';
+import ComplianceReport from './ComplianceReport';
+import { apiFormData } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-const OutlineCard = ({ outlineData, projectId }) => {
+const OutlineCard = ({ 
+    outlineData, 
+    projectId, 
+    messageId,
+    complianceReport,
+    openReportId,
+    setOpenReportId,
+    onCheckCompliance,
+    onUpdateComplianceReport,
+    isTyping = false
+}) => {
     const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [isDownloadingDOCX, setIsDownloadingDOCX] = useState(false);
+    const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
+    const [isUploadingCompliance, setIsUploadingCompliance] = useState(false);
+    const fileInputRef = useRef(null);
 
     if (!outlineData) return null;
 
@@ -38,6 +53,63 @@ const OutlineCard = ({ outlineData, projectId }) => {
             console.error('Failed to download DOCX:', error);
         } finally {
             setIsDownloadingDOCX(false);
+        }
+    };
+
+    const handleCheckComplianceClick = async () => {
+        if (!onCheckCompliance || !messageId) return;
+        
+        setIsCheckingCompliance(true);
+        try {
+            await onCheckCompliance(outlineData, messageId);
+            // Open the report after checking
+            if (setOpenReportId) {
+                setOpenReportId(messageId);
+            }
+        } catch (error) {
+            console.error('Failed to check compliance:', error);
+            alert(`Failed to check compliance: ${error.message}`);
+        } finally {
+            setIsCheckingCompliance(false);
+        }
+    };
+
+    const handleUploadComplianceClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileSelect = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset file input
+        e.target.value = '';
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            alert('Please upload a JSON file containing outline_data');
+            return;
+        }
+
+        setIsUploadingCompliance(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const result = await apiFormData('/upload_outline_for_compliance', formData);
+            
+            if (result.compliance_report && onUpdateComplianceReport) {
+                // Update the message with compliance report
+                onUpdateComplianceReport(messageId, result.compliance_report);
+                // Open the report after uploading
+                if (setOpenReportId) {
+                    setOpenReportId(messageId);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to upload and check compliance:', error);
+            alert(`Failed to upload and check compliance: ${error.message}`);
+        } finally {
+            setIsUploadingCompliance(false);
         }
     };
 
@@ -344,6 +416,116 @@ const OutlineCard = ({ outlineData, projectId }) => {
                     ))}
                 </div>
             )}
+
+            {/* Compliance Check Section */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+                {/* Hidden file input */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                />
+
+                {complianceReport ? (
+                    <button
+                        onClick={() => setOpenReportId && setOpenReportId(openReportId === messageId ? null : messageId)}
+                        style={{
+                            ...buttonStyle,
+                            background: openReportId === messageId ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                            color: openReportId === messageId ? 'white' : 'var(--text-primary)',
+                            border: '1px solid var(--border-color)',
+                        }}
+                        onMouseEnter={(e) => {
+                            if (openReportId !== messageId) {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (openReportId !== messageId) {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }
+                        }}
+                    >
+                        📋 {openReportId === messageId ? 'Close Compliance Report' : 'View Compliance Report'}
+                    </button>
+                ) : (
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <button
+                            onClick={handleCheckComplianceClick}
+                            disabled={isCheckingCompliance || isTyping}
+                            style={{
+                                ...buttonStyle,
+                                background: 'var(--accent-primary)',
+                                color: 'white',
+                                opacity: (isCheckingCompliance || isTyping) ? 0.6 : 1,
+                                cursor: (isCheckingCompliance || isTyping) ? 'wait' : 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isCheckingCompliance && !isTyping) {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isCheckingCompliance && !isTyping) {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }
+                            }}
+                        >
+                            {isCheckingCompliance ? (
+                                <><Loader2 size={16} className="animate-spin" /> Checking Compliance...</>
+                            ) : (
+                                <>📋 Check Compliance</>
+                            )}
+                        </button>
+                        <button
+                            onClick={handleUploadComplianceClick}
+                            disabled={isUploadingCompliance || isTyping}
+                            style={{
+                                ...buttonStyle,
+                                background: 'var(--bg-tertiary)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-color)',
+                                opacity: (isUploadingCompliance || isTyping) ? 0.6 : 1,
+                                cursor: (isUploadingCompliance || isTyping) ? 'wait' : 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isUploadingCompliance && !isTyping) {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isUploadingCompliance && !isTyping) {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }
+                            }}
+                        >
+                            {isUploadingCompliance ? (
+                                <><Loader2 size={16} className="animate-spin" /> Uploading...</>
+                            ) : (
+                                <><Upload size={16} /> Upload & Check</>
+                            )}
+                        </button>
+                    </div>
+                )}
+
+                {/* Compliance Report */}
+                {complianceReport && (
+                    <ComplianceReport
+                        report={complianceReport}
+                        isOpen={openReportId === messageId}
+                        onSave={(updated) => onUpdateComplianceReport && onUpdateComplianceReport(messageId, updated)}
+                        onClose={() => setOpenReportId && setOpenReportId(null)}
+                    />
+                )}
+            </div>
         </div>
     );
 };

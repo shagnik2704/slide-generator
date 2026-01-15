@@ -18,6 +18,7 @@ import BatchResultsList from './BatchResultsList';
 import UserProfile from './UserProfile';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
+import ComplianceReport from './ComplianceReport';
 
 // Message Action Components
 import {
@@ -83,6 +84,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         handleConfirmation,
         handleSendChatText,
         handleEditAnswer,
+        handleCheckCompliance,
+        handleUpdateOutlineComplianceReport,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
         handleExportMediaWiki,
@@ -195,11 +198,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         }
     }));
 
-    // Helper to update compliance report in a message
+    // Helper to update compliance report in a message (for upload mode)
     const handleUpdateComplianceReport = (messageId, updatedReport) => {
-        setUploadMessages(prev => prev.map(m =>
-            m.id === messageId ? { ...m, complianceReport: updatedReport } : m
-        ));
+        if (mode === 'upload') {
+            setUploadMessages(prev => prev.map(m =>
+                m.id === messageId ? { ...m, complianceReport: updatedReport } : m
+            ));
+        }
+        // For outline_chat mode, use handleUpdateOutlineComplianceReport
     };
 
     return (
@@ -419,6 +425,13 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                     <OutlineCard
                                         outlineData={msg.outlineData}
                                         projectId={outlineSession.projectId || msg.outlineData?.project_id}
+                                        messageId={msg.id}
+                                        complianceReport={msg.complianceReport}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        onCheckCompliance={handleCheckCompliance}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        isTyping={isTyping}
                                     />
                                 )}
 
@@ -524,6 +537,50 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                         batchSummary={msg.batchSummary}
                                         type="quality"
                                     />
+                                )}
+
+                                {/* Outline Compliance Result - Show ComplianceReport component */}
+                                {mode === 'outline_chat' && msg.type === 'outline_compliance_result' && msg.complianceReport && (
+                                    <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
+                                        {/* View Report Button */}
+                                        <button
+                                            onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: openReportId === msg.id ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                color: openReportId === msg.id ? 'white' : 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            📋 {openReportId === msg.id ? 'Close Report' : 'View Report'}
+                                        </button>
+
+                                        {/* Compliance Report */}
+                                        <ComplianceReport
+                                            report={msg.complianceReport}
+                                            isOpen={openReportId === msg.id}
+                                            onSave={(updated) => {
+                                                handleUpdateOutlineComplianceReport(msg.id, updated);
+                                            }}
+                                            onClose={() => setOpenReportId(null)}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         ))}
