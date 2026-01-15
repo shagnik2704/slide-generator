@@ -312,6 +312,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 <span style={textLabelStyle}>Batch Quality</span>
                             </button>
                         </TooltipWrapper>
+
                     </div>
                 )}
             </nav>

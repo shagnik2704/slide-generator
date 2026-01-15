@@ -14,10 +14,11 @@ router = APIRouter(tags=["upload"])
 
 @router.post("/upload_outline")
 async def upload_outline(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
-    """Upload an edited outline file (.md or .docx)."""
+    """Upload an edited outline file (.md, .docx, .txt, or .odt)."""
     try:
-        # Validate file type
-        if not (file.filename.endswith('.md') or file.filename.endswith('.docx') or file.filename.endswith('.txt') or file.filename.endswith('.odt')):
+        # Validate file type (case-insensitive)
+        filename_lower = file.filename.lower() if file.filename else ""
+        if not (filename_lower.endswith('.md') or filename_lower.endswith('.docx') or filename_lower.endswith('.txt') or filename_lower.endswith('.odt')):
             raise HTTPException(status_code=400, detail="Only .md, .txt, .docx, or .odt files are allowed")
         
         # Get project root (3 levels up from src/api/routes/upload.py)
@@ -34,19 +35,33 @@ async def upload_outline(file: UploadFile = File(...), current_user: TokenData =
             buffer.write(content)
         
         # Parse the document
-        outline_text = parse_docx_outline(str(temp_path))
+        try:
+            outline_text = parse_docx_outline(str(temp_path))
+        except ValueError as ve:
+            # Clean up temp file before raising error
+            if temp_path.exists():
+                os.remove(str(temp_path))
+            raise HTTPException(status_code=400, detail=f"Error parsing document: {str(ve)}")
+        except Exception as parse_error:
+            # Clean up temp file before raising error
+            if temp_path.exists():
+                os.remove(str(temp_path))
+            raise HTTPException(status_code=400, detail=f"Failed to parse document. Please ensure it's a valid .docx, .md, .txt, or .odt file: {str(parse_error)}")
         
         # Clean up temp file
-        os.remove(str(temp_path))
+        if temp_path.exists():
+            os.remove(str(temp_path))
         
         return {
             "outline": outline_text,
-            "message": "Outline uploaded successfully"
+            "message": f"Outline uploaded successfully ({file.filename})"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in upload_outline: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Server error while processing file: {str(e)}")
 
 
 @router.post("/parse_script")
@@ -176,6 +191,154 @@ async def check_outline_compliance_endpoint(data: dict):
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in check_outline_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload_outline_for_compliance")
+async def upload_outline_for_compliance(file: UploadFile = File(...)):
+    """
+    Upload an outline file (.json or .docx) and run compliance checks on it.
+    
+    Args:
+        file: JSON file containing outline_data (CourseOutlineData format) OR DOCX file to parse
+    
+    Returns:
+        Compliance report with checks and summary for outline design
+    """
+    print(f"Uploading outline file for compliance check: {file.filename}")
+    
+    try:
+        filename = file.filename.lower()
+        
+        # Validate file type - support JSON and DOCX files
+        if not (filename.endswith('.json') or filename.endswith('.docx')):
+            raise HTTPException(status_code=400, detail="Only .json or .docx files are allowed. JSON files should contain 'outline_data' field. DOCX files will be parsed to extract outline data.")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Handle DOCX files
+        if filename.endswith('.docx'):
+            # Parse DOCX and extract outline data using LLM
+            from src.services.outline_service import parse_docx_outline
+            
+            # Save temporarily to parse
+            project_root = Path(__file__).parent.parent.parent
+            upload_dir = project_root / "uploads"
+            upload_dir.mkdir(exist_ok=True)
+            temp_path = upload_dir / f"outline_compliance_{int(time.time())}_{file.filename}"
+            
+            with open(str(temp_path), "wb") as buffer:
+                buffer.write(content)
+            
+            try:
+                # Parse DOCX to markdown text
+                outline_text = parse_docx_outline(str(temp_path))
+                
+                # Use LLM to extract outline_data from the parsed text
+                from src.api.routes.outline_chat.outline_chat_llm_utils import generate_llm_text
+                import asyncio
+                
+                # Create a prompt to extract outline data from the text
+                extraction_prompt = f"""Extract course outline data from the following document text and return it as a JSON object matching the CourseOutlineData format.
+
+Document text:
+{outline_text}
+
+Return a JSON object with the following structure (fill in what you can find):
+{{
+    "outline_type": "FOSS" or "ICT" or "OTHER",
+    "outline_name": "course name",
+    "platform_name": "software/platform name and version",
+    "target_audience": "target audience description",
+    "entry_behaviour": "prerequisites/entry behaviour",
+    "purpose": "course purpose",
+    "os_version": "OS version if applicable",
+    "recommended_no_of_tutorials": number,
+    "prepared_by": "author name",
+    "domain": "domain name",
+    "reviewer": "reviewer name",
+    "date": "date",
+    "keywords": ["keyword1", "keyword2"],
+    "course_objectives": ["objective1", "objective2"],
+    "topics_included": ["topic1", "topic2"],
+    "topics_not_included": ["topic1", "topic2"],
+    "core_example": "core example description",
+    "allied_examples": ["example1", "example2"],
+    "tutorial_rows": [
+        {{
+            "tutorial_number": 1,
+            "title": "tutorial title",
+            "prerequisites": ["prereq1"],
+            "topics_details": ["topic1", "topic2"],
+            "time_seconds": 180,
+            "comments": "comments"
+        }}
+    ]
+}}
+
+Return ONLY the JSON object, no other text."""
+                
+                # Call LLM to extract outline data (run in thread to avoid blocking)
+                llm_response = await asyncio.to_thread(
+                    generate_llm_text,
+                    extraction_prompt,
+                    temperature=0.3,
+                    max_tokens=4096
+                )
+                
+                # Parse the LLM response to extract JSON
+                import re
+                json_match = re.search(r'\{.*\}', llm_response, re.DOTALL)
+                if json_match:
+                    outline_data = json.loads(json_match.group())
+                else:
+                    # Try to parse the entire response as JSON
+                    outline_data = json.loads(llm_response)
+                
+            except json.JSONDecodeError as e:
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+                raise HTTPException(status_code=400, detail=f"Failed to extract outline data from DOCX. The document may not be in the expected format. Error: {str(e)}")
+            except Exception as parse_error:
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+                raise HTTPException(status_code=400, detail=f"Failed to parse DOCX file: {str(parse_error)}")
+            finally:
+                # Clean up temp file
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+        else:
+            # Handle JSON files
+            try:
+                file_data = json.loads(content.decode('utf-8'))
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid JSON format: {str(e)}")
+            
+            # Extract outline_data - support both direct outline_data or wrapped in a dict
+            outline_data = file_data.get('outline_data') or file_data
+            
+            if not outline_data or not isinstance(outline_data, dict):
+                raise HTTPException(status_code=400, detail="JSON file must contain 'outline_data' field or be a valid outline_data object")
+        
+        # Run compliance checks
+        from src.services.compliance_service import check_outline_compliance
+        compliance_report = await check_outline_compliance(outline_data)
+        
+        summary = compliance_report.get('summary', {})
+        print(f"✅ Outline compliance check complete for {file.filename}: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
+        
+        return {
+            "compliance_report": compliance_report,
+            "outline_data": outline_data,
+            "message": f"Compliance check complete for {file.filename}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in upload_outline_for_compliance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

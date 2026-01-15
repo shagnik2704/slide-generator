@@ -553,23 +553,31 @@ C6. **Overview Planned**: Is there a plan for an overview tutorial?
 ### SECTION D: EXAMPLES & DEMONSTRATIONS
 
 D1. **Examples Mandatory**: Does every tutorial include at least one example?
-   - Check: tutorial_rows[].topics_details - should reference examples
+   - Check: `tutorial_rows[].topics_details`
+   - Requirement: Pure theory is not allowed. Every concept must be demonstrated with an example.
+   - Pass if: Topics mention specific examples (e.g. "Example: Calculation of simple interest").
    - Purpose: Example-driven learning, not abstract explanations.
 
 D2. **Build on Examples**: Do tutorials build on earlier examples/files?
-   - Check: core_example continuity across tutorial_rows
+   - Check: `core_example` field and continuity across `tutorial_rows`
+   - Requirement: The series should use a "Running Example" that evolves (e.g., creating a file in Tutorial 1, modifying it in Tutorial 2).
    - Purpose: Creates continuity. Shows how small skills combine into real workflows.
 
 D3. **75% Demonstration**: Is at least 75% of each tutorial demonstration?
-   - Check: tutorial_rows[].topics_details - should be action-oriented, demonstrable steps
+   - Check: `tutorial_rows[].topics_details`
+   - Requirement: Focus on "How-to" (Demonstration) rather than "What-is" (Theory).
+   - Pass if: >75% of topics involve user actions (Open, Select, Type, Click).
+   - Fail if: Topics are dominated by explanations, definitions, or history.
    - Purpose: Ensures self-learning effectiveness. Visual anchoring.
 
 D4. **Self-learning**: Is the tutorial suitable for self-learning?
-   - Check: Overall structure, clarity, completeness
+   - Check: Logic and flow of `tutorial_rows`
+   - Requirement: The sequence should be gap-less. A learner attempting this alone should not get stuck.
    - Purpose: Work without trainers. Support translation.
 
 D5. **Overview After Series**: Is the overview tutorial planned after the series?
-   - Check: Outline structure and organization
+   - Check: `tutorial_rows` list
+   - Requirement: An "Overview" tutorial should ideally summarize the series or be placed such that it covers the actual content created.
    - Purpose: Overview should showcase existing material, not be created first.
 
 For each check, provide:

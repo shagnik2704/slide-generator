@@ -270,6 +270,17 @@ const InputArea = ({
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file && !disabled && setStagedFile) {
+            // Validate file type
+            const filename = file.name.toLowerCase();
+            const validExtensions = ['.md', '.docx', '.txt', '.odt'];
+            const isValid = validExtensions.some(ext => filename.endsWith(ext));
+            
+            if (!isValid) {
+                alert('Please upload a .md, .docx, .txt, or .odt file');
+                e.target.value = '';
+                return;
+            }
+            
             setStagedFile({ file, type: 'outline' });
             e.target.value = '';
         }
@@ -279,6 +290,17 @@ const InputArea = ({
     const handleScriptSelect = (e) => {
         const file = e.target.files[0];
         if (file && !disabled && setStagedFile) {
+            // Validate file type
+            const filename = file.name.toLowerCase();
+            const validExtensions = ['.json', '.docx', '.odt'];
+            const isValid = validExtensions.some(ext => filename.endsWith(ext));
+            
+            if (!isValid) {
+                alert('Please upload a .json, .docx, or .odt file');
+                e.target.value = '';
+                return;
+            }
+            
             setStagedFile({ file, type: 'script' });
             e.target.value = '';
         }
@@ -288,6 +310,14 @@ const InputArea = ({
     const handleScriptToWikiSelect = (e) => {
         const file = e.target.files[0];
         if (file && !disabled && setStagedFile) {
+            // Validate file type - only DOCX for wiki conversion
+            const filename = file.name.toLowerCase();
+            if (!filename.endsWith('.docx')) {
+                alert('Please upload a .docx file for MediaWiki conversion');
+                e.target.value = '';
+                return;
+            }
+            
             setStagedFile({ file, type: 'wiki' });
             e.target.value = '';
         }
@@ -455,7 +485,7 @@ const InputArea = ({
                                     color: 'var(--text-secondary)',
                                     fontSize: '0.95rem',
                                 }}>
-                                    Upload content to start generating a tutorial...
+                                    Upload DOCX, MD, TXT, or ODT file to start generating a tutorial...
                                 </span>
                                 <div style={{
                                     display: 'flex',
@@ -515,9 +545,10 @@ const InputArea = ({
                                     e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                                     e.currentTarget.style.borderColor = 'var(--border-color)';
                                 }}
+                                title="Upload DOCX, MD, TXT, or ODT file to generate script"
                             >
                                 <FileText size={16} />
-                                Generate Script
+                                Upload Content (DOCX/MD/TXT)
                             </button>
 
                             <button
@@ -536,9 +567,10 @@ const InputArea = ({
                                     e.currentTarget.style.borderColor = 'var(--border-color)';
                                     e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                                 }}
+                                title="Upload DOCX, JSON, or ODT script file to check compliance"
                             >
                                 <FileJson size={16} />
-                                Check Script
+                                Upload Script (DOCX/JSON/ODT)
                             </button>
 
                             <button
@@ -600,53 +632,67 @@ const InputArea = ({
                 position: 'relative'
             }}>
                 {outlineMode ? (
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <textarea
-                            value={textValue}
-                            onChange={(e) => setTextValue(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendText();
-                                }
-                            }}
-                            disabled={disabled}
-                            placeholder="Describe your topic, goals, audience, or ask to refine the outline..."
-                            style={{
-                                flex: 1,
-                                minHeight: '80px',
-                                padding: '0.85rem 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid var(--border-color)',
-                                background: 'var(--bg-secondary)',
-                                color: 'var(--text-primary)',
-                                fontSize: '0.95rem',
-                                resize: 'vertical',
-                                boxShadow: 'var(--shadow-sm)'
-                            }}
-                        />
-                        <button
-                            type="button"
-                            onClick={handleSendText}
-                            disabled={disabled || !textValue.trim()}
-                            style={primaryButtonStyle(disabled || !textValue.trim())}
-                            onMouseEnter={(e) => {
-                                if (!disabled && textValue.trim()) {
-                                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!disabled) {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                }
-                            }}
-                        >
-                            <Send size={20} />
-                            Send
-                        </button>
-                    </div>
+                    <>
+                        {/* Show staged file preview if a file is selected (from sidebar) */}
+                        {stagedFile && (
+                            <div style={{ marginBottom: '1rem' }}>
+                                <FilePreviewCard
+                                    file={stagedFile.file}
+                                    uploadType={stagedFile.type}
+                                    onConfirm={handleConfirmUpload}
+                                    onCancel={handleCancelUpload}
+                                    disabled={disabled}
+                                />
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <textarea
+                                value={textValue}
+                                onChange={(e) => setTextValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendText();
+                                    }
+                                }}
+                                disabled={disabled}
+                                placeholder="Describe your topic, goals, audience, or ask to refine the outline..."
+                                style={{
+                                    flex: 1,
+                                    minHeight: '80px',
+                                    padding: '0.85rem 1rem',
+                                    borderRadius: '0.75rem',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.95rem',
+                                    resize: 'vertical',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleSendText}
+                                disabled={disabled || !textValue.trim()}
+                                style={primaryButtonStyle(disabled || !textValue.trim())}
+                                onMouseEnter={(e) => {
+                                    if (!disabled && textValue.trim()) {
+                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!disabled) {
+                                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                    }
+                                }}
+                            >
+                                <Send size={20} />
+                                Send
+                            </button>
+                        </div>
+                    </>
                 ) : (
                     <>
                         {/* Show staged file preview if a file is selected (from sidebar triggers) */}
