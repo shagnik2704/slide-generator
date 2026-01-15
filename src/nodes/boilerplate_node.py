@@ -127,13 +127,12 @@ def get_boilerplate_messages(metadata: dict) -> list:
 
 **3. SYSTEM REQUIREMENTS SLIDE**
 - title: System Requirements
-- narration: 
+- narration:To follow this tutorial,you need [System requirements from metadata].
 - image_prompt: "System Requirements Slide"
-- Infer appropriate requirements from the topic (e.g., browser for web topics, Python for coding)
 
 **4. PREREQUISITES SLIDE**
 - title: Prerequisites
-- narration: [Prerequisites from metadata].\\n"For pre-requisite tutorials, please visit this website."
+- narration(frame properly): You need [Prerequisites from metadata].\\n"For pre-requisite tutorials, please visit this website."
 - image_prompt: "Pre-requisite Slide"
 
 **5. SUMMARY SLIDE**

@@ -6,23 +6,42 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 /**
  * Editable cell using contentEditable - exactly like WikiScriptEditor
  */
-const WikiCell = ({ value, onChange, width }) => {
+const WikiCell = ({ value, onChange, width, placeholder }) => {
     const cellRef = useRef(null);
     const [isFocused, setIsFocused] = useState(false);
 
     useEffect(() => {
         if (cellRef.current && !isFocused) {
             cellRef.current.innerText = value || '';
+            // Show placeholder when empty
+            if (!value && placeholder) {
+                cellRef.current.style.color = 'var(--text-secondary, #999)';
+                cellRef.current.innerText = placeholder;
+            } else {
+                cellRef.current.style.color = 'var(--text-primary, #202122)';
+            }
         }
-    }, [value, isFocused]);
+    }, [value, isFocused, placeholder]);
 
     const handleBlur = () => {
         setIsFocused(false);
         if (cellRef.current) {
             const newValue = cellRef.current.innerText;
-            if (newValue !== value) {
+            // Remove placeholder text if it's the placeholder
+            if (newValue === placeholder) {
+                cellRef.current.innerText = '';
+                onChange('');
+            } else if (newValue !== value) {
                 onChange(newValue);
             }
+        }
+    };
+
+    const handleFocus = () => {
+        setIsFocused(true);
+        if (cellRef.current && cellRef.current.innerText === placeholder) {
+            cellRef.current.innerText = '';
+            cellRef.current.style.color = 'var(--text-primary, #202122)';
         }
     };
 
@@ -31,18 +50,19 @@ const WikiCell = ({ value, onChange, width }) => {
             ref={cellRef}
             contentEditable={true}
             onBlur={handleBlur}
-            onFocus={() => setIsFocused(true)}
+            onFocus={handleFocus}
             style={{
                 padding: '0.4em 0.6em',
-                border: '1px solid #a2a9b1',
+                border: '1px solid var(--border-color, #a2a9b1)',
                 verticalAlign: 'top',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'transparent',
                 width: width,
                 minHeight: '2em',
-                outline: isFocused ? '2px solid #36c' : 'none',
+                outline: isFocused ? '2px solid var(--accent-primary, #36c)' : 'none',
                 outlineOffset: '-2px',
                 cursor: 'text',
                 lineHeight: '1.6',
+                color: value ? 'var(--text-primary, #202122)' : 'var(--text-secondary, #999)',
             }}
             suppressContentEditableWarning={true}
         />
@@ -127,10 +147,11 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
     return (
         <div style={{
             marginTop: '1rem',
-            background: '#fff',
+            background: 'var(--bg-secondary, #fff)',
             borderRadius: '4px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             overflow: 'hidden',
+            border: '1px solid var(--border-color, #a2a9b1)',
         }}>
             {/* Toolbar - Exactly like WikiScriptEditor */}
             <div style={{
@@ -138,8 +159,8 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '0.75rem 1rem',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #a2a9b1',
+                background: 'var(--bg-tertiary, #f8f9fa)',
+                borderBottom: '1px solid var(--border-color, #a2a9b1)',
             }}>
                 <div style={{
                     display: 'flex',
@@ -147,13 +168,13 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                     gap: '1rem',
                     fontFamily: 'sans-serif',
                 }}>
-                    <span style={{ fontWeight: 600, color: '#202122' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary, #202122)' }}>
                         Compliance Report
                     </span>
                     <span style={{
                         fontSize: '0.85em',
-                        color: '#54595d',
-                        background: '#eaecf0',
+                        color: 'var(--text-secondary, #54595d)',
+                        background: 'var(--bg-secondary, #eaecf0)',
                         padding: '0.2em 0.6em',
                         borderRadius: '3px',
                     }}>
@@ -161,13 +182,13 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                     </span>
                     <span style={{
                         fontSize: '0.85em',
-                        background: '#eaecf0',
+                        background: 'var(--bg-secondary, #eaecf0)',
                         padding: '0.2em 0.6em',
                         borderRadius: '3px',
                     }}>
-                        <span style={{ color: '#14866d' }}>{summary?.ai_passed || 0} ✓</span>
+                        <span style={{ color: '#14866d', fontWeight: 600 }}>{summary?.ai_passed || 0} ✓</span>
                         {' · '}
-                        <span style={{ color: '#d33' }}>{summary?.ai_failed || 0} ✗</span>
+                        <span style={{ color: '#d33', fontWeight: 600 }}>{summary?.ai_failed || 0} ✗</span>
                     </span>
                     {hasChanges && (
                         <span style={{
@@ -258,7 +279,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
             <div style={{
                 padding: '1rem',
                 overflowX: 'auto',
-                background: '#fff',
+                background: 'var(--bg-secondary, #fff)',
             }}>
                 <table style={{
                     width: '100%',
@@ -267,114 +288,132 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                     fontFamily: 'Arial, sans-serif',
                     fontSize: '14px',
                     lineHeight: '1.6',
-                    border: '1px solid #a2a9b1',
+                    border: '1px solid var(--border-color, #a2a9b1)',
                 }}>
                     <thead>
                         <tr>
                             <th style={{
                                 padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                border: '1px solid var(--border-color, #a2a9b1)',
+                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
                                 fontWeight: 'bold',
                                 width: '40px',
                                 textAlign: 'center',
+                                color: 'var(--text-primary, #202122)',
                             }}>
                                 #
                             </th>
                             <th style={{
                                 padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                border: '1px solid var(--border-color, #a2a9b1)',
+                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
                                 fontWeight: 'bold',
                                 width: '35%',
+                                color: 'var(--text-primary, #202122)',
                             }}>
                                 Criteria
                             </th>
                             <th style={{
                                 padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                border: '1px solid var(--border-color, #a2a9b1)',
+                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
                                 fontWeight: 'bold',
                                 width: '60px',
                                 textAlign: 'center',
+                                color: 'var(--text-primary, #202122)',
                             }}>
                                 AI
                             </th>
                             <th style={{
                                 padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                border: '1px solid var(--border-color, #a2a9b1)',
+                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
                                 fontWeight: 'bold',
                                 width: '30%',
+                                color: 'var(--text-primary, #202122)',
                             }}>
                                 AI Notes
                             </th>
                             <th style={{
                                 padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                border: '1px solid var(--border-color, #a2a9b1)',
+                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
                                 fontWeight: 'bold',
                                 width: '25%',
+                                color: 'var(--text-primary, #202122)',
                             }}>
                                 Human Review
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {checks.map((check, index) => (
-                            <tr key={check.id || index}>
-                                {/* Row Number */}
-                                <td style={{
-                                    padding: '0.4em 0.6em',
-                                    border: '1px solid #a2a9b1',
-                                    backgroundColor: '#f8f9fa',
-                                    textAlign: 'center',
-                                    fontWeight: 600,
-                                    color: '#202122',
-                                }}>
-                                    {index + 1}
-                                </td>
-                                {/* Criteria - Read only */}
-                                <td style={{
-                                    padding: '0.4em 0.6em',
-                                    border: '1px solid #a2a9b1',
-                                    verticalAlign: 'top',
-                                    backgroundColor: '#fff',
-                                }}>
-                                    {check.criteria}
-                                </td>
-                                {/* AI Status - Tick/Cross */}
-                                <td style={{
-                                    padding: '0.4em 0.6em',
-                                    border: '1px solid #a2a9b1',
-                                    textAlign: 'center',
-                                    verticalAlign: 'middle',
-                                    backgroundColor: check.ai_review === true ? '#e6f9e6' :
-                                        check.ai_review === false ? '#fee' : '#fff',
-                                    fontSize: '1.2em',
-                                }}>
-                                    {check.ai_review === true ? (
-                                        <span style={{ color: '#14866d' }}>✓</span>
-                                    ) : check.ai_review === false ? (
-                                        <span style={{ color: '#d33' }}>✗</span>
-                                    ) : (
-                                        <span style={{ color: '#54595d' }}>—</span>
-                                    )}
-                                </td>
-                                {/* AI Notes - Editable */}
-                                <WikiCell
-                                    value={check.ai_notes || ''}
-                                    onChange={(value) => updateCheck(index, 'ai_notes', value)}
-                                    width="30%"
-                                />
-                                {/* Human Review - Editable */}
-                                <WikiCell
-                                    value={check.human_review || ''}
-                                    onChange={(value) => updateCheck(index, 'human_review', value)}
-                                    width="25%"
-                                />
-                            </tr>
-                        ))}
+                        {checks.map((check, index) => {
+                            const isFailed = check.ai_review === false;
+                            return (
+                                <tr 
+                                    key={check.id || index}
+                                    style={{
+                                        backgroundColor: isFailed ? 'rgba(221, 51, 51, 0.08)' : 'var(--bg-secondary, #fff)',
+                                    }}
+                                >
+                                    {/* Row Number */}
+                                    <td style={{
+                                        padding: '0.4em 0.6em',
+                                        border: '1px solid var(--border-color, #a2a9b1)',
+                                        backgroundColor: isFailed ? 'rgba(221, 51, 51, 0.12)' : 'var(--bg-tertiary, #f8f9fa)',
+                                        textAlign: 'center',
+                                        fontWeight: 600,
+                                        color: 'var(--text-primary, #202122)',
+                                    }}>
+                                        {index + 1}
+                                    </td>
+                                    {/* Criteria - Read only */}
+                                    <td style={{
+                                        padding: '0.4em 0.6em',
+                                        border: '1px solid var(--border-color, #a2a9b1)',
+                                        verticalAlign: 'top',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--text-primary, #202122)',
+                                        fontWeight: isFailed ? 600 : 400,
+                                    }}>
+                                        {check.criteria}
+                                    </td>
+                                    {/* AI Status - Tick/Cross */}
+                                    <td style={{
+                                        padding: '0.4em 0.6em',
+                                        border: '1px solid var(--border-color, #a2a9b1)',
+                                        textAlign: 'center',
+                                        verticalAlign: 'middle',
+                                        backgroundColor: check.ai_review === true ? 'rgba(20, 134, 109, 0.15)' :
+                                            check.ai_review === false ? 'rgba(221, 51, 51, 0.2)' : 'transparent',
+                                        fontSize: '1.3em',
+                                        fontWeight: 'bold',
+                                    }}>
+                                        {check.ai_review === true ? (
+                                            <span style={{ color: '#14866d' }}>✓</span>
+                                        ) : check.ai_review === false ? (
+                                            <span style={{ color: '#d33' }}>✗</span>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-secondary, #54595d)' }}>—</span>
+                                        )}
+                                    </td>
+                                    {/* AI Notes - Editable */}
+                                    <WikiCell
+                                        value={check.ai_notes || ''}
+                                        onChange={(value) => updateCheck(index, 'ai_notes', value)}
+                                        width="30%"
+                                        placeholder={isFailed && !check.ai_notes ? 'Click to see why this failed...' : 'No notes'}
+                                    />
+                                    {/* Human Review - Editable */}
+                                    <WikiCell
+                                        value={check.human_review || ''}
+                                        onChange={(value) => updateCheck(index, 'human_review', value)}
+                                        width="25%"
+                                        placeholder="Add your review..."
+                                    />
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
@@ -382,14 +421,17 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                 <div style={{
                     marginTop: '1rem',
                     padding: '0.75rem',
-                    background: '#f8f9fa',
-                    border: '1px solid #eaecf0',
+                    background: 'var(--bg-tertiary, #f8f9fa)',
+                    border: '1px solid var(--border-color, #eaecf0)',
                     borderRadius: '3px',
                     fontSize: '0.85rem',
-                    color: '#54595d',
+                    color: 'var(--text-secondary, #54595d)',
                     fontFamily: 'sans-serif',
                 }}>
-                    <strong>Tips:</strong> ✓ = AI passed, ✗ = AI failed. Click AI Notes or Human Review cells to edit.
+                    <strong style={{ color: 'var(--text-primary, #202122)' }}>Tips:</strong> 
+                    {' '}<span style={{ color: '#14866d', fontWeight: 600 }}>✓</span> = AI passed, 
+                    {' '}<span style={{ color: '#d33', fontWeight: 600 }}>✗</span> = AI failed (highlighted in red). 
+                    Failed checks show detailed notes explaining why they failed. Click AI Notes or Human Review cells to edit.
                 </div>
             </div>
         </div>

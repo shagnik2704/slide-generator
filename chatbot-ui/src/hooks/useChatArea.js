@@ -184,13 +184,19 @@ export function useChatArea(mode = 'upload') {
                 // Multiple files for batch processing
                 sidebarHandlers.handleSidebarBatchComplianceUpload(files);
                 break;
+            case 'outline_compliance':
+                // Outline compliance upload (for outline_chat mode)
+                if (mode === 'outline_chat' && outlineChat.handleUploadOutlineCompliance) {
+                    outlineChat.handleUploadOutlineCompliance(file);
+                }
+                break;
             case 'outline':
             default:
                 uploadHandlers.handleSendMessage(file);
         }
 
         setStagedFile(null);
-    }, [stagedFile, uploadHandlers, sidebarHandlers]);
+    }, [stagedFile, uploadHandlers, sidebarHandlers, outlineChat, mode]);
 
 
     const handleCancelStagedFile = useCallback(() => {
@@ -268,6 +274,9 @@ export function useChatArea(mode = 'upload') {
         handleSendChatText: outlineChat.handleSendChatText,
         handleConfirmation: outlineChat.handleConfirmation,
         handleEditAnswer: outlineChat.handleEditAnswer,
+        handleCheckCompliance: outlineChat.handleCheckCompliance,
+        handleUpdateOutlineComplianceReport: outlineChat.handleUpdateComplianceReport,
+        handleUploadOutlineCompliance: outlineChat.handleUploadOutlineCompliance,
 
         // Export handlers
         handleDownloadScriptDocx: exportHandlers.handleDownloadScriptDocx,
