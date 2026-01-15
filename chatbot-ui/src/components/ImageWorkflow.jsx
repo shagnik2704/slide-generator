@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Image, Download, Loader2, Paperclip, XCircle, RefreshCw, AlertCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
 import Tooltip from './Tooltip';
 import { apiJson, API_URL, apiFormData } from '../services/api';
@@ -98,6 +99,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     });
 
     const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState(null);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [isCharPanelOpen, setIsCharPanelOpen] = useState(false);
     const charRefInputRef = useRef(null);
@@ -120,6 +122,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     };
                 }
                 return parsed;
+
             } catch (e) {
                 console.warn('Failed to parse saved char ref:', e);
             }
@@ -127,6 +130,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         return {
             imageUrls: [],    // Array of preview URLs
             imagePaths: [],   // Array of server paths
+
             description: '',
             enabled: false
         };
@@ -136,6 +140,13 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     useEffect(() => {
         localStorage.setItem(CHAR_REF_KEY, JSON.stringify(globalCharRef));
     }, [globalCharRef, CHAR_REF_KEY]);
+
+    // Escape key to close lightbox
+    useEffect(() => {
+        const handleEsc = (e) => e.key === 'Escape' && setLightboxImage(null);
+        if (lightboxImage) document.addEventListener('keydown', handleEsc);
+        return () => document.removeEventListener('keydown', handleEsc);
+    }, [lightboxImage]);
 
     // Save sentence rows to localStorage on change
     useEffect(() => {
@@ -287,7 +298,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     imageUrl: generated.success ? generated.url : s.imageUrl,
                     imageStatus: generated.success ? 'success' : 'error',
                     imageError: generated.success ? null : generated.error,
-                    imageTimestamp: generated.success ? Date.now() : s.imageTimestamp
+                    imageTimestamp: generated.success ? Date.now() : s.imageTimestamp,
+
                 };
             }));
         } catch (error) {
@@ -308,6 +320,9 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         if (url.startsWith('http')) return url + cacheBuster;
         return `${API_URL}${url}${cacheBuster}`;
     };
+
+    // Build download URL that triggers Content-Disposition: attachment header
+
 
     // Build download URL that triggers Content-Disposition: attachment header
     const getDownloadUrl = (url) => {
@@ -813,9 +828,11 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     ) : row.imageStatus === 'success' && row.imageUrl ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                                             <img
+                                                onClick={() => setLightboxImage(row)}
                                                 src={getImageUrl(row.imageUrl, row.imageTimestamp)}
                                                 alt={`Row ${row.rowNumber}.${row.sentenceIndex + 1}`}
-                                                style={{ maxWidth: '140px', maxHeight: '100px', borderRadius: '6px' }}
+                                                style={{ maxWidth: '140px', maxHeight: '100px', borderRadius: '6px', cursor: 'pointer' }}
+                                                title="Click to enlarge"
                                             />
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <Tooltip text="Regenerate" position="bottom">
@@ -854,6 +871,100 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Lightbox Modal - rendered in portal to bypass overflow:hidden */}
+            {lightboxImage && ReactDOM.createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        padding: '2rem'
+                    }}
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            padding: '1.5rem',
+                            background: 'var(--bg-secondary)',
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                        }}
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={() => setLightboxImage(null)}
+                            style={{
+                                position: 'absolute',
+                                top: -12,
+                                right: -12,
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '1.25rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                                zIndex: 10000
+                            }}
+                            title="Close (Esc)"
+                        >
+                            ✕
+                        </button>
+
+                        {/* Image */}
+                        <img
+                            src={getImageUrl(lightboxImage.imageUrl, lightboxImage.imageTimestamp)}
+                            alt={`Row ${lightboxImage.rowNumber}.${lightboxImage.sentenceIndex + 1}`}
+                            style={{
+                                maxWidth: '60vw',
+                                maxHeight: '50vh',
+                                borderRadius: '8px',
+                                objectFit: 'contain'
+                            }}
+                        />
+
+                        {/* Info bar */}
+                        <div style={{
+                            marginTop: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            color: 'var(--text-primary)'
+                        }}>
+                            <span style={{ fontWeight: 500 }}>
+                                Row {lightboxImage.rowNumber}.{lightboxImage.sentenceIndex + 1}
+                            </span>
+                            <a
+                                href={getDownloadUrl(lightboxImage.imageUrl)}
+                                style={{
+                                    ...buttonStyle,
+                                    padding: '0.4rem 0.75rem',
+                                    fontSize: '0.85rem',
+                                    textDecoration: 'none'
+                                }}
+                            >
+                                <Download size={14} /> Download
+                            </a>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {/* CSS for spin animation */}
             <style>{`
