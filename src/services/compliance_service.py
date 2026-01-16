@@ -243,10 +243,10 @@ For each check, provide:
 - notes: Structured feedback following this format:
   - If PASSED: brief confirmation
   - If FAILED: Use numbered lists with EACH ITEM ON A NEW LINE:
-    1. "Slide X: [specific issue]"
+    1. "Row X: [specific issue]"
     2. "Line Y: [specific problem]"
     Use newline characters (\n) between each numbered item.
-  - Always reference slide numbers or line numbers when applicable
+  - IMPORTANT: Always use "Row" (not "Slide") when referencing issues. E.g., "Row 3: sentence exceeds 80 chars"
   - Be specific: quote problematic text when helpful
   - Keep each item concise (under 100 chars)
 """

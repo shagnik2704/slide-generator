@@ -20,6 +20,7 @@ import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
 import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
+import WorkflowCard from './WorkflowCard';
 
 // Message Action Components
 import {
@@ -129,19 +130,42 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
 
     // Translation handler
     const handleTranslation = async ({ file, languages, translateVisualCues }) => {
-        // Show loading message
-        const loadingMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `🌐 Translating script to ${languages.length} language(s)...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'translation',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: `Translating to ${languages.length} language(s)`, status: 'pending' },
+                { label: 'Translation ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, loadingMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
 
         try {
             // Step 1: Parse the script
             const formData = new FormData();
             formData.append('file', file);
             const parseData = await apiFormData('/parse_script', formData);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'processing' },
+                        { label: 'Translation ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Batch translate
             const translationResults = await apiJson('/translation/batch_translate', {
@@ -153,26 +177,32 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                 })
             });
 
-            // Add results message
-            const resultMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `🌍 Translation Complete!\n\n` +
-                    `File: ${file.name}\n` +
-                    `Languages: ${translationResults.total_success}/${translationResults.total_requested} successful`,
-                type: 'translation_result',
-                translationResults: translationResults
-            };
-            setUploadMessages(prev => [...prev, resultMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'complete' },
+                        { label: 'Translation ready', status: 'complete' }
+                    ],
+                    result: {
+                        translationResults: translationResults
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error('Translation error:', error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Translation failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
             throw error;
         }
     };
@@ -414,12 +444,32 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                     <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
-                                <MessageBubble
-                                    message={msg}
-                                    onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
-                                    onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
-                                    mode={mode}
-                                />
+                                {msg.type === 'workflow' ? (
+                                    <WorkflowCard
+                                        workflow={msg}
+                                        isTyping={isTyping}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        openQualityId={openQualityId}
+                                        setOpenQualityId={setOpenQualityId}
+                                        qualityReports={qualityReports}
+                                        isQualityLoading={isQualityLoading}
+                                        onQualityCheck={handleQualityCheck}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        // Script-related props
+                                        openEditorId={openEditorId}
+                                        setOpenEditorId={setOpenEditorId}
+                                        onDownloadScriptDocx={handleDownloadScriptDocx}
+                                        onSaveScriptEdit={handleSaveScriptEdit}
+                                    />
+                                ) : (
+                                    <MessageBubble
+                                        message={msg}
+                                        onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                                        onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
+                                        mode={mode}
+                                    />
+                                )}
 
                                 {/* OutlineCard for outline_chat mode */}
                                 {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
@@ -444,6 +494,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                         onGenerateScript={handleGenerateScript}
                                     />
                                 )}
+
+
 
                                 {mode === 'upload' && msg.type === 'script_uploaded' && (
                                     <ScriptUploadedActions
@@ -471,7 +523,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                         onGenerateSlides={handleGenerateSlides}
                                         onDownloadScriptDocx={handleDownloadScriptDocx}
                                         onUploadEditedScript={handleUploadEditedScript}
-                                        onExportMediaWiki={handleExportMediaWiki}
                                         onSaveScriptEdit={handleSaveScriptEdit}
                                     />
                                 )}
@@ -619,19 +670,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                             </div>
                         ))}
 
-                        {/* Typing Indicator */}
-                        {isTyping && (
-                            <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1rem', marginBottom: '1.5rem' }}>
-                                <div style={{
-                                    width: '36px', height: '36px', borderRadius: '50%',
-                                    background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both' }}></div>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.16s' }}></div>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.32s' }}></div>
-                                </div>
-                            </div>
-                        )}
                         <div ref={messagesEndRef} />
                     </div>
                 </div>

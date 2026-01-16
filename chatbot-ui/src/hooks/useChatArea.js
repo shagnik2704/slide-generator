@@ -191,6 +191,9 @@ export function useChatArea(mode = 'upload') {
                 }
                 break;
             case 'outline':
+                // Use WorkflowCard-based script generation
+                sidebarHandlers.handleSidebarScriptGenerate(file);
+                break;
             default:
                 uploadHandlers.handleSendMessage(file);
         }
