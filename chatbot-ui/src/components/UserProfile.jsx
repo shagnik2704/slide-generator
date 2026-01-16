@@ -46,19 +46,17 @@ export default function UserProfile({ compact = false }) {
           display: 'flex',
           alignItems: 'center',
           gap: compact ? '0.5rem' : '0.75rem',
-          padding: compact ? '0.375rem' : '0.5rem 0.75rem',
+          padding: compact ? '0.25rem' : '0.5rem',
           background: isDropdownOpen ? 'var(--bg-tertiary)' : 'transparent',
-          border: '1px solid var(--border-color)',
-          borderRadius: '50%',
+          border: 'none',
+          borderRadius: '0.5rem',
           cursor: 'pointer',
           width: compact ? 'auto' : '100%',
           transition: 'all 0.2s ease',
           color: 'var(--text-primary)',
         }}
         onMouseEnter={(e) => {
-          if (!isDropdownOpen) {
-            e.currentTarget.style.background = 'var(--bg-tertiary)';
-          }
+          e.currentTarget.style.background = 'var(--bg-tertiary)';
         }}
         onMouseLeave={(e) => {
           if (!isDropdownOpen) {
@@ -69,10 +67,10 @@ export default function UserProfile({ compact = false }) {
         {/* Avatar - Shows Google picture if available, otherwise initials */}
         <div
           style={{
-            width: compact ? '36px' : '32px',
-            height: compact ? '36px' : '32px',
+            width: compact ? '36px' : '40px',
+            height: compact ? '36px' : '40px',
             borderRadius: '50%',
-            background: user.picture ? 'transparent' : 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
+            background: user.picture ? 'transparent' : 'linear-gradient(135deg, #34a853 0%, #2d8a47 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -144,19 +142,22 @@ export default function UserProfile({ compact = false }) {
         )}
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - Opens UP in sidebar (dropup), DOWN in header (dropdown) */}
       {isDropdownOpen && (
         <div
           style={{
             position: 'absolute',
-            top: '100%',
+            // Dropup in sidebar, dropdown in header
+            ...(compact
+              ? { top: '100%', marginTop: '0.5rem' }  // Header: opens down
+              : { bottom: '100%', marginBottom: '0.5rem' }  // Sidebar: opens up
+            ),
             left: compact ? 'auto' : 0,
             right: compact ? 0 : 'auto',
-            marginTop: '0.5rem',
-            minWidth: compact ? '280px' : 'auto',
+            minWidth: compact ? '280px' : '100%',
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-color)',
-            borderRadius: '0.5rem',
+            borderRadius: '0.75rem',
             boxShadow: 'var(--shadow-lg)',
             overflow: 'hidden',
             zIndex: 1000,
@@ -231,7 +232,7 @@ export default function UserProfile({ compact = false }) {
             </div>
           </div>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <button
             onClick={handleLogout}
             style={{
@@ -255,7 +256,7 @@ export default function UserProfile({ compact = false }) {
             }}
           >
             <LogOut size={18} />
-            <span>Sign out</span>
+            <span>Log out</span>
           </button>
         </div>
       )}
