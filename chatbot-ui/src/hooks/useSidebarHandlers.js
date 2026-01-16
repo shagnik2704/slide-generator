@@ -566,7 +566,7 @@ export function useSidebarHandlers(
      * Parses all files, sends to /batch_check_quality, displays results.
      * @param {File[]} files - Array of files to check
      */
-    const handleSidebarBatchQualityUpload = useCallback(async (files) => {
+    const handleSidebarBatchQualityUpload = useCallback(async (files, languageCode = 'hi') => {
         const workflowId = Date.now();
         const initialWorkflow = {
             id: workflowId,
@@ -577,8 +577,8 @@ export function useSidebarHandlers(
             currentStep: 0,
             steps: [
                 { label: `Parsing ${files.length} scripts`, status: 'processing' },
-                { label: 'Reviewing quality with AI', status: 'pending' },
-                { label: 'Review ready', status: 'pending' }
+                { label: 'Reviewing quality forward & back', status: 'pending' },
+                { label: 'Batch review ready', status: 'pending' }
             ],
             role: 'assistant'
         };
@@ -607,8 +607,8 @@ export function useSidebarHandlers(
                     currentStep: 1,
                     steps: [
                         { label: `Parsing ${files.length} scripts`, status: 'complete' },
-                        { label: 'Reviewing quality with AI', status: 'processing' },
-                        { label: 'Review ready', status: 'pending' }
+                        { label: 'Reviewing quality forward & back', status: 'processing' },
+                        { label: 'Batch review ready', status: 'pending' }
                     ]
                 } : msg
             ));
@@ -617,7 +617,8 @@ export function useSidebarHandlers(
             const batchResult = await apiJson('/batch_check_quality', {
                 method: 'POST',
                 body: JSON.stringify({
-                    scripts: parsedScripts.map(s => s.json_script)
+                    scripts: parsedScripts.map(s => s.json_script),
+                    language_code: languageCode
                 }),
             });
 
@@ -629,8 +630,8 @@ export function useSidebarHandlers(
                     currentStep: 3,
                     steps: [
                         { label: `Parsing ${files.length} scripts`, status: 'complete' },
-                        { label: 'Reviewing quality with AI', status: 'complete' },
-                        { label: 'Review ready', status: 'complete' }
+                        { label: 'Forward & Back translation', status: 'complete' },
+                        { label: 'Batch review ready', status: 'complete' }
                     ],
                     result: {
                         batchResults: batchResult.results.map((result, i) => ({

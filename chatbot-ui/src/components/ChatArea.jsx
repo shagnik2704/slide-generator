@@ -21,6 +21,7 @@ import TranslationResults from './TranslationResults';
 import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
+import QualityCheckModal from './QualityCheckModal';
 
 // Message Action Components
 import {
@@ -62,6 +63,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         openQualityId,
         setOpenQualityId,
         qualityReports,
+        setQualityReports,
         isQualityLoading,
 
         // Refs
@@ -118,10 +120,157 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         }
     }, [stagedFile, setStagedFile]);
 
+    // Quality Check Modal State
+    const [isQualityModalOpen, setIsQualityModalOpen] = React.useState(false);
+    const [qualityModalFile, setQualityModalFile] = React.useState(null);  // For single sidebar flow
+    const [batchQualityFiles, setBatchQualityFiles] = React.useState(null); // For batch sidebar flow
+    const [qualityModalMessage, setQualityModalMessage] = React.useState(null);  // For message button flow
+
+    // Auto-open quality modal when a quality file is staged from sidebar
+    React.useEffect(() => {
+        if (stagedFile?.type === 'quality') {
+            setQualityModalFile(stagedFile.file);
+            setBatchQualityFiles(null);
+            setIsQualityModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        }
+    }, [stagedFile, setStagedFile]);
+
+    // Handler to open quality check modal with message context (for message button flow)
+    const handleOpenQualityModal = (msg) => {
+        setQualityModalMessage(msg);
+        setQualityModalFile(null);
+        setBatchQualityFiles(null);
+        setIsQualityModalOpen(true);
+    };
+
+    // Handler for quality check with language selection
+    const handleQualityCheckWithLanguage = async ({ file, jsonScript, languageCode }) => {
+        // If triggered from batch quality floral
+        if (batchQualityFiles) {
+            await handleSidebarBatchQualityUpload(batchQualityFiles, languageCode);
+            setBatchQualityFiles(null);
+            return;
+        }
+
+        // If triggered from sidebar (single file flow), run the sidebar quality upload with WorkflowCard
+        if (qualityModalFile) {
+            const workflowId = Date.now();
+            const languageName = languageCode === 'hi' ? 'Hindi' : languageCode; // Will be updated after API call
+
+            const initialWorkflow = {
+                id: workflowId,
+                type: 'workflow',
+                tool: 'quality_check',
+                filename: qualityModalFile.name,
+                status: 'processing',
+                currentStep: 0,
+                steps: [
+                    { label: `Parsing ${qualityModalFile.name}`, status: 'processing' },
+                    { label: `Translating (English ↔ Target Language)`, status: 'pending' },
+                    { label: 'Analyzing quality', status: 'pending' }
+                ],
+                role: 'assistant'
+            };
+
+            setUploadMessages(prev => [...prev, initialWorkflow]);
+
+            try {
+                // Step 1: Parse the script
+                const formData = new FormData();
+                formData.append('file', qualityModalFile);
+                const parseData = await apiFormData('/parse_script', formData);
+
+                // Update to Step 2
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        currentStep: 1,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ Target Language)`, status: 'processing' },
+                            { label: 'Analyzing quality', status: 'pending' }
+                        ]
+                    } : msg
+                ));
+
+                // Step 2 & 3: Run quality check (includes translation and comparison)
+                const qualityData = await apiJson('/check_quality', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        json_script: parseData.json_script,
+                        language_code: languageCode
+                    })
+                });
+
+                // Update to Step 3 (complete)
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        currentStep: 2,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ ${qualityData.language_name})`, status: 'complete' },
+                            { label: 'Analyzing quality', status: 'processing' }
+                        ]
+                    } : msg
+                ));
+
+                // Small delay for visual feedback
+                await new Promise(r => setTimeout(r, 500));
+
+                // Update to Complete
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        status: 'complete',
+                        currentStep: 3,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ ${qualityData.language_name})`, status: 'complete' },
+                            { label: 'Quality analysis complete', status: 'complete' }
+                        ],
+                        result: {
+                            qualityReport: qualityData,
+                            jsonScript: parseData.json_script
+                        }
+                    } : msg
+                ));
+
+                // Store quality report and auto-open
+                setQualityReports(prev => ({ ...prev, [workflowId]: qualityData }));
+                setOpenQualityId(workflowId);
+
+            } catch (error) {
+                console.error('Quality check error:', error);
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        status: 'error',
+                        error: error.message
+                    } : msg
+                ));
+            }
+
+            setQualityModalFile(null);
+            return;
+        }
+
+        // If triggered from message button flow
+        if (qualityModalMessage) {
+            await handleQualityCheck(jsonScript, qualityModalMessage.id, languageCode);
+            setQualityModalMessage(null);
+        }
+    };
+
     // Handler to close modal and start upload based on mode
     const handleBatchUpload = (files) => {
         if (batchMode === 'quality') {
-            handleSidebarBatchQualityUpload(files);
+            // Step 1 of 2: Store files and open language selection modal
+            setBatchQualityFiles(files);
+            setQualityModalFile(null);
+            setQualityModalMessage(null);
+            setIsQualityModalOpen(true);
         } else {
             handleSidebarBatchComplianceUpload(files);
         }
@@ -509,6 +658,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                         isQualityLoading={isQualityLoading}
                                         onGenerateSlides={handleGenerateSlides}
                                         onQualityCheck={handleQualityCheck}
+                                        onOpenQualityModal={handleOpenQualityModal}
                                         onUpdateComplianceReport={handleUpdateComplianceReport}
                                     />
                                 )}
@@ -706,6 +856,19 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                 }}
                 file={translationFile}
                 onTranslate={handleTranslation}
+            />
+
+            {/* Quality Check Modal - Single language selection */}
+            <QualityCheckModal
+                isOpen={isQualityModalOpen}
+                onClose={() => {
+                    setIsQualityModalOpen(false);
+                    setQualityModalFile(null);
+                    setQualityModalMessage(null);
+                }}
+                file={qualityModalFile || qualityModalMessage?.file}
+                jsonScript={qualityModalMessage?.jsonScript}
+                onSubmit={handleQualityCheckWithLanguage}
             />
 
             {/* Ask AI Chat - only show in outline_chat mode */}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Languages } from 'lucide-react';
 import ComplianceReport from '../ComplianceReport';
 import QualityReport from '../QualityReport';
 
@@ -19,6 +19,7 @@ export default function ScriptUploadedActions({
     isQualityLoading,
     onGenerateSlides,
     onQualityCheck,
+    onOpenQualityModal,  // New: Opens the language selection modal
     onUpdateComplianceReport,
 }) {
     return (
@@ -94,7 +95,7 @@ export default function ScriptUploadedActions({
                 </button>
             )}
 
-            {/* Quality Check Button - hidden for Admin Compliance */}
+            {/* Quality Check Button - opens language selection modal */}
             {!msg.hideQualityCheck && (
                 <button
                     onClick={() => {
@@ -102,7 +103,11 @@ export default function ScriptUploadedActions({
                             setOpenQualityId(null);
                         } else if (qualityReports[msg.id] || msg.qualityReport) {
                             setOpenQualityId(msg.id);
+                        } else if (onOpenQualityModal) {
+                            // Open language selection modal
+                            onOpenQualityModal(msg);
                         } else {
+                            // Fallback: Direct Hindi quality check (backward compatibility)
                             onQualityCheck(msg.jsonScript, msg.id);
                         }
                     }}
@@ -111,9 +116,9 @@ export default function ScriptUploadedActions({
                         padding: '0.75rem 1.5rem',
                         background: openQualityId === msg.id
                             ? 'var(--accent-primary)'
-                            : 'var(--bg-secondary)',
+                            : 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
                         color: openQualityId === msg.id ? 'white' : 'var(--text-primary)',
-                        border: '1px solid var(--border-color)',
+                        border: '1px solid var(--accent-primary)',
                         borderRadius: '0.75rem',
                         cursor: isQualityLoading ? 'wait' : 'pointer',
                         fontWeight: 600,
@@ -135,11 +140,12 @@ export default function ScriptUploadedActions({
                         e.currentTarget.style.boxShadow = 'none';
                     }}
                 >
-                    🌐 {isQualityLoading && openQualityId === msg.id
+                    <Languages size={18} />
+                    {isQualityLoading && openQualityId === msg.id
                         ? 'Checking...'
                         : openQualityId === msg.id
                             ? 'Close Quality'
-                            : 'Quality Check (Hindi)'}
+                            : 'Quality Check'}
                 </button>
             )}
 

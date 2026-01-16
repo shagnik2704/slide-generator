@@ -13,13 +13,15 @@ import {
     FileText,
     ShieldCheck,
     ClipboardCheck,
-    ListChecks
+    ListChecks,
+    Globe
 } from 'lucide-react';
 import ImageWorkflow from './ImageWorkflow';
 import VoicePreview from './VoicePreview';
 import TranslationResults from './TranslationResults';
 import SlidesPreview from './SlidesPreview';
 import BatchResultsList from './BatchResultsList';
+import QualityReport from './QualityReport';
 import { ScriptUploadedActions, ScriptReviewActions } from './message-actions';
 
 /**
@@ -57,6 +59,7 @@ const WorkflowCard = ({
         slides: <Presentation size={18} />,
         compliance: <ShieldCheck size={18} />,
         quality: <ListChecks size={18} />,
+        quality_check: <Globe size={18} />,
         batch_compliance: <ClipboardCheck size={18} />,
         batch_quality: <ListChecks size={18} />,
         script: <FileText size={18} />,
@@ -70,6 +73,7 @@ const WorkflowCard = ({
         slides: 'Slides Generation',
         compliance: 'Admin Compliance Check',
         quality: 'Quality Compliance Review',
+        quality_check: 'Quality Compliance Check',
         batch_compliance: 'Batch Compliance Check',
         batch_quality: 'Batch Quality Review',
         script: 'Script Generation'
@@ -270,6 +274,13 @@ const WorkflowCard = ({
                                     isQualityLoading={isQualityLoading}
                                     onQualityCheck={onQualityCheck}
                                     onUpdateComplianceReport={onUpdateComplianceReport}
+                                />
+                            )}
+                            {tool === 'quality_check' && result.qualityReport && (
+                                <QualityReport
+                                    report={result.qualityReport}
+                                    isOpen={true}
+                                    onClose={() => { }}
                                 />
                             )}
                             {tool === 'script' && (

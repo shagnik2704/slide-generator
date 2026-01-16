@@ -12,7 +12,14 @@ const QualityReport = ({ report, isOpen, onClose }) => {
     // Don't render if not open or no report
     if (!isOpen || !report) return null;
 
-    const { checks = [], summary = {}, translated_script: translatedScript } = report;
+    const {
+        checks = [],
+        summary = {},
+        translated_script: translatedScript,
+        language_code: languageCode = 'hi',
+        language_name: languageName = 'Hindi',
+        language_native: languageNative = 'हिंदी'
+    } = report;
 
     const toggleSlide = (slideNum) => {
         setExpandedSlide(expandedSlide === slideNum ? null : slideNum);
@@ -42,7 +49,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                     gap: '1rem',
                 }}>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Quality Report (Hindi)
+                        Quality Report ({languageName})
                     </span>
                     <span style={{
                         fontSize: '0.85em',
@@ -184,19 +191,14 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                         gap: '0.75rem'
                     }}>
                         <Globe size={18} style={{ color: 'var(--accent-primary)' }} />
-                        Hindi Translation
-                        {translatedScript.title_hindi && (
-                            <span style={{
-                                fontWeight: 'normal',
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9em',
-                                marginLeft: '0.5rem',
-                                paddingLeft: '0.75rem',
-                                borderLeft: '1px solid var(--border-color)'
-                            }}>
-                                {translatedScript.title_hindi}
-                            </span>
-                        )}
+                        {languageName} Translation
+                        <span style={{
+                            fontSize: '0.9em',
+                            color: 'var(--text-secondary)',
+                            fontWeight: 'normal'
+                        }}>
+                            ({languageNative})
+                        </span>
                     </h4>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -287,7 +289,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Column 2: Hindi Translation */}
+                                            {/* Column 2: Language Translation */}
                                             <div>
                                                 <label style={{
                                                     display: 'block',
@@ -298,7 +300,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                                     letterSpacing: '0.1em',
                                                     fontWeight: 700,
                                                 }}>
-                                                    Hindi Translation
+                                                    {languageName} Translation
                                                 </label>
                                                 <div style={{
                                                     padding: '1rem',
@@ -387,7 +389,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                 fontSize: '0.85rem',
                 color: 'var(--text-secondary)',
             }}>
-                <strong style={{ color: 'var(--text-primary)' }}>How it works:</strong> English → Hindi → Back to English. If back-translation matches original, the translation is accurate.
+                <strong style={{ color: 'var(--text-primary)' }}>How it works:</strong> English → {languageName} → Back to English. If back-translation matches original, the translation is accurate.
             </div>
 
             <style>{`
