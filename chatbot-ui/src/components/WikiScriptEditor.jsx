@@ -74,17 +74,18 @@ const WikiCell = ({ value, onChange, isHeader = false, width }) => {
     };
 
     const cellStyle = {
-        padding: '0.4em 0.6em',
-        border: '1px solid #a2a9b1',
+        padding: '0.75rem 1rem',
+        border: '1px solid var(--border-color)',
         verticalAlign: 'top',
-        backgroundColor: isHeader ? '#eaecf0' : '#ffffff',
+        backgroundColor: isHeader ? 'var(--bg-secondary)' : 'transparent',
         fontWeight: isHeader ? 'bold' : 'normal',
         width: width,
-        minHeight: '2em',
-        outline: isFocused ? '2px solid #36c' : 'none',
+        minHeight: '2.5em',
+        outline: isFocused ? '2px solid var(--accent-primary)' : 'none',
         outlineOffset: '-2px',
         cursor: 'text',
         lineHeight: '1.6',
+        color: 'var(--text-primary)',
     };
 
     if (isHeader) {
@@ -133,13 +134,13 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
     };
 
     const buttonStyle = (disabled, direction) => ({
-        background: animating === direction ? '#e6f3ff' : 'none',
+        background: animating === direction ? 'var(--bg-tertiary)' : 'none',
         border: '1px solid transparent',
-        borderRadius: '4px',
+        borderRadius: '8px',
         padding: '6px',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.3 : 1,
-        color: '#36c',
+        color: 'var(--accent-primary)',
         transition: 'all 0.15s ease',
         transform: animating === direction
             ? (direction === 'up' ? 'translateY(-3px)' : 'translateY(3px)')
@@ -148,24 +149,24 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
 
     return (
         <td style={{
-            padding: '0.5em',
-            border: '1px solid #a2a9b1',
-            backgroundColor: '#f8f9fa',
+            padding: '0.75rem',
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-secondary)',
             textAlign: 'center',
-            width: '60px',
+            width: '70px',
             verticalAlign: 'middle',
         }}>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '8px',
             }}>
                 <span style={{
-                    fontWeight: 600,
-                    fontSize: '0.9em',
-                    color: '#202122',
-                    marginBottom: '6px'
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    color: 'var(--text-primary)',
+                    marginBottom: '4px'
                 }}>
                     {rowNumber}
                 </span>
@@ -173,19 +174,8 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
                     onClick={handleMoveUp}
                     disabled={isFirst}
                     style={buttonStyle(isFirst, 'up')}
+                    className="row-btn"
                     title="Move row up"
-                    onMouseEnter={(e) => {
-                        if (!isFirst) {
-                            e.currentTarget.style.background = '#e6f3ff';
-                            e.currentTarget.style.borderColor = '#36c';
-                            e.currentTarget.style.transform = 'scale(1.15)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.transform = 'scale(1)';
-                    }}
                 >
                     <ChevronUp size={20} strokeWidth={2.5} />
                 </button>
@@ -193,47 +183,27 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
                     onClick={handleMoveDown}
                     disabled={isLast}
                     style={buttonStyle(isLast, 'down')}
+                    className="row-btn"
                     title="Move row down"
-                    onMouseEnter={(e) => {
-                        if (!isLast) {
-                            e.currentTarget.style.background = '#e6f3ff';
-                            e.currentTarget.style.borderColor = '#36c';
-                            e.currentTarget.style.transform = 'scale(1.15)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.transform = 'scale(1)';
-                    }}
                 >
                     <ChevronDown size={20} strokeWidth={2.5} />
                 </button>
                 <button
                     onClick={onDelete}
+                    className="row-btn delete-btn"
                     style={{
                         background: 'none',
                         border: '1px solid transparent',
-                        borderRadius: '4px',
-                        padding: '4px',
+                        borderRadius: '8px',
+                        padding: '6px',
                         cursor: 'pointer',
-                        color: '#c33',
+                        color: '#d93025',
                         transition: 'all 0.15s ease',
                         marginTop: '4px',
                     }}
                     title="Delete row"
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#fee';
-                        e.currentTarget.style.borderColor = '#c33';
-                        e.currentTarget.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.transform = 'scale(1)';
-                    }}
                 >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                 </button>
             </div>
         </td>
@@ -315,45 +285,50 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
     return (
         <div style={{
             marginTop: '1rem',
-            background: '#fff',
-            borderRadius: '4px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            background: 'var(--bg-primary)',
+            borderRadius: '12px',
+            boxShadow: 'var(--shadow-md)',
             overflow: 'hidden',
+            border: '1px solid var(--border-color)',
         }}>
             {/* Toolbar */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0.75rem 1rem',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #a2a9b1',
+                padding: '0.875rem 1.25rem',
+                background: 'var(--bg-secondary)',
+                borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
-                    fontFamily: 'sans-serif',
                 }}>
-                    <span style={{ fontWeight: 600, color: '#202122' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         Script Editor
                     </span>
                     <span style={{
                         fontSize: '0.85em',
-                        color: '#54595d',
-                        background: '#eaecf0',
+                        color: 'var(--text-secondary)',
+                        background: 'var(--bg-tertiary)',
                         padding: '0.2em 0.6em',
-                        borderRadius: '3px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
                     }}>
                         {slides.length} rows
                     </span>
                     {hasChanges && (
                         <span style={{
                             fontSize: '0.85em',
-                            color: '#d33',
-                            fontWeight: 500,
+                            color: '#d93025',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
                         }}>
-                            • Unsaved changes
+                            <span style={{ width: '6px', height: '6px', background: '#d93025', borderRadius: '50%' }}></span>
+                            Unsaved changes
                         </span>
                     )}
                 </div>
@@ -364,15 +339,15 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
                                 onClick={handleReset}
                                 style={{
                                     padding: '0.4rem 0.8rem',
-                                    background: '#fff',
-                                    border: '1px solid #a2a9b1',
-                                    borderRadius: '3px',
+                                    background: 'var(--bg-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    fontSize: '0.9rem',
-                                    color: '#54595d',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-secondary)',
                                 }}
                             >
                                 <RotateCcw size={14} />
@@ -382,16 +357,16 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
                                 onClick={handleSave}
                                 style={{
                                     padding: '0.4rem 0.8rem',
-                                    background: '#36c',
+                                    background: 'var(--accent-primary)',
                                     border: 'none',
-                                    borderRadius: '3px',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    fontSize: '0.9rem',
-                                    color: '#fff',
-                                    fontWeight: 500,
+                                    fontSize: '0.85rem',
+                                    color: 'white',
+                                    fontWeight: 600,
                                 }}
                             >
                                 <Save size={14} />
@@ -406,7 +381,7 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#54595d',
+                            color: 'var(--text-secondary)',
                         }}
                     >
                         <X size={18} />
@@ -416,44 +391,53 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
 
             {/* Wiki Table */}
             <div style={{
-                padding: '1rem',
+                padding: '1.25rem',
                 overflowX: 'auto',
-                background: '#fff',
+                background: 'var(--bg-primary)',
             }}>
                 <table style={{
                     width: '100%',
-                    borderCollapse: 'collapse',
-                    fontFamily: '"Linux Libertine", "Georgia", "Times", serif',
+                    borderCollapse: 'separate',
+                    borderSpacing: '0',
                     fontSize: '14px',
                     lineHeight: '1.6',
-                    border: '1px solid #a2a9b1',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
                 }}>
                     <thead>
                         <tr>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
-                                width: '50px',
+                                width: '70px',
                                 textAlign: 'center',
+                                color: 'var(--text-primary)',
                             }}>
                                 #
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '35%',
+                                color: 'var(--text-primary)',
+                                textAlign: 'left'
                             }}>
                                 Visual Cue
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid #a2a9b1',
-                                backgroundColor: '#eaecf0',
+                                padding: '0.75rem',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
+                                color: 'var(--text-primary)',
+                                textAlign: 'left'
                             }}>
                                 Narration
                             </th>
@@ -486,57 +470,71 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
 
                 {/* Add Row Button */}
                 <div style={{
-                    marginTop: '0.75rem',
+                    marginTop: '1.25rem',
                     textAlign: 'center',
                 }}>
                     <button
                         onClick={addSlide}
                         style={{
-                            padding: '0.4rem 1rem',
-                            background: '#fff',
-                            border: '1px dashed #a2a9b1',
-                            borderRadius: '3px',
+                            padding: '0.6rem 1.5rem',
+                            background: 'var(--bg-primary)',
+                            border: '2px dashed var(--border-color)',
+                            borderRadius: '8px',
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.4rem',
+                            gap: '0.5rem',
                             fontSize: '0.9rem',
-                            color: '#36c',
-                            fontFamily: 'sans-serif',
+                            color: 'var(--accent-primary)',
+                            fontWeight: 600,
+                            transition: 'all 0.2s ease',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#36c';
-                            e.currentTarget.style.background = '#f8f9fa';
+                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                            e.currentTarget.style.background = 'var(--bg-secondary)';
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '#a2a9b1';
-                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.background = 'var(--bg-primary)';
                         }}
                     >
-                        <Plus size={16} />
-                        Add Row
+                        <Plus size={18} />
+                        Add New Row
                     </button>
                 </div>
 
                 {/* Help text */}
                 <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    background: '#f8f9fa',
-                    border: '1px solid #eaecf0',
-                    borderRadius: '3px',
+                    marginTop: '1.5rem',
+                    padding: '1rem',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
                     fontSize: '0.85rem',
-                    color: '#54595d',
-                    fontFamily: 'sans-serif',
+                    color: 'var(--text-secondary)',
                 }}>
-                    <strong>Tips:</strong> Click any cell to edit directly. Use <code style={{
-                        background: '#eaecf0',
-                        padding: '0.1em 0.3em',
-                        borderRadius: '2px'
+                    <strong style={{ color: 'var(--text-primary)' }}>Tips:</strong> Click any cell to edit directly. Use <code style={{
+                        background: 'var(--bg-primary)',
+                        padding: '0.1em 0.4em',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border-color)'
                     }}>Ctrl+B</code> for bold text.
                     Text like <strong>'''bold'''</strong> will be rendered as <strong>bold</strong>.
                 </div>
             </div>
+
+            <style>{`
+                .row-btn:hover {
+                    background: var(--bg-tertiary) !important;
+                    border-color: var(--accent-primary) !important;
+                    transform: scale(1.1) !important;
+                }
+                .delete-btn:hover {
+                    background: rgba(217, 48, 37, 0.1) !important;
+                    border-color: #d93025 !important;
+                    color: #d93025 !important;
+                }
+            `}</style>
         </div>
     );
 };

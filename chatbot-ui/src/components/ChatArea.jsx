@@ -445,7 +445,23 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
                                 {msg.type === 'workflow' ? (
-                                    <WorkflowCard workflow={msg} />
+                                    <WorkflowCard
+                                        workflow={msg}
+                                        isTyping={isTyping}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        openQualityId={openQualityId}
+                                        setOpenQualityId={setOpenQualityId}
+                                        qualityReports={qualityReports}
+                                        isQualityLoading={isQualityLoading}
+                                        onQualityCheck={handleQualityCheck}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        // Script-related props
+                                        openEditorId={openEditorId}
+                                        setOpenEditorId={setOpenEditorId}
+                                        onDownloadScriptDocx={handleDownloadScriptDocx}
+                                        onSaveScriptEdit={handleSaveScriptEdit}
+                                    />
                                 ) : (
                                     <MessageBubble
                                         message={msg}
@@ -507,7 +523,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                         onGenerateSlides={handleGenerateSlides}
                                         onDownloadScriptDocx={handleDownloadScriptDocx}
                                         onUploadEditedScript={handleUploadEditedScript}
-                                        onExportMediaWiki={handleExportMediaWiki}
                                         onSaveScriptEdit={handleSaveScriptEdit}
                                     />
                                 )}

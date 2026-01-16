@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 /**
  * Editable cell using contentEditable - exactly like WikiScriptEditor
  */
-const WikiCell = ({ value, onChange, width, placeholder }) => {
+const WikiCell = ({ value, onChange, width, placeholder, style = {} }) => {
     const cellRef = useRef(null);
     const [isFocused, setIsFocused] = useState(false);
 
@@ -15,10 +15,10 @@ const WikiCell = ({ value, onChange, width, placeholder }) => {
             cellRef.current.innerText = value || '';
             // Show placeholder when empty
             if (!value && placeholder) {
-                cellRef.current.style.color = 'var(--text-secondary, #999)';
+                cellRef.current.style.color = 'var(--text-secondary)';
                 cellRef.current.innerText = placeholder;
             } else {
-                cellRef.current.style.color = 'var(--text-primary, #202122)';
+                cellRef.current.style.color = 'var(--text-primary)';
             }
         }
     }, [value, isFocused, placeholder]);
@@ -41,7 +41,7 @@ const WikiCell = ({ value, onChange, width, placeholder }) => {
         setIsFocused(true);
         if (cellRef.current && cellRef.current.innerText === placeholder) {
             cellRef.current.innerText = '';
-            cellRef.current.style.color = 'var(--text-primary, #202122)';
+            cellRef.current.style.color = 'var(--text-primary)';
         }
     };
 
@@ -52,17 +52,18 @@ const WikiCell = ({ value, onChange, width, placeholder }) => {
             onBlur={handleBlur}
             onFocus={handleFocus}
             style={{
-                padding: '0.4em 0.6em',
-                border: '1px solid var(--border-color, #a2a9b1)',
+                padding: '0.75rem 1rem',
+                border: '1px solid var(--border-color)',
                 verticalAlign: 'top',
                 backgroundColor: 'transparent',
                 width: width,
-                minHeight: '2em',
-                outline: isFocused ? '2px solid var(--accent-primary, #36c)' : 'none',
+                minHeight: '2.5rem',
+                outline: isFocused ? '2px solid var(--accent-primary)' : 'none',
                 outlineOffset: '-2px',
                 cursor: 'text',
                 lineHeight: '1.6',
-                color: value ? 'var(--text-primary, #202122)' : 'var(--text-secondary, #999)',
+                color: value ? 'var(--text-primary)' : 'var(--text-secondary)',
+                ...style,
             }}
             suppressContentEditableWarning={true}
         />
@@ -147,56 +148,63 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
     return (
         <div style={{
             marginTop: '1rem',
-            background: 'var(--bg-secondary, #fff)',
-            borderRadius: '4px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            background: 'var(--bg-primary)',
+            borderRadius: '12px',
+            boxShadow: 'var(--shadow-md)',
             overflow: 'hidden',
-            border: '1px solid var(--border-color, #a2a9b1)',
+            border: '1px solid var(--border-color)',
         }}>
             {/* Toolbar - Exactly like WikiScriptEditor */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0.75rem 1rem',
-                background: 'var(--bg-tertiary, #f8f9fa)',
-                borderBottom: '1px solid var(--border-color, #a2a9b1)',
+                padding: '0.875rem 1.25rem',
+                background: 'var(--bg-secondary)',
+                borderBottom: '1px solid var(--border-color)',
             }}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
-                    fontFamily: 'sans-serif',
                 }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary, #202122)' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         Compliance Report
                     </span>
                     <span style={{
                         fontSize: '0.85em',
-                        color: 'var(--text-secondary, #54595d)',
-                        background: 'var(--bg-secondary, #eaecf0)',
+                        color: 'var(--text-secondary)',
+                        background: 'var(--bg-tertiary)',
                         padding: '0.2em 0.6em',
-                        borderRadius: '3px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)'
                     }}>
                         {checks.length} checks
                     </span>
-                    <span style={{
+                    <div style={{
                         fontSize: '0.85em',
-                        background: 'var(--bg-secondary, #eaecf0)',
+                        background: 'var(--bg-tertiary)',
                         padding: '0.2em 0.6em',
-                        borderRadius: '3px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        gap: '0.75rem'
                     }}>
-                        <span style={{ color: '#14866d', fontWeight: 600 }}>{summary?.ai_passed || 0} ✓</span>
-                        {' · '}
-                        <span style={{ color: '#d33', fontWeight: 600 }}>{summary?.ai_failed || 0} ✗</span>
-                    </span>
+                        <span style={{ color: '#34a853', fontWeight: 600 }}>{summary?.ai_passed || 0} ✓</span>
+                        <span style={{ width: '1px', background: 'var(--border-color)' }}></span>
+                        <span style={{ color: '#d93025', fontWeight: 600 }}>{summary?.ai_failed || 0} ✗</span>
+                    </div>
                     {hasChanges && (
                         <span style={{
                             fontSize: '0.85em',
-                            color: '#d33',
-                            fontWeight: 500,
+                            color: '#d93025',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
                         }}>
-                            • Unsaved changes
+                            <span style={{ width: '6px', height: '6px', background: '#d93025', borderRadius: '50%' }}></span>
+                            Unsaved changes
                         </span>
                     )}
                 </div>
@@ -205,15 +213,16 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                         onClick={handleDownloadDocx}
                         style={{
                             padding: '0.4rem 0.8rem',
-                            background: '#fff',
-                            border: '1px solid #a2a9b1',
-                            borderRadius: '3px',
+                            background: 'var(--bg-primary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.3rem',
-                            fontSize: '0.9rem',
-                            color: '#54595d',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-primary)',
+                            fontWeight: 500,
                         }}
                     >
                         <Download size={14} />
@@ -225,15 +234,15 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                 onClick={handleReset}
                                 style={{
                                     padding: '0.4rem 0.8rem',
-                                    background: '#fff',
-                                    border: '1px solid #a2a9b1',
-                                    borderRadius: '3px',
+                                    background: 'var(--bg-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    fontSize: '0.9rem',
-                                    color: '#54595d',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-secondary)',
                                 }}
                             >
                                 <RotateCcw size={14} />
@@ -243,16 +252,16 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                 onClick={handleSave}
                                 style={{
                                     padding: '0.4rem 0.8rem',
-                                    background: '#36c',
+                                    background: 'var(--accent-primary)',
                                     border: 'none',
-                                    borderRadius: '3px',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    fontSize: '0.9rem',
-                                    color: '#fff',
-                                    fontWeight: 500,
+                                    fontSize: '0.85rem',
+                                    color: 'white',
+                                    fontWeight: 600,
                                 }}
                             >
                                 <Save size={14} />
@@ -267,7 +276,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#54595d',
+                            color: 'var(--text-secondary)',
                         }}
                     >
                         <X size={18} />
@@ -277,70 +286,79 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
 
             {/* Wiki Table */}
             <div style={{
-                padding: '1rem',
+                padding: '1.25rem',
                 overflowX: 'auto',
-                background: 'var(--bg-secondary, #fff)',
+                background: 'var(--bg-primary, #fff)',
             }}>
                 <table style={{
                     width: '100%',
                     minWidth: '900px',
-                    borderCollapse: 'collapse',
-                    fontFamily: 'Arial, sans-serif',
+                    borderCollapse: 'separate',
+                    borderSpacing: '0',
                     fontSize: '14px',
                     lineHeight: '1.6',
                     border: '1px solid var(--border-color, #a2a9b1)',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
                 }}>
                     <thead>
                         <tr>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid var(--border-color, #a2a9b1)',
-                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '40px',
                                 textAlign: 'center',
-                                color: 'var(--text-primary, #202122)',
+                                color: 'var(--text-primary)',
                             }}>
                                 #
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid var(--border-color, #a2a9b1)',
-                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '35%',
-                                color: 'var(--text-primary, #202122)',
+                                color: 'var(--text-primary)',
+                                textAlign: 'left'
                             }}>
                                 Criteria
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid var(--border-color, #a2a9b1)',
-                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '60px',
                                 textAlign: 'center',
-                                color: 'var(--text-primary, #202122)',
+                                color: 'var(--text-primary)',
                             }}>
                                 AI
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid var(--border-color, #a2a9b1)',
-                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
+                                padding: '0.75rem',
+                                borderRight: '1px solid var(--border-color)',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '30%',
-                                color: 'var(--text-primary, #202122)',
+                                color: 'var(--text-primary)',
+                                textAlign: 'left'
                             }}>
                                 AI Notes
                             </th>
                             <th style={{
-                                padding: '0.4em 0.6em',
-                                border: '1px solid var(--border-color, #a2a9b1)',
-                                backgroundColor: 'var(--bg-tertiary, #eaecf0)',
+                                padding: '0.75rem',
+                                borderBottom: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
                                 fontWeight: 'bold',
                                 width: '25%',
-                                color: 'var(--text-primary, #202122)',
+                                color: 'var(--text-primary)',
+                                textAlign: 'left'
                             }}>
                                 Human Review
                             </th>
@@ -349,52 +367,55 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                     <tbody>
                         {checks.map((check, index) => {
                             const isFailed = check.ai_review === false;
+                            const isLast = index === checks.length - 1;
                             return (
-                                <tr 
+                                <tr
                                     key={check.id || index}
                                     style={{
-                                        backgroundColor: isFailed ? 'rgba(221, 51, 51, 0.08)' : 'var(--bg-secondary, #fff)',
+                                        backgroundColor: isFailed ? 'rgba(217, 48, 37, 0.05)' : 'transparent',
                                     }}
                                 >
                                     {/* Row Number */}
                                     <td style={{
-                                        padding: '0.4em 0.6em',
-                                        border: '1px solid var(--border-color, #a2a9b1)',
-                                        backgroundColor: isFailed ? 'rgba(221, 51, 51, 0.12)' : 'var(--bg-tertiary, #f8f9fa)',
+                                        padding: '0.75rem',
+                                        borderRight: '1px solid var(--border-color)',
+                                        borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
+                                        backgroundColor: isFailed ? 'rgba(217, 48, 37, 0.08)' : 'var(--bg-secondary)',
                                         textAlign: 'center',
                                         fontWeight: 600,
-                                        color: 'var(--text-primary, #202122)',
+                                        color: 'var(--text-primary)',
                                     }}>
                                         {index + 1}
                                     </td>
                                     {/* Criteria - Read only */}
                                     <td style={{
-                                        padding: '0.4em 0.6em',
-                                        border: '1px solid var(--border-color, #a2a9b1)',
+                                        padding: '0.75rem',
+                                        borderRight: '1px solid var(--border-color)',
+                                        borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
                                         verticalAlign: 'top',
-                                        backgroundColor: 'transparent',
-                                        color: 'var(--text-primary, #202122)',
+                                        color: 'var(--text-primary)',
                                         fontWeight: isFailed ? 600 : 400,
                                     }}>
                                         {check.criteria}
                                     </td>
                                     {/* AI Status - Tick/Cross */}
                                     <td style={{
-                                        padding: '0.4em 0.6em',
-                                        border: '1px solid var(--border-color, #a2a9b1)',
+                                        padding: '0.75rem',
+                                        borderRight: '1px solid var(--border-color)',
+                                        borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
                                         textAlign: 'center',
                                         verticalAlign: 'middle',
-                                        backgroundColor: check.ai_review === true ? 'rgba(20, 134, 109, 0.15)' :
-                                            check.ai_review === false ? 'rgba(221, 51, 51, 0.2)' : 'transparent',
+                                        backgroundColor: check.ai_review === true ? 'rgba(52, 168, 83, 0.1)' :
+                                            check.ai_review === false ? 'rgba(217, 48, 37, 0.15)' : 'transparent',
                                         fontSize: '1.3em',
                                         fontWeight: 'bold',
                                     }}>
                                         {check.ai_review === true ? (
-                                            <span style={{ color: '#14866d' }}>✓</span>
+                                            <span style={{ color: '#34a853' }}>✓</span>
                                         ) : check.ai_review === false ? (
-                                            <span style={{ color: '#d33' }}>✗</span>
+                                            <span style={{ color: '#d93025' }}>✗</span>
                                         ) : (
-                                            <span style={{ color: 'var(--text-secondary, #54595d)' }}>—</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>—</span>
                                         )}
                                     </td>
                                     {/* AI Notes - Editable */}
@@ -403,6 +424,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                         onChange={(value) => updateCheck(index, 'ai_notes', value)}
                                         width="30%"
                                         placeholder={isFailed && !check.ai_notes ? 'Click to see why this failed...' : 'No notes'}
+                                        style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-color)' }}
                                     />
                                     {/* Human Review - Editable */}
                                     <WikiCell
@@ -410,6 +432,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                         onChange={(value) => updateCheck(index, 'human_review', value)}
                                         width="25%"
                                         placeholder="Add your review..."
+                                        style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-color)' }}
                                     />
                                 </tr>
                             );
@@ -419,18 +442,17 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
 
                 {/* Help text */}
                 <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    background: 'var(--bg-tertiary, #f8f9fa)',
-                    border: '1px solid var(--border-color, #eaecf0)',
-                    borderRadius: '3px',
+                    marginTop: '1.25rem',
+                    padding: '1rem',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
                     fontSize: '0.85rem',
-                    color: 'var(--text-secondary, #54595d)',
-                    fontFamily: 'sans-serif',
+                    color: 'var(--text-secondary)',
                 }}>
-                    <strong style={{ color: 'var(--text-primary, #202122)' }}>Tips:</strong> 
-                    {' '}<span style={{ color: '#14866d', fontWeight: 600 }}>✓</span> = AI passed, 
-                    {' '}<span style={{ color: '#d33', fontWeight: 600 }}>✗</span> = AI failed (highlighted in red). 
+                    <strong style={{ color: 'var(--text-primary)' }}>Tips:</strong>
+                    {' '}<span style={{ color: '#34a853', fontWeight: 600 }}>✓</span> = AI passed,
+                    {' '}<span style={{ color: '#d93025', fontWeight: 600 }}>✗</span> = AI failed (highlighted in red).
                     Failed checks show detailed notes explaining why they failed. Click AI Notes or Human Review cells to edit.
                 </div>
             </div>

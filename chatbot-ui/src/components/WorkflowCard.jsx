@@ -11,6 +11,7 @@ import {
     Languages,
     Presentation,
     FileText,
+    ShieldCheck,
     ClipboardCheck,
     ListChecks
 } from 'lucide-react';
@@ -19,12 +20,29 @@ import VoicePreview from './VoicePreview';
 import TranslationResults from './TranslationResults';
 import SlidesPreview from './SlidesPreview';
 import BatchResultsList from './BatchResultsList';
+import { ScriptUploadedActions, ScriptReviewActions } from './message-actions';
 
 /**
  * WorkflowCard - A lifecycle-aware component that handles tool processing states.
  * Replaces multiple chat bubbles with a single, updating card.
  */
-const WorkflowCard = ({ workflow }) => {
+const WorkflowCard = ({
+    workflow,
+    isTyping,
+    openReportId,
+    setOpenReportId,
+    openQualityId,
+    setOpenQualityId,
+    qualityReports,
+    isQualityLoading,
+    onQualityCheck,
+    onUpdateComplianceReport,
+    // Script-related props
+    openEditorId,
+    setOpenEditorId,
+    onDownloadScriptDocx,
+    onSaveScriptEdit
+}) => {
     const [isOpen, setIsOpen] = useState(true);
 
     if (!workflow) return null;
@@ -37,8 +55,11 @@ const WorkflowCard = ({ workflow }) => {
         voice: <Mic size={18} />,
         translation: <Languages size={18} />,
         slides: <Presentation size={18} />,
+        compliance: <ShieldCheck size={18} />,
+        quality: <ListChecks size={18} />,
         batch_compliance: <ClipboardCheck size={18} />,
         batch_quality: <ListChecks size={18} />,
+        script: <FileText size={18} />,
         default: <FileText size={18} />
     };
 
@@ -47,8 +68,11 @@ const WorkflowCard = ({ workflow }) => {
         voice: 'Voice Generation',
         translation: 'Script Translation',
         slides: 'Slides Generation',
+        compliance: 'Admin Compliance Check',
+        quality: 'Quality Compliance Review',
         batch_compliance: 'Batch Compliance Check',
-        batch_quality: 'Batch Quality Review'
+        batch_quality: 'Batch Quality Review',
+        script: 'Script Generation'
     };
 
     // Calculate Progress
@@ -234,12 +258,41 @@ const WorkflowCard = ({ workflow }) => {
                                     type="quality"
                                 />
                             )}
+                            {(tool === 'compliance' || tool === 'quality') && (
+                                <ScriptUploadedActions
+                                    msg={{ ...result, id: workflow.id }}
+                                    isTyping={isTyping}
+                                    openReportId={openReportId}
+                                    setOpenReportId={setOpenReportId}
+                                    openQualityId={openQualityId}
+                                    setOpenQualityId={setOpenQualityId}
+                                    qualityReports={qualityReports}
+                                    isQualityLoading={isQualityLoading}
+                                    onQualityCheck={onQualityCheck}
+                                    onUpdateComplianceReport={onUpdateComplianceReport}
+                                />
+                            )}
+                            {tool === 'script' && (
+                                <ScriptReviewActions
+                                    msg={{
+                                        id: workflow.id,
+                                        jsonScript: result.jsonScript,
+                                        projectId: result.projectId,
+                                        type: 'script_review'
+                                    }}
+                                    isTyping={isTyping}
+                                    openEditorId={openEditorId}
+                                    setOpenEditorId={setOpenEditorId}
+                                    onDownloadScriptDocx={onDownloadScriptDocx}
+                                    onSaveScriptEdit={onSaveScriptEdit}
+                                />
+                            )}
                         </div>
                     )}
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 .workflow-header:hover {
                     background: var(--bg-tertiary) !important;
                     border-color: var(--accent-primary) !important;

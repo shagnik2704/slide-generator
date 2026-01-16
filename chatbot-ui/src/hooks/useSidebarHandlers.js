@@ -29,12 +29,23 @@ export function useSidebarHandlers(
      * Run Admin Compliance check on a script file.
      */
     const handleSidebarComplianceUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Admin Compliance check on: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'compliance',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Running compliance check', status: 'pending' },
+                { label: 'Report ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -43,6 +54,19 @@ export function useSidebarHandlers(
             formData.append('file', file);
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Running compliance check', status: 'processing' },
+                        { label: 'Report ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Run compliance check
             const complianceReport = await apiJson('/check_compliance', {
@@ -53,31 +77,38 @@ export function useSidebarHandlers(
                 }),
             });
 
-            const messageId = Date.now() + 1;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Admin Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: complianceReport,
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-            setOpenReportId(messageId);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Running compliance check', status: 'complete' },
+                        { label: 'Report ready', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: parseData.json_script,
+                        projectId: parseData.project_id,
+                        complianceReport: complianceReport,
+                        hideQualityCheck: true,
+                        hideGenerateSlides: true
+                    }
+                } : msg
+            ));
+
+            setOpenReportId(workflowId);
 
         } catch (error) {
             console.error("Compliance check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Compliance check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -87,12 +118,23 @@ export function useSidebarHandlers(
      * Run Quality Compliance check on a script file.
      */
     const handleSidebarQualityUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Quality Compliance on: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'quality',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Reviewing quality with AI', status: 'pending' },
+                { label: 'Review ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -102,39 +144,59 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Reviewing quality with AI', status: 'processing' },
+                        { label: 'Review ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
             // Step 2: Run quality check
             const qualityData = await apiJson('/check_quality', {
                 method: 'POST',
                 body: JSON.stringify({ json_script: parseData.json_script }),
             });
 
-            const messageId = Date.now() + 1;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Quality Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: null,
-                qualityReport: qualityData,
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-            setQualityReports(prev => ({ ...prev, [messageId]: qualityData }));
-            setOpenQualityId(messageId);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Reviewing quality with AI', status: 'complete' },
+                        { label: 'Review ready', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: parseData.json_script,
+                        projectId: parseData.project_id,
+                        complianceReport: null,
+                        qualityReport: qualityData,
+                        hideQualityCheck: true,
+                        hideGenerateSlides: true
+                    }
+                } : msg
+            ));
+
+            setQualityReports(prev => ({ ...prev, [workflowId]: qualityData }));
+            setOpenQualityId(workflowId);
 
         } catch (error) {
             console.error("Quality check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `Quality check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -594,6 +656,93 @@ export function useSidebarHandlers(
         }
     }, [setUploadMessages, setIsTyping]);
 
+    /**
+     * Generate a script from an outline file (using WorkflowCard).
+     */
+    const handleSidebarScriptGenerate = useCallback(async (file) => {
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'script',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Generating script with AI', status: 'pending' },
+                { label: 'Script ready for review', status: 'pending' }
+            ],
+            role: 'assistant'
+        };
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the outline
+            const formData = new FormData();
+            formData.append('file', file);
+            const parseData = await apiFormData('/upload_outline', formData);
+            const projectId = Date.now();
+            setCurrentProjectId(projectId);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating script with AI', status: 'processing' },
+                        { label: 'Script ready for review', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            // Step 2: Generate the script
+            const scriptData = await apiJson('/generate_script', {
+                method: 'POST',
+                body: JSON.stringify({
+                    outline: parseData.outline,
+                    title: `Project #${projectId}`,
+                    project_id: projectId
+                }),
+            });
+
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating script with AI', status: 'complete' },
+                        { label: 'Script ready for review', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: scriptData.json_script,
+                        projectId: projectId,
+                        outline: parseData.outline
+                    }
+                } : msg
+            ));
+
+        } catch (error) {
+            console.error("Script generation error:", error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
+        } finally {
+            setIsTyping(false);
+        }
+    }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
+
     return {
         handleSidebarComplianceUpload,
         handleSidebarQualityUpload,
@@ -602,6 +751,7 @@ export function useSidebarHandlers(
         handleSlidesUpload,
         handleSidebarBatchComplianceUpload,
         handleSidebarBatchQualityUpload,
+        handleSidebarScriptGenerate,
     };
 }
 
