@@ -26,7 +26,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
 
     // Wrap onConfirm to include voiceMode for voice uploads
     const handleConfirm = () => {
-        if (isVoice) {      
+        if (isVoice) {
             onConfirm({ voiceMode });
         } else {
             onConfirm();
@@ -264,6 +264,7 @@ const InputArea = ({
     const fileInputRef = useRef(null);
     const scriptInputRef = useRef(null);
     const scriptToWikiRef = useRef(null);
+    const voiceInputRef = useRef(null);
     const [textValue, setTextValue] = useState('');
 
     // Stage file instead of uploading immediately
@@ -274,13 +275,13 @@ const InputArea = ({
             const filename = file.name.toLowerCase();
             const validExtensions = ['.md', '.docx', '.txt', '.odt'];
             const isValid = validExtensions.some(ext => filename.endsWith(ext));
-            
+
             if (!isValid) {
                 alert('Please upload a .md, .docx, .txt, or .odt file');
                 e.target.value = '';
                 return;
             }
-            
+
             setStagedFile({ file, type: 'outline' });
             e.target.value = '';
         }
@@ -294,13 +295,13 @@ const InputArea = ({
             const filename = file.name.toLowerCase();
             const validExtensions = ['.json', '.docx', '.odt'];
             const isValid = validExtensions.some(ext => filename.endsWith(ext));
-            
+
             if (!isValid) {
                 alert('Please upload a .json, .docx, or .odt file');
                 e.target.value = '';
                 return;
             }
-            
+
             setStagedFile({ file, type: 'script' });
             e.target.value = '';
         }
@@ -317,8 +318,28 @@ const InputArea = ({
                 e.target.value = '';
                 return;
             }
-            
+
             setStagedFile({ file, type: 'wiki' });
+            e.target.value = '';
+        }
+    };
+
+    // Stage voice file for voice generation
+    const handleVoiceSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && !disabled && setStagedFile) {
+            // Validate file type
+            const filename = file.name.toLowerCase();
+            const validExtensions = ['.json', '.docx', '.odt'];
+            const isValid = validExtensions.some(ext => filename.endsWith(ext));
+
+            if (!isValid) {
+                alert('Please upload a .json, .docx, or .odt file');
+                e.target.value = '';
+                return;
+            }
+
+            setStagedFile({ file, type: 'voice' });
             e.target.value = '';
         }
     };
@@ -418,6 +439,14 @@ const InputArea = ({
                     type="file"
                     accept=".docx"
                     onChange={handleScriptToWikiSelect}
+                    disabled={disabled}
+                    style={{ display: 'none' }}
+                />
+                <input
+                    ref={voiceInputRef}
+                    type="file"
+                    accept=".json,.docx,.odt"
+                    onChange={handleVoiceSelect}
                     disabled={disabled}
                     style={{ display: 'none' }}
                 />
@@ -594,10 +623,25 @@ const InputArea = ({
                                 Script to Wiki
                             </button>
 
+
+
                             <button
-                                disabled={true}
-                                style={pillButtonStyle(true)}
-                                title="Coming soon"
+                                onClick={() => voiceInputRef.current?.click()}
+                                disabled={disabled}
+                                style={pillButtonStyle(disabled)}
+                                onMouseEnter={(e) => {
+                                    if (!disabled) {
+                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                }}
+                                title="Upload script to generate voice audio"
                             >
                                 <Mic size={16} />
                                 Generate Voice

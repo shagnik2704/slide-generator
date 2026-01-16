@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 
@@ -446,22 +446,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     </div>
                 )}
 
-                <TooltipWrapper text="Settings">
-                    <button
-                        style={iconButtonStyle}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--accent-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                        }}
-                    >
-                        <Settings size={20} />
-                        <span style={textLabelStyle}>Settings</span>
-                    </button>
-                </TooltipWrapper>
+
 
                 {/* Toggle button */}
                 <TooltipWrapper text={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
