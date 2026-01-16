@@ -39,9 +39,10 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
             border: '1px solid var(--border-color)',
             borderRadius: '1rem',
             padding: '1.25rem',
-            marginBottom: '1rem',
-            boxShadow: 'var(--shadow-md)',
+            boxShadow: 'var(--shadow-lg)',
             animation: 'slideUp 0.3s ease-out',
+            width: '100%',
+            maxWidth: '450px',
         }}>
             {/* File info row */}
             <div style={{
@@ -451,18 +452,7 @@ const InputArea = ({
                     style={{ display: 'none' }}
                 />
 
-                {/* Show staged file preview if a file is selected */}
-                {stagedFile && (
-                    <div style={{ width: '100%', maxWidth: '500px', marginBottom: '1.5rem' }}>
-                        <FilePreviewCard
-                            file={stagedFile.file}
-                            uploadType={stagedFile.type}
-                            onConfirm={handleConfirmUpload}
-                            onCancel={handleCancelUpload}
-                            disabled={disabled}
-                        />
-                    </div>
-                )}
+                {/* Staging is now handled by the overlay at component root */}
 
                 {/* Welcome text - only show when no file is staged */}
                 {!stagedFile && (
@@ -677,18 +667,7 @@ const InputArea = ({
             }}>
                 {outlineMode ? (
                     <>
-                        {/* Show staged file preview if a file is selected (from sidebar) */}
-                        {stagedFile && (
-                            <div style={{ marginBottom: '1rem' }}>
-                                <FilePreviewCard
-                                    file={stagedFile.file}
-                                    uploadType={stagedFile.type}
-                                    onConfirm={handleConfirmUpload}
-                                    onCancel={handleCancelUpload}
-                                    disabled={disabled}
-                                />
-                            </div>
-                        )}
+                        {/* Staging is now handled by the overlay at component root */}
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                             <textarea
                                 value={textValue}
@@ -739,16 +718,7 @@ const InputArea = ({
                     </>
                 ) : (
                     <>
-                        {/* Show staged file preview if a file is selected (from sidebar triggers) */}
-                        {stagedFile && (
-                            <FilePreviewCard
-                                file={stagedFile.file}
-                                uploadType={stagedFile.type}
-                                onConfirm={handleConfirmUpload}
-                                onCancel={handleCancelUpload}
-                                disabled={disabled}
-                            />
-                        )}
+                        {/* Staging is now handled by the overlay at component root */}
 
                         {/* No redundant buttons - use sidebar or welcome screen for uploads */}
                         {!stagedFile && (
@@ -764,6 +734,37 @@ const InputArea = ({
                     </>
                 )}
             </div>
+
+            {/* Staging Overlay - Centered modal for file preview */}
+            {stagedFile && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                        padding: '1rem',
+                    }}
+                    onClick={(e) => {
+                        // Close on backdrop click
+                        if (e.target === e.currentTarget) {
+                            handleCancelUpload();
+                        }
+                    }}
+                >
+                    <FilePreviewCard
+                        file={stagedFile.file}
+                        uploadType={stagedFile.type}
+                        onConfirm={handleConfirmUpload}
+                        onCancel={handleCancelUpload}
+                        disabled={disabled}
+                    />
+                </div>
+            )}
         </div>
     );
 };

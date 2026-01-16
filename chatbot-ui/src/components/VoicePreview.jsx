@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, Download, Volume2 } from 'lucide-react';
+import { Play, Pause, Download, Volume2, Clock } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -73,8 +73,13 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                             color: 'var(--accent-primary)',
                             background: 'var(--bg-tertiary)',
                             padding: '0.25rem 0.5rem',
-                            borderRadius: '0.5rem'
+                            borderRadius: '0.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontWeight: 500
                         }}>
+                            <Clock size={14} />
                             {duration_estimate}
                         </span>
                     )}
