@@ -818,12 +818,15 @@ async def generate_voice_combined(
                 
                 wav_path = audio_dir / f"full_narration.wav"
                 
-                from src.utils.audio_utils import wave_file
+                from src.utils.audio_utils import wave_file, get_wav_duration
                 wave_file(str(wav_path), pcm_data)
                 
                 if wav_path.exists() and wav_path.stat().st_size > 0:
                     relative_path = wav_path.relative_to(project_root / "output")
-                    print(f"✅ Generated combined audio ({wav_path.stat().st_size} bytes)")
+                    
+                    # Get actual duration from the WAV file
+                    duration_seconds, duration_formatted = get_wav_duration(str(wav_path))
+                    print(f"✅ Generated combined audio ({wav_path.stat().st_size} bytes, {duration_formatted})")
                     
                     return {
                         "audio_url": f"/output/{relative_path}",
@@ -831,7 +834,8 @@ async def generate_voice_combined(
                         "success": True,
                         "total_slides": len(narrations),
                         "word_count": word_count,
-                        "duration_estimate": f"~{duration_minutes:.1f} minutes"
+                        "duration_seconds": duration_seconds,
+                        "duration_estimate": duration_formatted
                     }
         
         return {
