@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, UploadCloud, MessageSquare, Trash2 } from 'lucide-react';
+import { Menu, UploadCloud, MessageSquare, Trash2, Image, Mic, Languages, Presentation } from 'lucide-react';
 
 // Components
 import MessageBubble from './MessageBubble';
@@ -19,6 +19,7 @@ import UserProfile from './UserProfile';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
 import ComplianceReport from './ComplianceReport';
+import CollapsibleSection from './CollapsibleSection';
 
 // Message Action Components
 import {
@@ -496,31 +497,64 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 )}
 
                                 {msg.type === 'voice_preview' && msg.voiceData && (
-                                    <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                    <CollapsibleSection
+                                        title="Voice Preview"
+                                        icon={<Mic size={18} />}
+                                        subtitle={`${msg.voiceData?.samples?.length || 0} samples`}
+                                        defaultOpen={true}
+                                    >
+                                        <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'translation_result' && msg.translationResults && (
-                                    <TranslationResults results={msg.translationResults} />
+                                    <CollapsibleSection
+                                        title="Translation Results"
+                                        icon={<Languages size={18} />}
+                                        subtitle={`${msg.translationResults?.total_success || 0} languages`}
+                                        defaultOpen={true}
+                                    >
+                                        <TranslationResults results={msg.translationResults} />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'image_prompt_review' && msg.enhancedPrompts && (
-                                    <ImageWorkflow
-                                        enhancedPrompts={msg.enhancedPrompts}
-                                        projectId={msg.projectId}
-                                    />
+                                    <CollapsibleSection
+                                        title="Image Workflow"
+                                        icon={<Image size={18} />}
+                                        defaultOpen={true}
+                                    >
+                                        <ImageWorkflow
+                                            enhancedPrompts={msg.enhancedPrompts}
+                                            projectId={msg.projectId}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'image_gallery' && msg.imageData && (
-                                    <ImageGallery
-                                        imageData={msg.imageData}
-                                        projectId={msg.projectId}
-                                    />
+                                    <CollapsibleSection
+                                        title="Generated Images"
+                                        icon={<Image size={18} />}
+                                        subtitle={`${msg.imageData?.generated || 0} images`}
+                                        defaultOpen={true}
+                                    >
+                                        <ImageGallery
+                                            imageData={msg.imageData}
+                                            projectId={msg.projectId}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'slides_result' && msg.slidesData && (
-                                    <SlidesPreview
-                                        slidesData={msg.slidesData}
-                                    />
+                                    <CollapsibleSection
+                                        title="Slides Preview"
+                                        icon={<Presentation size={18} />}
+                                        defaultOpen={true}
+                                    >
+                                        <SlidesPreview
+                                            slidesData={msg.slidesData}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'batch_compliance_result' && msg.batchResults && (
