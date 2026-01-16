@@ -584,13 +584,21 @@ async def export_compliance_report(data: dict, current_user: TokenData = Depends
 @router.post("/check_quality")
 async def check_quality_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
-    Run quality checks and translate script to Hindi.
+    Run quality checks and translate script to target language.
+    
+    Uses back-translation method (English → Language → English) to verify translation quality.
+    
+    Args (in data):
+        json_script: The script JSON to check
+        language_code: Target language code ('hi', 'ta', 'te', etc). Defaults to 'hi' (Hindi)
     
     Returns:
         - Quality check results (translation quality, timing, transliteration)
-        - Full translated Hindi script
+        - Full translated script in target language
+        - Language info (code, name, native script)
     """
-    print("Running quality checks and Hindi translation...")
+    language_code = data.get('language_code', 'hi')
+    print(f"Running quality checks with {language_code} translation...")
     
     try:
         json_script = data.get('json_script')
@@ -599,10 +607,11 @@ async def check_quality_endpoint(data: dict, current_user: TokenData = Depends(g
             raise HTTPException(status_code=400, detail="json_script is required")
         
         from src.services.quality_service import check_quality
-        result = await check_quality(json_script)
+        result = await check_quality(json_script, language_code)
         
         summary = result.get('summary', {})
-        print(f"✅ Quality check complete: {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
+        lang_name = result.get('language_name', 'Unknown')
+        print(f"✅ Quality check complete ({lang_name}): {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
         print(f"📊 Avg translation quality: {summary.get('avg_quality_score', 0)}/5")
         
         return result
@@ -618,14 +627,16 @@ async def batch_check_quality_endpoint(data: dict, current_user: TokenData = Dep
     """
     Run quality checks for multiple scripts in parallel.
     
-    Args:
+    Args (in data):
         scripts: List of script JSON objects to check
+        language_code: Target language code for all scripts. Defaults to 'hi' (Hindi)
     
     Returns:
         results: List of quality check results (one per script)
         batch_summary: Overall batch statistics
     """
-    print("📋 Batch quality check requested...")
+    language_code = data.get('language_code', 'hi')
+    print(f"📋 Batch quality check requested ({language_code})...")
     
     try:
         scripts = data.get('scripts', [])
@@ -636,7 +647,7 @@ async def batch_check_quality_endpoint(data: dict, current_user: TokenData = Dep
         print(f"   Processing {len(scripts)} scripts...")
         
         from src.services.quality_service import batch_check_quality
-        result = await batch_check_quality(scripts)
+        result = await batch_check_quality(scripts, language_code)
         
         summary = result.get('batch_summary', {})
         print(f"✅ Batch quality check complete: {summary.get('scripts_passed', 0)}/{summary.get('total_scripts', 0)} passed")

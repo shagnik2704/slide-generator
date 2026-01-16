@@ -173,33 +173,6 @@ export default function TranslationResults({ results }) {
         });
     };
 
-    // Calculate word count from text
-    const getWordCount = (text) => {
-        if (!text) return 0;
-        return text.trim().split(/\s+/).filter(w => w.length > 0).length;
-    };
-
-    // Format seconds to MM:SS
-    const formatTimestamp = (totalSeconds) => {
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    // Calculate cumulative timestamps for slides (135 WPM)
-    const WPM = 135;
-    const SECONDS_PER_WORD = 60 / WPM; // ~0.44 seconds per word
-
-    const calculateTimestamps = (slides) => {
-        let cumulativeTime = 0;
-        return slides.map(slide => {
-            const timestamp = formatTimestamp(cumulativeTime);
-            const wordCount = getWordCount(slide.narration);
-            cumulativeTime += wordCount * SECONDS_PER_WORD;
-            return timestamp;
-        });
-    };
-
     const toggleExpanded = (langCode) => {
         setExpandedLang(prev => prev === langCode ? null : langCode);
     };
@@ -430,7 +403,7 @@ export default function TranslationResults({ results }) {
                         <table style={{ ...tableStyle, minWidth: `${200 + translations.filter(t => t.success).length * 250}px` }}>
                             <thead>
                                 <tr>
-                                    <th style={{ ...thStyle, width: '70px', position: 'sticky', left: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>Time</th>
+                                    <th style={{ ...thStyle, width: '70px', position: 'sticky', left: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>Row</th>
                                     <th style={{ ...thStyle, minWidth: '200px' }}>English</th>
                                     {translations.filter(t => t.success).map(result => (
                                         <th key={result.language_code} style={{ ...thStyle, minWidth: '200px' }}>
@@ -446,23 +419,22 @@ export default function TranslationResults({ results }) {
                                 {/* Use first successful translation as source for slides */}
                                 {(() => {
                                     const slides = translations.find(t => t.success)?.translated_script?.slides || [];
-                                    const timestamps = calculateTimestamps(slides);
                                     return slides.map((slide, i) => (
                                         <tr key={i} style={{
                                             background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)'
                                         }}>
                                             <td style={{
                                                 ...tdStyle,
-                                                fontWeight: 500,
+                                                fontWeight: 600,
                                                 textAlign: 'center',
                                                 position: 'sticky',
                                                 left: 0,
                                                 background: i % 2 === 0 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
                                                 zIndex: 1,
-                                                fontFamily: 'monospace',
-                                                fontSize: '0.85rem',
+                                                fontSize: '0.9rem',
+                                                color: 'var(--text-primary)',
                                             }}>
-                                                {timestamps[i]}
+                                                {slide.slide_number || i + 1}
                                             </td>
                                             <td style={tdStyle}>
                                                 {formatText(slide.narration)}

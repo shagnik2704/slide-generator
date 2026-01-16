@@ -648,6 +648,37 @@ const InputArea = ({
                         </div>
                     </>
                 )}
+
+                {/* Staging Overlay - Centered modal for file preview (also needed on welcome screen) */}
+                {stagedFile && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 100,
+                            padding: '1rem',
+                        }}
+                        onClick={(e) => {
+                            // Close on backdrop click
+                            if (e.target === e.currentTarget) {
+                                handleCancelUpload();
+                            }
+                        }}
+                    >
+                        <FilePreviewCard
+                            file={stagedFile.file}
+                            uploadType={stagedFile.type}
+                            onConfirm={handleConfirmUpload}
+                            onCancel={handleCancelUpload}
+                            disabled={disabled}
+                        />
+                    </div>
+                )}
             </div>
         );
     }

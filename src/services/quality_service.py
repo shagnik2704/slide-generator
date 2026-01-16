@@ -1,6 +1,7 @@
 """
 Quality checking service for Spoken Tutorial scripts.
-Uses back-translation (English → Hindi → English) for quality verification.
+Uses back-translation (English → Target Language → English) for quality verification.
+Supports multiple Indian languages.
 """
 import asyncio
 import json
@@ -8,11 +9,14 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+# Import supported languages from translation service
+from src.services.translation_service import SUPPORTED_LANGUAGES
+
 
 class TranslatedSlide(BaseModel):
     """A single translated slide with back-translation."""
     slide_number: int = Field(description="Slide number")
-    hindi_narration: str = Field(description="Translated Hindi narration")
+    translated_narration: str = Field(description="Translated narration in target language")
 
 
 class BackTranslatedSlide(BaseModel):
@@ -45,21 +49,30 @@ class ComparisonResults(BaseModel):
     comparisons: List[MeaningComparison] = Field(description="Per-slide comparison results")
 
 
-async def check_quality(json_script: dict) -> dict:
+async def check_quality(json_script: dict, language_code: str = "hi") -> dict:
     """
     Run quality checks using back-translation approach.
     
     Flow:
-    1. English → Hindi (forward translation)
-    2. Hindi → English (back-translation)
+    1. English → Target Language (forward translation)
+    2. Target Language → English (back-translation)
     3. Compare original English with back-translated English
     
     Args:
         json_script: The parsed script JSON with slides
+        language_code: Target language code (e.g., 'hi', 'ta', 'te'). Defaults to Hindi.
     
     Returns:
         Dictionary with quality checks and translated script
     """
+    # Get language info
+    lang_info = SUPPORTED_LANGUAGES.get(language_code)
+    if not lang_info:
+        return _get_error_response(f"Unsupported language: {language_code}")
+    
+    lang_name = lang_info["name"]
+    lang_native = lang_info["native"]
+    
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.3,
@@ -69,28 +82,28 @@ async def check_quality(json_script: dict) -> dict:
     if not slides:
         return _get_error_response("No slides found in script")
     
-    print(f"🔄 Starting back-translation for {len(slides)} slides...")
+    print(f"🔄 Starting back-translation for {len(slides)} slides to {lang_name} ({lang_native})...")
     
     try:
         # ============================================
-        # STEP 1: Forward Translation (English → Hindi)
+        # STEP 1: Forward Translation (English → Target Language)
         # ============================================
-        print("📝 Step 1: Translating English → Hindi...")
+        print(f"📝 Step 1: Translating English → {lang_name}...")
         
-        forward_prompt = f"""You are an expert English-to-Hindi translator for Spoken Tutorial scripts.
+        forward_prompt = f"""You are an expert English-to-{lang_name} translator for Spoken Tutorial scripts.
 
-Translate ONLY the narration text from English to Hindi. Follow these rules:
+Translate ONLY the narration text from English to {lang_name}. Follow these rules:
 
 **Translation Rules:**
-- Use natural, conversational Hindi (Devanagari script)
+- Use natural, conversational {lang_name} (native script: {lang_native})
 - Keep technical terms in English/transliterated (e.g., Python, Linux, File menu, click)
-- If text has **bold** markers, transliterate them to Hindi (e.g., **bold** → **बॉल्ड**)
+- If text has **bold** markers, transliterate them to {lang_name}
 - Each sentence should be speakable in one breath
 
 **Script to translate:**
 {json.dumps([{"slide_number": s.get("slide_number", i+1), "narration": s.get("narration", "")} for i, s in enumerate(slides)], indent=2)}
 
-Return the Hindi translation for each slide."""
+Return the {lang_name} translation for each slide."""
 
         forward_llm = llm.with_structured_output(TranslationBatch)
         forward_result = await forward_llm.ainvoke(forward_prompt)
@@ -98,20 +111,20 @@ Return the Hindi translation for each slide."""
         if not forward_result or not forward_result.slides:
             return _get_error_response("Forward translation failed")
         
-        hindi_translations = {s.slide_number: s.hindi_narration for s in forward_result.slides}
-        print(f"   ✓ Translated {len(hindi_translations)} slides to Hindi")
+        translations = {s.slide_number: s.translated_narration for s in forward_result.slides}
+        print(f"   ✓ Translated {len(translations)} slides to {lang_name}")
         
         # ============================================
-        # STEP 2: Back Translation (Hindi → English)
+        # STEP 2: Back Translation (Target Language → English)
         # ============================================
-        print("📝 Step 2: Back-translating Hindi → English...")
+        print(f"📝 Step 2: Back-translating {lang_name} → English...")
         
-        back_prompt = f"""You are an expert Hindi-to-English translator.
+        back_prompt = f"""You are an expert {lang_name}-to-English translator.
 
-Translate these Hindi narrations back to English. Be literal and accurate - do NOT try to guess the original text.
+Translate these {lang_name} narrations back to English. Be literal and accurate - do NOT try to guess the original text.
 
-**Hindi narrations to translate:**
-{json.dumps([{"slide_number": sn, "hindi": hn} for sn, hn in hindi_translations.items()], indent=2, ensure_ascii=False)}
+**{lang_name} narrations to translate:**
+{json.dumps([{"slide_number": sn, "text": tn} for sn, tn in translations.items()], indent=2, ensure_ascii=False)}
 
 Return the English translation for each slide."""
 
@@ -191,7 +204,7 @@ Overall quality passes if average score >= 4."""
         # Build translated script with comparison data
         translated_script = {
             "title": json_script.get("presentation_title", json_script.get("title", "Untitled")),
-            "title_hindi": await _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm),
+            f"title_{language_code}": await _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm, lang_name),
             "slides": []
         }
         
@@ -203,7 +216,7 @@ Overall quality passes if average score >= 4."""
             
             translated_script["slides"].append({
                 "slide_number": slide_num,
-                "narration": hindi_translations.get(slide_num, ""),
+                "narration": translations.get(slide_num, ""),
                 "narration_original": slide.get("narration", ""),
                 "back_translation": back_translations.get(slide_num, ""),
                 "image_prompt": slide.get("image_prompt", ""),
@@ -213,7 +226,7 @@ Overall quality passes if average score >= 4."""
                 "issues": comparison.issues if comparison else []
             })
         
-        print(f"✅ Quality check complete. Avg score: {avg_score:.1f}/5")
+        print(f"✅ Quality check ({lang_name}) complete. Avg score: {avg_score:.1f}/5")
         
         return {
             "checks": checks,
@@ -223,7 +236,10 @@ Overall quality passes if average score >= 4."""
                 "total": len(checks),
                 "avg_quality_score": round(avg_score, 1)
             },
-            "translated_script": translated_script
+            "translated_script": translated_script,
+            "language_code": language_code,
+            "language_name": lang_name,
+            "language_native": lang_native
         }
         
     except Exception as e:
@@ -233,12 +249,12 @@ Overall quality passes if average score >= 4."""
         return _get_error_response(str(e))
 
 
-async def _translate_title(title: str, llm) -> str:
-    """Translate just the title to Hindi."""
+async def _translate_title(title: str, llm, lang_name: str = "Hindi") -> str:
+    """Translate just the title to the target language."""
     if not title:
         return ""
     try:
-        response = await llm.ainvoke(f"Translate this tutorial title to Hindi (Devanagari script). Only output the Hindi translation, nothing else: {title}")
+        response = await llm.ainvoke(f"Translate this tutorial title to {lang_name}. Only output the {lang_name} translation, nothing else: {title}")
         return response.content.strip()
     except:
         return title
@@ -264,7 +280,7 @@ def _get_error_response(error_msg: str) -> dict:
     }
 
 
-async def batch_check_quality(scripts: List[dict]) -> dict:
+async def batch_check_quality(scripts: List[dict], language_code: str = "hi") -> dict:
     """
     Run quality checks for multiple scripts in parallel.
     
@@ -273,13 +289,15 @@ async def batch_check_quality(scripts: List[dict]) -> dict:
     
     Args:
         scripts: List of parsed script JSON objects
+        language_code: Target language code for all scripts. Defaults to Hindi.
     
     Returns:
         Dictionary with:
         - results: List of quality check results (one per script)
         - batch_summary: Overall batch statistics
     """
-    print(f"📋 Batch quality check: {len(scripts)} scripts in parallel")
+    lang_name = SUPPORTED_LANGUAGES.get(language_code, {}).get("name", "Hindi")
+    print(f"📋 Batch quality check: {len(scripts)} scripts in parallel ({lang_name})")
     
     if not scripts:
         return {
@@ -294,7 +312,7 @@ async def batch_check_quality(scripts: List[dict]) -> dict:
     
     # Run all quality checks in parallel
     results = await asyncio.gather(*[
-        check_quality(script) for script in scripts
+        check_quality(script, language_code) for script in scripts
     ], return_exceptions=True)
     
     # Process results
