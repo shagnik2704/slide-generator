@@ -485,14 +485,14 @@ const InputArea = ({
                                     color: 'var(--text-secondary)',
                                     fontSize: '0.95rem',
                                 }}>
-                                    Upload DOCX, MD, TXT, or ODT file to start generating a tutorial...
+                                    Disclaimer: The server may take time to respond...Please be patient.
                                 </span>
                                 <div style={{
                                     display: 'flex',
                                     gap: '0.5rem',
                                     marginLeft: '1rem',
                                 }}>
-                                    <button
+                                    {/* <button
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={disabled}
                                         style={{
@@ -517,7 +517,7 @@ const InputArea = ({
                                         }}
                                     >
                                         <Upload size={18} />
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
                         </div>
@@ -548,7 +548,7 @@ const InputArea = ({
                                 title="Upload DOCX, MD, TXT, or ODT file to generate script"
                             >
                                 <FileText size={16} />
-                                Upload Content (DOCX/MD/TXT)
+                                Upload Content
                             </button>
 
                             <button
@@ -570,7 +570,7 @@ const InputArea = ({
                                 title="Upload DOCX, JSON, or ODT script file to check compliance"
                             >
                                 <FileJson size={16} />
-                                Upload Script (DOCX/JSON/ODT)
+                                Upload Script
                             </button>
 
                             <button
