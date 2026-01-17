@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, ExternalLink } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 
@@ -439,6 +439,67 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 flexDirection: 'column',
                 gap: '0.5rem'
             }}>
+                {/* Need Help Section */}
+                <TooltipWrapper text="Need Help?">
+                    <div style={{
+                        padding: isOpen ? '0.75rem' : '0.75rem 0.5rem',
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '0.5rem',
+                        transition: 'padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: isOpen ? '0.5rem' : '0',
+                            marginBottom: isOpen ? '0.5rem' : '0',
+                            transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}>
+                            <HelpCircle size={18} style={{ color: 'var(--accent-secondary)', flexShrink: 0 }} />
+                            <span style={{
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                color: 'var(--text-primary)',
+                                ...textLabelStyle
+                            }}>Need Help?</span>
+                        </div>
+                        {isOpen && (
+                            <>
+                                <p style={{
+                                    fontSize: '0.7rem',
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: 1.4,
+                                    margin: '0 0 0.5rem 0'
+                                }}>
+                                    Watch these videos to get started
+                                </p>
+                                <a
+                                    href="https://drive.google.com/drive/folders/1XBGWAC4QBWIIbLODmcc114haXez0ApxJ?usp=drive_link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.4rem',
+                                        fontSize: '0.75rem',
+                                        color: 'var(--accent-primary)',
+                                        textDecoration: 'none',
+                                        fontWeight: 500,
+                                        transition: 'opacity 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                >
+                                    <span>📹 Tutorial Videos</span>
+                                    <ExternalLink size={12} />
+                                </a>
+                            </>
+                        )}
+                    </div>
+                </TooltipWrapper>
+
                 {/* User Profile */}
                 {isOpen && (
                     <div style={{ marginBottom: '0.5rem' }}>
