@@ -10,7 +10,7 @@ env/
 *.egg-info/
 dist/
 build/
-uv.lock
+# uv.lock removed so it can be committed
 data/
 .uv-cache/
 .uvcache/
