@@ -85,8 +85,9 @@ const OutlineCard = ({
         // Reset file input
         e.target.value = '';
 
-        if (!file.name.toLowerCase().endsWith('.json')) {
-            alert('Please upload a JSON file containing outline_data');
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.json') && !fileName.endsWith('.docx') && !fileName.endsWith('.pdf')) {
+            alert('Please upload a JSON, DOCX, or PDF file. JSON files should contain outline_data. DOCX and PDF files will be parsed to extract outline data.');
             return;
         }
 
@@ -423,7 +424,7 @@ const OutlineCard = ({
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".json"
+                    accept=".json,.docx,.pdf"
                     onChange={handleFileSelect}
                     style={{ display: 'none' }}
                 />

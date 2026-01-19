@@ -20,8 +20,8 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
         
         // Validate file type
         const filename = file.name.toLowerCase();
-        if (!filename.endsWith('.json') && !filename.endsWith('.docx')) {
-            alert('Please upload a .json or .docx file');
+        if (!filename.endsWith('.json') && !filename.endsWith('.docx') && !filename.endsWith('.pdf')) {
+            alert('Please upload a .json, .docx, or .pdf file');
             e.target.value = '';
             return;
         }
@@ -100,7 +100,7 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
             <input
                 ref={outlineComplianceInputRef}
                 type="file"
-                accept=".json,.docx"
+                accept=".json,.docx,.pdf"
                 onChange={handleOutlineComplianceFileSelect}
                 style={{ display: 'none' }}
             />
