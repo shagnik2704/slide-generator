@@ -105,6 +105,8 @@ dependencies = [
   "langchain-openai>=0.3.35",
   "pydub>=0.25.1",
   "python-jose[cryptography]>=3.5.0",
+  "pdfplumber>=0.11.4",
+  "sqlite-vec>=0.1.6",
 ]
 
 [tool.hatch.build.targets.wheel]

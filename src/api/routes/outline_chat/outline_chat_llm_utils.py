@@ -316,8 +316,8 @@ def generate_llm_text_with_tools(
         ]
     
     # First call - let model decide if it needs to search
-    # Use gpt-4o-mini for better function calling support
-    model_name = "gpt-4o-mini"
+    # Use gpt-4.1-mini for better function calling support
+    model_name = "gpt-4.1-mini"
     
     response = client.chat.completions.create(
         model=model_name,
