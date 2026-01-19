@@ -8,6 +8,5 @@ and utilities for the Spoken Tutorial Generator API.
 __version__ = "1.0.0"
 
 # Note: Exports are minimal to avoid circular imports
-# Import directly from submodules as needed:
-#   from src.api.config import settings
-#   from src.api.exceptions import APIException
+# Export the FastAPI app for easier discovery by uvicorn
+from .server import app

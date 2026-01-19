@@ -3,7 +3,7 @@
  * Eliminates duplicated fetch + error handling code across handlers.
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'auth_token';
 
 /**
@@ -25,7 +25,7 @@ function handleAuthError(response, endpoint = '') {
     if (endpoint.includes('/outline_chat') || endpoint.includes('/general_chat')) {
         return; // Don't redirect for public endpoints
     }
-    
+
     if (response.status === 401) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem(TOKEN_KEY);
@@ -76,7 +76,7 @@ export async function apiRequest(endpoint, options = {}) {
         } catch {
             errorData = { detail: `Request failed: ${endpoint}` };
         }
-        
+
         const error = new Error(errorData.detail || errorData.message || `Request failed: ${endpoint}`);
         error.status = response.status;
         error.code = errorData.error_code;
@@ -129,7 +129,7 @@ export async function apiFormData(endpoint, formData) {
         } catch {
             errorData = { detail: `Upload failed: ${endpoint}` };
         }
-        
+
         const error = new Error(errorData.detail || errorData.message || `Upload failed: ${endpoint}`);
         error.status = response.status;
         error.code = errorData.error_code;
