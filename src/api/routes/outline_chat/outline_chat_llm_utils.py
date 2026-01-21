@@ -106,6 +106,7 @@ def get_example_answer_hint(
     outline_type: str,
     phase: str,
     base_question: str,
+    outline_data: dict | None = None,
 ) -> str | None:
     """
     Use the LLM to generate a short, concrete example answer for the given question.
@@ -116,6 +117,29 @@ def get_example_answer_hint(
     - and the exact question text.
     """
     outline_type = outline_type.upper()
+
+    # Build rich but compact context for more grounded examples
+    extra_context_lines: list[str] = []
+    if outline_data:
+        outline_name = outline_data.get("outline_name")
+        platform_name = outline_data.get("platform_name")
+        target_audience = outline_data.get("target_audience")
+        domain = outline_data.get("domain")
+        core_example = outline_data.get("core_example")
+
+        if outline_name:
+            extra_context_lines.append(f"- Course name: {outline_name}")
+        if platform_name:
+            extra_context_lines.append(f"- Platform / tool: {platform_name}")
+        if domain:
+            extra_context_lines.append(f"- Domain: {domain}")
+        if target_audience:
+            extra_context_lines.append(f"- Target audience: {target_audience}")
+        if core_example and phase.lower() != "examples":
+            # If we already know the running example, hint it to keep answers coherent
+            extra_context_lines.append(f"- Core example already chosen: {core_example}")
+
+    extra_context_block = "\n".join(extra_context_lines) if extra_context_lines else ""
 
     try:
         prompt = f"""You are helping a subject-matter expert fill a Spoken Tutorial course outline via chat.
@@ -130,10 +154,11 @@ Guidelines:
 - Only return the example answer text itself.
 - If the question is asking for a course name, outline name, tutorial title, or similar short title, make sure your answer is under 50 characters and uses only letters, numbers, and spaces (no special characters).
 
-Context:
+Context about this outline and question:
 - Outline type: {outline_type}
 - Phase: {phase}
 - Question: {base_question}
+{extra_context_block}
 
 Now return just ONE example answer that would be appropriate for this question."""
 

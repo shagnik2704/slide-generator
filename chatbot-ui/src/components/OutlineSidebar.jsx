@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, FileText } from 'lucide-react';
+import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, FileText, Loader2, Download } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
+import { API_URL } from '../services/api';
 
 const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
     const collapsedWidth = '60px';
@@ -9,6 +10,8 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
 
     // Dropdown state
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [snapshotError, setSnapshotError] = useState('');
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
     // Refs for hidden file inputs
     const outlineComplianceInputRef = useRef(null);
@@ -80,6 +83,31 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
         return <Tooltip text={text} position="right">{children}</Tooltip>;
     };
 
+    const handleDownloadPdf = async () => {
+        setSnapshotError('');
+        setIsDownloadingPdf(true);
+        try {
+            const raw = localStorage.getItem('outline_chat_session');
+            const session = raw ? JSON.parse(raw) : null;
+            const projectId = session?.projectId;
+            if (!projectId) {
+                setSnapshotError('Start an outline chat first to create a session.');
+                return;
+            }
+            const response = await fetch(`${API_URL}/outline_chat/${projectId}/export?format=pdf`);
+            const data = await response.json();
+            if (data?.pdf_url) {
+                window.open(`${API_URL}${data.pdf_url}`, '_blank');
+            } else {
+                setSnapshotError('PDF is not ready yet. Complete the outline review first.');
+            }
+        } catch (e) {
+            setSnapshotError(e?.message || 'Failed to download PDF.');
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
+
     return (
         <aside style={{
             width: isOpen ? expandedWidth : collapsedWidth,
@@ -107,6 +135,31 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
 
             {/* Navigation Items */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+
+                {/* Download PDF button */}
+                <TooltipWrapper text="Download PDF">
+                    <button
+                        onClick={handleDownloadPdf}
+                        style={iconButtonStyle}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                    >
+                        {isDownloadingPdf ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : (
+                            <Download size={20} />
+                        )}
+                        <span style={{ ...textLabelStyle, flex: 1, textAlign: 'left' }}>
+                            {isDownloadingPdf ? 'Downloading…' : 'Download PDF'}
+                        </span>
+                    </button>
+                </TooltipWrapper>
 
                 {/* Compliance Report Parent Button */}
                 <TooltipWrapper text="Compliance Report">
@@ -170,6 +223,21 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                     </div>
                 )}
             </nav>
+
+            {/* Errors */}
+            {isOpen && snapshotError && (
+                <div style={{
+                    marginTop: '0.75rem',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '0.75rem',
+                    padding: '0.75rem',
+                    color: '#ef4444',
+                    fontSize: '0.8rem'
+                }}>
+                    {snapshotError}
+                </div>
+            )}
 
             {/* Spacer */}
             <div style={{ flex: 1 }} />

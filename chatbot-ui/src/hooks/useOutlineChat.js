@@ -26,6 +26,7 @@ export function useOutlineChat(mode, setIsTyping) {
         outlineData: null,
         phase: null
     });
+    const OUTLINE_SESSION_KEY = 'outline_chat_session';
 
     /**
      * Send a text message in outline chat mode.
@@ -49,11 +50,18 @@ export function useOutlineChat(mode, setIsTyping) {
                 }),
             });
 
-            setOutlineSession({
+            const nextSession = {
                 projectId: data.project_id || outlineSession.projectId,
                 outlineData: data.outline_data || outlineSession.outlineData,
                 phase: data.phase || outlineSession.phase
-            });
+            };
+            setOutlineSession(nextSession);
+            // Persist session so the outline sidebar can access project_id at any time
+            try {
+                localStorage.setItem(OUTLINE_SESSION_KEY, JSON.stringify(nextSession));
+            } catch {
+                // ignore storage errors (private mode, quota, etc.)
+            }
 
             // Update the user message with the field_name that was answered
             if (data.answered_field) {
@@ -141,11 +149,17 @@ export function useOutlineChat(mode, setIsTyping) {
                 }),
             });
 
-            setOutlineSession({
+            const nextSession = {
                 projectId: data.project_id || outlineSession.projectId,
                 outlineData: data.outline_data || outlineSession.outlineData,
                 phase: data.phase || outlineSession.phase
-            });
+            };
+            setOutlineSession(nextSession);
+            try {
+                localStorage.setItem(OUTLINE_SESSION_KEY, JSON.stringify(nextSession));
+            } catch {
+                // ignore storage errors (private mode, quota, etc.)
+            }
 
             const assistantMessage = {
                 id: Date.now() + 1,
