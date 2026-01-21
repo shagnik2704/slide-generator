@@ -9,9 +9,7 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-# ============================================
-# PYDANTIC MODELS
-# ============================================
+
 
 class TranslatedSlide(BaseModel):
     """A single translated slide."""
