@@ -52,10 +52,18 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
 
             } catch (error) {
                 console.error("Error:", error);
+                
+                // Check if this is a "no tutorials found" error
+                const isNotFoundError = error.message && 
+                    (error.message.includes("No tutorials found") || 
+                     error.message.includes("not available in the selected language"));
+                
                 const errorMessage = {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    content: error.message || "Sorry, something went wrong generating the tutorial."
+                    content: isNotFoundError 
+                        ? `⚠️ ${error.message}\n\nPlease try selecting a different language or FOSS that has available tutorials.`
+                        : error.message || "Sorry, something went wrong generating the tutorial."
                 };
                 setUploadMessages(prev => [...prev, errorMessage]);
             } finally {

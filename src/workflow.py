@@ -24,6 +24,15 @@ def run_pipeline(foss_name: str, language: str, export: bool, reciept_emails: li
     }
 
     state = extract_tutorials(state, foss_name, language)
+    
+    # Check if any tutorials were found
+    tutorials_found = len(state.get("structured_legacy", []))
+    if tutorials_found == 0:
+        raise ValueError(
+            f"No tutorials found for '{foss_name}' in '{language}'. "
+            f"This FOSS might not be available in the selected language."
+        )
+    
     _log(state, "extraction_output.json")
 
     state = tech_intelligence_agent(state)

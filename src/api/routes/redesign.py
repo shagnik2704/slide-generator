@@ -25,6 +25,9 @@ def generate_tutorial(request: GenerateTutorialRequest):
             "url": url
         }
 
+    except ValueError as e:
+        # Handle validation errors (e.g., no tutorials found)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
