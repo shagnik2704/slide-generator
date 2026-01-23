@@ -43,7 +43,7 @@ import { apiJson, apiFormData } from '../services/api';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', showSidebarToggle = true }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', showSidebarToggle = true }, ref) => {
     const location = useLocation();
     const {
         // State
@@ -378,9 +378,9 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
         }
     }));
 
-    // Helper to update compliance report in a message (for upload mode)
+    // Helper to update compliance report in a message (for create mode)
     const handleUpdateComplianceReport = (messageId, updatedReport) => {
-        if (mode === 'upload') {
+        if (mode === 'create') {
             setUploadMessages(prev => prev.map(m =>
                 m.id === messageId ? { ...m, complianceReport: updatedReport } : m
             ));
@@ -488,7 +488,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                         gap: '0.2rem'
                     }}>
                         <Link
-                            to="/upload"
+                            to="/create"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -496,20 +496,20 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: location.pathname === '/upload'
+                                background: location.pathname === '/create'
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: location.pathname === '/upload' ? 'white' : 'var(--text-primary)',
+                                color: location.pathname === '/create' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: location.pathname === '/upload' ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: location.pathname === '/create' ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
                         >
                             <UploadCloud size={16} />
-                            Upload Mode
+                            Create Mode
                         </Link>
                         <Link
                             to="/outline-chat"
@@ -538,7 +538,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                     </div>
 
                     {/* Clear Session button */}
-                    {mode === 'upload' && uploadMessages.length > 0 && (
+                    {mode === 'create' && uploadMessages.length > 0 && (
                         <button
                             onClick={handleClearSession}
                             style={{
@@ -581,7 +581,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
             </header>
 
             {/* Messages Area - hidden when welcome screen is shown */}
-            {!(mode === 'upload' && uploadMessages.length === 0) && (
+            {!(mode === 'create' && uploadMessages.length === 0) && (
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -636,7 +636,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                 )}
 
                                 {/* Message Action Components */}
-                                {mode === 'upload' && msg.type === 'outline_uploaded' && (
+                                {mode === 'create' && msg.type === 'outline_uploaded' && (
                                     <OutlineUploadedActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -646,7 +646,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
 
 
 
-                                {mode === 'upload' && msg.type === 'script_uploaded' && (
+                                {mode === 'create' && msg.type === 'script_uploaded' && (
                                     <ScriptUploadedActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -663,7 +663,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'script_review' && (
+                                {mode === 'create' && msg.type === 'script_review' && (
                                     <ScriptReviewActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -677,7 +677,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'slides_review' && (
+                                {mode === 'create' && msg.type === 'slides_review' && (
                                     <SlidesReviewActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -685,7 +685,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'video_result' && (
+                                {mode === 'create' && msg.type === 'video_result' && (
                                     <VideoResultActions msg={msg} />
                                 )}
 
@@ -833,7 +833,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'upload', sh
                 onScriptToWiki={handleScriptToWiki}
                 onSendText={handleSendChatText}
                 disabled={isTyping}
-                isWelcome={mode === 'upload' && uploadMessages.length === 0}
+                isWelcome={mode === 'create' && uploadMessages.length === 0}
                 stagedFile={stagedFile}
                 setStagedFile={setStagedFile}
                 onConfirmStagedFile={handleConfirmStagedFile}

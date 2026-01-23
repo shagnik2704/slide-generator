@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import OutlineSidebar from './OutlineSidebar';
 import ChatArea from './ChatArea';
 
-const Layout = ({ mode = 'upload' }) => {
+const Layout = ({ mode = 'create' }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const chatAreaRef = useRef(null);
 

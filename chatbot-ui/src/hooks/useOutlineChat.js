@@ -15,7 +15,7 @@ const DEFAULT_OUTLINE_MESSAGE = {
 
 /**
  * Hook for outline chat logic.
- * @param {string} mode - Current mode ('upload' | 'outline_chat')
+ * @param {string} mode - Current mode ('create' | 'outline_chat')
  * @param {Function} setIsTyping - State setter for typing indicator
  * @returns {Object} Outline chat state and handlers
  */
@@ -321,7 +321,7 @@ export function useOutlineChat(mode, setIsTyping) {
                 const passed = result.compliance_report.summary?.ai_passed || 0;
                 const failed = result.compliance_report.summary?.ai_failed || 0;
                 const total = passed + failed;
-                
+
                 const newMessage = {
                     id: messageId,
                     role: 'assistant',
