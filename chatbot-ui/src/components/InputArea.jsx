@@ -249,7 +249,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
 };
 
 const InputArea = ({
-    mode = 'upload',
+    mode = 'create',
     onSendMessage,
     onUploadScript,
     onSendText,
@@ -262,51 +262,10 @@ const InputArea = ({
     onConfirmStagedFile,
     onCancelStagedFile,
 }) => {
-    const fileInputRef = useRef(null);
-    const scriptInputRef = useRef(null);
     const scriptToWikiRef = useRef(null);
     const voiceInputRef = useRef(null);
     const [textValue, setTextValue] = useState('');
 
-    // Stage file instead of uploading immediately
-    const handleFileSelect = (e) => {
-        const file = e.target.files[0];
-        if (file && !disabled && setStagedFile) {
-            // Validate file type
-            const filename = file.name.toLowerCase();
-            const validExtensions = ['.md', '.docx', '.txt', '.odt'];
-            const isValid = validExtensions.some(ext => filename.endsWith(ext));
-
-            if (!isValid) {
-                alert('Please upload a .md, .docx, .txt, or .odt file');
-                e.target.value = '';
-                return;
-            }
-
-            setStagedFile({ file, type: 'outline' });
-            e.target.value = '';
-        }
-    };
-
-    // Stage script instead of uploading immediately
-    const handleScriptSelect = (e) => {
-        const file = e.target.files[0];
-        if (file && !disabled && setStagedFile) {
-            // Validate file type
-            const filename = file.name.toLowerCase();
-            const validExtensions = ['.json', '.docx', '.odt'];
-            const isValid = validExtensions.some(ext => filename.endsWith(ext));
-
-            if (!isValid) {
-                alert('Please upload a .json, .docx, or .odt file');
-                e.target.value = '';
-                return;
-            }
-
-            setStagedFile({ file, type: 'script' });
-            e.target.value = '';
-        }
-    };
 
     // Stage script for wiki conversion
     const handleScriptToWikiSelect = (e) => {
@@ -407,7 +366,7 @@ const InputArea = ({
     });
 
     // Welcome screen for upload mode (Gemini-inspired)
-    if (mode === 'upload' && isWelcome) {
+    if (mode === 'create' && isWelcome) {
         return (
             <div style={{
                 flex: 1,
@@ -419,22 +378,6 @@ const InputArea = ({
                 textAlign: 'center',
             }}>
                 {/* Hidden file inputs */}
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".md,.docx,.txt,.odt"
-                    onChange={handleFileSelect}
-                    disabled={disabled}
-                    style={{ display: 'none' }}
-                />
-                <input
-                    ref={scriptInputRef}
-                    type="file"
-                    accept=".json,.docx,.odt"
-                    onChange={handleScriptSelect}
-                    disabled={disabled}
-                    style={{ display: 'none' }}
-                />
                 <input
                     ref={scriptToWikiRef}
                     type="file"
@@ -548,49 +491,6 @@ const InputArea = ({
                             gap: '0.75rem',
                             justifyContent: 'center',
                         }}>
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
-                                title="Upload DOCX, MD, TXT, or ODT file to generate script"
-                            >
-                                <FileText size={16} />
-                                Upload Content
-                            </button>
-
-                            <button
-                                onClick={() => scriptInputRef.current?.click()}
-                                disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                }}
-                                title="Upload DOCX, JSON, or ODT script file to check compliance"
-                            >
-                                <FileJson size={16} />
-                                Upload Script
-                            </button>
 
                             <button
                                 onClick={() => scriptToWikiRef.current?.click()}

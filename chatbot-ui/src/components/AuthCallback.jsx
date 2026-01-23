@@ -17,7 +17,7 @@ export default function AuthCallback() {
     // If we have a token in the URL, the AuthContext will process it
     // Once authenticated, redirect to upload page
     if (!loading && isAuthenticated) {
-      navigate('/upload', { replace: true });
+      navigate('/create', { replace: true });
     } else if (!loading && !isAuthenticated && !token) {
       // No token and not authenticated, redirect to login
       navigate('/login', { replace: true });

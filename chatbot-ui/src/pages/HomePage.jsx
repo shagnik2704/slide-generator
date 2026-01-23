@@ -27,7 +27,7 @@ const HomePage = () => {
         <img
           src="/favicon.png"
           alt="EduPyramids"
-          style={{ 
+          style={{
             height: '48px',
             filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
           }}
@@ -81,9 +81,9 @@ const HomePage = () => {
           gap: '1.5rem',
           marginBottom: '2rem',
         }}>
-          {/* Upload Mode Card */}
+          {/* Create Mode Card */}
           <Link
-            to="/upload"
+            to="/create"
             className="home-card"
             style={{
               background: 'var(--bg-secondary)',
@@ -125,12 +125,12 @@ const HomePage = () => {
               boxShadow: 'var(--shadow-md)',
               transition: 'transform 0.3s ease',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+              }}
             >
               <UploadCloud size={36} strokeWidth={2} />
             </div>
@@ -141,7 +141,7 @@ const HomePage = () => {
               fontFamily: 'var(--font-sans)',
               color: 'var(--text-primary)',
             }}>
-              Upload Mode
+              Create Mode
             </h2>
             <p style={{
               fontSize: '0.95rem',
@@ -163,12 +163,12 @@ const HomePage = () => {
               marginTop: '0.5rem',
               transition: 'gap 0.3s ease',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.gap = '0.75rem';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.gap = '0.5rem';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.gap = '0.75rem';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.gap = '0.5rem';
+              }}
             >
               Get Started <ArrowRight size={18} />
             </div>
@@ -218,12 +218,12 @@ const HomePage = () => {
               boxShadow: 'var(--shadow-md)',
               transition: 'transform 0.3s ease',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.1) rotate(-5deg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1) rotate(-5deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+              }}
             >
               <MessageSquare size={36} strokeWidth={2} />
             </div>
@@ -256,12 +256,12 @@ const HomePage = () => {
               marginTop: '0.5rem',
               transition: 'gap 0.3s ease',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.gap = '0.75rem';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.gap = '0.5rem';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.gap = '0.75rem';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.gap = '0.5rem';
+              }}
             >
               Start Chatting <ArrowRight size={18} />
             </div>
@@ -285,15 +285,15 @@ const HomePage = () => {
             lineHeight: '1.7',
             fontFamily: 'var(--font-sans)',
           }}>
-            <strong style={{ 
+            <strong style={{
               color: 'var(--text-primary)',
               fontWeight: 600,
-            }}>Note:</strong> Upload Mode requires authentication with an @edupyramids.org email address. 
+            }}>Note:</strong> Create Mode requires authentication with an @edupyramids.org email address.
             Outline Chat is available to everyone and doesn't require login.
           </p>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes fadeIn {
           from {

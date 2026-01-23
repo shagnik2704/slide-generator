@@ -17,7 +17,7 @@ import { useExportHandlers } from './useExportHandlers';
  * Main hook for ChatArea state and business logic.
  * Composes smaller, focused hooks for each feature area.
  */
-export function useChatArea(mode = 'upload') {
+export function useChatArea(mode = 'create') {
     // =========================
     // CORE STATE
     // =========================
@@ -128,7 +128,7 @@ export function useChatArea(mode = 'upload') {
 
     // Auto-save upload mode state to localStorage
     useEffect(() => {
-        if (mode === 'upload' && uploadMessages.length > 0) {
+        if (mode === 'create' && uploadMessages.length > 0) {
             saveToLocalStorage(uploadMessages, currentProjectId);
         }
     }, [uploadMessages, currentProjectId, mode]);

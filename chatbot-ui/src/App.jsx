@@ -5,13 +5,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import AuthCallback from './components/AuthCallback';
 import HomePage from './pages/HomePage';
-import UploadPage from './pages/UploadPage';
+import CreatePage from './pages/CreatePage';
 import OutlineChatPage from './pages/OutlineChatPage';
 
 // Component to handle login route - redirects if already authenticated
 function LoginRoute() {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div style={{
@@ -45,11 +45,11 @@ function LoginRoute() {
       </div>
     );
   }
-  
+
   if (isAuthenticated) {
-    return <Navigate to="/upload" replace />;
+    return <Navigate to="/create" replace />;
   }
-  
+
   return <Login />;
 }
 
@@ -67,10 +67,10 @@ function App() {
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
-            path="/upload"
+            path="/create"
             element={
               <ProtectedRoute>
-                <UploadPage />
+                <CreatePage />
               </ProtectedRoute>
             }
           />
