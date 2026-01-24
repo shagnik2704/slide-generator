@@ -536,7 +536,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                     Report issues or suggestions
                                 </p>
                                 <a
-                                    href="https://forms.google.com/your-form-id-here"
+                                    href="https://docs.google.com/forms/d/1H_vD6E1sCMzf0S8kG-DyMZp6EGRLttwYdDqSMGYg4-Q/edit"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
