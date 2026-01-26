@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Image, Download, Loader2, Paperclip, XCircle, RefreshCw, AlertCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { Image, Download, Loader2, Paperclip, XCircle, RefreshCw, AlertCircle, User, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import Tooltip from './Tooltip';
 import { apiJson, API_URL, apiFormData } from '../services/api';
 
@@ -103,6 +103,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [isCharPanelOpen, setIsCharPanelOpen] = useState(false);
     const charRefInputRef = useRef(null);
+    const [modifyingRow, setModifyingRow] = useState(null);
+    const [modificationPrompt, setModificationPrompt] = useState('');
 
     // Global character reference state - supports multiple images
     const CHAR_REF_KEY = `char_ref_${projectId}`;
@@ -245,6 +247,49 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 setSentenceRows(prev => prev.map(s =>
                     s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
                         ? { ...s, imageStatus: 'error', imageError: generatedImage?.error || 'Generation failed' }
+                        : s
+                ));
+            }
+        } catch (error) {
+            setSentenceRows(prev => prev.map(s =>
+                s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                    ? { ...s, imageStatus: 'error', imageError: error.message }
+                    : s
+            ));
+        }
+    };
+
+    // Modify existing image with a modification prompt
+    const modifySingleImage = async (rowNumber, sentenceIndex, modificationPrompt, baseImageUrl) => {
+        setSentenceRows(prev => prev.map(s =>
+            s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                ? { ...s, imageStatus: 'generating', imageError: null }
+                : s
+        ));
+
+        try {
+            const result = await apiJson('/modify_image', {
+                method: 'POST',
+                body: JSON.stringify({
+                    project_id: projectId,
+                    slide_number: rowNumber,
+                    sentence_index: sentenceIndex,
+                    modification_prompt: modificationPrompt,
+                    base_image_url: baseImageUrl,
+                    aspect_ratio: '16:9'
+                })
+            });
+
+            if (result.success) {
+                setSentenceRows(prev => prev.map(s =>
+                    s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                        ? { ...s, imageUrl: result.url, imageStatus: 'success', imageError: null, imageTimestamp: result.timestamp }
+                        : s
+                ));
+            } else {
+                setSentenceRows(prev => prev.map(s =>
+                    s.rowNumber === rowNumber && s.sentenceIndex === sentenceIndex
+                        ? { ...s, imageStatus: 'error', imageError: 'Modification failed' }
                         : s
                 ));
             }
@@ -843,6 +888,21 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                                         <RefreshCw size={14} />
                                                     </button>
                                                 </Tooltip>
+                                                <Tooltip text="Modify" position="bottom">
+                                                    <button
+                                                        onClick={() => {
+                                                            setModifyingRow({
+                                                                rowNumber: row.rowNumber,
+                                                                sentenceIndex: row.sentenceIndex,
+                                                                imageUrl: row.imageUrl
+                                                            });
+                                                            setModificationPrompt('');
+                                                        }}
+                                                        style={{ ...buttonStyle, padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
+                                                    >
+                                                        <Edit size={14} />
+                                                    </button>
+                                                </Tooltip>
                                                 <Tooltip text="Download" position="bottom">
                                                     <a
                                                         href={getDownloadUrl(row.imageUrl)}
@@ -960,6 +1020,149 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                             >
                                 <Download size={14} /> Download
                             </a>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Modification Modal */}
+            {modifyingRow && ReactDOM.createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        padding: '2rem'
+                    }}
+                    onClick={() => setModifyingRow(null)}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.5rem',
+                            padding: '2rem',
+                            background: 'var(--bg-secondary)',
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                            maxWidth: '500px',
+                            width: '100%'
+                        }}
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={() => setModifyingRow(null)}
+                            style={{
+                                position: 'absolute',
+                                top: -12,
+                                right: -12,
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '1.25rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                                zIndex: 10000
+                            }}
+                            title="Close (Esc)"
+                        >
+                            ✕
+                        </button>
+
+                        {/* Header */}
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
+                                Modify Image
+                            </h3>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                Row {modifyingRow.rowNumber}.{modifyingRow.sentenceIndex + 1}
+                            </p>
+                        </div>
+
+                        {/* Input */}
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>
+                                What would you like to change?
+                            </label>
+                            <textarea
+                                autoFocus
+                                value={modificationPrompt}
+                                onChange={(e) => setModificationPrompt(e.target.value)}
+                                placeholder="e.g., change background to forest, make the person wear a red shirt..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-primary)',
+                                    background: 'var(--bg-primary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.9rem',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical',
+                                    outline: 'none'
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') setModifyingRow(null);
+                                    if (e.key === 'Enter' && e.metaKey && modificationPrompt.trim()) {
+                                        modifySingleImage(
+                                            modifyingRow.rowNumber,
+                                            modifyingRow.sentenceIndex,
+                                            modificationPrompt,
+                                            modifyingRow.imageUrl
+                                        );
+                                        setModifyingRow(null);
+                                    }
+                                }}
+                            />
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                Tip: Press Cmd+Enter to apply
+                            </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setModifyingRow(null)}
+                                style={buttonStyle}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (modificationPrompt.trim()) {
+                                        modifySingleImage(
+                                            modifyingRow.rowNumber,
+                                            modifyingRow.sentenceIndex,
+                                            modificationPrompt,
+                                            modifyingRow.imageUrl
+                                        );
+                                        setModifyingRow(null);
+                                    }
+                                }}
+                                disabled={!modificationPrompt.trim()}
+                                style={{
+                                    ...primaryButtonStyle,
+                                    opacity: !modificationPrompt.trim() ? 0.5 : 1,
+                                    cursor: !modificationPrompt.trim() ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                <Edit size={16} />
+                                Apply
+                            </button>
                         </div>
                     </div>
                 </div>,

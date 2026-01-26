@@ -219,3 +219,66 @@ def generate_images(
         "failed": failed_count,
         "project_id": project_id
     }
+
+
+def modify_existing_image(
+    base_image_path: Path,
+    modification_prompt: str,
+    output_path: Path,
+    aspect_ratio: str = "16:9"
+) -> bool:
+    """
+    Modify an existing image using a modification prompt.
+    
+    Uses image-to-image generation: sends the existing image + modification prompt to Gemini.
+    The model will use the image as context and apply the requested changes.
+    
+    Args:
+        base_image_path: Path to the existing image to modify
+        modification_prompt: What to change (e.g., "change background to forest")
+        output_path: Where to save the modified image (can be same as base_image_path to overwrite)
+        aspect_ratio: Image aspect ratio (default: "16:9")
+    
+    Returns:
+        True if successful, False otherwise
+    """
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY environment variable not set")
+    
+    client = genai.Client(api_key=api_key)
+    
+    try:
+        from PIL import Image
+        
+        # Load the existing image
+        base_image = Image.open(base_image_path)
+        print(f"  Loaded base image: {base_image_path.name} ({base_image.size})")
+        
+        # Send ONLY the base image + modification prompt to Gemini
+        # No style prefix, no character prompt - just the modification instruction
+        print(f"  Modifying with prompt: {modification_prompt[:80]}...")
+        
+        response = client.models.generate_content(
+            model='gemini-3-pro-image-preview',
+            contents=[base_image, modification_prompt],  # Image + modification prompt only
+            config=types.GenerateContentConfig(
+                response_modalities=["IMAGE"],
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
+            ),
+        )
+        
+        if response.parts:
+            for part in response.parts:
+                if part.inline_data:
+                    generated_image = part.as_image()
+                    generated_image.save(str(output_path))
+                    print(f"  Saved modified image: {output_path.name}")
+                    return True
+        
+        print(f"  No image returned from modification")
+        return False
+        
+    except Exception as e:
+        print(f"  Error modifying image: {e}")
+        raise
