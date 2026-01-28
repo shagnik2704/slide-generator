@@ -1,9 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Download, FileText, Users, Target, BookOpen, CheckCircle, XCircle, Loader2, Upload } from 'lucide-react';
 import ComplianceReport from './ComplianceReport';
-import { apiFormData } from '../services/api';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { apiFormData, apiJson } from '../services/api';
 
 const OutlineCard = ({ 
     outlineData, 
@@ -27,14 +25,15 @@ const OutlineCard = ({
     const handleDownloadPDF = async () => {
         setIsDownloadingPDF(true);
         try {
-            const response = await fetch(`${API_URL}/outline_chat/${projectId}/export?format=pdf`);
-            const data = await response.json();
+            const data = await apiJson(`/outline_chat/${projectId}/export?format=pdf`);
 
             if (data.pdf_url) {
+                const API_URL = import.meta.env.VITE_API_URL || '/api';
                 window.open(`${API_URL}${data.pdf_url}`, '_blank');
             }
         } catch (error) {
             console.error('Failed to download PDF:', error);
+            alert(`Failed to download PDF: ${error.message}`);
         } finally {
             setIsDownloadingPDF(false);
         }
@@ -43,14 +42,15 @@ const OutlineCard = ({
     const handleDownloadDOCX = async () => {
         setIsDownloadingDOCX(true);
         try {
-            const response = await fetch(`${API_URL}/outline_chat/${projectId}/export?format=docx`);
-            const data = await response.json();
+            const data = await apiJson(`/outline_chat/${projectId}/export?format=docx`);
 
             if (data.docx_url) {
+                const API_URL = import.meta.env.VITE_API_URL || '/api';
                 window.open(`${API_URL}${data.docx_url}`, '_blank');
             }
         } catch (error) {
             console.error('Failed to download DOCX:', error);
+            alert(`Failed to download DOCX: ${error.message}`);
         } finally {
             setIsDownloadingDOCX(false);
         }

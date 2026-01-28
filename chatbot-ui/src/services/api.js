@@ -21,11 +21,6 @@ function getToken() {
  * @throws {Error} - If authentication/authorization error occurs
  */
 function handleAuthError(response, endpoint = '') {
-    // Skip auth error handling for public outline_chat endpoints
-    if (endpoint.includes('/outline_chat') || endpoint.includes('/general_chat')) {
-        return; // Don't redirect for public endpoints
-    }
-
     if (response.status === 401) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem(TOKEN_KEY);

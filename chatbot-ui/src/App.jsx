@@ -63,7 +63,7 @@ function App() {
         }}
       >
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<LoginRoute />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
@@ -74,7 +74,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/outline-chat" element={<OutlineChatPage />} />
+          <Route
+            path="/outline-chat"
+            element={
+              <ProtectedRoute>
+                <OutlineChatPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

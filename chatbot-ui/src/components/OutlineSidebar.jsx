@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, FileText, Loader2, Download } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
-import { API_URL } from '../services/api';
+import { API_URL, apiJson } from '../services/api';
 
 const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
     const collapsedWidth = '60px';
@@ -94,8 +94,7 @@ const OutlineSidebar = ({ isOpen, toggleSidebar, onStageFile }) => {
                 setSnapshotError('Start an outline chat first to create a session.');
                 return;
             }
-            const response = await fetch(`${API_URL}/outline_chat/${projectId}/export?format=pdf`);
-            const data = await response.json();
+            const data = await apiJson(`/outline_chat/${projectId}/export?format=pdf`);
             if (data?.pdf_url) {
                 window.open(`${API_URL}${data.pdf_url}`, '_blank');
             } else {
