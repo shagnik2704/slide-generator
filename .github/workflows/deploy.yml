@@ -22,7 +22,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'https://iam.googleapis.com/projects/77578091156/locations/global/workloadIdentityPools/qc-version-change/providers/github-provider-id'
+          workload_identity_provider: 'projects/77578091156/locations/global/workloadIdentityPools/qc-version-change/providers/github-provider-id'
           service_account: 'vc-automation@version-change-automation.iam.gserviceaccount.com'
 
       # 2. Deploy to the VM via SSH
