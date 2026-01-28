@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.config import settings
 from src.api.exceptions import APIException
@@ -38,6 +39,7 @@ async def lifespan(app: FastAPI):
     logger.info("🔒 Server shutting down")
 
 
+
 app = FastAPI(
     title="Spoken Tutorial Generator API",
     description="Professional API for generating Spoken Tutorial educational content with advanced security",
@@ -47,6 +49,9 @@ app = FastAPI(
     redoc_url="/redoc" if settings.is_development else None,
     openapi_url="/openapi.json" if settings.is_development else None,
 )
+
+Instrumentator().instrument(app).expose(app)
+
 
 # Add security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
@@ -84,6 +89,7 @@ from src.api.routes import (
     download_router,
     outline_chat_router,
     translation_router,
+    timed_script_router,
 )
 from src.api.routes.auth import router as auth_router
 
@@ -94,6 +100,7 @@ app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
 app.include_router(translation_router)
+app.include_router(timed_script_router)
 
 # Global exception handler for API exceptions
 @app.exception_handler(APIException)

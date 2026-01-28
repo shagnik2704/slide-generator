@@ -107,6 +107,8 @@ dependencies = [
   "python-jose[cryptography]>=3.5.0",
   "pdfplumber>=0.11.4",
   "sqlite-vec>=0.1.6",
+  "prometheus-fastapi-instrumentator>=7.1.0",
+  "openai-whisper>=20250625",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, ExternalLink, MessageSquareWarning } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, ExternalLink, MessageSquareWarning, Clock } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 
@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     const imageInputRef = useRef(null);
     const slidesInputRef = useRef(null);
     const translationInputRef = useRef(null);
+    const timedScriptInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
@@ -69,6 +70,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'translation' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle timed script audio file selection - stage for preview
+    const handleTimedScriptFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'timed_script' });
             e.target.value = '';
         }
     };
@@ -190,6 +200,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleTranslationFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={timedScriptInputRef}
+                type="file"
+                accept=".wav,.mp3,.m4a,.ogg,.flac,.webm"
+                onChange={handleTimedScriptFileSelect}
                 style={{ display: 'none' }}
             />
 
@@ -424,6 +441,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 >
                     <Languages size={20} />
                     <span style={textLabelStyle}>Translate Script</span>
+                </button>
+            </TooltipWrapper>
+
+            {/* Timed Script Button */}
+            <TooltipWrapper text="Timed Script">
+                <button
+                    onClick={() => timedScriptInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Clock size={20} />
+                    <span style={textLabelStyle}>Timed Script</span>
                 </button>
             </TooltipWrapper>
 

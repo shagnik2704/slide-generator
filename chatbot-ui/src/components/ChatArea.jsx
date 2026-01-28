@@ -22,6 +22,7 @@ import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
 import QualityCheckModal from './QualityCheckModal';
+import TimedScriptModal from './TimedScriptModal';
 
 // Message Action Components
 import {
@@ -132,6 +133,19 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
             setQualityModalFile(stagedFile.file);
             setBatchQualityFiles(null);
             setIsQualityModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        }
+    }, [stagedFile, setStagedFile]);
+
+    // Timed Script Modal State
+    const [isTimedScriptModalOpen, setIsTimedScriptModalOpen] = React.useState(false);
+    const [timedScriptFile, setTimedScriptFile] = React.useState(null);
+
+    // Auto-open timed script modal when an audio file is staged
+    React.useEffect(() => {
+        if (stagedFile?.type === 'timed_script') {
+            setTimedScriptFile(stagedFile.file);
+            setIsTimedScriptModalOpen(true);
             setStagedFile(null);  // Clear staging since modal takes over
         }
     }, [stagedFile, setStagedFile]);
@@ -873,6 +887,16 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
 
             {/* Ask AI Chat - only show in outline_chat mode */}
             {mode === 'outline_chat' && <AskAIChat />}
+
+            {/* Timed Script Modal */}
+            <TimedScriptModal
+                isOpen={isTimedScriptModalOpen}
+                onClose={() => {
+                    setIsTimedScriptModalOpen(false);
+                    setTimedScriptFile(null);
+                }}
+                file={timedScriptFile}
+            />
 
             <style>{`
                 @keyframes bounce {
