@@ -484,7 +484,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <RefreshCw size={20} />
-                    {isOpen && <span>Tutorial Redesign</span>}
+                    <span style={textLabelStyle}>Tutorial Redesign</span>
                 </button>
             </TooltipWrapper>
 

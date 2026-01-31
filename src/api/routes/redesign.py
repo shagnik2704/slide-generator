@@ -3,7 +3,7 @@ from src.api.models import GenerateTutorialRequest, GenerateTutorialResponse, Sh
 from src.workflow import run_pipeline
 from src.nodes.gsheet import share_sheet
 
-router = APIRouter(tags=["redesign"])
+router = APIRouter(prefix="/redesign", tags=["redesign"])
 
 @router.get("/")
 def health_check():

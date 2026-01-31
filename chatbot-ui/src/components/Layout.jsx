@@ -77,7 +77,7 @@ const Layout = ({ mode = 'create' }) => {
           ref={chatAreaRef}
           toggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
-          mode={mode}
+          initialMode={mode}
           showSidebarToggle={showSidebar}
         />
       </div>

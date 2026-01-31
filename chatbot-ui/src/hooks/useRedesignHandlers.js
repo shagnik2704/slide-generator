@@ -29,7 +29,7 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
             setUploadMessages(prev => [...prev, statusMessage]);
 
             try {
-                const data = await apiJson('/generate', {
+                const data = await apiJson('/redesign/generate', {
                     method: 'POST',
                     body: JSON.stringify({
                         foss_name: formData.foss_name,
@@ -80,7 +80,7 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
             setUploadMessages(prev => [...prev, statusMessage]);
 
             try {
-                const data = await apiJson('/share', {
+                const data = await apiJson('/redesign/share', {
                     method: 'POST',
                     body: JSON.stringify({
                         url: formData.url,

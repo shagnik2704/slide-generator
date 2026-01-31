@@ -45,7 +45,7 @@ import { apiJson, apiFormData } from '../services/api';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', showSidebarToggle = true }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'create', showSidebarToggle = true }, ref) => {
     const location = useLocation();
     const {
         // State (mode from hook can be 'create' | 'outline_chat' | 'redesign')
@@ -96,7 +96,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         handleUpdateOutlineComplianceReport,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
-        handleExportMediaWiki,
         handleSaveScriptEdit,
         handleQualityCheck,
         handleRedesignSubmit,
@@ -106,7 +105,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         setStagedFile,
         handleConfirmStagedFile,
         handleCancelStagedFile,
-    } = useChatArea(mode);
+    } = useChatArea(initialMode);
 
     // Batch Modal State
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
@@ -163,7 +162,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
     };
 
     // Handler for quality check with language selection
-    const handleQualityCheckWithLanguage = async ({ file, jsonScript, languageCode }) => {
+    const handleQualityCheckWithLanguage = async ({ jsonScript, languageCode }) => {
         // If triggered from batch quality floral
         if (batchQualityFiles) {
             await handleSidebarBatchQualityUpload(batchQualityFiles, languageCode);
@@ -174,8 +173,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         // If triggered from sidebar (single file flow), run the sidebar quality upload with WorkflowCard
         if (qualityModalFile) {
             const workflowId = Date.now();
-            const languageName = languageCode === 'hi' ? 'Hindi' : languageCode; // Will be updated after API call
-
             const initialWorkflow = {
                 id: workflowId,
                 type: 'workflow',
@@ -515,14 +512,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: location.pathname === '/create'
+                                background: (location.pathname === '/create' && mode !== 'redesign')
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: location.pathname === '/create' ? 'white' : 'var(--text-primary)',
+                                color: (location.pathname === '/create' && mode !== 'redesign') ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: location.pathname === '/create' ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: (location.pathname === '/create' && mode !== 'redesign') ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
@@ -639,7 +636,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                         {mode === 'redesign' && (
                             <RedesignForm
                                 onSubmit={handleRedesignSubmit}
-                                onCancel={() => setMode('upload')}
+                                onCancel={() => setMode('create')}
                             />
                         )}
                         
