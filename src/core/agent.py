@@ -1,12 +1,12 @@
 """
-Main agent workflow for the slide generator.
+Main agent workflow for the Spoken Tutorial Generator.
 All business logic has been modularized into separate files.
 
-4-NODE PIPELINE:
-  Stage 1: generate_structure - Parse outline, create metadata + slide skeleton
-  Stage 2: expand_narration - Expand skeleton to full narration
-  Stage 3: generate_visuals - Add image prompts based on narration
-  Stage 4: evaluator - Quality checks + optimization loop
+4-NODE SCRIPT PIPELINE (Parallel):
+  Stage 1: extract_metadata - Extract metadata from user content
+  Stage 2a: generate_boilerplate - Generate 7 boilerplate slides (parallel)
+  Stage 2b: generate_content - Generate content slides (parallel)  
+  Stage 3: merge_script - Combine into final json_script
 """
 # Load environment variables first for LangSmith tracing
 from dotenv import load_dotenv
@@ -15,26 +15,14 @@ load_dotenv()
 from langgraph.graph import StateGraph, START, END
 from src.core.state import AgentState
 
-# === 4-NODE PIPELINE IMPORTS ===
-from src.nodes.structure_node import generate_structure
-from src.nodes.narration_node import expand_narration
-from src.nodes.visuals_node import generate_visuals
-from src.nodes.type_detector import detect_tutorial_type
-
-# === QUALITY CONTROL ===
-from src.nodes.evaluator_node import evaluate_quality
-from src.nodes.optimiser_node import optimise_script
-
-# === PDF GENERATION ===
-from src.nodes.pdf_node import generate_script_pdf, convert_to_latex, compile_pdf
-
-# === MEDIA GENERATION ===
-from src.nodes.media_node import generate_images, generate_audio
-from src.nodes.video_node import create_video
-from src.nodes.slide_content_node import generate_slide_content
+# === SCRIPT PIPELINE IMPORTS ===
+from src.nodes.metadata_node import extract_metadata
+from src.nodes.boilerplate_node import generate_boilerplate
+from src.nodes.content_node import generate_content
+from src.nodes.merge_node import merge_script
 
 # === ROUTING ===
-from src.routing.router import route_step, route_evaluation
+from src.routing.router import route_step
 
 
 def build_graph(checkpointer=None):
@@ -42,60 +30,32 @@ def build_graph(checkpointer=None):
     
     builder = StateGraph(AgentState)
 
-    # === 5-NODE SCRIPT GENERATION PIPELINE ===
-    builder.add_node("detect_type", detect_tutorial_type)         # Stage 0: Detect tutorial type
-    builder.add_node("generate_structure", generate_structure)    # Stage 1
-    builder.add_node("expand_narration", expand_narration)        # Stage 2
-    builder.add_node("generate_visuals", generate_visuals)        # Stage 3
-    builder.add_node("generate_script_pdf", generate_script_pdf)
-
-    # === QUALITY CONTROL NODES ===
-    builder.add_node("evaluator", evaluate_quality)
-    builder.add_node("optimiser", optimise_script)
-
-    # === PHASE 2: PDF - Slide Content + Images + LaTeX ===
-    builder.add_node("generate_slide_content", generate_slide_content)
-    builder.add_node("convert_to_latex", convert_to_latex)
-    builder.add_node("compile_pdf", compile_pdf)
-    builder.add_node("generate_images", generate_images)
-
-    # === PHASE 3: Video ===
-    builder.add_node("generate_audio", generate_audio)
-    builder.add_node("create_video", create_video)
+    # === 4-NODE SCRIPT PIPELINE ===
+    builder.add_node("extract_metadata", extract_metadata)          # Stage 1
+    builder.add_node("generate_boilerplate", generate_boilerplate)  # Stage 2a
+    builder.add_node("generate_content", generate_content)          # Stage 2b
+    builder.add_node("merge_script", merge_script)                  # Stage 3
 
 
-    # === ROUTING ===
+    # === ROUTING FROM START ===
     builder.add_conditional_edges(START, route_step, {
-        "script": "detect_type",  # Now starts with type detection
-        "pdf": "generate_slide_content",
-        "video": "generate_audio"
+        "script": "extract_metadata",  # Start with metadata extraction
+        "pdf": "extract_metadata",     # Temporary: route PDF to script for now
+        "video": "extract_metadata"    # Temporary: route video to script for now
     })
 
 
-    # === 5-NODE PIPELINE EDGES ===
-    # Type Detection -> Stage 1 -> Stage 2 -> Stage 3 -> Evaluator
-    builder.add_edge("detect_type", "generate_structure")
-    builder.add_edge("generate_structure", "expand_narration")
-    builder.add_edge("expand_narration", "generate_visuals")
-    builder.add_edge("generate_visuals", "evaluator")
-
-    # === EVALUATION LOOP ===
-    builder.add_conditional_edges("evaluator", route_evaluation, {
-        "proceed": "generate_script_pdf",
-        "optimise": "optimiser"
-    })
-    builder.add_edge("optimiser", "evaluator")
-    builder.add_edge("generate_script_pdf", END)
-
-    # === PHASE 2: Slide Content -> Images -> LaTeX -> PDF ===
-    builder.add_edge("generate_slide_content", "generate_images")
-    builder.add_edge("generate_images", "convert_to_latex")
-    builder.add_edge("convert_to_latex", "compile_pdf")
-    builder.add_edge("compile_pdf", END)
-
-    # === PHASE 3: Video ===
-    builder.add_edge("generate_audio", "create_video")
-    builder.add_edge("create_video", END)
+    # === SCRIPT PIPELINE EDGES ===
+    # Stage 1 -> Stage 2a AND Stage 2b (parallel fan-out)
+    builder.add_edge("extract_metadata", "generate_boilerplate")
+    builder.add_edge("extract_metadata", "generate_content")
+    
+    # Stage 2a AND Stage 2b -> Stage 3 (fan-in at merge)
+    builder.add_edge("generate_boilerplate", "merge_script")
+    builder.add_edge("generate_content", "merge_script")
+    
+    # Stage 3 -> END
+    builder.add_edge("merge_script", END)
 
     # Compile graph with optional checkpointer
     return builder.compile(checkpointer=checkpointer)
@@ -104,5 +64,3 @@ def build_graph(checkpointer=None):
 # For backwards compatibility and non-async usage (e.g., testing)
 # Creates a graph without checkpointer by default
 graph = build_graph()
-
-

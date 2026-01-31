@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import Sidebar from './Sidebar';
+import OutlineSidebar from './OutlineSidebar';
 import ChatArea from './ChatArea';
 
-const Layout = () => {
+const Layout = ({ mode = 'create' }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const chatAreaRef = useRef(null);
 
@@ -12,8 +13,12 @@ const Layout = () => {
 
   // Handle staging file from sidebar (stages for preview before upload)
   const handleStageFile = (stagedData) => {
+    console.log('Layout: handleStageFile called with:', stagedData);
     if (chatAreaRef.current?.setStagedFile) {
       chatAreaRef.current.setStagedFile(stagedData);
+      console.log('Layout: setStagedFile called successfully');
+    } else {
+      console.error('Layout: chatAreaRef.current.setStagedFile is not available');
     }
   };
 
@@ -38,29 +43,42 @@ const Layout = () => {
     }
   };
 
-  // Handle switch to redesign mode
   const handleSwitchToRedesign = () => {
     if (chatAreaRef.current?.setMode) {
       chatAreaRef.current.setMode('redesign');
     }
   };
 
+  const showSidebar = true;
+
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-        <Sidebar
-          isOpen={isSidebarOpen}
-          toggleSidebar={toggleSidebar}
-          onStageFile={handleStageFile}
-          onCreateSlides={handleCreateSlides}
-          onOpenBatchModal={handleOpenBatchModal}
-          onOpenBatchQualityModal={handleOpenBatchQualityModal}
-          onSwitchToRedesign={handleSwitchToRedesign}
-        />
+        {showSidebar && (
+          mode === 'outline_chat' ? (
+            <OutlineSidebar
+              isOpen={isSidebarOpen}
+              toggleSidebar={toggleSidebar}
+              onStageFile={handleStageFile}
+            />
+          ) : (
+            <Sidebar
+              isOpen={isSidebarOpen}
+              toggleSidebar={toggleSidebar}
+              onStageFile={handleStageFile}
+              onCreateSlides={handleCreateSlides}
+              onOpenBatchModal={handleOpenBatchModal}
+              onOpenBatchQualityModal={handleOpenBatchQualityModal}
+              onSwitchToRedesign={handleSwitchToRedesign}
+            />
+          )
+        )}
         <ChatArea
           ref={chatAreaRef}
           toggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
+          mode={mode}
+          showSidebarToggle={showSidebar}
         />
       </div>
     </div>

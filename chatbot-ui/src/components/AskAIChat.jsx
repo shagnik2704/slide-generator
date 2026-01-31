@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Minimize2 } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { apiJson } from '../services/api';
 
 const AskAIChat = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -35,17 +34,10 @@ const AskAIChat = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/general_chat`, {
+            const data = await apiJson('/general_chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question }),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to get answer');
-            }
-
-            const data = await response.json();
             const assistantMessage = {
                 role: 'assistant',
                 content: data.answer || 'Sorry, I could not generate an answer.',

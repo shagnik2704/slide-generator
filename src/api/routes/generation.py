@@ -1,5 +1,5 @@
 """Generation route handlers (script, slides, video)."""
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 import os
@@ -7,6 +7,7 @@ import json
 import time
 import traceback
 
+from src.api.auth import get_current_user, TokenData
 from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest, ExportMediaWikiRequest, DownloadScriptDocxRequest
 from src.services.mediawiki_service import export_to_mediawiki
 from src.services.docx_service import export_script_docx, docx_to_json
@@ -15,7 +16,7 @@ router = APIRouter(tags=["generation"])
 
 
 @router.post("/generate_script")
-async def generate_script(request: GenerateScriptRequest, req: Request):
+async def generate_script(request: GenerateScriptRequest, req: Request, current_user: TokenData = Depends(get_current_user)):
     """Generates a presentation script from a user-provided outline."""
     
     print(f"Received request to generate script from outline ({len(request.outline)} chars)")
@@ -29,19 +30,15 @@ async def generate_script(request: GenerateScriptRequest, req: Request):
         initial_state = {
             "outline": request.outline,
             "mode": getattr(request, 'mode', 'script_only'),
-            "evaluation_iteration": 0,
-            "evaluation_passed": False,
-            "evaluation_feedback": None,
         }
         
         # Use graph from app.state
         graph = req.app.state.graph
         result = await graph.ainvoke(initial_state)
         
-        script_pdf_path = result.get("script_pdf_path")
         json_script = result.get("json_script")
         
-        if script_pdf_path:
+        if json_script:
             project_id = int(time.time())
             
             # Save JSON script
@@ -51,15 +48,15 @@ async def generate_script(request: GenerateScriptRequest, req: Request):
             with open(str(json_path), 'w') as f:
                 json.dump(json_script, f, indent=2)
             
-            print(f"✅ Saved script PDF and JSON for project #{project_id}")
+            print(f"✅ Saved script JSON for project #{project_id}")
+            print(f"   Slides: {len(json_script.get('slides', []))}")
             
             return JSONResponse({
-                "script_pdf_url": f"/static/{os.path.basename(script_pdf_path)}",
                 "json_script": json_script,
                 "outline": request.outline
             })
         else:
-            raise HTTPException(status_code=500, detail="Failed to generate script PDF")
+            raise HTTPException(status_code=500, detail="Failed to generate script")
             
     except Exception as e:
         traceback.print_exc()
@@ -68,7 +65,7 @@ async def generate_script(request: GenerateScriptRequest, req: Request):
 
 
 @router.post("/generate_slides")
-async def generate_slides(request: GenerateSlidesRequest, req: Request):
+async def generate_slides(request: GenerateSlidesRequest, req: Request, current_user: TokenData = Depends(get_current_user)):
     """Generates PDF slides from the approved JSON script."""
     print(f"Received request to generate slides")
 
@@ -101,7 +98,7 @@ async def generate_slides(request: GenerateSlidesRequest, req: Request):
 
 
 @router.post("/generate_video")
-async def generate_video(request: GenerateVideoRequest, req: Request):
+async def generate_video(request: GenerateVideoRequest, req: Request, current_user: TokenData = Depends(get_current_user)):
     """Generates the final video from the approved JSON script and existing PDF."""
     try:
         # Get project root (3 levels up from src/api/routes/generation.py)
@@ -135,7 +132,7 @@ async def generate_video(request: GenerateVideoRequest, req: Request):
 
 
 @router.post("/export_mediawiki")
-async def export_mediawiki_endpoint(request: ExportMediaWikiRequest):
+async def export_mediawiki_endpoint(request: ExportMediaWikiRequest, current_user: TokenData = Depends(get_current_user)):
     """Exports the JSON script to MediaWiki format for Spoken Tutorial upload."""
     print("Exporting script to MediaWiki format...")
     
@@ -157,7 +154,7 @@ async def export_mediawiki_endpoint(request: ExportMediaWikiRequest):
 
 
 @router.post("/docx_to_mediawiki")
-async def docx_to_mediawiki(file: UploadFile = File(...)):
+async def docx_to_mediawiki(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Converts a .docx script directly to MediaWiki format in one step."""
     print(f"Converting .docx to MediaWiki: {file.filename}")
     
@@ -199,7 +196,7 @@ async def docx_to_mediawiki(file: UploadFile = File(...)):
 
 
 @router.post("/download_script_docx")
-async def download_script_docx(request: DownloadScriptDocxRequest):
+async def download_script_docx(request: DownloadScriptDocxRequest, current_user: TokenData = Depends(get_current_user)):
     """Downloads the script as an editable Word document with two-column table format."""
     print("Generating editable script .docx...")
     
@@ -222,7 +219,7 @@ async def download_script_docx(request: DownloadScriptDocxRequest):
 
 
 @router.post("/upload_edited_script")
-async def upload_edited_script(file: UploadFile = File(...)):
+async def upload_edited_script(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Uploads an edited .docx script and converts it back to JSON format."""
     print(f"Receiving edited script: {file.filename}")
     

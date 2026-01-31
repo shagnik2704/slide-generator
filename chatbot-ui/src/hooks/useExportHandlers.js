@@ -165,19 +165,25 @@ export function useExportHandlers(
 
     /**
      * Run a quality check on a script.
+     * @param {Object} jsonScript - The script to check
+     * @param {string|number} messageId - The message ID to associate the report with
+     * @param {string} languageCode - Target language code (e.g., 'hi', 'ta', 'te'). Defaults to 'hi'
      */
-    const handleQualityCheck = useCallback(async (jsonScript, messageId) => {
+    const handleQualityCheck = useCallback(async (jsonScript, messageId, languageCode = 'hi') => {
         setIsQualityLoading(true);
         setOpenQualityId(messageId);
 
         try {
             const data = await apiJson('/check_quality', {
                 method: 'POST',
-                body: JSON.stringify({ json_script: jsonScript }),
+                body: JSON.stringify({
+                    json_script: jsonScript,
+                    language_code: languageCode
+                }),
             });
 
             setQualityReports(prev => ({ ...prev, [messageId]: data }));
-            console.log('✅ Quality check complete:', data.summary);
+            console.log(`✅ Quality check complete (${data.language_name || languageCode}):`, data.summary);
 
         } catch (error) {
             console.error('Quality check error:', error);

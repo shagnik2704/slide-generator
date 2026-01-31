@@ -9,9 +9,7 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-# ============================================
-# PYDANTIC MODELS
-# ============================================
+
 
 class TranslatedSlide(BaseModel):
     """A single translated slide."""
@@ -46,6 +44,11 @@ SUPPORTED_LANGUAGES = {
     "mr": {"name": "Marathi", "native": "मराठी"},
     "bn": {"name": "Bengali", "native": "বাংলা"},
     "kn": {"name": "Kannada", "native": "ಕನ್ನಡ"},
+    "gu": {"name": "Gujarati", "native": "ગુજરાતી"},
+    "ml": {"name": "Malayalam", "native": "മലയാളം"},
+    "pa": {"name": "Punjabi", "native": "ਪੰਜਾਬੀ"},
+    "or": {"name": "Odia", "native": "ଓଡ଼ିଆ"},
+    "as": {"name": "Assamese", "native": "অসমীয়া"},
 }
 
 
@@ -118,13 +121,15 @@ async def translate_script(
         if translate_visual_cues:
             visual_cue_instruction = "- Also translate the visual_cue field if present"
         
-        prompt = f"""You are an expert English-to-{lang_name} translator for Spoken Tutorial scripts.
+        prompt = f"""You are an expert English-to-{lang_name} translator specializing in educational Spoken Tutorial scripts.
 
-**Translation Rules:**
-1. Use natural, conversational {lang_name} ({lang_native} script)
-2. Keep technical terms in English or transliterate them (e.g., Python, Linux, Terminal, click, file)
-3. IMPORTANT: Preserve **bold** markers exactly. Transliterate the content inside **markers** to {lang_native} script (e.g., **File** becomes **ఫైల్** in Telugu, **click** becomes **क्लिक** in Hindi)
-4. Each sentence should be speakable in one breath (under 100 characters)
+**Translation Guidelines:**
+1. Use simple, everyday {lang_name} that a student can easily understand
+2. Keep sentences short and natural for speaking aloud (this will be converted to audio)
+3. Avoid complex vocabulary - prefer common words over formal/literary ones
+4. Preserve **bold** markers exactly - transliterate content inside **markers** to {lang_native} script
+   (e.g., Python → पायथन, Terminal → టెర్మినల్, Click → क्लिक)
+5. Maintain the original meaning and tone
 {visual_cue_instruction}
 
 **Content to translate:**

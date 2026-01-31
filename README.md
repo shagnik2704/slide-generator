@@ -1,4 +1,4 @@
-# Slide Generator
+# Spoken Tutorial Generator
 
 AI-powered tool for generating Spoken Tutorial content: scripts, slides, and narrated videos from simple outlines.
 

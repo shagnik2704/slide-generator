@@ -1,1 +1,1 @@
-"""Slide Generator Application - Main Package"""
+"""Spoken Tutorial Generator Application - Main Package"""

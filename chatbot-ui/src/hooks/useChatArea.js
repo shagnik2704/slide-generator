@@ -14,23 +14,19 @@ import { useOutlineChat } from './useOutlineChat';
 import { useExportHandlers } from './useExportHandlers';
 import { useRedesignHandlers } from './useRedesignHandlers';
 
-// Default messages
-const DEFAULT_UPLOAD_MESSAGE = {
-    id: 1,
-    role: 'assistant',
-    content: 'Hello! Please upload your tutorial content to get started. I\'ll help you generate a script, slides, and video from it.'
-};
-
 /**
  * Main hook for ChatArea state and business logic.
  * Composes smaller, focused hooks for each feature area.
  */
-export function useChatArea() {
+export function useChatArea(initialMode = 'create') {
     // =========================
     // CORE STATE
     // =========================
 
-    const [mode, setMode] = useState('upload'); // 'upload' | 'outline_chat' | 'redesign'
+    const [mode, setMode] = useState(initialMode); // 'create' | 'outline_chat' | 'redesign'
+    useEffect(() => {
+        setMode(initialMode);
+    }, [initialMode]);
 
     // Initialize uploadMessages from localStorage or default
     const [uploadMessages, setUploadMessages] = useState(() => {
@@ -39,7 +35,7 @@ export function useChatArea() {
             console.log('📂 Restored session from localStorage');
             return saved.uploadMessages;
         }
-        return [DEFAULT_UPLOAD_MESSAGE];
+        return [];
     });
 
     const [isTyping, setIsTyping] = useState(false);
@@ -144,7 +140,7 @@ export function useChatArea() {
 
     // Auto-save upload mode state to localStorage
     useEffect(() => {
-        if (mode === 'upload' && uploadMessages.length > 0) {
+        if (mode === 'create' && uploadMessages.length > 0) {
             saveToLocalStorage(uploadMessages, currentProjectId);
         }
     }, [uploadMessages, currentProjectId, mode]);
@@ -156,7 +152,7 @@ export function useChatArea() {
     const handleClearSession = useCallback(() => {
         if (window.confirm('Clear all upload data and start fresh? This cannot be undone.')) {
             clearStorage();
-            setUploadMessages([DEFAULT_UPLOAD_MESSAGE]);
+            setUploadMessages([]);
             setCurrentProjectId(null);
             setOpenEditorId(null);
             setSessionRestored(false);
@@ -168,7 +164,7 @@ export function useChatArea() {
     // STAGING HANDLERS
     // =========================
 
-    const handleConfirmStagedFile = useCallback(() => {
+    const handleConfirmStagedFile = useCallback((options = {}) => {
         if (!stagedFile) return;
 
         const { file, files, type } = stagedFile;
@@ -187,7 +183,8 @@ export function useChatArea() {
                 sidebarHandlers.handleSidebarQualityUpload(file);
                 break;
             case 'voice':
-                sidebarHandlers.handleSidebarVoiceUpload(file);
+                // Pass voiceMode from options
+                sidebarHandlers.handleSidebarVoiceUpload(file, options.voiceMode || 'combined');
                 break;
             case 'images':
                 sidebarHandlers.handleSidebarImageUpload(file);
@@ -199,13 +196,23 @@ export function useChatArea() {
                 // Multiple files for batch processing
                 sidebarHandlers.handleSidebarBatchComplianceUpload(files);
                 break;
+            case 'outline_compliance':
+                // Outline compliance upload (for outline_chat mode)
+                if (mode === 'outline_chat' && outlineChat.handleUploadOutlineCompliance) {
+                    outlineChat.handleUploadOutlineCompliance(file);
+                }
+                break;
             case 'outline':
+                // Use WorkflowCard-based script generation
+                sidebarHandlers.handleSidebarScriptGenerate(file);
+                break;
             default:
                 uploadHandlers.handleSendMessage(file);
         }
 
         setStagedFile(null);
-    }, [stagedFile, uploadHandlers, sidebarHandlers]);
+    }, [stagedFile, uploadHandlers, sidebarHandlers, outlineChat, mode]);
+
 
     const handleCancelStagedFile = useCallback(() => {
         setStagedFile(null);
@@ -218,7 +225,6 @@ export function useChatArea() {
     return {
         // Core State
         mode,
-        setMode,
         uploadMessages,
         setUploadMessages,
         isTyping,
@@ -283,6 +289,9 @@ export function useChatArea() {
         handleSendChatText: outlineChat.handleSendChatText,
         handleConfirmation: outlineChat.handleConfirmation,
         handleEditAnswer: outlineChat.handleEditAnswer,
+        handleCheckCompliance: outlineChat.handleCheckCompliance,
+        handleUpdateOutlineComplianceReport: outlineChat.handleUpdateComplianceReport,
+        handleUploadOutlineCompliance: outlineChat.handleUploadOutlineCompliance,
 
         // Export handlers
         handleDownloadScriptDocx: exportHandlers.handleDownloadScriptDocx,

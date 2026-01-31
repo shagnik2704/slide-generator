@@ -16,9 +16,7 @@ const SlidesPreview = ({ slidesData }) => {
         filename = 'slides.tex',
         zip_filename = 'slides.zip',
         zip_url = '',
-        num_boilerplate_slides = 0,
-        num_content_slides = 0,
-        total_slides = 0
+        num_boilerplate_slides = 0
     } = slidesData || {};
 
     const handleDownload = () => {
@@ -142,16 +140,8 @@ const SlidesPreview = ({ slidesData }) => {
             {/* Stats */}
             <div style={statsStyle}>
                 <div style={statItemStyle}>
-                    <span style={statNumberStyle}>{total_slides}</span>
-                    <span style={statLabelStyle}>Total Slides</span>
-                </div>
-                <div style={statItemStyle}>
                     <span style={statNumberStyle}>{num_boilerplate_slides}</span>
-                    <span style={statLabelStyle}>Boilerplate</span>
-                </div>
-                <div style={statItemStyle}>
-                    <span style={statNumberStyle}>{num_content_slides}</span>
-                    <span style={statLabelStyle}>Blank Content</span>
+                    <span style={statLabelStyle}>Boilerplate Slides</span>
                 </div>
             </div>
 

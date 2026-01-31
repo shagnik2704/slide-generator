@@ -1,22 +1,24 @@
 """Upload route handlers."""
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from pathlib import Path
 import os
 import json
 import time
 import traceback
 
+from src.api.auth import get_current_user, TokenData
 from src.services.outline_service import parse_docx_outline
 
 router = APIRouter(tags=["upload"])
 
 
 @router.post("/upload_outline")
-async def upload_outline(file: UploadFile = File(...)):
-    """Upload an edited outline file (.md or .docx)."""
+async def upload_outline(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
+    """Upload an edited outline file (.md, .docx, .txt, or .odt)."""
     try:
-        # Validate file type
-        if not (file.filename.endswith('.md') or file.filename.endswith('.docx') or file.filename.endswith('.txt') or file.filename.endswith('.odt')):
+        # Validate file type (case-insensitive)
+        filename_lower = file.filename.lower() if file.filename else ""
+        if not (filename_lower.endswith('.md') or filename_lower.endswith('.docx') or filename_lower.endswith('.txt') or filename_lower.endswith('.odt')):
             raise HTTPException(status_code=400, detail="Only .md, .txt, .docx, or .odt files are allowed")
         
         # Get project root (3 levels up from src/api/routes/upload.py)
@@ -33,23 +35,37 @@ async def upload_outline(file: UploadFile = File(...)):
             buffer.write(content)
         
         # Parse the document
-        outline_text = parse_docx_outline(str(temp_path))
+        try:
+            outline_text = parse_docx_outline(str(temp_path))
+        except ValueError as ve:
+            # Clean up temp file before raising error
+            if temp_path.exists():
+                os.remove(str(temp_path))
+            raise HTTPException(status_code=400, detail=f"Error parsing document: {str(ve)}")
+        except Exception as parse_error:
+            # Clean up temp file before raising error
+            if temp_path.exists():
+                os.remove(str(temp_path))
+            raise HTTPException(status_code=400, detail=f"Failed to parse document. Please ensure it's a valid .docx, .md, .txt, or .odt file: {str(parse_error)}")
         
         # Clean up temp file
-        os.remove(str(temp_path))
+        if temp_path.exists():
+            os.remove(str(temp_path))
         
         return {
             "outline": outline_text,
-            "message": "Outline uploaded successfully"
+            "message": f"Outline uploaded successfully ({file.filename})"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in upload_outline: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Server error while processing file: {str(e)}")
 
 
 @router.post("/parse_script")
-async def parse_script(file: UploadFile = File(...)):
+async def parse_script(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Parse a script file (.json, .docx, or .odt) WITHOUT running any checks."""
     try:
         filename = file.filename.lower()
@@ -107,7 +123,7 @@ async def parse_script(file: UploadFile = File(...)):
 
 
 @router.post("/check_compliance")
-async def check_compliance_endpoint(data: dict):
+async def check_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Run compliance checks on a parsed script.
     
@@ -145,8 +161,189 @@ async def check_compliance_endpoint(data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/check_outline_compliance")
+async def check_outline_compliance_endpoint(data: dict):
+    """
+    Run compliance checks on an outline/tutorial design.
+    
+    Args:
+        outline_data: The outline JSON data (CourseOutlineData format)
+    
+    Returns:
+        Compliance report with checks and summary for outline design
+    """
+    print("Running outline compliance checks...")
+    
+    try:
+        outline_data = data.get('outline_data')
+        
+        if not outline_data:
+            raise HTTPException(status_code=400, detail="outline_data is required")
+        
+        from src.services.compliance_service import check_outline_compliance
+        compliance_report = await check_outline_compliance(outline_data)
+        
+        summary = compliance_report.get('summary', {})
+        print(f"✅ Outline compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
+        
+        return compliance_report
+        
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in check_outline_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload_outline_for_compliance")
+async def upload_outline_for_compliance(file: UploadFile = File(...)):
+    """
+    Upload an outline file (.json or .docx) and run compliance checks on it.
+    
+    Args:
+        file: JSON file containing outline_data (CourseOutlineData format) OR DOCX file to parse
+    
+    Returns:
+        Compliance report with checks and summary for outline design
+    """
+    print(f"Uploading outline file for compliance check: {file.filename}")
+    
+    try:
+        filename = file.filename.lower()
+        
+        # Validate file type - support JSON and DOCX files
+        if not (filename.endswith('.json') or filename.endswith('.docx')):
+            raise HTTPException(status_code=400, detail="Only .json or .docx files are allowed. JSON files should contain 'outline_data' field. DOCX files will be parsed to extract outline data.")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Handle DOCX files
+        if filename.endswith('.docx'):
+            # Parse DOCX and extract outline data using LLM
+            from src.services.outline_service import parse_docx_outline
+            
+            # Save temporarily to parse
+            project_root = Path(__file__).parent.parent.parent
+            upload_dir = project_root / "uploads"
+            upload_dir.mkdir(exist_ok=True)
+            temp_path = upload_dir / f"outline_compliance_{int(time.time())}_{file.filename}"
+            
+            with open(str(temp_path), "wb") as buffer:
+                buffer.write(content)
+            
+            try:
+                # Parse DOCX to markdown text
+                outline_text = parse_docx_outline(str(temp_path))
+                
+                # Use LLM to extract outline_data from the parsed text
+                from src.api.routes.outline_chat.outline_chat_llm_utils import generate_llm_text
+                import asyncio
+                
+                # Create a prompt to extract outline data from the text
+                extraction_prompt = f"""Extract course outline data from the following document text and return it as a JSON object matching the CourseOutlineData format.
+
+Document text:
+{outline_text}
+
+Return a JSON object with the following structure (fill in what you can find):
+{{
+    "outline_type": "FOSS" or "ICT" or "OTHER",
+    "outline_name": "course name",
+    "platform_name": "software/platform name and version",
+    "target_audience": "target audience description",
+    "entry_behaviour": "prerequisites/entry behaviour",
+    "purpose": "course purpose",
+    "os_version": "OS version if applicable",
+    "recommended_no_of_tutorials": number,
+    "prepared_by": "author name",
+    "domain": "domain name",
+    "reviewer": "reviewer name",
+    "date": "date",
+    "keywords": ["keyword1", "keyword2"],
+    "course_objectives": ["objective1", "objective2"],
+    "topics_included": ["topic1", "topic2"],
+    "topics_not_included": ["topic1", "topic2"],
+    "core_example": "core example description",
+    "allied_examples": ["example1", "example2"],
+    "tutorial_rows": [
+        {{
+            "tutorial_number": 1,
+            "title": "tutorial title",
+            "prerequisites": ["prereq1"],
+            "topics_details": ["topic1", "topic2"],
+            "time_seconds": 180,
+            "comments": "comments"
+        }}
+    ]
+}}
+
+Return ONLY the JSON object, no other text."""
+                
+                # Call LLM to extract outline data (run in thread to avoid blocking)
+                llm_response = await asyncio.to_thread(
+                    generate_llm_text,
+                    extraction_prompt,
+                    temperature=0.3,
+                    max_tokens=4096
+                )
+                
+                # Parse the LLM response to extract JSON
+                import re
+                json_match = re.search(r'\{.*\}', llm_response, re.DOTALL)
+                if json_match:
+                    outline_data = json.loads(json_match.group())
+                else:
+                    # Try to parse the entire response as JSON
+                    outline_data = json.loads(llm_response)
+                
+            except json.JSONDecodeError as e:
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+                raise HTTPException(status_code=400, detail=f"Failed to extract outline data from DOCX. The document may not be in the expected format. Error: {str(e)}")
+            except Exception as parse_error:
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+                raise HTTPException(status_code=400, detail=f"Failed to parse DOCX file: {str(parse_error)}")
+            finally:
+                # Clean up temp file
+                if temp_path.exists():
+                    os.remove(str(temp_path))
+        else:
+            # Handle JSON files
+            try:
+                file_data = json.loads(content.decode('utf-8'))
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid JSON format: {str(e)}")
+            
+            # Extract outline_data - support both direct outline_data or wrapped in a dict
+            outline_data = file_data.get('outline_data') or file_data
+            
+            if not outline_data or not isinstance(outline_data, dict):
+                raise HTTPException(status_code=400, detail="JSON file must contain 'outline_data' field or be a valid outline_data object")
+        
+        # Run compliance checks
+        from src.services.compliance_service import check_outline_compliance
+        compliance_report = await check_outline_compliance(outline_data)
+        
+        summary = compliance_report.get('summary', {})
+        print(f"✅ Outline compliance check complete for {file.filename}: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
+        
+        return {
+            "compliance_report": compliance_report,
+            "outline_data": outline_data,
+            "message": f"Compliance check complete for {file.filename}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in upload_outline_for_compliance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/batch_check_compliance")
-async def batch_check_compliance_endpoint(data: dict):
+async def batch_check_compliance_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Check multiple scripts for compliance in parallel.
     
@@ -203,7 +400,7 @@ async def batch_check_compliance_endpoint(data: dict):
 
 
 @router.post("/upload_script")
-async def upload_script(file: UploadFile = File(...)):
+async def upload_script(file: UploadFile = File(...), current_user: TokenData = Depends(get_current_user)):
     """Upload a script file (.json, .docx, or .odt) and run compliance check."""
     try:
         filename = file.filename.lower()
@@ -285,7 +482,7 @@ def _detect_tutorial_type(json_script: dict) -> str:
 
 
 @router.post("/export_compliance_report")
-async def export_compliance_report(data: dict):
+async def export_compliance_report(data: dict, current_user: TokenData = Depends(get_current_user)):
     """Export compliance report as DOCX or ODT file."""
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
@@ -385,15 +582,23 @@ async def export_compliance_report(data: dict):
 
 
 @router.post("/check_quality")
-async def check_quality_endpoint(data: dict):
+async def check_quality_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
-    Run quality checks and translate script to Hindi.
+    Run quality checks and translate script to target language.
+    
+    Uses back-translation method (English → Language → English) to verify translation quality.
+    
+    Args (in data):
+        json_script: The script JSON to check
+        language_code: Target language code ('hi', 'ta', 'te', etc). Defaults to 'hi' (Hindi)
     
     Returns:
         - Quality check results (translation quality, timing, transliteration)
-        - Full translated Hindi script
+        - Full translated script in target language
+        - Language info (code, name, native script)
     """
-    print("Running quality checks and Hindi translation...")
+    language_code = data.get('language_code', 'hi')
+    print(f"Running quality checks with {language_code} translation...")
     
     try:
         json_script = data.get('json_script')
@@ -402,10 +607,11 @@ async def check_quality_endpoint(data: dict):
             raise HTTPException(status_code=400, detail="json_script is required")
         
         from src.services.quality_service import check_quality
-        result = await check_quality(json_script)
+        result = await check_quality(json_script, language_code)
         
         summary = result.get('summary', {})
-        print(f"✅ Quality check complete: {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
+        lang_name = result.get('language_name', 'Unknown')
+        print(f"✅ Quality check complete ({lang_name}): {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
         print(f"📊 Avg translation quality: {summary.get('avg_quality_score', 0)}/5")
         
         return result
@@ -417,18 +623,20 @@ async def check_quality_endpoint(data: dict):
 
 
 @router.post("/batch_check_quality")
-async def batch_check_quality_endpoint(data: dict):
+async def batch_check_quality_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Run quality checks for multiple scripts in parallel.
     
-    Args:
+    Args (in data):
         scripts: List of script JSON objects to check
+        language_code: Target language code for all scripts. Defaults to 'hi' (Hindi)
     
     Returns:
         results: List of quality check results (one per script)
         batch_summary: Overall batch statistics
     """
-    print("📋 Batch quality check requested...")
+    language_code = data.get('language_code', 'hi')
+    print(f"📋 Batch quality check requested ({language_code})...")
     
     try:
         scripts = data.get('scripts', [])
@@ -439,7 +647,7 @@ async def batch_check_quality_endpoint(data: dict):
         print(f"   Processing {len(scripts)} scripts...")
         
         from src.services.quality_service import batch_check_quality
-        result = await batch_check_quality(scripts)
+        result = await batch_check_quality(scripts, language_code)
         
         summary = result.get('batch_summary', {})
         print(f"✅ Batch quality check complete: {summary.get('scripts_passed', 0)}/{summary.get('total_scripts', 0)} passed")
@@ -453,7 +661,7 @@ async def batch_check_quality_endpoint(data: dict):
 
 
 @router.post("/generate_voice")
-async def generate_voice_endpoint(data: dict):
+async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate voice narration for a JSON script.
     
@@ -490,44 +698,8 @@ async def generate_voice_endpoint(data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/generate_voice_batched")
-async def generate_voice_batched_endpoint(data: dict):
-    """
-    Generate voice narration using BATCHED approach - ~75% fewer API calls!
-    
-    Combines multiple slides per API call, then splits audio using silence detection.
-    
-    Args:
-        json_script: The parsed script JSON
-        project_id: Optional project ID
-    """
-    print("🎤 Starting BATCHED voice generation...")
-    
-    try:
-        json_script = data.get('json_script')
-        project_id = data.get('project_id')
-        
-        if not json_script:
-            raise HTTPException(status_code=400, detail="json_script is required")
-        
-        from src.services.voice_service import generate_voice_for_script_batched
-        result = await generate_voice_for_script_batched(
-            json_script=json_script,
-            project_id=project_id,
-        )
-        
-        print(f"✅ Batched voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
-        print(f"📊 API calls saved: {result.get('api_calls_saved')}")
-        
-        return result
-        
-    except Exception as e:
-        traceback.print_exc()
-        print(f"ERROR in generate_voice_batched: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("/generate_voice_combined")
-async def generate_voice_combined_endpoint(data: dict):
+async def generate_voice_combined_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate a SINGLE audio file for the entire script.
     
@@ -572,7 +744,7 @@ async def generate_voice_combined_endpoint(data: dict):
 
 
 @router.post("/enhance_prompts")
-async def enhance_prompts_endpoint(data: dict):
+async def enhance_prompts_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Enhance visual cues from a script into detailed image generation prompts.
     
@@ -609,7 +781,8 @@ async def enhance_prompts_endpoint(data: dict):
 async def upload_reference_image(
     file: UploadFile = File(...),
     project_id: int = Form(...),
-    slide_number: int = Form(...)
+    slide_number: int = Form(...),
+    current_user: TokenData = Depends(get_current_user)
 ):
     """
     Upload a reference image for image-to-image generation.
@@ -643,7 +816,7 @@ async def upload_reference_image(
 
 
 @router.post("/generate_images")
-async def generate_images_endpoint(data: dict):
+async def generate_images_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate images from approved prompts.
     
@@ -681,9 +854,90 @@ async def generate_images_endpoint(data: dict):
         print(f"ERROR in generate_images: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post('/modify_image')
+async def modify_image_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """
+    Modify an existing generated image with a new prompt.
+    
+    Args:
+        project_id: Project ID
+        slide_number: Row number
+        sentence_index: Sentence index
+        modification_prompt: The change you want to make (e.g., "change background to forest")
+        base_image_url: URL of the existing image to modify (e.g., "/output/images/123/row_5_sent_2.png")
+        aspect_ratio: Optional, defaults to "16:9"
+    
+    Returns:
+        success: Boolean indicating if modification was successful
+        url: URL of the modified image
+        timestamp: Cache-busting timestamp
+    """
+    print("Modifying existing image...")
+    
+    try:
+        project_id = data.get('project_id')
+        slide_number = data.get('slide_number')
+        sentence_index = data.get('sentence_index')
+        modification_prompt = data.get('modification_prompt')
+        base_image_url = data.get('base_image_url')
+        aspect_ratio = data.get('aspect_ratio', '16:9')
+        
+        # Validate inputs
+        if not project_id:
+            raise HTTPException(status_code=400, detail="project_id is required")
+        if slide_number is None:
+            raise HTTPException(status_code=400, detail="slide_number is required")
+        if sentence_index is None:
+            raise HTTPException(status_code=400, detail="sentence_index is required")
+        if not modification_prompt:
+            raise HTTPException(status_code=400, detail="modification_prompt is required")
+        if not base_image_url:
+            raise HTTPException(status_code=400, detail="base_image_url is required")
+        
+        # Convert URL to file path
+        # e.g., "/output/images/123/row_5_sent_2.png" -> "output/images/123/row_5_sent_2.png"
+        project_root = Path(__file__).parent.parent.parent.parent
+        base_image_path = project_root / base_image_url.lstrip('/')
+        
+        if not base_image_path.exists():
+            raise HTTPException(status_code=404, detail=f"Base image not found: {base_image_url}")
+        
+        print(f"Base image: {base_image_path.name}")
+        print(f"Modification: {modification_prompt[:60]}...")
+        
+        from src.services.image_service import modify_existing_image
+        
+        success = modify_existing_image(
+            base_image_path=base_image_path,
+            modification_prompt=modification_prompt,
+            output_path=base_image_path,  
+            aspect_ratio=aspect_ratio
+        )
+        
+        if success:
+            print(f"Image modified successfully")
+            return {
+                "success": True,
+                "url": base_image_url,
+                "timestamp": int(time.time()),  
+                "message": "Image modified successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to modify image")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in modify_image: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+        
+        
+
+
 
 @router.post("/generate_slides")
-async def generate_slides_endpoint(data: dict):
+async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
     Generate a Beamer LaTeX template for presentation slides.
     
@@ -705,12 +959,10 @@ async def generate_slides_endpoint(data: dict):
     try:
         json_script = data.get('json_script')
         tutorial_name = data.get('tutorial_name', 'Tutorial Name')
-        num_content_slides = data.get('num_content_slides', 10)
         
         # Initialize template parameters
         template_params = {
             "tutorial_name": tutorial_name,
-            "num_content_slides": num_content_slides,
         }
         
         # Extract content from script using LLM if provided
@@ -723,7 +975,6 @@ async def generate_slides_endpoint(data: dict):
             # Update template params with extracted content
             template_params.update({
                 "tutorial_name": extracted.get("tutorial_name", tutorial_name),
-                "num_content_slides": extracted.get("num_content_slides", num_content_slides),
                 "learning_objectives": extracted.get("learning_objectives"),
                 "learning_objectives_intro": extracted.get("learning_objectives_intro"),
                 "prerequisites": extracted.get("prerequisites"),
@@ -785,9 +1036,7 @@ async def generate_slides_endpoint(data: dict):
             "filename": tex_filename,
             "zip_filename": zip_filename,
             "zip_url": f"/output/slides/{zip_filename}",
-            "num_boilerplate_slides": 8,  # Title, LO, SysReq, Prereq, Summary, Assignment, Thanks
-            "num_content_slides": template_params["num_content_slides"],
-            "total_slides": 8 + template_params["num_content_slides"],
+            "num_boilerplate_slides": 8,  # Title, LO, SysReq, Prereq, Code, Summary, Assignment, Thanks
             "auto_filled": auto_filled
         }
         

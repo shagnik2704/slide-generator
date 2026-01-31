@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Settings, ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, RefreshCw } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, RefreshCw, HelpCircle, ExternalLink, MessageSquareWarning, Clock } from 'lucide-react';
 import Tooltip from './Tooltip';
+import UserProfile from './UserProfile';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign }) => {
     const collapsedWidth = '60px';
@@ -17,6 +18,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     const imageInputRef = useRef(null);
     const slidesInputRef = useRef(null);
     const translationInputRef = useRef(null);
+    const timedScriptInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
     const handleComplianceFileSelect = (e) => {
@@ -72,6 +74,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         }
     };
 
+    // Handle timed script audio file selection - stage for preview
+    const handleTimedScriptFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'timed_script' });
+            e.target.value = '';
+        }
+    };
+
     // Handle slides generation file selection - stage for preview
     const handleSlidesFileSelect = (e) => {
         const file = e.target.files[0];
@@ -85,8 +96,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     const iconButtonStyle = {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: isOpen ? 'flex-start' : 'center',
-        gap: '0.75rem',
+        justifyContent: 'flex-start',  // Always flex-start - icons stay in place
+        gap: isOpen ? '0.75rem' : '0',  // Collapse gap when closed
         padding: isOpen ? '0.75rem 1rem' : '0.75rem',
         background: 'transparent',
         border: 'none',
@@ -95,9 +106,19 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         fontSize: '0.85rem',
         cursor: 'pointer',
         width: '100%',
-        transition: 'all 0.2s ease',
+        transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease',
         whiteSpace: 'nowrap',
         overflow: 'hidden'
+    };
+
+    // Text label style - fades out AND collapses when sidebar closed
+    const textLabelStyle = {
+        opacity: isOpen ? 1 : 0,
+        width: isOpen ? 'auto' : 0,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        transition: 'opacity 0.25s ease, width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        pointerEvents: isOpen ? 'auto' : 'none'
     };
 
     // Dropdown item style (indented)
@@ -124,7 +145,9 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             flexDirection: 'column',
             padding: isOpen ? '1rem' : '0.75rem 0.5rem',
             flexShrink: 0,
-            transition: 'all 0.3s ease-in-out',
+            // Smoother animation with cubic-bezier and GPU acceleration
+            transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+            willChange: 'width, min-width, padding',
             overflow: 'visible',
             position: 'relative'
         }}>
@@ -179,6 +202,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 onChange={handleTranslationFileSelect}
                 style={{ display: 'none' }}
             />
+            <input
+                ref={timedScriptInputRef}
+                type="file"
+                accept=".wav,.mp3,.m4a,.ogg,.flac,.webm"
+                onChange={handleTimedScriptFileSelect}
+                style={{ display: 'none' }}
+            />
 
             {/* Navigation Items */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -204,18 +234,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                         }}
                     >
                         <ClipboardCheck size={20} />
-                        {isOpen && (
-                            <>
-                                <span style={{ flex: 1, textAlign: 'left' }}>Compliance Report</span>
-                                <ChevronDown
-                                    size={16}
-                                    style={{
-                                        transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.2s ease'
-                                    }}
-                                />
-                            </>
-                        )}
+                        <span style={{ flex: 1, textAlign: 'left', ...textLabelStyle }}>Compliance Report</span>
+                        <ChevronDown
+                            size={16}
+                            style={{
+                                ...textLabelStyle,
+                                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.2s ease, opacity 0.25s ease'
+                            }}
+                        />
                     </button>
                 </TooltipWrapper>
 
@@ -242,7 +269,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 }}
                             >
                                 <ShieldCheck size={18} />
-                                {isOpen && <span>Admin Compliance</span>}
+                                <span style={textLabelStyle}>Admin Compliance</span>
                             </button>
                         </TooltipWrapper>
 
@@ -261,12 +288,12 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 }}
                             >
                                 <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.5px' }}>अத</span>
-                                {isOpen && <span>Quality Compliance</span>}
+                                <span style={textLabelStyle}>Quality Compliance</span>
                             </button>
                         </TooltipWrapper>
 
-                        {/* Batch Compliance */}
-                        <TooltipWrapper text="Batch Compliance">
+                        {/* Batch Admin */}
+                        <TooltipWrapper text="Batch Admin">
                             <button
                                 onClick={() => onOpenBatchModal && onOpenBatchModal()}
                                 style={dropdownItemStyle}
@@ -280,7 +307,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 }}
                             >
                                 <ListChecks size={18} />
-                                {isOpen && <span>Batch Compliance</span>}
+                                <span style={textLabelStyle}>Batch Admin</span>
                             </button>
                         </TooltipWrapper>
 
@@ -299,9 +326,10 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                 }}
                             >
                                 <Languages size={18} />
-                                {isOpen && <span>Batch Quality</span>}
+                                <span style={textLabelStyle}>Batch Quality</span>
                             </button>
                         </TooltipWrapper>
+
                     </div>
                 )}
             </nav>
@@ -324,7 +352,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <FileText size={20} />
-                    {isOpen && <span>Script Generator</span>}
+                    <span style={textLabelStyle}>Script Generator</span>
                 </button>
             </TooltipWrapper>
 
@@ -346,7 +374,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <Mic size={20} />
-                    {isOpen && <span>Voice Generator</span>}
+                    <span style={textLabelStyle}>Voice Generator</span>
                 </button>
             </TooltipWrapper>
 
@@ -368,7 +396,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <Image size={20} />
-                    {isOpen && <span>Image Generator</span>}
+                    <span style={textLabelStyle}>Image Generator</span>
                 </button>
             </TooltipWrapper>
 
@@ -390,7 +418,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <Presentation size={20} />
-                    {isOpen && <span>Slides Generator</span>}
+                    <span style={textLabelStyle}>Slides Generator</span>
                 </button>
             </TooltipWrapper>
 
@@ -412,7 +440,29 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     }}
                 >
                     <Languages size={20} />
-                    {isOpen && <span>Translate Script</span>}
+                    <span style={textLabelStyle}>Translate Script</span>
+                </button>
+            </TooltipWrapper>
+
+            {/* Timed Script Button */}
+            <TooltipWrapper text="Timed Script">
+                <button
+                    onClick={() => timedScriptInputRef.current?.click()}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Clock size={20} />
+                    <span style={textLabelStyle}>Timed Script</span>
                 </button>
             </TooltipWrapper>
 
@@ -450,22 +500,136 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 flexDirection: 'column',
                 gap: '0.5rem'
             }}>
-                <TooltipWrapper text="Settings">
-                    <button
-                        style={iconButtonStyle}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--accent-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                        }}
-                    >
-                        <Settings size={20} />
-                        {isOpen && <span>Settings</span>}
-                    </button>
+                {/* Need Help Section */}
+                <TooltipWrapper text="Need Help?">
+                    <div style={{
+                        padding: isOpen ? '0.75rem' : '0.75rem 0.5rem',
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '0.5rem',
+                        transition: 'padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: isOpen ? '0.5rem' : '0',
+                            marginBottom: isOpen ? '0.5rem' : '0',
+                            transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}>
+                            <HelpCircle size={18} style={{ color: 'var(--accent-secondary)', flexShrink: 0 }} />
+                            <span style={{
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                color: 'var(--text-primary)',
+                                ...textLabelStyle
+                            }}>Need Help?</span>
+                        </div>
+                        {isOpen && (
+                            <>
+                                <p style={{
+                                    fontSize: '0.7rem',
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: 1.4,
+                                    margin: '0 0 0.5rem 0'
+                                }}>
+                                    Watch these videos to get started
+                                </p>
+                                <a
+                                    href="https://drive.google.com/drive/folders/1XBGWAC4QBWIIbLODmcc114haXez0ApxJ?usp=drive_link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.4rem',
+                                        fontSize: '0.75rem',
+                                        color: 'var(--accent-primary)',
+                                        textDecoration: 'none',
+                                        fontWeight: 500,
+                                        transition: 'opacity 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                >
+                                    <span>📹 Tutorial Videos</span>
+                                    <ExternalLink size={12} />
+                                </a>
+                            </>
+                        )}
+                    </div>
                 </TooltipWrapper>
+
+                {/* Send Feedback Section */}
+                <TooltipWrapper text="Send Feedback">
+                    <div style={{
+                        padding: isOpen ? '0.75rem' : '0.75rem 0.5rem',
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '0.5rem',
+                        transition: 'padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: isOpen ? '0.5rem' : '0',
+                            marginBottom: isOpen ? '0.5rem' : '0',
+                            transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}>
+                            <MessageSquareWarning size={18} style={{ color: 'var(--accent-secondary)', flexShrink: 0 }} />
+                            <span style={{
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                                color: 'var(--text-primary)',
+                                ...textLabelStyle
+                            }}>Send Feedback</span>
+                        </div>
+                        {isOpen && (
+                            <>
+                                <p style={{
+                                    fontSize: '0.7rem',
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: 1.4,
+                                    margin: '0 0 0.5rem 0'
+                                }}>
+                                    Report issues or suggestions
+                                </p>
+                                <a
+                                    href="https://forms.gle/gZQChrYSiDn2aemr8"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.4rem',
+                                        fontSize: '0.75rem',
+                                        color: 'var(--accent-primary)',
+                                        textDecoration: 'none',
+                                        fontWeight: 500,
+                                        transition: 'opacity 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                >
+                                    <span>📝 Feedback Form</span>
+                                    <ExternalLink size={12} />
+                                </a>
+                            </>
+                        )}
+                    </div>
+                </TooltipWrapper>
+
+                {/* User Profile */}
+                {isOpen && (
+                    <div style={{ marginBottom: '0.5rem' }}>
+                        <UserProfile />
+                    </div>
+                )}
+
+
 
                 {/* Toggle button */}
                 <TooltipWrapper text={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
@@ -479,7 +643,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                         }}
                     >
                         {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                        {isOpen && <span style={{ marginLeft: '0.25rem' }}>Collapse</span>}
+                        <span style={{ marginLeft: '0.25rem', ...textLabelStyle }}>Collapse</span>
                     </button>
                 </TooltipWrapper>
             </div>

@@ -29,12 +29,23 @@ export function useSidebarHandlers(
      * Run Admin Compliance check on a script file.
      */
     const handleSidebarComplianceUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Admin Compliance check on: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'compliance',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Running compliance check', status: 'pending' },
+                { label: 'Report ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -43,6 +54,19 @@ export function useSidebarHandlers(
             formData.append('file', file);
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Running compliance check', status: 'processing' },
+                        { label: 'Report ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Run compliance check
             const complianceReport = await apiJson('/check_compliance', {
@@ -53,31 +77,38 @@ export function useSidebarHandlers(
                 }),
             });
 
-            const messageId = Date.now() + 1;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Admin Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: complianceReport,
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-            setOpenReportId(messageId);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Running compliance check', status: 'complete' },
+                        { label: 'Report ready', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: parseData.json_script,
+                        projectId: parseData.project_id,
+                        complianceReport: complianceReport,
+                        hideQualityCheck: true,
+                        hideGenerateSlides: true
+                    }
+                } : msg
+            ));
+
+            setOpenReportId(workflowId);
 
         } catch (error) {
             console.error("Compliance check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Compliance check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -87,12 +118,23 @@ export function useSidebarHandlers(
      * Run Quality Compliance check on a script file.
      */
     const handleSidebarQualityUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Quality Compliance on: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'quality',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Reviewing quality with AI', status: 'pending' },
+                { label: 'Review ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -101,6 +143,19 @@ export function useSidebarHandlers(
             formData.append('file', file);
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Reviewing quality with AI', status: 'processing' },
+                        { label: 'Review ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Run quality check
             const qualityData = await apiJson('/check_quality', {
@@ -108,33 +163,40 @@ export function useSidebarHandlers(
                 body: JSON.stringify({ json_script: parseData.json_script }),
             });
 
-            const messageId = Date.now() + 1;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Quality Compliance Check Complete\n\n` +
-                    `Checked: ${file.name}\n` +
-                    `Rows: ${parseData.json_script.slides?.length || 0}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'script_uploaded',
-                complianceReport: null,
-                qualityReport: qualityData,
-                hideQualityCheck: true,
-                hideGenerateSlides: true
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
-            setQualityReports(prev => ({ ...prev, [messageId]: qualityData }));
-            setOpenQualityId(messageId);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Reviewing quality with AI', status: 'complete' },
+                        { label: 'Review ready', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: parseData.json_script,
+                        projectId: parseData.project_id,
+                        complianceReport: null,
+                        qualityReport: qualityData,
+                        hideQualityCheck: true,
+                        hideGenerateSlides: true
+                    }
+                } : msg
+            ));
+
+            setQualityReports(prev => ({ ...prev, [workflowId]: qualityData }));
+            setOpenQualityId(workflowId);
 
         } catch (error) {
             console.error("Quality check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `Quality check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -142,14 +204,29 @@ export function useSidebarHandlers(
 
     /**
      * Generate voice audio for a script file.
+     * @param {File} file - Script file to generate voice for
+     * @param {string} voiceMode - 'combined' for single file, 'rowwise' for per-row files
      */
-    const handleSidebarVoiceUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `🎤 Generating voice for: ${file.name}...`
+    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined') => {
+        const workflowId = Date.now();
+        const modeLabel = voiceMode === 'combined' ? '(Full Audio)' : '(Row-wise)';
+
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'voice',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: `Generating voice ${modeLabel}`, status: 'pending' },
+                { label: 'Voice ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -159,8 +236,25 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
-            // Step 2: Generate voice (combined - single file for entire script)
-            const voiceData = await apiJson('/generate_voice_combined', {
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Generating voice ${modeLabel}`, status: 'processing' },
+                        { label: 'Voice ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            // Step 2: Generate voice based on mode
+            const endpoint = voiceMode === 'combined'
+                ? '/generate_voice_combined'
+                : '/generate_voice';
+
+            const voiceData = await apiJson(endpoint, {
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
@@ -168,44 +262,61 @@ export function useSidebarHandlers(
                 }),
             });
 
-            const messageId = Date.now() + 1;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `🎤 Voice Generation Complete!\n\n` +
-                    `File: ${file.name}\n` +
-                    `Slides: ${voiceData.total_slides}\n` +
-                    `Duration: ${voiceData.duration_estimate}`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'voice_preview',
-                voiceData: voiceData
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Generating voice ${modeLabel}`, status: 'complete' },
+                        { label: 'Voice ready', status: 'complete' }
+                    ],
+                    result: {
+                        voiceData: voiceData,
+                        projectId: parseData.project_id,
+                        jsonScript: parseData.json_script
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Voice generation error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Voice generation failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
     }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
 
+
     /**
      * Parse script and enhance image prompts for review.
      */
     const handleSidebarImageUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Parsing script for image generation: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'images',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Enhancing visual cues', status: 'pending' },
+                { label: 'Ready for review', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -215,13 +326,18 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
-            // Update message to show enhancing
-            const enhancingMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✨ Enhancing visual cues with AI...`
-            };
-            setUploadMessages(prev => [...prev, enhancingMessage]);
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Enhancing visual cues', status: 'processing' },
+                        { label: 'Ready for review', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Enhance prompts
             const enhanceData = await apiJson('/enhance_prompts', {
@@ -232,26 +348,34 @@ export function useSidebarHandlers(
                 })
             });
 
-            const messageId = Date.now() + 2;
-            const reviewMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `Review and edit the prompts below, then click Generate.`,
-                jsonScript: parseData.json_script,
-                projectId: parseData.project_id,
-                type: 'image_prompt_review',
-                enhancedPrompts: enhanceData.enhanced_prompts
-            };
-            setUploadMessages(prev => [...prev, reviewMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Enhancing visual cues', status: 'complete' },
+                        { label: 'Ready for review', status: 'complete' }
+                    ],
+                    result: {
+                        enhancedPrompts: enhanceData.enhanced_prompts,
+                        projectId: parseData.project_id,
+                        jsonScript: parseData.json_script
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Image generation error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -261,12 +385,23 @@ export function useSidebarHandlers(
      * Generate Beamer slides from a script file.
      */
     const handleSlidesUpload = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `🎴 Generating slides from: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'slides',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Generating Beamer slides', status: 'pending' },
+                { label: 'Template ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
@@ -276,35 +411,55 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating Beamer slides', status: 'processing' },
+                        { label: 'Template ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
             // Step 2: Generate slides
             const data = await apiJson('/generate_slides', {
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
-                    tutorial_name: parseData.json_script?.title || file.name.replace(/\.[^/.]+$/, '')
+                    project_id: parseData.project_id
                 })
             });
 
-            const resultMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ Beamer template generated from "${file.name}"!\n\n` +
-                    `📄 ${data.filename}\n` +
-                    `📊 ${data.total_slides} total slides (${data.num_boilerplate_slides} boilerplate + ${data.num_content_slides} content)\n` +
-                    `✨ Auto-filled from script!`,
-                type: 'slides_result',
-                slidesData: data
-            };
-            setUploadMessages(prev => [...prev, resultMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating Beamer slides', status: 'complete' },
+                        { label: 'Template ready', status: 'complete' }
+                    ],
+                    result: {
+                        slidesData: data,
+                        projectId: parseData.project_id
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Slides generation error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -315,16 +470,27 @@ export function useSidebarHandlers(
      * @param {File[]} files - Array of files to check
      */
     const handleSidebarBatchComplianceUpload = useCallback(async (files) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Batch Compliance check on ${files.length} files...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'batch_compliance',
+            filename: `${files.length} scripts`,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${files.length} scripts`, status: 'processing' },
+                { label: 'Running compliance checks', status: 'pending' },
+                { label: 'Report ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
-            // Step 1: Parse all files to get JSON scripts
+            // Step 1: Parse all files
             const parsePromises = files.map(async (file) => {
                 const formData = new FormData();
                 formData.append('file', file);
@@ -338,6 +504,19 @@ export function useSidebarHandlers(
 
             const parsedScripts = await Promise.all(parsePromises);
 
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${files.length} scripts`, status: 'complete' },
+                        { label: 'Running compliance checks', status: 'processing' },
+                        { label: 'Report ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
             // Step 2: Run batch compliance check
             const batchResult = await apiJson('/batch_check_compliance', {
                 method: 'POST',
@@ -347,33 +526,36 @@ export function useSidebarHandlers(
                 }),
             });
 
-            // Create result message
-            const messageId = Date.now() + 1;
-            const summary = batchResult.batch_summary;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `📋 Batch Compliance Check Complete\n\n` +
-                    `Scripts Checked: ${summary.total_scripts}\n` +
-                    `✅ Passed: ${summary.scripts_passed}\n` +
-                    `⚠️ With Issues: ${summary.scripts_with_issues}`,
-                type: 'batch_compliance_result',
-                batchResults: batchResult.results.map((result, i) => ({
-                    filename: parsedScripts[i].filename,
-                    ...result
-                })),
-                batchSummary: summary
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${files.length} scripts`, status: 'complete' },
+                        { label: 'Running compliance checks', status: 'complete' },
+                        { label: 'Report ready', status: 'complete' }
+                    ],
+                    result: {
+                        batchResults: batchResult.results.map((result, i) => ({
+                            filename: parsedScripts[i].filename,
+                            ...result
+                        })),
+                        batchSummary: batchResult.batch_summary
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Batch compliance check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Batch compliance check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
@@ -385,16 +567,27 @@ export function useSidebarHandlers(
      * @param {File[]} files - Array of files to check
      */
     const handleSidebarBatchQualityUpload = useCallback(async (files) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Running Batch Quality check on ${files.length} files... (This may take a while)`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'batch_quality',
+            filename: `${files.length} scripts`,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${files.length} scripts`, status: 'processing' },
+                { label: 'Reviewing quality forward & back', status: 'pending' },
+                { label: 'Batch review ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
-            // Step 1: Parse all files to get JSON scripts
+            // Step 1: Parse all files
             const parsePromises = files.map(async (file) => {
                 const formData = new FormData();
                 formData.append('file', file);
@@ -407,46 +600,149 @@ export function useSidebarHandlers(
 
             const parsedScripts = await Promise.all(parsePromises);
 
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${files.length} scripts`, status: 'complete' },
+                        { label: 'Reviewing quality forward & back', status: 'processing' },
+                        { label: 'Batch review ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
             // Step 2: Run batch quality check
             const batchResult = await apiJson('/batch_check_quality', {
                 method: 'POST',
                 body: JSON.stringify({
-                    scripts: parsedScripts.map(s => s.json_script)
+                    scripts: parsedScripts.map(s => s.json_script),
+                    language_code: languageCode
                 }),
             });
 
-            // Create result message
-            const messageId = Date.now() + 1;
-            const summary = batchResult.batch_summary;
-            const newBotMessage = {
-                id: messageId,
-                role: 'assistant',
-                content: `🌐 Batch Quality Check Complete\n\n` +
-                    `Scripts Checked: ${summary.total_scripts}\n` +
-                    `✅ Passed: ${summary.scripts_passed}\n` +
-                    `⚠️ With Issues: ${summary.scripts_with_issues}\n` +
-                    `📊 Avg Score: ${summary.avg_quality_score}/5`,
-                type: 'batch_quality_result',
-                batchResults: batchResult.results.map((result, i) => ({
-                    filename: parsedScripts[i].filename,
-                    ...result
-                })),
-                batchSummary: summary
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${files.length} scripts`, status: 'complete' },
+                        { label: 'Forward & Back translation', status: 'complete' },
+                        { label: 'Batch review ready', status: 'complete' }
+                    ],
+                    result: {
+                        batchResults: batchResult.results.map((result, i) => ({
+                            filename: parsedScripts[i].filename,
+                            ...result
+                        })),
+                        batchSummary: batchResult.batch_summary
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Batch quality check error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Batch quality check failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
     }, [setUploadMessages, setIsTyping]);
+
+    /**
+     * Generate a script from an outline file (using WorkflowCard).
+     */
+    const handleSidebarScriptGenerate = useCallback(async (file) => {
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'script',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: 'Generating script with AI', status: 'pending' },
+                { label: 'Script ready for review', status: 'pending' }
+            ],
+            role: 'assistant'
+        };
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
+        setIsTyping(true);
+
+        try {
+            // Step 1: Parse the outline
+            const formData = new FormData();
+            formData.append('file', file);
+            const parseData = await apiFormData('/upload_outline', formData);
+            const projectId = Date.now();
+            setCurrentProjectId(projectId);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating script with AI', status: 'processing' },
+                        { label: 'Script ready for review', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            // Step 2: Generate the script
+            const scriptData = await apiJson('/generate_script', {
+                method: 'POST',
+                body: JSON.stringify({
+                    outline: parseData.outline,
+                    title: `Project #${projectId}`,
+                    project_id: projectId
+                }),
+            });
+
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: 'Generating script with AI', status: 'complete' },
+                        { label: 'Script ready for review', status: 'complete' }
+                    ],
+                    result: {
+                        jsonScript: scriptData.json_script,
+                        projectId: projectId,
+                        outline: parseData.outline
+                    }
+                } : msg
+            ));
+
+        } catch (error) {
+            console.error("Script generation error:", error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
+        } finally {
+            setIsTyping(false);
+        }
+    }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
 
     return {
         handleSidebarComplianceUpload,
@@ -456,6 +752,7 @@ export function useSidebarHandlers(
         handleSlidesUpload,
         handleSidebarBatchComplianceUpload,
         handleSidebarBatchQualityUpload,
+        handleSidebarScriptGenerate,
     };
 }
 

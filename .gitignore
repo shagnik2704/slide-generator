@@ -10,7 +10,7 @@ env/
 *.egg-info/
 dist/
 build/
-uv.lock
+# uv.lock removed so it can be committed
 data/
 .uv-cache/
 .uvcache/
@@ -21,14 +21,8 @@ generated_images
 
 # Generated files
 script_*.json
-static/
-static/outline_*.docx
-static/outline_*.md
-static/script_review_*.pdf
-static/slides_*.pdf
-static/*.mp4
-static/*.mp3
-static/
+static/*
+!static/logo.png
 *.db
 generated_images/
 

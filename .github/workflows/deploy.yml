@@ -1,0 +1,41 @@
+name: Production Deployment (WIF + SSH)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud (Keyless)
+      # This allows the runner to interact with GCP if needed (e.g., pushing images)
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/77578091156/locations/global/workloadIdentityPools/qc-version-change/providers/github-provider-id'
+          service_account: 'vc-automation@version-change-automation.iam.gserviceaccount.com'
+
+      # 2. Deploy to the VM via SSH
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 30m
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
+            git pull origin main
+            # We rebuild the containers to pick up code changes
+            docker compose down
+            docker compose up --build -d

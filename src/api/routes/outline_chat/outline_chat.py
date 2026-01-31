@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import asyncio
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
+
+from src.api.auth import get_current_user, TokenData
 
 from .outline_chat_field_extraction import extract_json_block
 from .outline_chat_handlers import (
@@ -44,6 +46,7 @@ from .outline_chat_session import (
     save_session,
 )
 from .outline_chat_validation import validate_outline
+from .outline_chat_draft_generation import generate_draft_outline
 
 router = APIRouter(tags=["outline_chat"])
 
@@ -52,8 +55,25 @@ router = APIRouter(tags=["outline_chat"])
 # See imports above for the new module structure
 
 
+@router.get("/outline_chat/{project_id}/snapshot")
+async def get_outline_snapshot(project_id: int, current_user: TokenData = Depends(get_current_user)):
+    """Return a human-readable snapshot of the current outline session."""
+    outline_data, phase, pending_confirmation = load_session(project_id, "warmup")
+    draft = generate_draft_outline(outline_data)
+    return JSONResponse(
+        {
+            "project_id": project_id,
+            "phase": phase,
+            "snapshot": draft,
+            "outline_data": outline_data,
+            "needs_confirmation": pending_confirmation is not None,
+            "confirmation_field": pending_confirmation.get("field") if pending_confirmation else None,
+        }
+    )
+
+
 @router.post("/outline_chat")
-async def outline_chat(request: OutlineChatRequest):
+async def outline_chat(request: OutlineChatRequest, current_user: TokenData = Depends(get_current_user)):
     """Chat endpoint that guides SME through Course Outline creation."""
     try:
         if not request.conversation:
@@ -69,6 +89,34 @@ async def outline_chat(request: OutlineChatRequest):
         # Check for approval command
         last_message = request.conversation[-1] if request.conversation else None
         user_content = last_message.content.lower().strip() if last_message and last_message.role == "user" else ""
+
+        # Allow user to request a snapshot at any time without changing state
+        # Commands: "snapshot" / "status" / "show outline"
+        if user_content in {"snapshot", "status", "show outline", "show_outline"}:
+            draft = generate_draft_outline(outline_data)
+            assistant_message = (
+                f"Current outline snapshot (phase: **{phase}**):\n\n{draft}\n\n"
+                "To continue, answer the last question (or just reply anything and I’ll ask the next one)."
+            )
+            # Do NOT modify phase / outline_data / pending_confirmation
+            save_session(project_id, outline_data, phase, pending_confirmation)
+            return JSONResponse(
+                {
+                    "project_id": project_id,
+                    "assistant_message": assistant_message,
+                    "follow_up_question": None,
+                    "phase": phase,
+                    "outline_data": outline_data,
+                    "validation_errors": [],
+                    "pedagogy_compliance": {},
+                    "is_draft_ready": phase == "review",
+                    "is_approved": phase == "approved",
+                    "needs_confirmation": pending_confirmation is not None,
+                    "confirmation_field": pending_confirmation.get("field") if pending_confirmation else None,
+                    "confirmation_value": str(pending_confirmation.get("value", "")) if pending_confirmation else None,
+                    "answered_field": None,
+                }
+            )
         
         # Handle confirmation responses (yes/no)
         if pending_confirmation and user_content in ["yes", "no", "y", "n"]:
@@ -82,7 +130,7 @@ async def outline_chat(request: OutlineChatRequest):
                 outline_type = outline_data.get("outline_type", "FOSS").upper()
                 if next_question:
                     rewritten = friendly_rewrite_question(next_question, outline_type, phase)
-                    example_hint = get_example_answer_hint(outline_type, phase, next_question)
+                    example_hint = get_example_answer_hint(outline_type, phase, next_question, outline_data)
                     assistant_message = f"{rewritten}\n\nExample answer: {example_hint}" if example_hint else rewritten
                 else:
                     assistant_message = "Thank you! All information collected."
@@ -107,7 +155,7 @@ async def outline_chat(request: OutlineChatRequest):
                 outline_type = outline_data.get("outline_type", "FOSS").upper()
                 if next_question:
                     rewritten = friendly_rewrite_question(next_question, outline_type, phase)
-                    example_hint = get_example_answer_hint(outline_type, phase, next_question)
+                    example_hint = get_example_answer_hint(outline_type, phase, next_question, outline_data)
                     assistant_message = f"{rewritten}\n\nExample answer: {example_hint}" if example_hint else rewritten
                 else:
                     assistant_message = "Thank you! All information collected."
@@ -178,10 +226,10 @@ async def outline_chat(request: OutlineChatRequest):
             
             if next_question:
                 # Rewrite the base question in a slightly friendlier tone using LLM,
-                # and include a concrete example answer where possible.
+                # and include a concrete, contextual example answer where possible.
                 outline_type = outline_data.get("outline_type", "FOSS").upper()
                 rewritten = friendly_rewrite_question(next_question, outline_type, phase)
-                example_hint = get_example_answer_hint(outline_type, phase, next_question)
+                example_hint = get_example_answer_hint(outline_type, phase, next_question, outline_data)
                 if example_hint:
                     assistant_message = f"{rewritten}\n\nExample answer: {example_hint}"
                 else:
@@ -239,7 +287,7 @@ async def outline_chat_options():
 
 
 @router.get("/outline_chat/{project_id}/export")
-async def export_outline(project_id: int, format: str = "json"):
+async def export_outline(project_id: int, format: str = "json", current_user: TokenData = Depends(get_current_user)):
     """Export the finalized outline in JSON or PDF-ready format."""
     project_root = Path(__file__).parent.parent.parent
     session_dir = project_root / "output" / "outline_sessions"
@@ -305,7 +353,7 @@ async def export_outline(project_id: int, format: str = "json"):
 
 
 @router.post("/outline_chat/{project_id}/edit")
-async def edit_outline_field(project_id: int, request: dict):
+async def edit_outline_field(project_id: int, request: dict, current_user: TokenData = Depends(get_current_user)):
     """Edit a specific field in the outline data.
     
     Request body:
@@ -358,7 +406,7 @@ async def edit_outline_field(project_id: int, request: dict):
         if next_question:
             from .outline_chat_llm_utils import friendly_rewrite_question, get_example_answer_hint
             rewritten = friendly_rewrite_question(next_question, outline_type, new_phase)
-            example_hint = get_example_answer_hint(outline_type, new_phase, next_question)
+            example_hint = get_example_answer_hint(outline_type, new_phase, next_question, updated_outline_data)
             if example_hint:
                 assistant_message += f"{rewritten}\n\nExample answer: {example_hint}"
             else:
@@ -385,7 +433,7 @@ async def edit_outline_field(project_id: int, request: dict):
 
 
 @router.post("/general_chat")
-async def general_chat(request: GeneralChatRequest):
+async def general_chat(request: GeneralChatRequest, current_user: TokenData = Depends(get_current_user)):
     """General chat endpoint for asking any questions with web search capabilities."""
     try:
         question = request.question.strip()
@@ -425,7 +473,7 @@ Then you MUST use the web_search tool to get the most up-to-date information bef
 
 
 @router.post("/outline_chat_stream")
-async def outline_chat_stream(request: OutlineChatRequest):
+async def outline_chat_stream(request: OutlineChatRequest, current_user: TokenData = Depends(get_current_user)):
     """Streaming version of outline chat - streams assistant response token by token."""
     
     async def generate():
@@ -453,6 +501,28 @@ async def outline_chat_stream(request: OutlineChatRequest):
             
             last_message = request.conversation[-1] if request.conversation else None
             user_content = last_message.content.lower().strip() if last_message and last_message.role == "user" else ""
+
+            # Snapshot command for streaming endpoint (does not change state)
+            if user_content in {"snapshot", "status", "show outline", "show_outline"}:
+                draft = generate_draft_outline(outline_data)
+                snapshot_msg = f"Current outline snapshot (phase: {phase}):\n\n{draft}"
+                for char in snapshot_msg:
+                    yield f"data: {json.dumps({'token': char})}\n\n"
+                    await asyncio.sleep(0.005)
+                # Save session unchanged
+                with open(session_path, "w") as f:
+                    json.dump(
+                        {
+                            "project_id": project_id,
+                            "outline_data": outline_data,
+                            "phase": phase,
+                            "updated_at": time.time(),
+                        },
+                        f,
+                        indent=2,
+                    )
+                yield f"data: {json.dumps({'done': True, 'project_id': project_id, 'phase': phase, 'outline_data': outline_data, 'is_draft_ready': phase == 'review', 'is_approved': phase == 'approved'})}\n\n"
+                return
             
             # Quick approval check
             if user_content == "approve" and phase == "review":

@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw, Image, Mic, Languages, Presentation } from 'lucide-react';
 
 // Components
 import MessageBubble from './MessageBubble';
@@ -9,13 +10,20 @@ import OutlineCard from './OutlineCard';
 import VoicePreview from './VoicePreview';
 import ImagePromptReview from './ImagePromptReview';
 import ImageGallery from './ImageGallery';
+import ImageWorkflow from './ImageWorkflow';
 import SlidesPreview from './SlidesPreview';
 import AskAIChat from './AskAIChat';
 import BatchUploadModal from './BatchUploadModal';
 import BatchResultsList from './BatchResultsList';
+import UserProfile from './UserProfile';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
 import RedesignForm from './RedesignForm';
+import ComplianceReport from './ComplianceReport';
+import CollapsibleSection from './CollapsibleSection';
+import WorkflowCard from './WorkflowCard';
+import QualityCheckModal from './QualityCheckModal';
+import TimedScriptModal from './TimedScriptModal';
 
 // Message Action Components
 import {
@@ -29,6 +37,7 @@ import {
 
 // Custom Hook
 import { useChatArea } from '../hooks/useChatArea';
+import { apiJson, apiFormData } from '../services/api';
 
 /**
  * ChatArea - Main chat interface component
@@ -36,9 +45,10 @@ import { useChatArea } from '../hooks/useChatArea';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', showSidebarToggle = true }, ref) => {
+    const location = useLocation();
     const {
-        // State
+        // State (mode from hook can be 'create' | 'outline_chat' | 'redesign')
         mode,
         setMode,
         uploadMessages,
@@ -57,6 +67,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         openQualityId,
         setOpenQualityId,
         qualityReports,
+        setQualityReports,
         isQualityLoading,
 
         // Refs
@@ -81,6 +92,8 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         handleConfirmation,
         handleSendChatText,
         handleEditAnswer,
+        handleCheckCompliance,
+        handleUpdateOutlineComplianceReport,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
         handleExportMediaWiki,
@@ -93,7 +106,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         setStagedFile,
         handleConfirmStagedFile,
         handleCancelStagedFile,
-    } = useChatArea();
+    } = useChatArea(mode);
 
     // Batch Modal State
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
@@ -112,10 +125,170 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         }
     }, [stagedFile, setStagedFile]);
 
+    // Quality Check Modal State
+    const [isQualityModalOpen, setIsQualityModalOpen] = React.useState(false);
+    const [qualityModalFile, setQualityModalFile] = React.useState(null);  // For single sidebar flow
+    const [batchQualityFiles, setBatchQualityFiles] = React.useState(null); // For batch sidebar flow
+    const [qualityModalMessage, setQualityModalMessage] = React.useState(null);  // For message button flow
+
+    // Auto-open quality modal when a quality file is staged from sidebar
+    React.useEffect(() => {
+        if (stagedFile?.type === 'quality') {
+            setQualityModalFile(stagedFile.file);
+            setBatchQualityFiles(null);
+            setIsQualityModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        }
+    }, [stagedFile, setStagedFile]);
+
+    // Timed Script Modal State
+    const [isTimedScriptModalOpen, setIsTimedScriptModalOpen] = React.useState(false);
+    const [timedScriptFile, setTimedScriptFile] = React.useState(null);
+
+    // Auto-open timed script modal when an audio file is staged
+    React.useEffect(() => {
+        if (stagedFile?.type === 'timed_script') {
+            setTimedScriptFile(stagedFile.file);
+            setIsTimedScriptModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        }
+    }, [stagedFile, setStagedFile]);
+
+    // Handler to open quality check modal with message context (for message button flow)
+    const handleOpenQualityModal = (msg) => {
+        setQualityModalMessage(msg);
+        setQualityModalFile(null);
+        setBatchQualityFiles(null);
+        setIsQualityModalOpen(true);
+    };
+
+    // Handler for quality check with language selection
+    const handleQualityCheckWithLanguage = async ({ file, jsonScript, languageCode }) => {
+        // If triggered from batch quality floral
+        if (batchQualityFiles) {
+            await handleSidebarBatchQualityUpload(batchQualityFiles, languageCode);
+            setBatchQualityFiles(null);
+            return;
+        }
+
+        // If triggered from sidebar (single file flow), run the sidebar quality upload with WorkflowCard
+        if (qualityModalFile) {
+            const workflowId = Date.now();
+            const languageName = languageCode === 'hi' ? 'Hindi' : languageCode; // Will be updated after API call
+
+            const initialWorkflow = {
+                id: workflowId,
+                type: 'workflow',
+                tool: 'quality_check',
+                filename: qualityModalFile.name,
+                status: 'processing',
+                currentStep: 0,
+                steps: [
+                    { label: `Parsing ${qualityModalFile.name}`, status: 'processing' },
+                    { label: `Translating (English ↔ Target Language)`, status: 'pending' },
+                    { label: 'Analyzing quality', status: 'pending' }
+                ],
+                role: 'assistant'
+            };
+
+            setUploadMessages(prev => [...prev, initialWorkflow]);
+
+            try {
+                // Step 1: Parse the script
+                const formData = new FormData();
+                formData.append('file', qualityModalFile);
+                const parseData = await apiFormData('/parse_script', formData);
+
+                // Update to Step 2
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        currentStep: 1,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ Target Language)`, status: 'processing' },
+                            { label: 'Analyzing quality', status: 'pending' }
+                        ]
+                    } : msg
+                ));
+
+                // Step 2 & 3: Run quality check (includes translation and comparison)
+                const qualityData = await apiJson('/check_quality', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        json_script: parseData.json_script,
+                        language_code: languageCode
+                    })
+                });
+
+                // Update to Step 3 (complete)
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        currentStep: 2,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ ${qualityData.language_name})`, status: 'complete' },
+                            { label: 'Analyzing quality', status: 'processing' }
+                        ]
+                    } : msg
+                ));
+
+                // Small delay for visual feedback
+                await new Promise(r => setTimeout(r, 500));
+
+                // Update to Complete
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        status: 'complete',
+                        currentStep: 3,
+                        steps: [
+                            { label: `Parsing ${qualityModalFile.name}`, status: 'complete' },
+                            { label: `Translating (English ↔ ${qualityData.language_name})`, status: 'complete' },
+                            { label: 'Quality analysis complete', status: 'complete' }
+                        ],
+                        result: {
+                            qualityReport: qualityData,
+                            jsonScript: parseData.json_script
+                        }
+                    } : msg
+                ));
+
+                // Store quality report and auto-open
+                setQualityReports(prev => ({ ...prev, [workflowId]: qualityData }));
+                setOpenQualityId(workflowId);
+
+            } catch (error) {
+                console.error('Quality check error:', error);
+                setUploadMessages(prev => prev.map(msg =>
+                    msg.id === workflowId ? {
+                        ...msg,
+                        status: 'error',
+                        error: error.message
+                    } : msg
+                ));
+            }
+
+            setQualityModalFile(null);
+            return;
+        }
+
+        // If triggered from message button flow
+        if (qualityModalMessage) {
+            await handleQualityCheck(jsonScript, qualityModalMessage.id, languageCode);
+            setQualityModalMessage(null);
+        }
+    };
+
     // Handler to close modal and start upload based on mode
     const handleBatchUpload = (files) => {
         if (batchMode === 'quality') {
-            handleSidebarBatchQualityUpload(files);
+            // Step 1 of 2: Store files and open language selection modal
+            setBatchQualityFiles(files);
+            setQualityModalFile(null);
+            setQualityModalMessage(null);
+            setIsQualityModalOpen(true);
         } else {
             handleSidebarBatchComplianceUpload(files);
         }
@@ -123,59 +296,80 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
     };
 
     // Translation handler
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
     const handleTranslation = async ({ file, languages, translateVisualCues }) => {
-        // Show loading message
-        const loadingMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `🌐 Translating script to ${languages.length} language(s)...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'translation',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: `Translating to ${languages.length} language(s)`, status: 'pending' },
+                { label: 'Translation ready', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, loadingMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
 
         try {
             // Step 1: Parse the script
             const formData = new FormData();
             formData.append('file', file);
-            const parseResponse = await fetch(`${API_URL}/parse_script`, {
-                method: 'POST',
-                body: formData
-            });
-            const parseData = await parseResponse.json();
+            const parseData = await apiFormData('/parse_script', formData);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'processing' },
+                        { label: 'Translation ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
 
             // Step 2: Batch translate
-            const translateResponse = await fetch(`${API_URL}/translation/batch_translate`, {
+            const translationResults = await apiJson('/translation/batch_translate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     json_script: parseData.json_script,
                     languages: languages,
                     translate_visual_cues: translateVisualCues
                 })
             });
-            const translationResults = await translateResponse.json();
 
-            // Add results message
-            const resultMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `🌍 Translation Complete!\n\n` +
-                    `File: ${file.name}\n` +
-                    `Languages: ${translationResults.total_success}/${translationResults.total_requested} successful`,
-                type: 'translation_result',
-                translationResults: translationResults
-            };
-            setUploadMessages(prev => [...prev, resultMessage]);
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'complete' },
+                        { label: 'Translation ready', status: 'complete' }
+                    ],
+                    result: {
+                        translationResults: translationResults
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error('Translation error:', error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Translation failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
             throw error;
         }
     };
@@ -203,11 +397,14 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
         }
     }));
 
-    // Helper to update compliance report in a message
+    // Helper to update compliance report in a message (for create mode)
     const handleUpdateComplianceReport = (messageId, updatedReport) => {
-        setUploadMessages(prev => prev.map(m =>
-            m.id === messageId ? { ...m, complianceReport: updatedReport } : m
-        ));
+        if (mode === 'create') {
+            setUploadMessages(prev => prev.map(m =>
+                m.id === messageId ? { ...m, complianceReport: updatedReport } : m
+            ));
+        }
+        // For outline_chat mode, use handleUpdateOutlineComplianceReport
     };
 
     return (
@@ -235,116 +432,137 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        onClick={toggleSidebar}
+                    {showSidebarToggle && (
+                        <button
+                            onClick={toggleSidebar}
+                            style={{
+                                background: 'var(--bg-tertiary)',
+                                border: 'none',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0.5rem',
+                                borderRadius: '50%',
+                                width: '40px',
+                                height: '40px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: 'var(--shadow-sm)',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--accent-primary)';
+                                e.currentTarget.style.color = 'white';
+                                e.currentTarget.style.transform = 'scale(1.15)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                            }}
+                        >
+                            <Menu size={24} strokeWidth={2.5} />
+                        </button>
+                    )}
+                    <Link
+                        to="/"
                         style={{
-                            background: 'var(--bg-tertiary)',
-                            border: 'none',
-                            color: 'var(--text-primary)',
-                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.5rem',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            transition: 'all 0.3s ease',
-                            boxShadow: 'var(--shadow-sm)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--accent-primary)';
-                            e.currentTarget.style.color = 'white';
-                            e.currentTarget.style.transform = 'scale(1.15)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                            gap: '0.5rem',
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
                         }}
                     >
-                        <Menu size={24} strokeWidth={2.5} />
-                    </button>
-                    <img
-                        src="/favicon.png"
-                        alt="EduPyramids"
-                        style={{ height: '36px', marginRight: '0.5rem' }}
-                    />
-                    <div style={{
-                        fontWeight: 600,
-                        fontSize: '1.25rem',
-                        fontFamily: '"Outfit", sans-serif',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                    }}>
-                        <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
-                        <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
-                    </div>
+                        <img
+                            src="/favicon.png"
+                            alt="EduPyramids"
+                            style={{ height: '36px' }}
+                        />
+                        <div style={{
+                            fontWeight: 600,
+                            fontSize: '1.25rem',
+                            fontFamily: '"Outfit", sans-serif',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                        }}>
+                            <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
+                            <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
+                        </div>
+                    </Link>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Mode Toggle */}
+                    {/* Mode Navigation */}
                     <div style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
-                        borderRadius: '1rem',
-                        padding: '0.25rem',
+                        borderRadius: '0.75rem',
+                        padding: '0.2rem',
                         boxShadow: 'var(--shadow-sm)',
                         border: '1px solid var(--border-color)',
-                        gap: '0.25rem'
+                        gap: '0.2rem'
                     }}>
-                        <button
-                            onClick={() => setMode('upload')}
+                        <Link
+                            to="/create"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
-                                background: mode === 'upload'
+                                background: location.pathname === '/create'
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: mode === 'upload' ? 'white' : 'var(--text-primary)',
+                                color: location.pathname === '/create' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                boxShadow: mode === 'upload' ? 'var(--shadow-sm)' : 'none'
+                                fontSize: '0.85rem',
+                                boxShadow: location.pathname === '/create' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <UploadCloud size={18} />
-                            Upload Mode
-                        </button>
-                        <button
-                            onClick={() => setMode('outline_chat')}
+                            <UploadCloud size={16} />
+                            Create Mode
+                        </Link>
+                        <Link
+                            to="/outline-chat"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
-                                background: mode === 'outline_chat'
+                                background: location.pathname === '/outline-chat'
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: mode === 'outline_chat' ? 'white' : 'var(--text-primary)',
+                                color: location.pathname === '/outline-chat' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                boxShadow: mode === 'outline_chat' ? 'var(--shadow-sm)' : 'none'
+                                fontSize: '0.85rem',
+                                boxShadow: location.pathname === '/outline-chat' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <MessageSquare size={18} />
+                            <MessageSquare size={16} />
                             Outline Chat
-                        </button>
-                        <button
-                            onClick={() => setMode('redesign')}
+                        </Link>
+                        <Link
+                            to="/create"
+                            onClick={(e) => { e.preventDefault(); setMode('redesign'); }}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: '0.75rem',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
                                 border: 'none',
                                 background: mode === 'redesign'
                                     ? 'var(--accent-primary)'
@@ -352,16 +570,19 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                 color: mode === 'redesign' ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                boxShadow: mode === 'redesign' ? 'var(--shadow-sm)' : 'none'
+                                fontSize: '0.85rem',
+                                boxShadow: mode === 'redesign' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <RefreshCw size={18} />
+                            <RefreshCw size={16} />
                             Redesign
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Clear Session button */}
-                    {mode === 'upload' && uploadMessages.length > 1 && (
+                    {mode === 'create' && uploadMessages.length > 0 && (
                         <button
                             onClick={handleClearSession}
                             style={{
@@ -393,11 +614,18 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     )}
 
                     <ThemeToggle />
+
+                    {/* User Profile - Compact version in header */}
+                    {showSidebarToggle && !isSidebarOpen && (
+                        <div style={{ marginLeft: '0.5rem' }}>
+                            <UserProfile compact={true} />
+                        </div>
+                    )}
                 </div>
             </header>
 
             {/* Messages Area - hidden when welcome screen is shown */}
-            {!(mode === 'upload' && uploadMessages.length === 1) && (
+            {!(mode === 'create' && uploadMessages.length === 0) && (
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -417,23 +645,50 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                         
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
-                                <MessageBubble
-                                    message={msg}
-                                    onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
-                                    onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
-                                    mode={mode}
-                                />
+                                {msg.type === 'workflow' ? (
+                                    <WorkflowCard
+                                        workflow={msg}
+                                        isTyping={isTyping}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        openQualityId={openQualityId}
+                                        setOpenQualityId={setOpenQualityId}
+                                        qualityReports={qualityReports}
+                                        isQualityLoading={isQualityLoading}
+                                        onQualityCheck={handleQualityCheck}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        // Script-related props
+                                        openEditorId={openEditorId}
+                                        setOpenEditorId={setOpenEditorId}
+                                        onDownloadScriptDocx={handleDownloadScriptDocx}
+                                        onSaveScriptEdit={handleSaveScriptEdit}
+                                    />
+                                ) : (
+                                    <MessageBubble
+                                        message={msg}
+                                        onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
+                                        onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
+                                        mode={mode}
+                                    />
+                                )}
 
                                 {/* OutlineCard for outline_chat mode */}
                                 {mode === 'outline_chat' && msg.outlineData && msg.phase === 'review' && (
                                     <OutlineCard
                                         outlineData={msg.outlineData}
                                         projectId={outlineSession.projectId || msg.outlineData?.project_id}
+                                        messageId={msg.id}
+                                        complianceReport={msg.complianceReport}
+                                        openReportId={openReportId}
+                                        setOpenReportId={setOpenReportId}
+                                        onCheckCompliance={handleCheckCompliance}
+                                        onUpdateComplianceReport={handleUpdateOutlineComplianceReport}
+                                        isTyping={isTyping}
                                     />
                                 )}
 
                                 {/* Message Action Components */}
-                                {mode === 'upload' && msg.type === 'outline_uploaded' && (
+                                {mode === 'create' && msg.type === 'outline_uploaded' && (
                                     <OutlineUploadedActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -441,7 +696,9 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'script_uploaded' && (
+
+
+                                {mode === 'create' && msg.type === 'script_uploaded' && (
                                     <ScriptUploadedActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -453,11 +710,12 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                         isQualityLoading={isQualityLoading}
                                         onGenerateSlides={handleGenerateSlides}
                                         onQualityCheck={handleQualityCheck}
+                                        onOpenQualityModal={handleOpenQualityModal}
                                         onUpdateComplianceReport={handleUpdateComplianceReport}
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'script_review' && (
+                                {mode === 'create' && msg.type === 'script_review' && (
                                     <ScriptReviewActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -467,12 +725,11 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                         onGenerateSlides={handleGenerateSlides}
                                         onDownloadScriptDocx={handleDownloadScriptDocx}
                                         onUploadEditedScript={handleUploadEditedScript}
-                                        onExportMediaWiki={handleExportMediaWiki}
                                         onSaveScriptEdit={handleSaveScriptEdit}
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'slides_review' && (
+                                {mode === 'create' && msg.type === 'slides_review' && (
                                     <SlidesReviewActions
                                         msg={msg}
                                         isTyping={isTyping}
@@ -480,7 +737,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                     />
                                 )}
 
-                                {mode === 'upload' && msg.type === 'video_result' && (
+                                {mode === 'create' && msg.type === 'video_result' && (
                                     <VideoResultActions msg={msg} />
                                 )}
 
@@ -493,45 +750,64 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                 )}
 
                                 {msg.type === 'voice_preview' && msg.voiceData && (
-                                    <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                    <CollapsibleSection
+                                        title="Voice Preview"
+                                        icon={<Mic size={18} />}
+                                        subtitle={`${msg.voiceData?.samples?.length || 0} samples`}
+                                        defaultOpen={true}
+                                    >
+                                        <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'translation_result' && msg.translationResults && (
-                                    <TranslationResults results={msg.translationResults} />
+                                    <CollapsibleSection
+                                        title="Translation Results"
+                                        icon={<Languages size={18} />}
+                                        subtitle={`${msg.translationResults?.total_success || 0} languages`}
+                                        defaultOpen={true}
+                                    >
+                                        <TranslationResults results={msg.translationResults} />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'image_prompt_review' && msg.enhancedPrompts && (
-                                    <ImagePromptReview
-                                        enhancedPrompts={msg.enhancedPrompts}
-                                        projectId={msg.projectId}
-                                        onGenerateComplete={(result) => {
-                                            // Add gallery message when images are generated
-                                            const galleryMessage = {
-                                                id: Date.now(),
-                                                role: 'assistant',
-                                                content: `🖼️ Images Generated!\n\n` +
-                                                    `Generated: ${result.generated} images\n` +
-                                                    `Failed: ${result.failed}`,
-                                                type: 'image_gallery',
-                                                imageData: result,
-                                                projectId: msg.projectId
-                                            };
-                                            setUploadMessages(prev => [...prev, galleryMessage]);
-                                        }}
-                                    />
+                                    <CollapsibleSection
+                                        title="Image Workflow"
+                                        icon={<Image size={18} />}
+                                        defaultOpen={true}
+                                    >
+                                        <ImageWorkflow
+                                            enhancedPrompts={msg.enhancedPrompts}
+                                            projectId={msg.projectId}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'image_gallery' && msg.imageData && (
-                                    <ImageGallery
-                                        imageData={msg.imageData}
-                                        projectId={msg.projectId}
-                                    />
+                                    <CollapsibleSection
+                                        title="Generated Images"
+                                        icon={<Image size={18} />}
+                                        subtitle={`${msg.imageData?.generated || 0} images`}
+                                        defaultOpen={true}
+                                    >
+                                        <ImageGallery
+                                            imageData={msg.imageData}
+                                            projectId={msg.projectId}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'slides_result' && msg.slidesData && (
-                                    <SlidesPreview
-                                        slidesData={msg.slidesData}
-                                    />
+                                    <CollapsibleSection
+                                        title="Slides Preview"
+                                        icon={<Presentation size={18} />}
+                                        defaultOpen={true}
+                                    >
+                                        <SlidesPreview
+                                            slidesData={msg.slidesData}
+                                        />
+                                    </CollapsibleSection>
                                 )}
 
                                 {msg.type === 'batch_compliance_result' && msg.batchResults && (
@@ -549,22 +825,53 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                                         type="quality"
                                     />
                                 )}
+
+                                {/* Outline Compliance Result - Show ComplianceReport component */}
+                                {mode === 'outline_chat' && msg.type === 'outline_compliance_result' && msg.complianceReport && (
+                                    <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
+                                        {/* View Report Button */}
+                                        <button
+                                            onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
+                                            style={{
+                                                padding: '0.75rem 1.5rem',
+                                                background: openReportId === msg.id ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                color: openReportId === msg.id ? 'white' : 'var(--text-primary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '0.75rem',
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.3s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }}
+                                        >
+                                            📋 {openReportId === msg.id ? 'Close Report' : 'View Report'}
+                                        </button>
+
+                                        {/* Compliance Report */}
+                                        <ComplianceReport
+                                            report={msg.complianceReport}
+                                            isOpen={openReportId === msg.id}
+                                            onSave={(updated) => {
+                                                handleUpdateOutlineComplianceReport(msg.id, updated);
+                                            }}
+                                            onClose={() => setOpenReportId(null)}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ))}
 
-                        {/* Typing Indicator */}
-                        {isTyping && (
-                            <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1rem', marginBottom: '1.5rem' }}>
-                                <div style={{
-                                    width: '36px', height: '36px', borderRadius: '50%',
-                                    background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both' }}></div>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.16s' }}></div>
-                                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-secondary)', borderRadius: '50%', margin: '0 2px', animation: 'bounce 1.4s infinite ease-in-out both 0.32s' }}></div>
-                                </div>
-                            </div>
-                        )}
                         <div ref={messagesEndRef} />
                     </div>
                 </div>
@@ -579,7 +886,7 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                     onScriptToWiki={handleScriptToWiki}
                     onSendText={handleSendChatText}
                     disabled={isTyping}
-                    isWelcome={mode === 'upload' && uploadMessages.length === 1}
+                    isWelcome={mode === 'create' && uploadMessages.length === 0}
                     stagedFile={stagedFile}
                     setStagedFile={setStagedFile}
                     onConfirmStagedFile={handleConfirmStagedFile}
@@ -605,8 +912,31 @@ const ChatArea = forwardRef(({ toggleSidebar }, ref) => {
                 onTranslate={handleTranslation}
             />
 
+            {/* Quality Check Modal - Single language selection */}
+            <QualityCheckModal
+                isOpen={isQualityModalOpen}
+                onClose={() => {
+                    setIsQualityModalOpen(false);
+                    setQualityModalFile(null);
+                    setQualityModalMessage(null);
+                }}
+                file={qualityModalFile || qualityModalMessage?.file}
+                jsonScript={qualityModalMessage?.jsonScript}
+                onSubmit={handleQualityCheckWithLanguage}
+            />
+
             {/* Ask AI Chat - only show in outline_chat mode */}
             {mode === 'outline_chat' && <AskAIChat />}
+
+            {/* Timed Script Modal */}
+            <TimedScriptModal
+                isOpen={isTimedScriptModalOpen}
+                onClose={() => {
+                    setIsTimedScriptModalOpen(false);
+                    setTimedScriptFile(null);
+                }}
+                file={timedScriptFile}
+            />
 
             <style>{`
                 @keyframes bounce {

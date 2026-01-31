@@ -62,9 +62,9 @@ def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
     for i, slide in enumerate(slides):
         row = table.add_row()
         
-        # Visual Cue column (slide title + image prompt)
+        # Visual Cue column (slide title + image prompt) - with bold markdown parsing
         visual_cue = _format_visual_cue(slide)
-        row.cells[0].text = visual_cue
+        _add_formatted_text(row.cells[0], visual_cue)
         
         # Narration column (with bold markdown parsing)
         narration = slide.get('narration', '')
@@ -265,7 +265,7 @@ def docx_to_json(docx_file) -> dict:
     return {
         'presentation_title': metadata.get('title', title),
         'module': metadata.get('module', ''),
-        'episode': metadata.get('episode', ''),
+        'tutorial': metadata.get('episode', ''),
         'duration': metadata.get('duration', '3-4 min'),
         'learning_objectives': metadata.get('learning_objectives', []),
         'prerequisites': metadata.get('prerequisites', ''),
@@ -276,30 +276,76 @@ def docx_to_json(docx_file) -> dict:
 
 
 def _add_metadata_section(doc, json_data: dict):
-    """Add metadata section to the document."""
-    doc.add_heading('Metadata', level=1)
+    """Add metadata section to the document with blue underlined labels."""
     
-    # Create a simple metadata table
+    # Create metadata table
     meta_table = doc.add_table(rows=0, cols=2)
     meta_table.style = 'Table Grid'
     meta_table.columns[0].width = Inches(2)
     meta_table.columns[1].width = Inches(5)
     
-    metadata_items = [
-        ('Title', json_data.get('presentation_title', '')),
-        ('Module', json_data.get('module', '')),
-        ('Episode', json_data.get('episode', '')),
-        ('Duration', json_data.get('duration', '')),
-        ('Prerequisites', json_data.get('prerequisites', '')),
-        ('Learning Objectives', '\n'.join(json_data.get('learning_objectives', []))),
-    ]
+    # Helper to style label cell (blue + underline)
+    def style_label(cell, text):
+        cell.text = ""
+        para = cell.paragraphs[0]
+        run = para.add_run(text)
+        run.bold = True
+        run.underline = True
+        run.font.color.rgb = RGBColor(0, 0, 255)  # Blue
+        run.font.size = Pt(11)
     
-    for label, value in metadata_items:
-        if value:
-            row = meta_table.add_row()
-            row.cells[0].text = label
-            row.cells[0].paragraphs[0].runs[0].bold = True
-            row.cells[1].text = str(value)
+    # Helper to add padding to row cells
+    def add_row_padding(row):
+        for cell in row.cells:
+            _set_cell_padding(cell, top=120, bottom=120, left=120, right=120)
+    
+    # Module
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Module:")
+    row.cells[1].text = json_data.get('module', '')
+    add_row_padding(row)
+    
+    # Episode
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Episode:")
+    row.cells[1].text = json_data.get('episode', '')
+    add_row_padding(row)
+    
+    # Learning Objective (with header and numbered list)
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Learning Objective:")
+    los = json_data.get('learning_objectives', [])
+    lo_text = "At the end of this tutorial learner will be able to\n"
+    for i, lo in enumerate(los, 1):
+        lo_text += f"    {i}. {lo}\n"
+    row.cells[1].text = lo_text.strip()
+    add_row_padding(row)
+    
+    # Approx. Duration
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Approx. Duration:")
+    row.cells[1].text = json_data.get('duration', '3-4 min')
+    add_row_padding(row)
+    
+    # Outline (bulleted)
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Outline")
+    outline = json_data.get('outline', [])
+    outline_text = '\n'.join([f"    • {item}" for item in outline])
+    row.cells[1].text = outline_text
+    add_row_padding(row)
+    
+    # Meta Tags (comma-separated)
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Meta Tags")
+    row.cells[1].text = ', '.join(json_data.get('meta_tags', []))
+    add_row_padding(row)
+    
+    # Pre-requisite Tutorial
+    row = meta_table.add_row()
+    style_label(row.cells[0], "Pre-requisite Tutorial")
+    row.cells[1].text = json_data.get('prerequisites', '')
+    add_row_padding(row)
     
     doc.add_paragraph()  # Add spacing
 

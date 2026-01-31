@@ -34,16 +34,16 @@ def generate_single_image(
     prompt: str,
     output_path: Path,
     aspect_ratio: str = "1:1",
-    reference_image_path: Optional[Path] = None
+    reference_image_paths: Optional[List[Path]] = None
 ) -> bool:
     """
-    Generate a single image from a prompt, optionally using a reference image.
+    Generate a single image from a prompt, optionally using reference images.
     
     Args:
         prompt: The image generation prompt
         output_path: Path to save the generated image
         aspect_ratio: Image aspect ratio (1:1, 16:9, 4:3)
-        reference_image_path: Optional path to a reference image for image-to-image generation
+        reference_image_paths: Optional list of paths to reference images for image-to-image generation
     
     Returns:
         True if successful, False otherwise
@@ -55,16 +55,30 @@ def generate_single_image(
     client = genai.Client(api_key=api_key)
     
     try:
-        # Build contents: reference image (if provided) + prompt
-        if reference_image_path and reference_image_path.exists():
-            print(f"  🎨 Editing image with prompt: {prompt[:50]}...")
-            # Load reference image using PIL
+        # Import shared style prefix for consistent image generation
+        from src.services.image_styles import IMAGE_STYLE_PREFIX, CHARACTER_PROMPT
+        
+        
+        # Build contents: reference images (if provided) + style-prefixed prompt
+        styled_prompt = IMAGE_STYLE_PREFIX + prompt + CHARACTER_PROMPT
+        
+        if reference_image_paths:
+            # Load all valid reference images
             from PIL import Image
-            ref_image = Image.open(reference_image_path)
-            contents = [ref_image, prompt]
+            ref_images = []
+            for path in reference_image_paths:
+                if path and path.exists():
+                    ref_images.append(Image.open(path))
+            
+            if ref_images:
+                print(f"  🎨 Editing with {len(ref_images)} reference image(s): {prompt[:50]}...")
+                contents = [*ref_images, styled_prompt]  # Multiple images + prompt
+            else:
+                print(f"  🎨 Generating image: {prompt[:50]}...")
+                contents = styled_prompt
         else:
             print(f"  🎨 Generating image: {prompt[:50]}...")
-            contents = prompt
+            contents = styled_prompt
         
         response = client.models.generate_content(
             model='gemini-3-pro-image-preview',
@@ -100,13 +114,13 @@ def generate_images(
     Generate images for multiple prompts.
     
     Args:
-        prompts: List of dicts with 'slide_number' and 'prompt' keys
+        prompts: List of dicts with 'slide_number', 'prompt', and optionally 'sentence_index' keys
         project_id: Project ID for file naming
         aspect_ratio: Image aspect ratio
     
     Returns:
         Dictionary with:
-        - images: List of {slide_number, url, success}
+        - images: List of {slide_number, sentence_index, url, success}
         - zip_url: URL to download all images as ZIP
         - generated: Count of successfully generated images
         - failed: Count of failed generations
@@ -121,12 +135,14 @@ def generate_images(
     
     for item in prompts:
         slide_number = item.get('slide_number')
+        sentence_index = item.get('sentence_index', None)  # None for backwards compatibility
         prompt = item.get('prompt', '')
-        reference_image = item.get('reference_image_path')  # Optional reference image
+        reference_images = item.get('reference_image_paths', [])  # List of reference image paths
         
         if not prompt:
             results.append({
                 "slide_number": slide_number,
+                "sentence_index": sentence_index,
                 "url": None,
                 "success": False,
                 "error": "No prompt provided"
@@ -134,19 +150,26 @@ def generate_images(
             failed_count += 1
             continue
         
-        output_path = output_dir / f"slide_{slide_number}.png"
+        # Generate filename based on whether sentence_index is provided
+        if sentence_index is not None:
+            filename = f"row_{slide_number}_sent_{sentence_index}.png"
+        else:
+            filename = f"slide_{slide_number}.png"
         
-        # Convert reference_image string to Path if provided
-        ref_path = Path(reference_image) if reference_image else None
+        output_path = output_dir / filename
+        
+        # Convert reference_image strings to Path list
+        ref_paths = [Path(p) for p in reference_images if p] if reference_images else None
         
         try:
-            success = generate_single_image(prompt, output_path, aspect_ratio, ref_path)
+            success = generate_single_image(prompt, output_path, aspect_ratio, ref_paths)
             
             if success:
                 # Build URL relative to output directory
-                url = f"/output/images/{project_id}/slide_{slide_number}.png"
+                url = f"/output/images/{project_id}/{filename}"
                 results.append({
                     "slide_number": slide_number,
+                    "sentence_index": sentence_index,
                     "url": url,
                     "success": True
                 })
@@ -154,6 +177,7 @@ def generate_images(
             else:
                 results.append({
                     "slide_number": slide_number,
+                    "sentence_index": sentence_index,
                     "url": None,
                     "success": False,
                     "error": "No image returned from API"
@@ -163,6 +187,7 @@ def generate_images(
         except Exception as e:
             results.append({
                 "slide_number": slide_number,
+                "sentence_index": sentence_index,
                 "url": None,
                 "success": False,
                 "error": str(e)
@@ -175,13 +200,11 @@ def generate_images(
         zip_path = output_dir / f"project_{project_id}_images.zip"
         try:
             with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for result in results:
-                    if result.get("success"):
-                        img_path = output_dir / f"slide_{result['slide_number']}.png"
-                        if img_path.exists():
-                            zipf.write(str(img_path), img_path.name)
+                # Add all PNG files in the directory (supports both naming conventions)
+                for png_file in output_dir.glob("*.png"):
+                    zipf.write(str(png_file), png_file.name)
             zip_url = f"/output/images/{project_id}/project_{project_id}_images.zip"
-            print(f"\n📦 Created ZIP: {zip_path.name}")
+            print(f"\n📦 Created ZIP: {zip_path.name} with {len(list(output_dir.glob('*.png')))} images")
         except Exception as e:
             print(f"⚠️ Failed to create ZIP: {e}")
     
@@ -196,3 +219,66 @@ def generate_images(
         "failed": failed_count,
         "project_id": project_id
     }
+
+
+def modify_existing_image(
+    base_image_path: Path,
+    modification_prompt: str,
+    output_path: Path,
+    aspect_ratio: str = "16:9"
+) -> bool:
+    """
+    Modify an existing image using a modification prompt.
+    
+    Uses image-to-image generation: sends the existing image + modification prompt to Gemini.
+    The model will use the image as context and apply the requested changes.
+    
+    Args:
+        base_image_path: Path to the existing image to modify
+        modification_prompt: What to change (e.g., "change background to forest")
+        output_path: Where to save the modified image (can be same as base_image_path to overwrite)
+        aspect_ratio: Image aspect ratio (default: "16:9")
+    
+    Returns:
+        True if successful, False otherwise
+    """
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY environment variable not set")
+    
+    client = genai.Client(api_key=api_key)
+    
+    try:
+        from PIL import Image
+        
+        # Load the existing image
+        base_image = Image.open(base_image_path)
+        print(f"  Loaded base image: {base_image_path.name} ({base_image.size})")
+        
+        # Send ONLY the base image + modification prompt to Gemini
+        # No style prefix, no character prompt - just the modification instruction
+        print(f"  Modifying with prompt: {modification_prompt[:80]}...")
+        
+        response = client.models.generate_content(
+            model='gemini-3-pro-image-preview',
+            contents=[base_image, modification_prompt],  # Image + modification prompt only
+            config=types.GenerateContentConfig(
+                response_modalities=["IMAGE"],
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
+            ),
+        )
+        
+        if response.parts:
+            for part in response.parts:
+                if part.inline_data:
+                    generated_image = part.as_image()
+                    generated_image.save(str(output_path))
+                    print(f"  Saved modified image: {output_path.name}")
+                    return True
+        
+        print(f"  No image returned from modification")
+        return False
+        
+    except Exception as e:
+        print(f"  Error modifying image: {e}")
+        raise

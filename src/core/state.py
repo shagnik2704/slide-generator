@@ -1,5 +1,5 @@
 """
-Data models for the slide generator agent.
+Data models for the Spoken Tutorial Generator agent.
 Contains TypedDict and Pydantic model definitions.
 """
 from typing import TypedDict, Optional, List, Literal
@@ -67,9 +67,18 @@ class AgentState(TypedDict):
     outline: Optional[str]
     mode: str
     tutorial_type: Optional[str]  # "conceptual" or "demo"
-    # Intermediate states for 4-node pipeline
-    structured_outline: Optional[dict]  # Stage 1 output
-    narration_script: Optional[dict]    # Stage 2 output
+    # Outline processor outputs
+    outline_valid: Optional[bool]           # Whether outline is usable
+    outline_topics: Optional[List[str]]     # Extracted topics
+    outline_suggested_title: Optional[str]  # Suggested title
+    outline_rejection: Optional[str]        # Why rejected (if invalid)
+    # NEW PIPELINE: Stage outputs
+    metadata: Optional[dict]           # ScriptMetadata from metadata_node
+    boilerplate_slides: Optional[List[dict]]  # 7 boilerplate slides from boilerplate_node
+    content_slides: Optional[List[dict]]      # Content slides from content_node
+    # Legacy intermediate states (for backward compatibility)
+    structured_outline: Optional[dict]  
+    narration_script: Optional[dict]
     # Final output
     json_script: dict
     script_pdf_path: Optional[str]
