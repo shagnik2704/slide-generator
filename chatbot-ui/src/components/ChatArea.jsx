@@ -22,7 +22,6 @@ import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
 import QualityCheckModal from './QualityCheckModal';
-import TimedScriptModal from './TimedScriptModal';
 
 // Message Action Components
 import {
@@ -137,18 +136,100 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         }
     }, [stagedFile, setStagedFile]);
 
-    // Timed Script Modal State
-    const [isTimedScriptModalOpen, setIsTimedScriptModalOpen] = React.useState(false);
-    const [timedScriptFile, setTimedScriptFile] = React.useState(null);
+    // Timed Script Workflow Handler - uses WorkflowCard instead of modal
+    const handleTimedScriptGeneration = async (file) => {
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'timed_script',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Uploading ${file.name}`, status: 'processing' },
+                { label: 'Transcribing audio with Whisper', status: 'pending' },
+                { label: 'Generating sentence timestamps', status: 'pending' }
+            ],
+            role: 'assistant'
+        };
 
-    // Auto-open timed script modal when an audio file is staged
-    React.useEffect(() => {
-        if (stagedFile?.type === 'timed_script') {
-            setTimedScriptFile(stagedFile.file);
-            setIsTimedScriptModalOpen(true);
-            setStagedFile(null);  // Clear staging since modal takes over
+        setUploadMessages(prev => [...prev, initialWorkflow]);
+
+        try {
+            // Update to step 1 - uploading complete, now transcribing
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Transcribing audio with Whisper', status: 'processing' },
+                        { label: 'Generating sentence timestamps', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            // Call the API
+            const formData = new FormData();
+            formData.append('audio', file);
+            const timedScriptData = await apiFormData('/timed-script/generate', formData);
+
+            // Update to step 2 - generating timestamps
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 2,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Transcribing audio with Whisper', status: 'complete' },
+                        { label: 'Generating sentence timestamps', status: 'processing' }
+                    ]
+                } : msg
+            ));
+
+            // Small delay for visual feedback
+            await new Promise(r => setTimeout(r, 500));
+
+            // Update to complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Transcribing audio with Whisper', status: 'complete' },
+                        { label: 'Timestamps generated', status: 'complete' }
+                    ],
+                    result: {
+                        timedScriptData: timedScriptData
+                    }
+                } : msg
+            ));
+
+        } catch (error) {
+            console.error('Timed script generation error:', error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message || 'Failed to generate timed script'
+                } : msg
+            ));
         }
-    }, [stagedFile, setStagedFile]);
+    };
+
+    // Wrapped confirm handler that intercepts timed_script type
+    const wrappedHandleConfirmStagedFile = (options) => {
+        if (stagedFile?.type === 'timed_script') {
+            handleTimedScriptGeneration(stagedFile.file);
+            setStagedFile(null);
+        } else {
+            handleConfirmStagedFile(options);
+        }
+    };
+
 
     // Handler to open quality check modal with message context (for message button flow)
     const handleOpenQualityModal = (msg) => {
@@ -850,7 +931,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                 isWelcome={mode === 'create' && uploadMessages.length === 0}
                 stagedFile={stagedFile}
                 setStagedFile={setStagedFile}
-                onConfirmStagedFile={handleConfirmStagedFile}
+                onConfirmStagedFile={wrappedHandleConfirmStagedFile}
                 onCancelStagedFile={handleCancelStagedFile}
             />
 
@@ -887,16 +968,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
 
             {/* Ask AI Chat - only show in outline_chat mode */}
             {mode === 'outline_chat' && <AskAIChat />}
-
-            {/* Timed Script Modal */}
-            <TimedScriptModal
-                isOpen={isTimedScriptModalOpen}
-                onClose={() => {
-                    setIsTimedScriptModalOpen(false);
-                    setTimedScriptFile(null);
-                }}
-                file={timedScriptFile}
-            />
 
             <style>{`
                 @keyframes bounce {

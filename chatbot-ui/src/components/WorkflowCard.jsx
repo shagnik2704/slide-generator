@@ -14,7 +14,8 @@ import {
     ShieldCheck,
     ClipboardCheck,
     ListChecks,
-    Globe
+    Globe,
+    Clock
 } from 'lucide-react';
 import ImageWorkflow from './ImageWorkflow';
 import VoicePreview from './VoicePreview';
@@ -22,6 +23,7 @@ import TranslationResults from './TranslationResults';
 import SlidesPreview from './SlidesPreview';
 import BatchResultsList from './BatchResultsList';
 import QualityReport from './QualityReport';
+import TimedScriptResults from './TimedScriptResults';
 import { ScriptUploadedActions, ScriptReviewActions } from './message-actions';
 
 /**
@@ -63,6 +65,7 @@ const WorkflowCard = ({
         batch_compliance: <ClipboardCheck size={18} />,
         batch_quality: <ListChecks size={18} />,
         script: <FileText size={18} />,
+        timed_script: <Clock size={18} />,
         default: <FileText size={18} />
     };
 
@@ -76,7 +79,8 @@ const WorkflowCard = ({
         quality_check: 'Quality Compliance Check',
         batch_compliance: 'Batch Compliance Check',
         batch_quality: 'Batch Quality Review',
-        script: 'Script Generation'
+        script: 'Script Generation',
+        timed_script: 'Timed Script Generation'
     };
 
     // Calculate Progress
@@ -296,6 +300,12 @@ const WorkflowCard = ({
                                     setOpenEditorId={setOpenEditorId}
                                     onDownloadScriptDocx={onDownloadScriptDocx}
                                     onSaveScriptEdit={onSaveScriptEdit}
+                                />
+                            )}
+                            {tool === 'timed_script' && (
+                                <TimedScriptResults
+                                    timedScriptData={result.timedScriptData}
+                                    filename={workflow.filename}
                                 />
                             )}
                         </div>
