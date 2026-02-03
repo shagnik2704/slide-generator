@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, FileText, Image, Presentation, ListChecks, Languages, RefreshCw, HelpCircle, ExternalLink, MessageSquareWarning, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, RefreshCw, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, ExternalLink, MessageSquareWarning, Clock, Video, ClipboardList } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 
@@ -553,7 +553,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
                                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                                 >
-                                    <span>📹 Tutorial Videos</span>
+                                    <Video size={14} />
+                                    <span>Tutorial Videos</span>
                                     <ExternalLink size={12} />
                                 </a>
                             </>
@@ -614,7 +615,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                                     onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
                                     onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                                 >
-                                    <span>📝 Feedback Form</span>
+                                    <ClipboardList size={14} />
+                                    <span>Feedback Form</span>
                                     <ExternalLink size={12} />
                                 </a>
                             </>
