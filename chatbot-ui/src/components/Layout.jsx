@@ -43,6 +43,12 @@ const Layout = ({ mode = 'create' }) => {
     }
   };
 
+  const handleSwitchToRedesign = () => {
+    if (chatAreaRef.current?.setMode) {
+      chatAreaRef.current.setMode('redesign');
+    }
+  };
+
   const showSidebar = true;
 
   return (
@@ -63,6 +69,7 @@ const Layout = ({ mode = 'create' }) => {
               onCreateSlides={handleCreateSlides}
               onOpenBatchModal={handleOpenBatchModal}
               onOpenBatchQualityModal={handleOpenBatchQualityModal}
+              onSwitchToRedesign={handleSwitchToRedesign}
             />
           )
         )}
@@ -70,7 +77,7 @@ const Layout = ({ mode = 'create' }) => {
           ref={chatAreaRef}
           toggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
-          mode={mode}
+          initialMode={mode}
           showSidebarToggle={showSidebar}
         />
       </div>

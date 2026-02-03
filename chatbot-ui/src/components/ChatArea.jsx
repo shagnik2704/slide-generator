@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, UploadCloud, MessageSquare, Trash2, Image, Mic, Languages, Presentation } from 'lucide-react';
+import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw, Image, Mic, Languages, Presentation } from 'lucide-react';
 
 // Components
 import MessageBubble from './MessageBubble';
@@ -18,6 +18,7 @@ import BatchResultsList from './BatchResultsList';
 import UserProfile from './UserProfile';
 import TranslationModal from './TranslationModal';
 import TranslationResults from './TranslationResults';
+import RedesignForm from './RedesignForm';
 import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
@@ -43,10 +44,12 @@ import { apiJson, apiFormData } from '../services/api';
  * This component handles the presentation layer for the chat interface.
  * All business logic and state management is handled by the useChatArea hook.
  */
-const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', showSidebarToggle = true }, ref) => {
+const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'create', showSidebarToggle = true }, ref) => {
     const location = useLocation();
     const {
-        // State
+        // State (mode from hook can be 'create' | 'outline_chat' | 'redesign')
+        mode,
+        setMode,
         uploadMessages,
         setUploadMessages,
         outlineSession,
@@ -92,16 +95,16 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         handleUpdateOutlineComplianceReport,
         handleDownloadScriptDocx,
         handleUploadEditedScript,
-        handleExportMediaWiki,
         handleSaveScriptEdit,
         handleQualityCheck,
+        handleRedesignSubmit,
 
         // Staging
         stagedFile,
         setStagedFile,
         handleConfirmStagedFile,
         handleCancelStagedFile,
-    } = useChatArea(mode);
+    } = useChatArea(initialMode);
 
     // Batch Modal State
     const [isBatchModalOpen, setIsBatchModalOpen] = React.useState(false);
@@ -240,7 +243,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
     };
 
     // Handler for quality check with language selection
-    const handleQualityCheckWithLanguage = async ({ file, jsonScript, languageCode }) => {
+    const handleQualityCheckWithLanguage = async ({ jsonScript, languageCode }) => {
         // If triggered from batch quality floral
         if (batchQualityFiles) {
             await handleSidebarBatchQualityUpload(batchQualityFiles, languageCode);
@@ -251,8 +254,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         // If triggered from sidebar (single file flow), run the sidebar quality upload with WorkflowCard
         if (qualityModalFile) {
             const workflowId = Date.now();
-            const languageName = languageCode === 'hi' ? 'Hindi' : languageCode; // Will be updated after API call
-
             const initialWorkflow = {
                 id: workflowId,
                 type: 'workflow',
@@ -459,6 +460,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
         handleSidebarScriptUpload,
         handleCreateSlides,
         setStagedFile,  // Expose staging for Sidebar
+        setMode,  // Expose setMode for mode switching
         openBatchModal: () => {
             setBatchMode('compliance');
             setIsBatchModalOpen(true);
@@ -584,6 +586,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                     }}>
                         <Link
                             to="/create"
+                            onClick={() => setMode('create')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -591,14 +594,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: location.pathname === '/create'
+                                background: (location.pathname === '/create' && mode === 'create')
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: location.pathname === '/create' ? 'white' : 'var(--text-primary)',
+                                color: (location.pathname === '/create' && mode === 'create') ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: location.pathname === '/create' ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: (location.pathname === '/create' && mode === 'create') ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
@@ -608,6 +611,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                         </Link>
                         <Link
                             to="/outline-chat"
+                            onClick={() => setMode('outline_chat')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -615,20 +619,45 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: location.pathname === '/outline-chat'
+                                background: (location.pathname === '/outline-chat' && mode === 'outline_chat')
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: location.pathname === '/outline-chat' ? 'white' : 'var(--text-primary)',
+                                color: (location.pathname === '/outline-chat' && mode === 'outline_chat') ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: location.pathname === '/outline-chat' ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: (location.pathname === '/outline-chat' && mode === 'outline_chat') ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
                         >
                             <MessageSquare size={16} />
                             Outline Chat
+                        </Link>
+                        <Link
+                            to="/create"
+                            onClick={(e) => { e.preventDefault(); setMode('redesign'); }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
+                                border: 'none',
+                                background: mode === 'redesign'
+                                    ? 'var(--accent-primary)'
+                                    : 'transparent',
+                                color: mode === 'redesign' ? 'white' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                boxShadow: mode === 'redesign' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <RefreshCw size={16} />
+                            Redesign
                         </Link>
                     </div>
 
@@ -675,7 +704,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                 </div>
             </header>
 
-            {/* Messages Area - hidden when welcome screen is shown */}
+            {/* Messages Area - always shown except for create mode welcome screen */}
             {!(mode === 'create' && uploadMessages.length === 0) && (
                 <div style={{
                     flex: 1,
@@ -686,6 +715,15 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                     gap: '0.5rem'
                 }}>
                     <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                        {/* Redesign Form - always shown in redesign mode */}
+                        {mode === 'redesign' && (
+                            <RedesignForm
+                                onSubmit={handleRedesignSubmit}
+                                onCancel={() => setMode('create')}
+                            />
+                        )}
+                        
+                        {/* Message list */}
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
                                 {msg.type === 'workflow' ? (
@@ -920,20 +958,22 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, mode = 'create', sh
                 </div>
             )}
 
-            {/* Input Area */}
-            <InputArea
-                mode={mode}
-                onSendMessage={handleSendMessage}
-                onUploadScript={handleUploadScript}
-                onScriptToWiki={handleScriptToWiki}
-                onSendText={handleSendChatText}
-                disabled={isTyping}
-                isWelcome={mode === 'create' && uploadMessages.length === 0}
-                stagedFile={stagedFile}
-                setStagedFile={setStagedFile}
-                onConfirmStagedFile={wrappedHandleConfirmStagedFile}
-                onCancelStagedFile={handleCancelStagedFile}
-            />
+            {/* Input Area - hidden in redesign mode */}
+            {mode !== 'redesign' && (
+                <InputArea
+                    mode={mode}
+                    onSendMessage={handleSendMessage}
+                    onUploadScript={handleUploadScript}
+                    onScriptToWiki={handleScriptToWiki}
+                    onSendText={handleSendChatText}
+                    disabled={isTyping}
+                    isWelcome={mode === 'create' && uploadMessages.length === 0}
+                    stagedFile={stagedFile}
+                    setStagedFile={setStagedFile}
+                    onConfirmStagedFile={wrappedHandleConfirmStagedFile}
+                    onCancelStagedFile={handleCancelStagedFile}
+                />
+            )}
 
             {/* Batch Upload Modal */}
             <BatchUploadModal

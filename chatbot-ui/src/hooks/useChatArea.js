@@ -12,15 +12,21 @@ import { useSidebarHandlers } from './useSidebarHandlers';
 import { useGenerationHandlers } from './useGenerationHandlers';
 import { useOutlineChat } from './useOutlineChat';
 import { useExportHandlers } from './useExportHandlers';
+import { useRedesignHandlers } from './useRedesignHandlers';
 
 /**
  * Main hook for ChatArea state and business logic.
  * Composes smaller, focused hooks for each feature area.
  */
-export function useChatArea(mode = 'create') {
+export function useChatArea(initialMode = 'create') {
     // =========================
     // CORE STATE
     // =========================
+
+    const [mode, setMode] = useState(initialMode); // 'create' | 'outline_chat' | 'redesign'
+    useEffect(() => {
+        setMode(initialMode);
+    }, [initialMode]);
 
     // Initialize uploadMessages from localStorage or default
     const [uploadMessages, setUploadMessages] = useState(() => {
@@ -31,6 +37,9 @@ export function useChatArea(mode = 'create') {
         }
         return [];
     });
+
+    // Separate state for redesign mode messages
+    const [redesignMessages, setRedesignMessages] = useState([]);
 
     const [isTyping, setIsTyping] = useState(false);
 
@@ -108,11 +117,21 @@ export function useChatArea(mode = 'create') {
         setIsQualityLoading
     );
 
+    // Redesign handlers
+    const redesignHandlers = useRedesignHandlers(
+        setRedesignMessages,
+        setIsTyping
+    );
+
     // =========================
     // COMPUTED
     // =========================
 
-    const activeMessages = mode === 'outline_chat' ? outlineChat.outlineMessages : uploadMessages;
+    const activeMessages = mode === 'outline_chat' 
+        ? outlineChat.outlineMessages 
+        : mode === 'redesign' 
+            ? redesignMessages 
+            : uploadMessages;
 
     // =========================
     // EFFECTS
@@ -213,9 +232,10 @@ export function useChatArea(mode = 'create') {
     return {
         // Core State
         mode,
+        setMode,
         uploadMessages,
-        setUploadMessages,
-        isTyping,
+        setUploadMessages,        redesignMessages,
+        setRedesignMessages,        isTyping,
         currentProjectId,
         activeMessages,
 
@@ -287,5 +307,8 @@ export function useChatArea(mode = 'create') {
         handleExportMediaWiki: exportHandlers.handleExportMediaWiki,
         handleSaveScriptEdit: exportHandlers.handleSaveScriptEdit,
         handleQualityCheck: exportHandlers.handleQualityCheck,
+
+        // Redesign handlers
+        handleRedesignSubmit: redesignHandlers.handleRedesignSubmit,
     };
 }
