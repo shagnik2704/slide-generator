@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers } from 'lucide-react';
+import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers, Clock } from 'lucide-react';
 
 // Helper to format file size
 const formatFileSize = (bytes) => {
@@ -20,9 +20,18 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
     const extension = getFileExtension(file.name);
     const isScript = uploadType === 'script';
     const isVoice = uploadType === 'voice';
+    const isTimedScript = uploadType === 'timed_script';
 
     // Voice mode state - 'combined' or 'rowwise'
     const [voiceMode, setVoiceMode] = useState('combined');
+
+    // Get the appropriate icon based on upload type
+    const getIcon = () => {
+        if (isScript) return <FileJson size={24} />;
+        if (isTimedScript) return <Clock size={24} />;
+        if (isVoice) return <Mic size={24} />;
+        return <File size={24} />;
+    };
 
     // Wrap onConfirm to include voiceMode for voice uploads
     const handleConfirm = () => {
@@ -63,7 +72,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     color: 'white',
                     flexShrink: 0,
                 }}>
-                    {isScript ? <FileJson size={24} /> : <File size={24} />}
+                    {getIcon()}
                 </div>
 
                 {/* File details */}
@@ -169,6 +178,37 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                 </div>
             )}
 
+            {/* Timed Script Description */}
+            {isTimedScript && (
+                <div style={{
+                    padding: '0.75rem 1rem',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '0.75rem',
+                    marginBottom: '1rem',
+                }}>
+                    <div style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-primary)',
+                        fontWeight: 500,
+                        marginBottom: '0.35rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                    }}>
+                        <Clock size={14} style={{ color: 'var(--accent-primary)' }} />
+                        Generate Timed Script
+                    </div>
+                    <div style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.4,
+                    }}>
+                        Uses AI (Whisper) to transcribe your audio and generate sentence-level timestamps.
+                        Results can be downloaded as a DOCX file.
+                    </div>
+                </div>
+            )}
+
             {/* Action buttons */}
             <div style={{
                 display: 'flex',
@@ -241,7 +281,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     }}
                 >
                     <Check size={16} />
-                    Confirm Upload
+                    {isTimedScript ? 'Generate Timed Script' : 'Confirm Upload'}
                 </button>
             </div>
         </div>

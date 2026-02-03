@@ -11,7 +11,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-cache
+RUN uv sync --frozen --no-cache && rm -rf ~/.cache/uv ~/.cache/pip 
 
 ENV PATH="/app/.venv/bin:$PATH"
 

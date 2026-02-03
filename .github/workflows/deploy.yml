@@ -25,7 +25,6 @@ jobs:
           workload_identity_provider: 'projects/77578091156/locations/global/workloadIdentityPools/qc-version-change/providers/github-provider-id'
           service_account: 'vc-automation@version-change-automation.iam.gserviceaccount.com'
 
-      # 2. Deploy to the VM via SSH
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -36,6 +35,5 @@ jobs:
           script: |
             cd ${{ secrets.PROJECT_PATH }}
             git pull origin main
-            # We rebuild the containers to pick up code changes
             docker compose down
             docker compose up --build -d
