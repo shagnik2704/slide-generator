@@ -38,6 +38,9 @@ export function useChatArea(initialMode = 'create') {
         return [];
     });
 
+    // Separate state for redesign mode messages
+    const [redesignMessages, setRedesignMessages] = useState([]);
+
     const [isTyping, setIsTyping] = useState(false);
 
     // Initialize currentProjectId from localStorage or null
@@ -116,7 +119,7 @@ export function useChatArea(initialMode = 'create') {
 
     // Redesign handlers
     const redesignHandlers = useRedesignHandlers(
-        setUploadMessages,
+        setRedesignMessages,
         setIsTyping
     );
 
@@ -124,7 +127,11 @@ export function useChatArea(initialMode = 'create') {
     // COMPUTED
     // =========================
 
-    const activeMessages = mode === 'outline_chat' ? outlineChat.outlineMessages : uploadMessages;
+    const activeMessages = mode === 'outline_chat' 
+        ? outlineChat.outlineMessages 
+        : mode === 'redesign' 
+            ? redesignMessages 
+            : uploadMessages;
 
     // =========================
     // EFFECTS
@@ -225,9 +232,10 @@ export function useChatArea(initialMode = 'create') {
     return {
         // Core State
         mode,
+        setMode,
         uploadMessages,
-        setUploadMessages,
-        isTyping,
+        setUploadMessages,        redesignMessages,
+        setRedesignMessages,        isTyping,
         currentProjectId,
         activeMessages,
 

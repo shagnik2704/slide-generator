@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, X, Plus, Share2, Eye } from 'lucide-react';
 
 /**
  * RedesignForm - Form component for submitting tutorial redesign requests
  */
 export default function RedesignForm({ onSubmit, onCancel }) {
+    const navigate = useNavigate();
     const [step, setStep] = useState('generate'); // 'generate' | 'preview'
     const [generatedUrl, setGeneratedUrl] = useState('');
     const [hasShared, setHasShared] = useState(false);
@@ -146,7 +148,10 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                 </h2>
                 {onCancel && (
                     <button
-                        onClick={onCancel}
+                        onClick={() => {
+                            if (onCancel) onCancel();
+                            navigate('/create');
+                        }}
                         style={{
                             background: 'transparent',
                             border: 'none',

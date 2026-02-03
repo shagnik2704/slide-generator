@@ -505,6 +505,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     }}>
                         <Link
                             to="/create"
+                            onClick={() => setMode('create')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -512,14 +513,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: (location.pathname === '/create' && mode !== 'redesign')
+                                background: (location.pathname === '/create' && mode === 'create')
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: (location.pathname === '/create' && mode !== 'redesign') ? 'white' : 'var(--text-primary)',
+                                color: (location.pathname === '/create' && mode === 'create') ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: (location.pathname === '/create' && mode !== 'redesign') ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: (location.pathname === '/create' && mode === 'create') ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
@@ -529,6 +530,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                         </Link>
                         <Link
                             to="/outline-chat"
+                            onClick={() => setMode('outline_chat')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -536,14 +538,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 padding: '0.3rem 0.6rem',
                                 borderRadius: '0.6rem',
                                 border: 'none',
-                                background: location.pathname === '/outline-chat'
+                                background: (location.pathname === '/outline-chat' && mode === 'outline_chat')
                                     ? 'var(--accent-primary)'
                                     : 'transparent',
-                                color: location.pathname === '/outline-chat' ? 'white' : 'var(--text-primary)',
+                                color: (location.pathname === '/outline-chat' && mode === 'outline_chat') ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
-                                boxShadow: location.pathname === '/outline-chat' ? 'var(--shadow-sm)' : 'none',
+                                boxShadow: (location.pathname === '/outline-chat' && mode === 'outline_chat') ? 'var(--shadow-sm)' : 'none',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             }}
@@ -621,7 +623,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 </div>
             </header>
 
-            {/* Messages Area - hidden when welcome screen is shown */}
+            {/* Messages Area - always shown except for create mode welcome screen */}
             {!(mode === 'create' && uploadMessages.length === 0) && (
                 <div style={{
                     flex: 1,
@@ -632,7 +634,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     gap: '0.5rem'
                 }}>
                     <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-                        {/* Redesign Form - show when in redesign mode */}
+                        {/* Redesign Form - always shown in redesign mode */}
                         {mode === 'redesign' && (
                             <RedesignForm
                                 onSubmit={handleRedesignSubmit}
@@ -640,6 +642,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             />
                         )}
                         
+                        {/* Message list */}
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
                                 {msg.type === 'workflow' ? (

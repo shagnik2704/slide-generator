@@ -1,3 +1,5 @@
+import os
+import json
 import pandas as pd
 import gspread
 from google.auth import default
@@ -5,18 +7,32 @@ from googleapiclient.discovery import build
 from src.core.state import VCAgentState
 from src.utils.VC_utils import template_id
 
-
-
-#------------------------AUTH---------------------------------
+#------------------------WORKLOAD IDENTITY FEDERATION AUTH-----
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds, _ = default(scopes=SCOPES)
+
+def _get_wif_credentials():
+    """
+    Uses Application Default Credentials.
+
+    In GitHub Actions:
+    - google-github-actions/auth@v2 sets GOOGLE_APPLICATION_CREDENTIALS
+    - This loads the temporary WIF credentials automatically
+
+    Locally:
+    - Uses `gcloud auth application-default login` (if present)
+    """
+    creds, _ = default(scopes=SCOPES)
+    return creds
+
+
+creds = _get_wif_credentials()
 client = gspread.authorize(creds)
-drive_service = build(serviceName="drive",version="v3",credentials=creds)
+drive_service = build(serviceName="drive", version="v3", credentials=creds)
 
 #--------------------------------------------------------------
 

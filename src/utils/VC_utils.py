@@ -33,7 +33,7 @@ def search_tool(query:str):
     return search_client.search(query=query,max_results=3,topic='general')
 
 
-template_url = "https://docs.google.com/spreadsheets/d/1soF2643TAWM91p9Xv_jB-VSgRil99-SSujGX0I_ipyU/edit?gid=0#gid=0"
+template_url = "https://docs.google.com/spreadsheets/d/1H6Pzc3h5j8VfO7IBLvNXX8Qo6UpZHo4PnIhWggeIPMM/edit?usp=sharing"
 template_id = template_url.split('/')[5]
 
 
