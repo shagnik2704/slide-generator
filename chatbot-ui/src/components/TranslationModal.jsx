@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Languages, Check, Loader2, FileText, Download } from 'lucide-react';
+import { X, Languages, Check, Loader2, FileText, Download, Presentation } from 'lucide-react';
 import { apiJson } from '../services/api';
 
 /**
- * TranslationModal - Modal for selecting languages and translating scripts
+ * TranslationModal - Modal for selecting languages and translating scripts or slides
+ * @param {string} mode - 'script' (default) or 'slides'
+ *   - script: Multi-language batch translation for .docx/.json files
+ *   - slides: Single language translation for .tex files (XeLaTeX output)
  */
 export default function TranslationModal({
     isOpen,
     onClose,
     file,
-    onTranslate
+    onTranslate,
+    mode = 'script'  // 'script' or 'slides'
 }) {
     const [languages, setLanguages] = useState({});
     const [selectedLanguages, setSelectedLanguages] = useState([]);
     const [translateVisualCues, setTranslateVisualCues] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Mode-specific settings
+    const isSlideMode = mode === 'slides';
+    const allowMultiple = !isSlideMode;  // Slides mode = single language only
 
     // Fetch supported languages on mount
     useEffect(() => {
@@ -35,11 +43,19 @@ export default function TranslationModal({
     };
 
     const toggleLanguage = (code) => {
-        setSelectedLanguages(prev =>
-            prev.includes(code)
-                ? prev.filter(l => l !== code)
-                : [...prev, code]
-        );
+        if (allowMultiple) {
+            // Multi-select for script mode
+            setSelectedLanguages(prev =>
+                prev.includes(code)
+                    ? prev.filter(l => l !== code)
+                    : [...prev, code]
+            );
+        } else {
+            // Single-select for slides mode
+            setSelectedLanguages(prev =>
+                prev.includes(code) ? [] : [code]
+            );
+        }
     };
 
     const handleTranslate = async () => {
@@ -52,7 +68,8 @@ export default function TranslationModal({
         onTranslate({
             file,
             languages: selectedLanguages,
-            translateVisualCues
+            translateVisualCues,
+            mode  // Pass mode to handler
         }).catch(err => {
             console.error('Translation failed:', err);
         });
@@ -164,9 +181,13 @@ export default function TranslationModal({
                 {/* Header */}
                 <div style={headerStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Languages size={24} style={{ color: 'var(--accent-primary)' }} />
+                        {isSlideMode ? (
+                            <Presentation size={24} style={{ color: 'var(--accent-primary)' }} />
+                        ) : (
+                            <Languages size={24} style={{ color: 'var(--accent-primary)' }} />
+                        )}
                         <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
-                            Translate Script
+                            {isSlideMode ? 'Translate Slides' : 'Translate Script'}
                         </h2>
                     </div>
                     <button
@@ -214,8 +235,20 @@ export default function TranslationModal({
                             fontWeight: 500,
                             color: 'var(--text-primary)'
                         }}>
-                            Select languages to translate:
+                            {isSlideMode
+                                ? 'Select target language:'
+                                : 'Select languages to translate:'}
                         </label>
+                        {isSlideMode && (
+                            <p style={{
+                                fontSize: '0.85rem',
+                                color: 'var(--text-secondary)',
+                                marginBottom: '0.75rem',
+                                marginTop: '-0.25rem'
+                            }}>
+                                The .tex file will be converted to XeLaTeX format with proper font support.
+                            </p>
+                        )}
 
                         <div style={languageGridStyle}>
                             {Object.entries(languages).map(([code, info]) => (
@@ -244,31 +277,33 @@ export default function TranslationModal({
                         </div>
                     </div>
 
-                    {/* Options */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            padding: '1rem',
-                            background: 'var(--bg-tertiary)',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                        }}
-                        onClick={() => setTranslateVisualCues(!translateVisualCues)}
-                    >
-                        <div style={checkboxStyle(translateVisualCues)}>
-                            {translateVisualCues && (
-                                <Check size={14} style={{ color: 'white' }} />
-                            )}
-                        </div>
-                        <div>
-                            <div style={{ fontWeight: 500 }}>Translate visual cues</div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                Also translate the visual cue descriptions
+                    {/* Options - Only show for script mode */}
+                    {!isSlideMode && (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                padding: '1rem',
+                                background: 'var(--bg-tertiary)',
+                                borderRadius: '10px',
+                                cursor: 'pointer',
+                            }}
+                            onClick={() => setTranslateVisualCues(!translateVisualCues)}
+                        >
+                            <div style={checkboxStyle(translateVisualCues)}>
+                                {translateVisualCues && (
+                                    <Check size={14} style={{ color: 'white' }} />
+                                )}
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 500 }}>Translate visual cues</div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    Also translate the visual cue descriptions
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Error message */}
                     {error && (
@@ -307,8 +342,11 @@ export default function TranslationModal({
                             </>
                         ) : (
                             <>
-                                <Languages size={18} />
-                                Translate to {selectedLanguages.length} language{selectedLanguages.length !== 1 ? 's' : ''}
+                                {isSlideMode ? <Presentation size={18} /> : <Languages size={18} />}
+                                {isSlideMode
+                                    ? `Translate Slides${selectedLanguages.length > 0 ? ` to ${languages[selectedLanguages[0]]?.name || ''}` : ''}`
+                                    : `Translate to ${selectedLanguages.length} language${selectedLanguages.length !== 1 ? 's' : ''}`
+                                }
                             </>
                         )}
                     </button>

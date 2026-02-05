@@ -58,6 +58,7 @@ const WorkflowCard = ({
         images: <Image size={18} />,
         voice: <Mic size={18} />,
         translation: <Languages size={18} />,
+        slides_translation: <Languages size={18} />,
         slides: <Presentation size={18} />,
         compliance: <ShieldCheck size={18} />,
         quality: <ListChecks size={18} />,
@@ -73,6 +74,7 @@ const WorkflowCard = ({
         images: 'Image Generation',
         voice: 'Voice Generation',
         translation: 'Script Translation',
+        slides_translation: 'Slides Translation',
         slides: 'Slides Generation',
         compliance: 'Admin Compliance Check',
         quality: 'Quality Compliance Review',
@@ -307,6 +309,80 @@ const WorkflowCard = ({
                                     timedScriptData={result.timedScriptData}
                                     filename={workflow.filename}
                                 />
+                            )}
+                            {tool === 'slides_translation' && result.slidesTranslation && (
+                                <div style={{
+                                    padding: '1.25rem',
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border-color)'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '1rem'
+                                    }}>
+                                        <div>
+                                            <div style={{
+                                                fontWeight: 600,
+                                                color: 'var(--text-primary)',
+                                                marginBottom: '0.25rem'
+                                            }}>
+                                                Translated to {result.slidesTranslation.language_name}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--text-secondary)'
+                                            }}>
+                                                XeLaTeX format with {result.slidesTranslation.font_name} font
+                                            </div>
+                                        </div>
+                                        <a
+                                            href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${result.slidesTranslation.download_url}`}
+                                            download={result.slidesTranslation.filename}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.625rem 1rem',
+                                                background: 'var(--accent-primary)',
+                                                color: 'white',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                fontWeight: 500,
+                                                fontSize: '0.9rem',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'var(--accent-secondary)';
+                                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'var(--accent-primary)';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            <Presentation size={16} />
+                                            Download .tex
+                                        </a>
+                                    </div>
+                                    <div style={{
+                                        padding: '0.75rem 1rem',
+                                        background: 'rgba(251, 191, 36, 0.1)',
+                                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                                        borderRadius: '8px',
+                                        fontSize: '0.85rem',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        <strong style={{ color: 'var(--text-primary)' }}>Note:</strong> Compile with <code style={{
+                                            background: 'var(--bg-tertiary)',
+                                            padding: '0.125rem 0.375rem',
+                                            borderRadius: '4px',
+                                            fontFamily: 'monospace'
+                                        }}>xelatex</code> instead of pdflatex
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}
