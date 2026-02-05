@@ -89,6 +89,7 @@ from src.api.routes import (
     download_router,
     outline_chat_router,
     translation_router,
+    redesign_router,
     timed_script_router,
 )
 from src.api.routes.auth import router as auth_router
@@ -100,6 +101,7 @@ app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
 app.include_router(translation_router)
+app.include_router(redesign_router)
 app.include_router(timed_script_router)
 
 # Global exception handler for API exceptions
@@ -131,7 +133,6 @@ async def general_exception_handler(request: Request, exc: Exception):
             "detail": "An internal error occurred. Please try again later.",
         },
     )
-
 
 # Basic health/root endpoints for uptime checks
 @app.get("/")
