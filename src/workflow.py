@@ -33,16 +33,16 @@ def run_pipeline(foss_name: str, language: str, export: bool, reciept_emails: li
             f"This FOSS might not be available in the selected language."
         )
     
-    _log(state, "extraction_output.json")
+    # _log(state, "extraction_output.json")
 
     state = tech_intelligence_agent(state)
-    _log(state, "updation_output.json")
+    # _log(state, "updation_output.json")
 
     state = duration_split(state)
-    _log(state, "split_output.json")
+    # _log(state, "split_output.json")
 
     state = form_final_table(state)
-    _log(state, "final_output.json")
+    # _log(state, "final_output.json")
 
     export_url = "Export flag disabled."
 

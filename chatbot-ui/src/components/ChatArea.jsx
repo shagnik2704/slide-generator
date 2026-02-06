@@ -113,11 +113,18 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
     // Translation Modal State
     const [isTranslationModalOpen, setIsTranslationModalOpen] = React.useState(false);
     const [translationFile, setTranslationFile] = React.useState(null);
+    const [translationMode, setTranslationMode] = React.useState('script');  // 'script' or 'slides'
 
     // Auto-open translation modal when a translation file is staged
     React.useEffect(() => {
         if (stagedFile?.type === 'translation') {
             setTranslationFile(stagedFile.file);
+            setTranslationMode('script');
+            setIsTranslationModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
+        } else if (stagedFile?.type === 'slides_translation') {
+            setTranslationFile(stagedFile.file);
+            setTranslationMode('slides');
             setIsTranslationModalOpen(true);
             setStagedFile(null);  // Clear staging since modal takes over
         }
@@ -373,8 +380,17 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
         setIsBatchModalOpen(false);
     };
 
-    // Translation handler
-    const handleTranslation = async ({ file, languages, translateVisualCues }) => {
+    // Translation handler - handles both script and slides translation
+    const handleTranslation = async ({ file, languages, translateVisualCues, mode: translationModeParam }) => {
+        // Route to appropriate handler based on mode
+        if (translationModeParam === 'slides') {
+            return handleSlidesTranslation({ file, languages });
+        }
+        return handleScriptTranslation({ file, languages, translateVisualCues });
+    };
+
+    // Script translation handler (original logic)
+    const handleScriptTranslation = async ({ file, languages, translateVisualCues }) => {
         const workflowId = Date.now();
         const initialWorkflow = {
             id: workflowId,
@@ -446,6 +462,96 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     ...msg,
                     status: 'error',
                     error: error.message
+                } : msg
+            ));
+            throw error;
+        }
+    };
+
+    // Slides translation handler (.tex files)
+    const handleSlidesTranslation = async ({ file, languages }) => {
+        const workflowId = Date.now();
+        const targetLang = languages[0];  // Single language for slides
+
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'slides_translation',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Reading ${file.name}`, status: 'processing' },
+                { label: 'Translating slide content', status: 'pending' },
+                { label: 'Adding XeLaTeX support', status: 'pending' }
+            ],
+            role: 'assistant'
+        };
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
+
+        try {
+            // Step 1: Upload and parse .tex file
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('target_language', targetLang);
+
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Reading ${file.name}`, status: 'complete' },
+                        { label: 'Translating slide content', status: 'processing' },
+                        { label: 'Adding XeLaTeX support', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            // Step 2 & 3: Translate slides
+            const translationResult = await apiFormData('/translate_slides', formData);
+
+            // Update to Step 3
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 2,
+                    steps: [
+                        { label: `Reading ${file.name}`, status: 'complete' },
+                        { label: 'Translating slide content', status: 'complete' },
+                        { label: 'Adding XeLaTeX support', status: 'processing' }
+                    ]
+                } : msg
+            ));
+
+            // Small delay for visual feedback
+            await new Promise(r => setTimeout(r, 500));
+
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Reading ${file.name}`, status: 'complete' },
+                        { label: 'Translating slide content', status: 'complete' },
+                        { label: 'XeLaTeX ready', status: 'complete' }
+                    ],
+                    result: {
+                        slidesTranslation: translationResult
+                    }
+                } : msg
+            ));
+
+        } catch (error) {
+            console.error('Slides translation error:', error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message || 'Failed to translate slides'
                 } : msg
             ));
             throw error;
@@ -988,8 +1094,10 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 onClose={() => {
                     setIsTranslationModalOpen(false);
                     setTranslationFile(null);
+                    setTranslationMode('script');
                 }}
                 file={translationFile}
+                mode={translationMode}
                 onTranslate={handleTranslation}
             />
 

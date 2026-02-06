@@ -9,6 +9,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
 
     // Dropdown state
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = useState(false);
 
     // Refs for hidden file inputs
     const complianceInputRef = useRef(null);
@@ -18,6 +19,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     const imageInputRef = useRef(null);
     const slidesInputRef = useRef(null);
     const translationInputRef = useRef(null);
+    const slidesTranslationInputRef = useRef(null);
     const timedScriptInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
@@ -70,6 +72,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'translation' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle slides translation file selection (.tex files) - stage for preview
+    const handleSlidesTranslationFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'slides_translation' });
             e.target.value = '';
         }
     };
@@ -200,6 +211,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 type="file"
                 accept=".json,.docx,.odt"
                 onChange={handleTranslationFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={slidesTranslationInputRef}
+                type="file"
+                accept=".tex"
+                onChange={handleSlidesTranslationFileSelect}
                 style={{ display: 'none' }}
             />
             <input
@@ -422,27 +440,87 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 </button>
             </TooltipWrapper>
 
-            {/* Translation Button */}
-            <TooltipWrapper text="Translate Script">
+            {/* Translation Dropdown */}
+            <TooltipWrapper text="Translation">
                 <button
-                    onClick={() => translationInputRef.current?.click()}
+                    onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
                     style={{
                         ...iconButtonStyle,
-                        marginTop: '0.5rem'
+                        marginTop: '0.5rem',
+                        background: isTranslateDropdownOpen ? 'var(--bg-tertiary)' : 'transparent',
+                        color: isTranslateDropdownOpen ? 'var(--accent-primary)' : 'var(--text-secondary)'
                     }}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--bg-tertiary)';
                         e.currentTarget.style.color = 'var(--accent-primary)';
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        if (!isTranslateDropdownOpen) {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }
                     }}
                 >
                     <Languages size={20} />
-                    <span style={textLabelStyle}>Translate Script</span>
+                    <span style={{ flex: 1, textAlign: 'left', ...textLabelStyle }}>Translation</span>
+                    <ChevronDown
+                        size={16}
+                        style={{
+                            ...textLabelStyle,
+                            transform: isTranslateDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease, opacity 0.25s ease'
+                        }}
+                    />
                 </button>
             </TooltipWrapper>
+
+            {/* Translation Dropdown Items */}
+            {isTranslateDropdownOpen && (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.125rem',
+                    marginTop: '0.125rem'
+                }}>
+                    {/* Translate Script */}
+                    <TooltipWrapper text="Translate Script">
+                        <button
+                            onClick={() => translationInputRef.current?.click()}
+                            style={dropdownItemStyle}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--accent-primary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <FileText size={18} />
+                            <span style={textLabelStyle}>Translate Script</span>
+                        </button>
+                    </TooltipWrapper>
+
+                    {/* Translate Slides */}
+                    <TooltipWrapper text="Translate Slides">
+                        <button
+                            onClick={() => slidesTranslationInputRef.current?.click()}
+                            style={dropdownItemStyle}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--accent-primary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <Presentation size={18} />
+                            <span style={textLabelStyle}>Translate Slides</span>
+                        </button>
+                    </TooltipWrapper>
+                </div>
+            )}
 
             {/* Timed Script Button */}
             <TooltipWrapper text="Timed Script">

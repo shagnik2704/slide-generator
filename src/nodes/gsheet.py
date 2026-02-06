@@ -14,6 +14,11 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
+# Lazy-loaded credentials and clients
+_creds = None
+_client = None
+_drive_service = None
+
 
 def _get_wif_credentials():
     """
@@ -26,13 +31,27 @@ def _get_wif_credentials():
     Locally:
     - Uses `gcloud auth application-default login` (if present)
     """
-    creds, _ = default(scopes=SCOPES)
-    return creds
+    global _creds
+    if _creds is None:
+        _creds, _ = default(scopes=SCOPES)
+    return _creds
 
 
-creds = _get_wif_credentials()
-client = gspread.authorize(creds)
-drive_service = build(serviceName="drive", version="v3", credentials=creds)
+def _get_gspread_client():
+    """Lazily initialize gspread client."""
+    global _client
+    if _client is None:
+        _client = gspread.authorize(_get_wif_credentials())
+    return _client
+
+
+def _get_drive_service():
+    """Lazily initialize Google Drive service."""
+    global _drive_service
+    if _drive_service is None:
+        _drive_service = build(serviceName="drive", version="v3", credentials=_get_wif_credentials())
+    return _drive_service
+
 
 #--------------------------------------------------------------
 
@@ -43,6 +62,9 @@ def export_to_sheets(state: VCAgentState,
                      user_role: str = "writer"  # "writer" | "reader" | "commenter"
                      ) -> str:
 
+    client = _get_gspread_client()
+    drive_service = _get_drive_service()
+    
     generated_sheet_name = f"VC-{foss_name}_{language}"
     print(f"Copying template to {generated_sheet_name}...")
 
@@ -77,6 +99,8 @@ def export_to_sheets(state: VCAgentState,
     return new_sheet.url
     
 def share_sheet(sheet_url: str, recipients: list[dict]):
+    drive_service = _get_drive_service()
+    
     # Extract sheet ID from URL
     sheet_id = sheet_url.split('/d/')[1].split('/')[0]
     
