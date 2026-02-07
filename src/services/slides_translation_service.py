@@ -149,12 +149,8 @@ def translate_tex_content(tex_content: str, target_language: str) -> str:
 - ALL LaTeX commands (\\begin, \\end, \\item, \\frametitle, \\usepackage, etc.)
 - ALL LaTeX special characters, braces {{}}, brackets [], and backslashes \\
 - ALL LaTeX environments and their names
-- Software names: Python, Linux, Ubuntu, Windows, VS Code, Firefox, LibreOffice, etc.
-- Brand names: Spoken Tutorial, EduPyramids, FOSSEE, IIT Bombay
-- Technical terms: terminal, command line, script, variable, function, GUI, CLI
 - URLs and file paths (anything with http, www, or file extensions)
 - Numbers and version numbers (e.g., "Python 3.x", "Ubuntu 22.04")
-- Email addresses
 - Code snippets inside verbatim or lstlisting environments
 
 ### TRANSLATION STYLE:
