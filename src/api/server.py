@@ -91,6 +91,7 @@ from src.api.routes import (
     translation_router,
     redesign_router,
     timed_script_router,
+    slides_translation_router,
 )
 from src.api.routes.auth import router as auth_router
 
@@ -103,6 +104,7 @@ app.include_router(outline_chat_router)
 app.include_router(translation_router)
 app.include_router(redesign_router)
 app.include_router(timed_script_router)
+app.include_router(slides_translation_router)
 
 # Global exception handler for API exceptions
 @app.exception_handler(APIException)
