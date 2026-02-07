@@ -25,7 +25,6 @@ import BatchResultsList from './BatchResultsList';
 import QualityReport from './QualityReport';
 import TimedScriptResults from './TimedScriptResults';
 import { ScriptUploadedActions, ScriptReviewActions } from './message-actions';
-import { API_URL } from '../services/api';
 
 /**
  * WorkflowCard - A lifecycle-aware component that handles tool processing states.
@@ -340,7 +339,7 @@ const WorkflowCard = ({
                                             </div>
                                         </div>
                                         <a
-                                            href={`${API_URL}${result.slidesTranslation.download_url}`}
+                                            href={result.slidesTranslation.download_url}
                                             download={result.slidesTranslation.filename}
                                             style={{
                                                 display: 'flex',
