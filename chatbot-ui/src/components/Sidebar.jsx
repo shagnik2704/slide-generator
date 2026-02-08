@@ -153,21 +153,23 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     };
 
     return (
-        <aside style={{
-            width: isOpen ? expandedWidth : collapsedWidth,
-            minWidth: isOpen ? expandedWidth : collapsedWidth,
-            backgroundColor: 'var(--bg-secondary)',
-            borderRight: '1px solid var(--border-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: isOpen ? '1rem' : '0.75rem 0.5rem',
-            flexShrink: 0,
-            // Smoother animation with cubic-bezier and GPU acceleration
-            transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            willChange: 'width, min-width, padding',
-            overflow: 'visible',
-            position: 'relative'
-        }}>
+        <aside
+            className={`sidebar-container ${isOpen ? 'sidebar-open' : ''}`}
+            style={{
+                width: isOpen ? expandedWidth : collapsedWidth,
+                minWidth: isOpen ? expandedWidth : collapsedWidth,
+                backgroundColor: 'var(--bg-secondary)',
+                borderRight: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: isOpen ? '1rem' : '0.75rem 0.5rem',
+                flexShrink: 0,
+                // Smoother animation with cubic-bezier and GPU acceleration
+                transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease',
+                willChange: 'width, min-width, padding, transform',
+                overflow: 'visible',
+                position: 'relative'
+            }}>
 
             {/* Hidden file inputs */}
             <input

@@ -597,10 +597,11 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            position: 'relative'
+            position: 'relative',
+            overflowX: 'hidden'
         }}>
             {/* Header */}
-            <header style={{
+            <header className="chat-header" style={{
                 padding: '1rem 1.5rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
@@ -618,11 +619,12 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {showSidebarToggle && (
                         <button
+                            className="hamburger-btn"
                             onClick={toggleSidebar}
                             style={{
-                                background: 'var(--bg-tertiary)',
+                                background: isSidebarOpen ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
                                 border: 'none',
-                                color: 'var(--text-primary)',
+                                color: isSidebarOpen ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -633,18 +635,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 height: '40px',
                                 transition: 'all 0.3s ease',
                                 boxShadow: 'var(--shadow-sm)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'var(--accent-primary)';
-                                e.currentTarget.style.color = 'white';
-                                e.currentTarget.style.transform = 'scale(1.15)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                                e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                             }}
                         >
                             <Menu size={24} strokeWidth={2.5} />
@@ -666,7 +656,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             alt="EduPyramids"
                             style={{ height: '36px' }}
                         />
-                        <div style={{
+                        {/* Full title - hidden on mobile */}
+                        <div className="header-title-full" style={{
                             fontWeight: 600,
                             fontSize: '1.25rem',
                             fontFamily: '"Outfit", sans-serif',
@@ -677,11 +668,22 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
                             <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
                         </div>
+                        {/* Short title - shown only on mobile */}
+                        <div className="header-title-short" style={{
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            fontFamily: '"Outfit", sans-serif',
+                            display: 'none',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                        }}>
+                            <span style={{ color: 'var(--accent-secondary)' }}>STG</span>
+                        </div>
                     </Link>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Mode Navigation */}
-                    <div style={{
+                <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                    {/* Mode Navigation - hidden on mobile */}
+                    <div className="hide-on-mobile" style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
                         borderRadius: '0.75rem',
@@ -770,6 +772,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     {/* Clear Session button */}
                     {mode === 'create' && uploadMessages.length > 0 && (
                         <button
+                            className="clear-session-btn"
                             onClick={handleClearSession}
                             style={{
                                 padding: '0.25rem 0.75rem',
@@ -795,15 +798,15 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             }}
                         >
                             <Trash2 size={14} />
-                            Clear Session
+                            <span>Clear Session</span>
                         </button>
                     )}
 
                     <ThemeToggle />
 
-                    {/* User Profile - Compact version in header */}
-                    {showSidebarToggle && !isSidebarOpen && (
-                        <div style={{ marginLeft: '0.5rem' }}>
+                    {/* User Profile - Compact version in header (always show on mobile) */}
+                    {showSidebarToggle && (
+                        <div className="header-user-profile" style={{ marginLeft: '0.5rem' }}>
                             <UserProfile compact={true} />
                         </div>
                     )}
@@ -828,7 +831,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 onCancel={() => setMode('create')}
                             />
                         )}
-                        
+
                         {/* Message list */}
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>

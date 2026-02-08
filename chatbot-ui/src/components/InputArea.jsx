@@ -488,7 +488,7 @@ const InputArea = ({
                                 <Sparkles size={18} />
                                 <span>Welcome</span>
                             </div>
-                            <h1 style={{
+                            <h1 className="welcome-heading" style={{
                                 fontSize: '2rem',
                                 fontWeight: 600,
                                 color: 'var(--text-primary)',
@@ -505,7 +505,7 @@ const InputArea = ({
                             maxWidth: '600px',
                             marginBottom: '1.5rem',
                         }}>
-                            <div style={{
+                            <div className="welcome-input-box" style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 padding: '1rem 1.25rem',
@@ -514,12 +514,12 @@ const InputArea = ({
                                 border: '1px solid var(--border-color)',
                                 boxShadow: 'var(--shadow-sm)',
                             }}>
-                                <span style={{
+                                <span className="welcome-disclaimer" style={{
                                     flex: 1,
                                     color: 'var(--text-secondary)',
                                     fontSize: '0.95rem',
                                 }}>
-                                    Disclaimer: The server may take time to respond...Please be patient.
+                                    AI generated content may have mistakes, please cross check.
                                 </span>
                                 <div style={{
                                     display: 'flex',
@@ -557,14 +557,36 @@ const InputArea = ({
                         </div>
 
                         {/* Quick action pills */}
-                        <div style={{
+                        <div className="action-pills-container" style={{
                             display: 'flex',
                             flexWrap: 'wrap',
                             gap: '0.75rem',
                             justifyContent: 'center',
                         }}>
+                            <style>{`
+                                @media (max-width: 768px) {
+                                    .welcome-heading {
+                                        font-size: 1.5rem !important;
+                                    }
+                                    .welcome-disclaimer {
+                                        font-size: 0.85rem !important;
+                                    }
+                                    .action-pills-container {
+                                        flex-direction: column !important;
+                                        align-items: stretch !important;
+                                        width: 100% !important;
+                                        max-width: 300px !important;
+                                        margin: 0 auto !important;
+                                    }
+                                    .action-pill {
+                                        width: 100% !important;
+                                        justify-content: center !important;
+                                    }
+                                }
+                            `}</style>
 
                             <button
+                                className="action-pill"
                                 onClick={() => scriptToWikiRef.current?.click()}
                                 disabled={disabled}
                                 style={pillButtonStyle(disabled)}
@@ -588,6 +610,7 @@ const InputArea = ({
 
 
                             <button
+                                className="action-pill"
                                 onClick={() => voiceInputRef.current?.click()}
                                 disabled={disabled}
                                 style={pillButtonStyle(disabled)}
@@ -610,6 +633,7 @@ const InputArea = ({
                             </button>
 
                             <button
+                                className="action-pill"
                                 disabled={true}
                                 style={pillButtonStyle(true)}
                                 title="Coming soon"
@@ -731,7 +755,7 @@ const InputArea = ({
                                 color: 'var(--text-secondary)',
                                 padding: '0.5rem',
                             }}>
-                                Use the sidebar to generate voice,slides,images or run compliance checks
+                                AI may make mistakes, please cross check.
                             </div>
                         )}
                     </>

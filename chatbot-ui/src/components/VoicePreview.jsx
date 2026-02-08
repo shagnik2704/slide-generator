@@ -123,7 +123,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
 
             {/* Multiple Audio Players Grid */}
             {!isCombined && audio_urls && (
-                <div style={{
+                <div className="voice-preview-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                     gap: '0.75rem',

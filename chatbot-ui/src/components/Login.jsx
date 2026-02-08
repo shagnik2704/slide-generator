@@ -56,17 +56,18 @@ export default function Login() {
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
     }}>
       {/* Animated Greeting - Horizontal Row */}
-      <div style={{
-        marginBottom: '2rem',
+      <div className="login-greeting" style={{
+        marginBottom: '3rem',
         display: 'flex',
-        flexDirection: 'row',
+        flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '1rem',
-        flexWrap: 'wrap',
+        gap: '0.5rem 1rem',
+        textAlign: 'center',
+        width: '100%',
       }}>
         <h1 style={{
-          fontSize: '2.5rem',
+          fontSize: 'var(--greeting-size, 2.5rem)',
           fontWeight: '600',
           color: 'var(--accent-primary, #4285F4)',
           margin: 0,
@@ -77,39 +78,66 @@ export default function Login() {
           Hi! 👋
         </h1>
         <p style={{
-          fontSize: '2.5rem',
+          fontSize: 'var(--greeting-size, 2.5rem)',
           fontWeight: '500',
           color: 'var(--text-primary, #202124)',
           margin: 0,
           minWidth: '1ch',
+          textAlign: 'center',
         }}>
           {displayedWelcome}
           <span style={{ color: 'var(--accent-secondary, #34A853)' }}>{displayedBrand}</span>
           <span style={{
             display: welcomeText.length > 0 && welcomeText.length < fullWelcomeText.length + brandText.length ? 'inline-block' : 'none',
             width: '3px',
-            height: '2.5rem',
+            height: 'var(--greeting-size, 2.5rem)',
             backgroundColor: 'var(--accent-primary, #4285F4)',
             marginLeft: '2px',
+            verticalAlign: 'middle',
             animation: 'blink 0.8s infinite',
           }} />
         </p>
       </div>
 
       <style>{`
+        :root {
+          --greeting-size: 3.5rem;
+          --card-padding: 3rem 2.5rem;
+        }
         @keyframes blink {
           0%, 50% { opacity: 1; }
           51%, 100% { opacity: 0; }
         }
+        @media (max-width: 1024px) {
+          :root {
+            --greeting-size: 3rem;
+          }
+        }
+        @media (max-width: 768px) {
+          :root {
+            --greeting-size: 2.5rem;
+            --card-padding: 2rem 1.5rem;
+          }
+          .login-greeting {
+            flex-direction: column !important;
+            gap: 0.25rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          :root {
+            --greeting-size: 2.2rem;
+            --card-padding: 1.5rem 1rem;
+          }
+        }
       `}</style>
 
       {/* Login Card - Always Visible */}
-      <div style={{
+      <div className="login-card" style={{
         maxWidth: '420px',
         width: '100%',
         background: '#fff',
         borderRadius: '12px',
-        padding: '3rem 2.5rem',
+        padding: 'var(--card-padding, 3rem 2.5rem)',
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
         textAlign: 'center',
       }}>
