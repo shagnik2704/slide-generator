@@ -26,7 +26,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
     };
 
     return (
-        <div style={{
+        <div className="quality-report" style={{
             marginTop: '1rem',
             background: 'var(--bg-primary)',
             borderRadius: '12px',
@@ -35,18 +35,21 @@ const QualityReport = ({ report, isOpen, onClose }) => {
             border: '1px solid var(--border-color)',
         }}>
             {/* Toolbar - Match ComplianceReport style */}
-            <div style={{
+            <div className="report-toolbar" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '0.875rem 1.25rem',
                 background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
             }}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
+                    flexWrap: 'wrap',
                 }}>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         Quality Report ({languageName})
@@ -252,18 +255,32 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                     }
                                 </div>
 
-                                {/* Expanded Content - 3 Column Layout */}
+                                {/* Expanded Content - Swipeable Carousel on Mobile */}
                                 {expandedSlide === slide.slide_number && (
                                     <div style={{ padding: '1.25rem', background: 'var(--bg-primary)' }}>
-                                        {/* 3 Column Grid */}
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: '1fr 1fr 1fr',
-                                            gap: '1.25rem',
-                                            marginBottom: slide.issues?.length > 0 ? '1.25rem' : 0
-                                        }}>
-                                            {/* Column 1: Original English */}
-                                            <div>
+                                        {/* Carousel Container */}
+                                        <div
+                                            className="translation-carousel"
+                                            style={{
+                                                display: 'flex',
+                                                overflowX: 'auto',
+                                                scrollSnapType: 'x mandatory',
+                                                scrollBehavior: 'smooth',
+                                                gap: '1rem',
+                                                paddingBottom: '0.75rem',
+                                                marginBottom: slide.issues?.length > 0 ? '1.25rem' : 0,
+                                                WebkitOverflowScrolling: 'touch',
+                                            }}
+                                        >
+                                            {/* Card 1: Original English */}
+                                            <div
+                                                className="translation-card"
+                                                style={{
+                                                    flex: '0 0 calc(33.333% - 0.75rem)',
+                                                    minWidth: '280px',
+                                                    scrollSnapAlign: 'start',
+                                                }}
+                                            >
                                                 <label style={{
                                                     display: 'block',
                                                     fontSize: '0.7rem',
@@ -289,8 +306,15 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Column 2: Language Translation */}
-                                            <div>
+                                            {/* Card 2: Language Translation */}
+                                            <div
+                                                className="translation-card"
+                                                style={{
+                                                    flex: '0 0 calc(33.333% - 0.75rem)',
+                                                    minWidth: '280px',
+                                                    scrollSnapAlign: 'start',
+                                                }}
+                                            >
                                                 <label style={{
                                                     display: 'block',
                                                     fontSize: '0.7rem',
@@ -317,8 +341,15 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                                 </div>
                                             </div>
 
-                                            {/* Column 3: Back Translation */}
-                                            <div>
+                                            {/* Card 3: Back Translation */}
+                                            <div
+                                                className="translation-card"
+                                                style={{
+                                                    flex: '0 0 calc(33.333% - 0.75rem)',
+                                                    minWidth: '280px',
+                                                    scrollSnapAlign: 'start',
+                                                }}
+                                            >
                                                 <label style={{
                                                     display: 'block',
                                                     fontSize: '0.7rem',
@@ -343,6 +374,27 @@ const QualityReport = ({ report, isOpen, onClose }) => {
                                                     {slide.back_translation || 'N/A'}
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        {/* Swipe Indicator - Only visible on mobile */}
+                                        <div
+                                            className="swipe-indicator"
+                                            style={{
+                                                display: 'none',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem',
+                                                marginTop: '0.5rem',
+                                            }}
+                                        >
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                color: 'var(--text-secondary)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                            }}>
+                                                ← Swipe to view all →
+                                            </span>
                                         </div>
 
                                         {/* Issues if any */}

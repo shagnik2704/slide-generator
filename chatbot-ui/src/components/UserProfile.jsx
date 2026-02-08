@@ -154,7 +154,8 @@ export default function UserProfile({ compact = false }) {
             ),
             left: compact ? 'auto' : 0,
             right: compact ? 0 : 'auto',
-            minWidth: compact ? '280px' : '100%',
+            width: compact ? '260px' : '100%',
+            maxWidth: compact ? 'calc(100vw - 2rem)' : 'none',
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
@@ -207,19 +208,20 @@ export default function UserProfile({ compact = false }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
                     color: 'var(--text-primary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    marginBottom: '2px',
                   }}
                 >
                   {user.name || 'User'}
                 </div>
                 <div
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.8rem',
                     color: 'var(--text-secondary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -240,13 +242,14 @@ export default function UserProfile({ compact = false }) {
               alignItems: 'center',
               gap: '0.75rem',
               width: '100%',
-              padding: '0.75rem',
+              padding: '0.75rem 1rem',
               background: 'transparent',
               border: 'none',
               color: 'var(--text-primary)',
-              fontSize: '0.875rem',
+              fontSize: '0.9rem',
               cursor: 'pointer',
               transition: 'background-color 0.2s',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--bg-tertiary)';
@@ -256,7 +259,7 @@ export default function UserProfile({ compact = false }) {
             }}
           >
             <LogOut size={18} />
-            <span>Log out</span>
+            <span style={{ fontWeight: 500 }}>Log out</span>
           </button>
         </div>
       )}

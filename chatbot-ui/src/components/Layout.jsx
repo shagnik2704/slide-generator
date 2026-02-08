@@ -53,7 +53,15 @@ const Layout = ({ mode = 'create' }) => {
 
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
+      <div style={{ display: 'flex', height: '100vh', width: '100vw', position: 'relative' }}>
+        {/* Mobile sidebar overlay - only visible on mobile when sidebar is open */}
+        {showSidebar && isSidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={toggleSidebar}
+            style={{ display: 'none' }}
+          />
+        )}
         {showSidebar && (
           mode === 'outline_chat' ? (
             <OutlineSidebar

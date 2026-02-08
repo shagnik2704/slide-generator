@@ -397,10 +397,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         overflow: 'hidden',
         marginTop: '1rem',
         position: 'relative',
-        width: 'calc(100vw - 180px)',
+        width: '100%',
         maxWidth: '1200px',
-        left: '50%',
-        transform: 'translateX(-50%)',
     };
 
     const headerStyle = {
@@ -458,7 +456,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     };
 
     return (
-        <div style={containerStyle}>
+        <div className="image-workflow-container" style={containerStyle}>
             {/* Header */}
             <div style={headerStyle}>
                 <Image size={22} style={{ color: 'var(--accent-primary)' }} />

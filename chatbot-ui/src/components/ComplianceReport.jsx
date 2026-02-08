@@ -146,7 +146,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
     };
 
     return (
-        <div style={{
+        <div className="compliance-report" style={{
             marginTop: '1rem',
             background: 'var(--bg-primary)',
             borderRadius: '12px',
@@ -155,13 +155,15 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
             border: '1px solid var(--border-color)',
         }}>
             {/* Toolbar - Exactly like WikiScriptEditor */}
-            <div style={{
+            <div className="report-toolbar" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '0.875rem 1.25rem',
                 background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
             }}>
                 <div style={{
                     display: 'flex',
@@ -285,10 +287,11 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
             </div>
 
             {/* Wiki Table */}
-            <div style={{
+            <div className="compliance-table-wrapper" style={{
                 padding: '1.25rem',
                 overflowX: 'auto',
                 background: 'var(--bg-primary, #fff)',
+                WebkitOverflowScrolling: 'touch',
             }}>
                 <table style={{
                     width: '100%',
@@ -439,6 +442,11 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                         })}
                     </tbody>
                 </table>
+
+                {/* Mobile scroll hint */}
+                <div className="table-scroll-hint">
+                    ← Scroll horizontally to see all columns →
+                </div>
 
                 {/* Help text */}
                 <div style={{
