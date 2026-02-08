@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, RefreshCw, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, ExternalLink, MessageSquareWarning, Clock, Video, ClipboardList } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, RefreshCw, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, MessageSquareWarning, Clock } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
+import HelpModal from './HelpModal';
+import FeedbackModal from './FeedbackModal';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign }) => {
     const collapsedWidth = '60px';
@@ -10,6 +12,10 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     // Dropdown state
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = useState(false);
+
+    // Modal state
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
     // Refs for hidden file inputs
     const complianceInputRef = useRef(null);
@@ -578,138 +584,91 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 flexDirection: 'column',
                 gap: '0.5rem'
             }}>
-                {/* Need Help Section */}
-                <TooltipWrapper text="Need Help?">
-                    <div style={{
-                        padding: isOpen ? '0.75rem' : '0.75rem 0.5rem',
-                        background: 'var(--bg-tertiary)',
-                        borderRadius: '0.5rem',
-                        transition: 'padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: isOpen ? '0.5rem' : '0',
-                            marginBottom: isOpen ? '0.5rem' : '0',
-                            transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}>
-                            <HelpCircle size={18} style={{ color: 'var(--accent-secondary)', flexShrink: 0 }} />
-                            <span style={{
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                                color: 'var(--text-primary)',
-                                ...textLabelStyle
-                            }}>Need Help?</span>
-                        </div>
-                        {isOpen && (
-                            <>
-                                <p style={{
-                                    fontSize: '0.7rem',
-                                    color: 'var(--text-secondary)',
-                                    lineHeight: 1.4,
-                                    margin: '0 0 0.5rem 0'
-                                }}>
-                                    Watch these videos to get started
-                                </p>
-                                <a
-                                    href="https://drive.google.com/drive/folders/1XBGWAC4QBWIIbLODmcc114haXez0ApxJ?usp=drive_link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.4rem',
-                                        fontSize: '0.75rem',
-                                        color: 'var(--accent-primary)',
-                                        textDecoration: 'none',
-                                        fontWeight: 500,
-                                        transition: 'opacity 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                >
-                                    <Video size={14} />
-                                    <span>Tutorial Videos</span>
-                                    <ExternalLink size={12} />
-                                </a>
-                            </>
-                        )}
-                    </div>
-                </TooltipWrapper>
+                {/* Help & Feedback Buttons - Stacked */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.375rem'
+                }}>
+                    {/* Need Help Button */}
+                    <TooltipWrapper text="Need Help?">
+                        <button
+                            onClick={() => setIsHelpModalOpen(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: isOpen ? 'flex-start' : 'center',
+                                gap: isOpen ? '0.75rem' : '0',
+                                padding: isOpen ? '0.625rem 1rem' : '0.625rem',
+                                background: 'var(--bg-tertiary)',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                width: '100%'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--accent-secondary)';
+                                e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <HelpCircle size={20} />
+                            <span style={textLabelStyle}>Need Help?</span>
+                        </button>
+                    </TooltipWrapper>
 
-                {/* Send Feedback Section */}
-                <TooltipWrapper text="Send Feedback">
-                    <div style={{
-                        padding: isOpen ? '0.75rem' : '0.75rem 0.5rem',
-                        background: 'var(--bg-tertiary)',
-                        borderRadius: '0.5rem',
-                        transition: 'padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: isOpen ? '0.5rem' : '0',
-                            marginBottom: isOpen ? '0.5rem' : '0',
-                            transition: 'gap 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}>
-                            <MessageSquareWarning size={18} style={{ color: 'var(--accent-secondary)', flexShrink: 0 }} />
-                            <span style={{
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                                color: 'var(--text-primary)',
-                                ...textLabelStyle
-                            }}>Send Feedback</span>
-                        </div>
-                        {isOpen && (
-                            <>
-                                <p style={{
-                                    fontSize: '0.7rem',
-                                    color: 'var(--text-secondary)',
-                                    lineHeight: 1.4,
-                                    margin: '0 0 0.5rem 0'
-                                }}>
-                                    Report issues or suggestions
-                                </p>
-                                <a
-                                    href="https://forms.gle/gZQChrYSiDn2aemr8"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.4rem',
-                                        fontSize: '0.75rem',
-                                        color: 'var(--accent-primary)',
-                                        textDecoration: 'none',
-                                        fontWeight: 500,
-                                        transition: 'opacity 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                >
-                                    <ClipboardList size={14} />
-                                    <span>Feedback Form</span>
-                                    <ExternalLink size={12} />
-                                </a>
-                            </>
-                        )}
-                    </div>
-                </TooltipWrapper>
+                    {/* Send Feedback Button */}
+                    <TooltipWrapper text="Send Feedback">
+                        <button
+                            onClick={() => setIsFeedbackModalOpen(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: isOpen ? 'flex-start' : 'center',
+                                gap: isOpen ? '0.75rem' : '0',
+                                padding: isOpen ? '0.625rem 1rem' : '0.625rem',
+                                background: 'var(--bg-tertiary)',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                width: '100%'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--accent-secondary)';
+                                e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <MessageSquareWarning size={20} />
+                            <span style={textLabelStyle}>Send Feedback</span>
+                        </button>
+                    </TooltipWrapper>
+                </div>
 
                 {/* User Profile */}
                 {isOpen && (
-                    <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ marginTop: '0.25rem' }}>
                         <UserProfile />
                     </div>
                 )}
-
-
 
                 {/* Toggle button */}
                 <TooltipWrapper text={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
@@ -719,7 +678,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                             ...iconButtonStyle,
                             justifyContent: 'center',
                             background: 'var(--bg-tertiary)',
-                            marginTop: '0.5rem'
+                            marginTop: '0.25rem'
                         }}
                     >
                         {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -727,9 +686,18 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                     </button>
                 </TooltipWrapper>
             </div>
+
+            {/* Modals */}
+            <HelpModal
+                isOpen={isHelpModalOpen}
+                onClose={() => setIsHelpModalOpen(false)}
+            />
+            <FeedbackModal
+                isOpen={isFeedbackModalOpen}
+                onClose={() => setIsFeedbackModalOpen(false)}
+            />
         </aside>
     );
 };
 
 export default Sidebar;
-
