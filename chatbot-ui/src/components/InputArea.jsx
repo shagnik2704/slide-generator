@@ -21,6 +21,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
     const isScript = uploadType === 'script';
     const isVoice = uploadType === 'voice';
     const isTimedScript = uploadType === 'timed_script';
+    const isWiki = uploadType === 'wiki';
 
     // Voice mode state - 'combined' or 'rowwise'
     const [voiceMode, setVoiceMode] = useState('combined');
@@ -30,6 +31,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
         if (isScript) return <FileJson size={24} />;
         if (isTimedScript) return <Clock size={24} />;
         if (isVoice) return <Mic size={24} />;
+        if (isWiki) return <BookOpen size={24} />;
         return <File size={24} />;
     };
 
@@ -209,6 +211,36 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                 </div>
             )}
 
+            {/* Wiki Conversion Description */}
+            {isWiki && (
+                <div style={{
+                    padding: '0.75rem 1rem',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '0.75rem',
+                    marginBottom: '1rem',
+                }}>
+                    <div style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-primary)',
+                        fontWeight: 500,
+                        marginBottom: '0.35rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                    }}>
+                        <BookOpen size={14} style={{ color: 'var(--accent-primary)' }} />
+                        MediaWiki Conversion
+                    </div>
+                    <div style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.4,
+                    }}>
+                        Converts your DOCX script to MediaWiki format. Ideal for uploading tutorials to the Spoken Tutorial Wiki.
+                    </div>
+                </div>
+            )}
+
             {/* Action buttons */}
             <div style={{
                 display: 'flex',
@@ -281,7 +313,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     }}
                 >
                     <Check size={16} />
-                    {isTimedScript ? 'Generate Timed Script' : 'Confirm Upload'}
+                    {isTimedScript ? 'Generate Timed Script' : isWiki ? 'Convert to Wiki' : 'Confirm Upload'}
                 </button>
             </div>
         </div>

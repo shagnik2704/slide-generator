@@ -24,7 +24,11 @@ import SlidesPreview from './SlidesPreview';
 import BatchResultsList from './BatchResultsList';
 import QualityReport from './QualityReport';
 import TimedScriptResults from './TimedScriptResults';
-import { ScriptUploadedActions, ScriptReviewActions } from './message-actions';
+import {
+    ScriptUploadedActions,
+    ScriptReviewActions,
+    MediaWikiExportActions
+} from './message-actions';
 
 /**
  * WorkflowCard - A lifecycle-aware component that handles tool processing states.
@@ -67,6 +71,7 @@ const WorkflowCard = ({
         batch_quality: <ListChecks size={18} />,
         script: <FileText size={18} />,
         timed_script: <Clock size={18} />,
+        mediawiki_export: <Globe size={18} />,
         default: <FileText size={18} />
     };
 
@@ -82,7 +87,8 @@ const WorkflowCard = ({
         batch_compliance: 'Batch Compliance Check',
         batch_quality: 'Batch Quality Review',
         script: 'Script Generation',
-        timed_script: 'Timed Script Generation'
+        timed_script: 'Timed Script Generation',
+        mediawiki_export: 'MediaWiki Conversion'
     };
 
     // Calculate Progress
@@ -308,6 +314,14 @@ const WorkflowCard = ({
                                 <TimedScriptResults
                                     timedScriptData={result.timedScriptData}
                                     filename={workflow.filename}
+                                />
+                            )}
+                            {tool === 'mediawiki_export' && (
+                                <MediaWikiExportActions
+                                    msg={{
+                                        ...result,
+                                        id: workflow.id
+                                    }}
                                 />
                             )}
                             {tool === 'slides_translation' && result.slidesTranslation && (

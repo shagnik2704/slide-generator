@@ -106,39 +106,89 @@ export function useUploadHandlers(setUploadMessages, setIsTyping, setCurrentProj
      * Convert a DOCX script directly to MediaWiki format.
      */
     const handleScriptToWiki = useCallback(async (file) => {
-        const uploadMessage = {
-            id: Date.now(),
-            role: 'assistant',
-            content: `Converting script to MediaWiki format: ${file.name}...`
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'mediawiki_export',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Uploading ${file.name}`, status: 'processing' },
+                { label: 'Converting to MediaWiki syntax', status: 'pending' },
+                { label: 'Wiki code generated', status: 'pending' }
+            ],
+            role: 'assistant'
         };
-        setUploadMessages(prev => [...prev, uploadMessage]);
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
         setIsTyping(true);
 
         try {
+            // Update to Step 1: Uploading complete, now converting
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Converting to MediaWiki syntax', status: 'processing' },
+                        { label: 'Wiki code generated', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
             const formData = new FormData();
             formData.append('file', file);
 
             const data = await apiFormData('/docx_to_mediawiki', formData);
 
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `✅ ${data.message}`,
-                type: 'mediawiki_export',
-                mediawikiContent: data.mediawiki_content,
-                mediawikiFileUrl: data.mediawiki_file_url,
-                slideCount: data.slide_count
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
+            // Update to Step 2: Conversion complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 2,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Converting to MediaWiki syntax', status: 'complete' },
+                        { label: 'Wiki code generated', status: 'processing' }
+                    ]
+                } : msg
+            ));
+
+            // Small delay for visual feedback
+            await new Promise(r => setTimeout(r, 600));
+
+            // Set final complete status
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Uploading ${file.name}`, status: 'complete' },
+                        { label: 'Converting to MediaWiki syntax', status: 'complete' },
+                        { label: 'Wiki code generated', status: 'complete' }
+                    ],
+                    result: {
+                        ...data,
+                        mediawikiContent: data.mediawiki_content,
+                        mediawikiFileUrl: data.mediawiki_file_url,
+                        type: 'mediawiki_export'
+                    }
+                } : msg
+            ));
 
         } catch (error) {
             console.error("Script to Wiki error:", error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: `❌ Conversion failed: ${error.message}`
-            };
-            setUploadMessages(prev => [...prev, errorMessage]);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: `Conversion failed: ${error.message}`
+                } : msg
+            ));
         } finally {
             setIsTyping(false);
         }
