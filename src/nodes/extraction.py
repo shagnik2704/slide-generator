@@ -1,13 +1,19 @@
 from src.core.state import VCAgentState
 from src.nodes.extract_links import fetch_links
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
+import asyncio
+from typing import List, Dict
 
 
-def extract(url: str) -> dict:
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, "html.parser")
+async def extract(url: str) -> dict:
+    """Asynchronously extract tutorial information from URL."""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            response.raise_for_status()
+            html = await response.text()
+    
+    soup = BeautifulSoup(html, "html.parser")
 
     extracted_data = {
         "outline_title": "",
@@ -45,22 +51,44 @@ def extract(url: str) -> dict:
     return extracted_data
 
 
-def extract_tutorials(state: VCAgentState,foss: str, language: str) -> VCAgentState:
-    url = state["legacy_raw_data"]
-    links = fetch_links(foss,language)
-    print (f"Tutorials found: {len(links)}")
-    for i,link in enumerate(links):
-        print (f"Extracting tutorial outline and information: {i+1}/{len(links)}")
-        extracted_info = extract(link)
-
-        tutorial_row = {
+async def _extract_single(semaphore: asyncio.Semaphore, index: int, total: int, link: str) -> Dict:
+    """Extract a single tutorial with semaphore control."""
+    async with semaphore:
+        print(f"Extracting tutorial outline and information: {index+1}/{total}")
+        extracted_info = await extract(link)
+        return {
             "title": extracted_info["outline_title"],
             "duation": extracted_info["duration"],
             "subtopics": extracted_info["outline_points"]
         }
 
-        state["structured_legacy"].append(tutorial_row)
+
+async def extract_tutorials_async(state: VCAgentState, foss: str, language: str, semaphore_limit: int = 3) -> VCAgentState:
+    """Extract tutorials concurrently with semaphore limit."""
+    url = state["legacy_raw_data"]
+    links = fetch_links(foss, language)
+    print(f"Tutorials found: {len(links)}")
+    
+    semaphore = asyncio.Semaphore(semaphore_limit)
+    tasks = [
+        _extract_single(semaphore, i, len(links), link)
+        for i, link in enumerate(links)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"Error during extraction: {result}")
+        else:
+            state["structured_legacy"].append(result)
+    
     return state
+
+
+def extract_tutorials(state: VCAgentState, foss: str, language: str) -> VCAgentState:
+    """Synchronous wrapper for extract_tutorials_async."""
+    return asyncio.run(extract_tutorials_async(state, foss, language))
 
 
 

@@ -10,9 +10,9 @@ def health_check():
     return {"status": "OK", "message": "Pipeline is alive."}
 
 @router.post("/generate", response_model=GenerateTutorialResponse)
-def generate_tutorial(request: GenerateTutorialRequest):
+async def generate_tutorial(request: GenerateTutorialRequest):
     try:
-        state, url = run_pipeline(
+        state, url = await run_pipeline(
             foss_name=request.foss_name,
             language=request.language,
             export=True,  # Always export for generation

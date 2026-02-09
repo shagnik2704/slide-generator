@@ -4,6 +4,8 @@ from src.core.state import VCAgentState
 import json
 
 from langchain.schema import SystemMessage, HumanMessage
+import asyncio
+from typing import Dict
 
 PROMPT1 = '''
         You are an expert instructional design agent.
@@ -97,27 +99,49 @@ SYSTEM_PROMPT = SystemMessage(
 #     state["split_result"] = response.content
 #     return state
 
-def duration_split(state: VCAgentState):
-    
-    for i,tutorial in enumerate(state['tech_updates']):
-        print (f"Splitting tutorials into smaller fragments: {i+1}/{len(state['tech_updates'])}")
-        task = f"Split the given tutorial with total duration of {state['structured_legacy'][i]['duation']} into fragments of 3-4 minutes tutorials delivering subtopics: {tutorial['updated_subtopics']}."
-        result = llm.invoke([SYSTEM_PROMPT,HumanMessage(content=task),])
-        # response = llm.invoke([
-        # SYSTEM_PROMPT,
-        # HumanMessage(content=state["text"]),
-    # ])
+async def _split_single_tutorial(semaphore: asyncio.Semaphore, index: int, total: int, tutorial: Dict, legacy_duration: str) -> Dict:
+    """Split a single tutorial with semaphore control."""
+    async with semaphore:
+        print(f"Splitting tutorials into smaller fragments: {index+1}/{total}")
+        task = f"Split the given tutorial with total duration of {legacy_duration} into fragments of 3-4 minutes tutorials delivering subtopics: {tutorial['updated_subtopics']}."
         
-        # raw_content = (search_result['messages'][-1].content[-1]['text'])     # use when using gemini
-        # raw_content = (result['messages'][-1].content)                   # use when using openRouter
+        # Run LLM invoke in executor since it's synchronous
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, lambda: llm.invoke([SYSTEM_PROMPT, HumanMessage(content=task)]))
+        
         raw_content = result.content
         if "```json" in raw_content:
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()
-            
+        
         parsed = json.loads(raw_content)
-        
-        tutorial['updated_subtopics'] = parsed
-        
+        return (index, parsed)
+
+
+async def duration_split_async(state: VCAgentState, semaphore_limit: int = 3) -> VCAgentState:
+    """Split tutorials concurrently with semaphore limit."""
+    tech_updates = state['tech_updates']
+    structured_legacy = state['structured_legacy']
+    
+    semaphore = asyncio.Semaphore(semaphore_limit)
+    tasks = [
+        _split_single_tutorial(semaphore, i, len(tech_updates), tutorial, structured_legacy[i]['duation'])
+        for i, tutorial in enumerate(tech_updates)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"Error during split: {result}")
+        else:
+            index, parsed = result
+            state['tech_updates'][index]['updated_subtopics'] = parsed
+    
     return state
+
+
+def duration_split(state: VCAgentState) -> VCAgentState:
+    """Synchronous wrapper for duration_split_async."""
+    return asyncio.run(duration_split_async(state))
     
     

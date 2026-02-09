@@ -2,6 +2,8 @@ from src.core.state import VCAgentState
 from src.utils.VC_utils import llm, search_tool
 import json
 from langchain.schema import SystemMessage, HumanMessage
+import asyncio
+from typing import Dict, List
 
 SYSTEM_PROMPT = SystemMessage(
     content=(
@@ -66,49 +68,69 @@ def chunk_text(text, max_len=250):
     chunks.append(current.strip(","))
     return chunks
 
-def tech_intelligence_agent(state: VCAgentState):
-#     # This agent would ideally use a search tool. 
-#     # Here, it provides a mapping for Linux 24.04 features.
-
-    for i,tutorial in enumerate(state['structured_legacy']):
-        print(f"Updating tutorials and its contents to latest version: {i+1}/{len(state['structured_legacy'])}")
+async def _update_single_tutorial(semaphore: asyncio.Semaphore, index: int, total: int, tutorial: Dict) -> Dict:
+    """Update a single tutorial with semaphore control."""
+    async with semaphore:
+        print(f"Updating tutorials and its contents to latest version: {index+1}/{total}")
         chunks = chunk_text(tutorial['subtopics'])
 
-        search_results = []
-        for chunk in chunks:
+        # Parallelize search operations within this tutorial
+        async def search_chunk(chunk):
             query = f"""
             Find latest stable version of {tutorial['title']} and version updates corresponding to the subtopics: {chunk}.
             """
-            search_results.append(search_tool(query))
+            # Run search_tool in executor since it's synchronous
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(None, search_tool, query)
+        
+        # Execute all chunk searches concurrently
+        search_results = await asyncio.gather(*[search_chunk(chunk) for chunk in chunks])
+        
         task = f'''
         Here are the search results from the search tool:{search_results}.
         Update the tutorial title and the subtopics taking resferrnce to the search results.
         Maintain logs and return JSON in required format.
         '''
-        result = llm.invoke([
+        
+        # Run LLM invoke in executor since it's synchronous
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, lambda: llm.invoke([
             SYSTEM_PROMPT,
             HumanMessage(content=task),
-        ])
-        # print (search_result)
-        # raw_content = (search_result['messages'][-1].content[-1]['text'])     # use when using gemini
-        # raw_content = (search_result['messages'][-1].content)                   # use when using openRouter
+        ]))
+        
         raw_content = result.content
         if "```json" in raw_content:
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()
-            
+        
         parsed = json.loads(raw_content)
-        # Parse the search result to extract updates
-        # Here we simulate the extraction process
-        
-        # parsed = json.loads(search_result["messages"][-1].content) #[-1]["text"])
-        
-        # updates = {
-        #     "updated_title": f"{parsed['updated_title']}(Updated)" if parsed['updated_title'] else tutorial['title'],
-        #     "updated_subtopics": (parsed["updated_subtopics"] if parsed['updated_subtopics'] else tutorial['subtopics'])
-        # }
-        state['tech_updates'].append(parsed)
-   
+        return parsed
+
+
+async def tech_intelligence_agent_async(state: VCAgentState, semaphore_limit: int = 3) -> VCAgentState:
+    """Update tutorials concurrently with semaphore limit."""
+    tutorials = state['structured_legacy']
+    
+    semaphore = asyncio.Semaphore(semaphore_limit)
+    tasks = [
+        _update_single_tutorial(semaphore, i, len(tutorials), tutorial)
+        for i, tutorial in enumerate(tutorials)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"Error during update: {result}")
+        else:
+            state['tech_updates'].append(result)
+    
     return state
+
+
+def tech_intelligence_agent(state: VCAgentState) -> VCAgentState:
+    """Synchronous wrapper for tech_intelligence_agent_async."""
+    return asyncio.run(tech_intelligence_agent_async(state))
     # return state['tech_updates']
     
     # return search_result
