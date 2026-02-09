@@ -6,6 +6,13 @@ load_dotenv()
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 
+# Semaphore configuration for concurrent operations
+SEMAPHORE_CONFIG = {
+    "extraction": 8,    # HTTP is cheap, concurrent parsing is safe
+    "update": 3,        # LLM + search_tool is expensive and rate-limited
+    "split": 4          # Pure LLM, moderate usage
+}
+
 # Lazy-loaded instances to prevent import-time failures
 _llm_openrouter = None
 _llm_openai = None

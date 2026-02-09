@@ -1,5 +1,6 @@
 from src.core.state import VCAgentState
 from src.nodes.extract_links import fetch_links
+from src.utils.VC_utils import SEMAPHORE_CONFIG
 import aiohttp
 from bs4 import BeautifulSoup
 import asyncio
@@ -63,11 +64,15 @@ async def _extract_single(semaphore: asyncio.Semaphore, index: int, total: int, 
         }
 
 
-async def extract_tutorials_async(state: VCAgentState, foss: str, language: str, semaphore_limit: int = 3) -> VCAgentState:
+async def extract_tutorials_async(state: VCAgentState, foss: str, language: str, semaphore_limit: int = None) -> VCAgentState:
     """Extract tutorials concurrently with semaphore limit."""
+    if semaphore_limit is None:
+        semaphore_limit = SEMAPHORE_CONFIG["extraction"]
+    
     url = state["legacy_raw_data"]
     links = fetch_links(foss, language)
     print(f"Tutorials found: {len(links)}")
+    print(f"Using extraction semaphore limit: {semaphore_limit}")
     
     semaphore = asyncio.Semaphore(semaphore_limit)
     tasks = [

@@ -1,4 +1,4 @@
-from src.utils.VC_utils import llm
+from src.utils.VC_utils import llm, SEMAPHORE_CONFIG
 from langchain.schema import SystemMessage
 from src.core.state import VCAgentState
 import json
@@ -117,10 +117,14 @@ async def _split_single_tutorial(semaphore: asyncio.Semaphore, index: int, total
         return (index, parsed)
 
 
-async def duration_split_async(state: VCAgentState, semaphore_limit: int = 3) -> VCAgentState:
+async def duration_split_async(state: VCAgentState, semaphore_limit: int = None) -> VCAgentState:
     """Split tutorials concurrently with semaphore limit."""
+    if semaphore_limit is None:
+        semaphore_limit = SEMAPHORE_CONFIG["split"]
+    
     tech_updates = state['tech_updates']
     structured_legacy = state['structured_legacy']
+    print(f"Splitting {len(tech_updates)} tutorials with semaphore limit: {semaphore_limit}")
     
     semaphore = asyncio.Semaphore(semaphore_limit)
     tasks = [

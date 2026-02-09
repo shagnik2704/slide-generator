@@ -14,8 +14,13 @@ def _log(data, filename):
         json.dump(data, f, indent=4)
 
 
-async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emails: list, reciept_role: str, semaphore_limit: int = 3):
-    """Run the redesign pipeline with concurrent processing.
+async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emails: list, reciept_role: str):
+    """Run the redesign pipeline with optimized concurrent processing.
+    
+    Uses stage-specific semaphore limits from SEMAPHORE_CONFIG:
+    - Extraction: 8 concurrent operations (I/O bound)
+    - Update: 2 concurrent operations (LLM rate-limited)
+    - Split: 4 concurrent operations (Moderate LLM usage)
     
     Args:
         foss_name: Name of the FOSS software
@@ -23,7 +28,6 @@ async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emai
         export: Whether to export to Google Sheets
         reciept_emails: Email addresses for sharing
         reciept_role: Role for recipients
-        semaphore_limit: Concurrency limit for extraction, update, and split (default: 3)
         
     Returns:
         Tuple of (state, export_url)
@@ -37,8 +41,8 @@ async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emai
         "final_table": []
     }
 
-    # Extract tutorials concurrently (up to 3 at a time)
-    state = await extract_tutorials_async(state, foss_name, language, semaphore_limit)
+    # Extract tutorials concurrently (up to 8 at a time - I/O bound)
+    state = await extract_tutorials_async(state, foss_name, language)
     
     # Check if any tutorials were found
     tutorials_found = len(state.get("structured_legacy", []))
@@ -50,12 +54,12 @@ async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emai
     
     # _log(state, "extraction_output.json")
 
-    # Update tutorials concurrently (up to 3 at a time)
-    state = await tech_intelligence_agent_async(state, semaphore_limit)
+    # Update tutorials concurrently (up to 2 at a time - rate-limited)
+    state = await tech_intelligence_agent_async(state)
     # _log(state, "updation_output.json")
 
-    # Split tutorials concurrently (up to 3 at a time)
-    state = await duration_split_async(state, semaphore_limit)
+    # Split tutorials concurrently (up to 4 at a time - moderate LLM)
+    state = await duration_split_async(state)
     # _log(state, "split_output.json")
 
     # Form final table (sequential operation)

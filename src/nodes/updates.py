@@ -1,5 +1,5 @@
 from src.core.state import VCAgentState
-from src.utils.VC_utils import llm, search_tool
+from src.utils.VC_utils import llm, search_tool, SEMAPHORE_CONFIG
 import json
 from langchain.schema import SystemMessage, HumanMessage
 import asyncio
@@ -107,9 +107,13 @@ async def _update_single_tutorial(semaphore: asyncio.Semaphore, index: int, tota
         return parsed
 
 
-async def tech_intelligence_agent_async(state: VCAgentState, semaphore_limit: int = 3) -> VCAgentState:
+async def tech_intelligence_agent_async(state: VCAgentState, semaphore_limit: int = None) -> VCAgentState:
     """Update tutorials concurrently with semaphore limit."""
+    if semaphore_limit is None:
+        semaphore_limit = SEMAPHORE_CONFIG["update"]
+    
     tutorials = state['structured_legacy']
+    print(f"Updating {len(tutorials)} tutorials with semaphore limit: {semaphore_limit}")
     
     semaphore = asyncio.Semaphore(semaphore_limit)
     tasks = [
