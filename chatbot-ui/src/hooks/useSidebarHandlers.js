@@ -566,7 +566,7 @@ export function useSidebarHandlers(
      * Parses all files, sends to /batch_check_quality, displays results.
      * @param {File[]} files - Array of files to check
      */
-    const handleSidebarBatchQualityUpload = useCallback(async (files) => {
+    const handleSidebarBatchQualityUpload = useCallback(async (files, languageCode = 'hi') => {
         const workflowId = Date.now();
         const initialWorkflow = {
             id: workflowId,
