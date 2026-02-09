@@ -250,12 +250,13 @@ export default function TranslationResults({ results }) {
                     style={resultCardStyle(result.success)}
                 >
                     {/* Result Header */}
-                    <div style={{
+                    <div className="translation-result-header" style={{
                         padding: '1rem 1.25rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '1rem',
+                        flexWrap: 'wrap',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <div>
@@ -272,7 +273,7 @@ export default function TranslationResults({ results }) {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div className="translation-result-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                             {/* Status badge - only show for failed */}
                             {!result.success && (
                                 <span style={statusBadgeStyle(false)}>

@@ -6,11 +6,20 @@ import { Download, Copy, Check } from 'lucide-react';
  */
 export default function MediaWikiExportActions({
     msg,
-    copiedId,
-    setCopiedId,
+    copiedId: propsCopiedId,
+    setCopiedId: propsSetCopiedId,
 }) {
+    // Fallback state if not provided as props (e.g. when used in WorkflowCard)
+    const [localCopiedId, setLocalCopiedId] = React.useState(null);
+    const copiedId = propsCopiedId !== undefined ? propsCopiedId : localCopiedId;
+    const setCopiedId = propsSetCopiedId || setLocalCopiedId;
+
+    // Support both snake_case and camelCase from backend
+    const content = msg.mediawikiContent || msg.mediawiki_content;
+    const downloadUrl = msg.mediawikiFileUrl || msg.mediawiki_file_url;
+
     return (
-        <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem' }}>
+        <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
             {/* MediaWiki content preview */}
             <div style={{
                 background: 'var(--bg-tertiary)',
@@ -29,7 +38,7 @@ export default function MediaWikiExportActions({
                     wordBreak: 'break-word',
                     color: 'var(--text-primary)'
                 }}>
-                    {msg.mediawikiContent}
+                    {content || 'No wiki content generated.'}
                 </pre>
             </div>
 
@@ -37,7 +46,7 @@ export default function MediaWikiExportActions({
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
                     onClick={() => {
-                        navigator.clipboard.writeText(msg.mediawikiContent);
+                        navigator.clipboard.writeText(content);
                         setCopiedId(msg.id);
                         setTimeout(() => setCopiedId(null), 2000);
                     }}
@@ -72,7 +81,7 @@ export default function MediaWikiExportActions({
 
                 <button
                     onClick={() => {
-                        const blob = new Blob([msg.mediawikiContent], { type: 'text/plain' });
+                        const blob = new Blob([content], { type: 'text/plain' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;

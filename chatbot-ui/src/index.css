@@ -264,3 +264,625 @@ body {
 .message-bubble-container .markdown-content em {
   font-style: italic;
 }
+
+/* ======================================
+   BUTTON HOVER EFFECTS (Desktop only)
+   ====================================== */
+
+/* Hamburger menu button hover - desktop only */
+@media (hover: hover) and (pointer: fine) {
+  .hamburger-btn:hover {
+    background: var(--accent-primary) !important;
+    color: white !important;
+    transform: scale(1.1);
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+/* ======================================
+   MOBILE RESPONSIVE STYLES
+   ====================================== */
+
+/* Tablet breakpoint (768px and below) */
+@media screen and (max-width: 768px) {
+
+  /* Header adjustments */
+  .header-nav-buttons {
+    display: none !important;
+  }
+
+  .header-title-full {
+    display: none !important;
+  }
+
+  .header-title-short {
+    display: flex !important;
+  }
+
+  /* Header container mobile fixes */
+  .chat-header {
+    padding: 0.75rem 1rem !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100 !important;
+    overflow: visible !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  /* Left side of header - allow shrinking */
+  .chat-header>div:first-child {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Truncate long title text */
+  .chat-header>div:first-child a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Ensure the right side of header stays visible */
+  .header-right,
+  .chat-header>div:last-child {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  /* Force header buttons to be perfectly round, not oval */
+  .hamburger-btn,
+  .chat-header button:not(.clear-session-btn) {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    flex-shrink: 0 !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  /* Clear Session button - make it a round icon button on mobile */
+  .clear-session-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Hide Clear Session text on mobile, show only icon */
+  .clear-session-btn span {
+    display: none !important;
+  }
+
+  /* Sidebar - slide over on tablet */
+  .sidebar-container {
+    position: fixed !important;
+    left: 0;
+    top: 60px !important;
+    /* Start below the header */
+    bottom: 0;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto !important;
+    max-height: calc(100vh - 60px) !important;
+  }
+
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block !important;
+    position: fixed;
+    top: 60px !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 80;
+  }
+
+  /* Welcome screen */
+  .welcome-heading {
+    font-size: 1.5rem !important;
+    padding: 0 1rem;
+  }
+
+  /* Action pills - stack on tablet */
+  .action-pills-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .action-pill {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Mobile breakpoint (480px and below) */
+@media screen and (max-width: 480px) {
+
+  /* Root adjustments */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Header - more compact */
+  header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .header-logo-img {
+    height: 28px !important;
+  }
+
+  .header-menu-button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* Hide sidebar completely on mobile by default */
+  .sidebar-container {
+    width: 260px !important;
+  }
+
+  /* Welcome screen adjustments */
+  .welcome-container {
+    padding: 1rem !important;
+  }
+
+  .welcome-heading {
+    font-size: 1.25rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .welcome-input-box {
+    padding: 0.75rem 1rem !important;
+    border-radius: 1rem !important;
+  }
+
+  .welcome-disclaimer {
+    font-size: 0.8rem !important;
+  }
+
+  /* Messages area - adjust padding for mobile */
+  .messages-area {
+    padding: 5rem 0.75rem 0.75rem 0.75rem !important;
+  }
+
+  /* Action pills - full width */
+  .action-pill {
+    padding: 0.6rem 1.2rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* File preview card adjustments */
+  .file-preview-card {
+    padding: 1rem !important;
+    margin: 0 0.5rem;
+    max-width: calc(100vw - 1rem) !important;
+  }
+
+  /* Modal adjustments */
+  .modal-content {
+    margin: 0.5rem !important;
+    max-height: calc(100vh - 1rem) !important;
+    width: calc(100% - 1rem) !important;
+  }
+
+  /* Input area adjustments */
+  .input-area textarea {
+    min-height: 60px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .input-send-button {
+    padding: 0.7rem 0.9rem !important;
+  }
+
+  /* Outline card adjustments */
+  .outline-card {
+    padding: 1rem !important;
+  }
+
+  /* Workflow card adjustments */
+  .workflow-card {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Extra small screens (320px) */
+@media screen and (max-width: 320px) {
+  .welcome-heading {
+    font-size: 1.1rem !important;
+  }
+
+  .action-pill {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  header {
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+/* Utility classes for responsive behavior */
+.hide-on-mobile {
+  display: flex;
+}
+
+.show-on-mobile {
+  display: none !important;
+}
+
+@media screen and (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .show-on-mobile {
+    display: flex !important;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Increase touch targets */
+  button {
+    min-height: 44px;
+  }
+
+  .action-pill,
+  .btn-primary,
+  .btn-icon {
+    min-height: 44px;
+  }
+
+  /* Remove hover effects that don't work on touch */
+  button:hover {
+    transform: none !important;
+  }
+}
+
+/* Translation Carousel Styles */
+.translation-carousel {
+  /* Hide scrollbar on webkit browsers for cleaner look */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.translation-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile carousel adjustments */
+@media screen and (max-width: 768px) {
+  .translation-carousel {
+    /* Make it obvious it's scrollable */
+    padding: 0 0.5rem 1rem 0.5rem !important;
+    margin: 0 -0.5rem;
+  }
+
+  .translation-card {
+    /* Each card takes almost full width on mobile for swipe */
+    flex: 0 0 85% !important;
+    min-width: unset !important;
+  }
+
+  .swipe-indicator {
+    display: flex !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .translation-card {
+    /* Even larger on very small screens */
+    flex: 0 0 90% !important;
+  }
+}
+
+/* ======================================
+   WORKFLOW COMPONENTS RESPONSIVE STYLES
+   ====================================== */
+
+/* Workflow Card Adjustments */
+@media screen and (max-width: 768px) {
+
+  /* Workflow header - wrap on mobile */
+  .workflow-header {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .workflow-header>div:first-child {
+    flex-wrap: wrap;
+  }
+
+  /* Compliance/Quality Report Container */
+  .compliance-report,
+  .quality-report {
+    margin: 0.5rem 0 !important;
+  }
+
+  /* Report toolbar - stack actions */
+  .report-toolbar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .report-toolbar>div:first-child {
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  .report-toolbar>div:last-child {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Table scroll container - make tables horizontally scrollable */
+@media screen and (max-width: 768px) {
+
+  /* Add scroll hint gradient to scrollable tables */
+  .table-scroll-container {
+    position: relative;
+  }
+
+  .table-scroll-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, var(--bg-primary), transparent);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .table-scroll-container.scrolled-right::after {
+    opacity: 0;
+  }
+
+  /* Compliance table specific */
+  .compliance-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem 0.5rem 0.5rem;
+    position: relative;
+  }
+
+  /* Add right-side gradient overlay hint */
+  .compliance-table-wrapper::after {
+    content: '→';
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    font-size: 1.25rem;
+    color: var(--accent-primary);
+    opacity: 0.7;
+    animation: scrollHintPulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scrollHintPulse {
+
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    50% {
+      opacity: 0.9;
+      transform: translateY(-50%) translateX(3px);
+    }
+  }
+
+  .compliance-table-wrapper table {
+    min-width: 600px !important;
+    font-size: 12px !important;
+  }
+
+  .compliance-table-wrapper th,
+  .compliance-table-wrapper td {
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  /* Make criteria column narrower on mobile */
+  .compliance-table-wrapper th:nth-child(2),
+  .compliance-table-wrapper td:nth-child(2) {
+    min-width: 180px;
+    max-width: 200px;
+  }
+
+  /* Make AI Notes column more compact */
+  .compliance-table-wrapper th:nth-child(4),
+  .compliance-table-wrapper td:nth-child(4) {
+    min-width: 120px;
+  }
+
+  /* Scroll hint text for tables */
+  .table-scroll-hint {
+    display: flex !important;
+    justify-content: center;
+    padding: 0.625rem;
+    font-size: 0.8rem;
+    color: var(--accent-primary);
+    background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary));
+    border-radius: 0 0 8px 8px;
+    margin-top: 0;
+    border-top: 1px solid var(--border-color);
+    font-weight: 500;
+  }
+}
+
+/* Hide scroll hint on desktop - must use lower specificity than mobile rule */
+@media screen and (min-width: 769px) {
+  .table-scroll-hint {
+    display: none !important;
+  }
+}
+
+/* Quality Report mobile adjustments */
+@media screen and (max-width: 768px) {
+  .quality-report-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .quality-report-stats {
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  /* Slide header in quality report */
+  .slide-header {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .slide-header>div:first-child {
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Batch Results adjustments */
+@media screen and (max-width: 768px) {
+  .batch-results-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .batch-result-card {
+    padding: 0.875rem !important;
+  }
+}
+
+/* Voice Preview adjustments */
+@media screen and (max-width: 768px) {
+  .voice-preview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .voice-slide-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .voice-slide-card audio {
+    width: 100% !important;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Image Workflow adjustments */
+@media screen and (max-width: 768px) {
+  .image-workflow-container {
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .image-workflow-container>div:first-child {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Make the table scrollable horizontally */
+  .image-workflow-container table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .image-workflow-container th,
+  .image-workflow-container td {
+    min-width: 100px;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .image-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .image-workflow-container th,
+  .image-workflow-container td {
+    min-width: 80px;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Slides Preview adjustments */
+@media screen and (max-width: 768px) {
+  .slides-preview-container {
+    padding: 1rem !important;
+  }
+
+  .slides-download-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Translation Results adjustments */
+@media screen and (max-width: 768px) {
+  .translation-result-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .translation-result-actions {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .translation-result-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}
