@@ -8,7 +8,7 @@ import time
 import traceback
 
 from src.api.auth import get_current_user, TokenData
-from src.api.models import GenerateScriptRequest, GenerateSlidesRequest, GenerateVideoRequest, ExportMediaWikiRequest, DownloadScriptDocxRequest
+from src.api.models import GenerateScriptRequest, GenerateVideoRequest, ExportMediaWikiRequest, DownloadScriptDocxRequest
 from src.services.mediawiki_service import export_to_mediawiki
 from src.services.docx_service import export_script_docx, docx_to_json
 
@@ -64,37 +64,8 @@ async def generate_script(request: GenerateScriptRequest, req: Request, current_
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/generate_slides")
-async def generate_slides(request: GenerateSlidesRequest, req: Request, current_user: TokenData = Depends(get_current_user)):
-    """Generates PDF slides from the approved JSON script."""
-    print(f"Received request to generate slides")
 
-    initial_state = {
-        "json_script": request.json_script, 
-        "mode": "slides_only"
-    }
-    
-    try:
-        # Use graph from app.state
-        graph = req.app.state.graph
-        result = await graph.ainvoke(initial_state)
-        
-        pdf_path = result.get("pdf_path")
-        if pdf_path and os.path.exists(pdf_path):
-            print(f"✅ Generated slides PDF")
-            
-            return JSONResponse({
-                "slides_pdf_url": f"/static/{os.path.basename(pdf_path)}",
-                "pdf_path": pdf_path,
-                "json_script": request.json_script
-            })
-        else:
-            raise HTTPException(status_code=500, detail="Failed to generate PDF slides")
-            
-    except Exception as e:
-        traceback.print_exc()
-        print(f"ERROR in generate_slides: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/generate_video")

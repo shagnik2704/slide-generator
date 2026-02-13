@@ -27,10 +27,6 @@ class GenerateVideoRequest(BaseModel):
     pdf_path: Optional[str] = None
 
 
-class GenerateSlidesRequest(BaseModel):
-    json_script: dict
-
-
 class ExportMediaWikiRequest(BaseModel):
     json_script: dict
 

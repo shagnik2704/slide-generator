@@ -85,6 +85,11 @@ app.mount("/output", StaticFiles(directory=str(output_dir), check_dir=False), na
 # Import routers after app is created (they will use app.state.graph)
 from src.api.routes import (
     upload_router,
+    compliance_router,
+    quality_router,
+    voice_router,
+    images_router,
+    slides_router,
     generation_router,
     download_router,
     outline_chat_router,
@@ -98,6 +103,11 @@ from src.api.routes.auth import router as auth_router
 # Include routers
 app.include_router(auth_router)
 app.include_router(upload_router)
+app.include_router(compliance_router)
+app.include_router(quality_router)
+app.include_router(voice_router)
+app.include_router(images_router)
+app.include_router(slides_router)
 app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
