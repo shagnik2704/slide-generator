@@ -2,10 +2,11 @@ import os
 import json
 import pandas as pd
 import gspread
-from google.auth import default
+# from google.auth import default
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from src.core.state import VCAgentState
-from src.utils.VC_utils import template_id
+from src.utils.VC_utils import template_id, google_cred_file
 
 #------------------------WORKLOAD IDENTITY FEDERATION AUTH-----
 
@@ -33,7 +34,10 @@ def _get_wif_credentials():
     """
     global _creds
     if _creds is None:
-        _creds, _ = default(scopes=SCOPES)
+        _creds = service_account.Credentials.from_service_account_file(
+            google_cred_file,
+            scopes=SCOPES
+        )
     return _creds
 
 

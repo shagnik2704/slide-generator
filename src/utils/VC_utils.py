@@ -1,3 +1,4 @@
+from turtle import home
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tavily import TavilyClient
 import os
@@ -100,3 +101,4 @@ def search_tool(query: str):
 
 template_url = "https://docs.google.com/spreadsheets/d/1H6Pzc3h5j8VfO7IBLvNXX8Qo6UpZHo4PnIhWggeIPMM/edit?usp=sharing"
 template_id = template_url.split('/')[5]
+google_cred_file = "/home/shagnik2704/.gcp/version-change-automation-abc4823f94ae.json"
