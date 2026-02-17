@@ -25,7 +25,7 @@ def get_llm_openrouter():
     global _llm_openrouter
     if _llm_openrouter is None:
         _llm_openrouter = ChatOpenAI(
-            model="xiaomi/mimo-v2-flash:free",
+            model="arcee-ai/trinity-large-preview:free",
             api_key=os.getenv("OPENROUTER_API_KEY"),
             base_url="https://openrouter.ai/api/v1",
         )
@@ -37,7 +37,7 @@ def get_llm_openai():
     global _llm_openai
     if _llm_openai is None:
         _llm_openai = ChatOpenAI(
-            model="gpt-5.2",
+            model="gpt-4o-mini-2024-07-18",
             api_key=os.getenv("OPENAI_API_KEY")
         )
     return _llm_openai
@@ -49,7 +49,7 @@ def get_llm_gemini():
     if _llm_gemini is None:
         _llm_gemini = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash", 
-            google_api_key=os.getenv("GEMINI_KEY")  # Fixed: use google_api_key
+            google_api_key=os.getenv("GOOGLE_API_KEY")  # Fixed: use google_api_key
         )
     return _llm_gemini
 
