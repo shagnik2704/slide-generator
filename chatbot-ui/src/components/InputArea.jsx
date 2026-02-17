@@ -671,7 +671,7 @@ const InputArea = ({
                             uploadType={stagedFile.type}
                             onConfirm={handleConfirmUpload}
                             onCancel={handleCancelUpload}
-                            disabled={disabled}
+                            disabled={false}
                         />
                     </div>
                 )}
