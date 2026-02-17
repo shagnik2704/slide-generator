@@ -788,12 +788,22 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     ) : row.isEditing ? (
                                         <textarea
                                             autoFocus
+                                            ref={(el) => {
+                                                if (el) {
+                                                    el.style.height = 'auto';
+                                                    el.style.height = el.scrollHeight + 'px';
+                                                }
+                                            }}
                                             value={row.enhancedPrompt}
                                             onChange={(e) => setSentenceRows(prev => prev.map(s =>
                                                 s.rowNumber === row.rowNumber && s.sentenceIndex === row.sentenceIndex
                                                     ? { ...s, enhancedPrompt: e.target.value }
                                                     : s
                                             ))}
+                                            onInput={(e) => {
+                                                e.target.style.height = 'auto';
+                                                e.target.style.height = e.target.scrollHeight + 'px';
+                                            }}
                                             onBlur={() => saveEdit(row.rowNumber, row.sentenceIndex, row.enhancedPrompt)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Escape') cancelEdit(row.rowNumber, row.sentenceIndex);
@@ -814,7 +824,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                                 fontSize: '0.85rem',
                                                 lineHeight: '1.5',
                                                 fontFamily: 'inherit',
-                                                outline: 'none'
+                                                outline: 'none',
+                                                overflow: 'hidden',
                                             }}
                                         />
                                     ) : (
