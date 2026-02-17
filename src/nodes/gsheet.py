@@ -8,9 +8,6 @@ from src.core.state import VCAgentState
 from src.utils.VC_utils import template_id
 
 
-print("ENV VAR:", os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
-
-
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
