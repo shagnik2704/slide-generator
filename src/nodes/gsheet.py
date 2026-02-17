@@ -2,13 +2,14 @@ import os
 import json
 import pandas as pd
 import gspread
-# from google.auth import default
-from google.oauth2 import service_account
+from google.auth import default
 from googleapiclient.discovery import build
 from src.core.state import VCAgentState
-from src.utils.VC_utils import template_id, google_cred_file
+from src.utils.VC_utils import template_id
 
-#------------------------WORKLOAD IDENTITY FEDERATION AUTH-----
+
+print("ENV VAR:", os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
+
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -34,10 +35,7 @@ def _get_wif_credentials():
     """
     global _creds
     if _creds is None:
-        _creds = service_account.Credentials.from_service_account_file(
-            google_cred_file,
-            scopes=SCOPES
-        )
+        _creds, _ = default(scopes=SCOPES)
     return _creds
 
 
