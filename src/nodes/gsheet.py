@@ -114,7 +114,9 @@ def export_to_sheets(state: VCAgentState,
                 "role": user_role,
                 "emailAddress": email
             },
-            sendNotificationEmail=True).execute()
+            sendNotificationEmail=True,
+            supportsAllDrives=True
+            ).execute()
         
         print (f"Sheet delivered to {email}")
     
@@ -136,7 +138,8 @@ def share_sheet(sheet_url: str, recipients: list[dict]):
                 "role": role,
                 "emailAddress": email
             },
-            sendNotificationEmail=True).execute()
+            sendNotificationEmail=True,
+            supportsAllDrives=True).execute()
         
         print(f"Sheet shared to {email} as {role}")
     
