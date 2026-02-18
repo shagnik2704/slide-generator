@@ -2,16 +2,23 @@ import os
 import json
 import pandas as pd
 import gspread
-from google.auth import default
+# from google.auth import default
 from googleapiclient.discovery import build
 from src.core.state import VCAgentState
-from src.utils.VC_utils import template_id
+from src.utils.VC_utils import template_id, shared_drive_folder_id
 
+from dotenv import load_dotenv
+load_dotenv()
+
+from google.oauth2 import service_account
+
+CRED_FILE_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
+
 
 # Lazy-loaded credentials and clients
 _creds = None
@@ -32,7 +39,9 @@ def _get_wif_credentials():
     """
     global _creds
     if _creds is None:
-        _creds, _ = default(scopes=SCOPES)
+        _creds = service_account.Credentials.from_service_account_file(
+            CRED_FILE_PATH,
+            scopes=SCOPES)
     return _creds
 
 
@@ -65,10 +74,24 @@ def export_to_sheets(state: VCAgentState,
     drive_service = _get_drive_service()
     
     generated_sheet_name = f"VC-{foss_name}_{language}"
-    print(f"Copying template to {generated_sheet_name}...")
+    print(f"Copying template to {generated_sheet_name} in Shared Drive...")
 
-    new_sheet = client.copy(template_id, title=generated_sheet_name)
+    # new_sheet = client.copy(template_id, title=generated_sheet_name)
 
+    # worksheet = new_sheet.sheet1
+    copied_file = drive_service.files().copy(
+    fileId=template_id,
+    body={
+        "name": generated_sheet_name,
+        "parents": [shared_drive_folder_id]  # must specify
+    },
+    supportsAllDrives=True
+    ).execute()
+
+    new_sheet_id = copied_file["id"]
+
+    # Now open with gspread
+    new_sheet = client.open_by_key(new_sheet_id)
     worksheet = new_sheet.sheet1
 
     worksheet.batch_clear(["A4:Z1000"])

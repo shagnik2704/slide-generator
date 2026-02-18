@@ -100,3 +100,6 @@ def search_tool(query: str):
 
 template_url = "https://docs.google.com/spreadsheets/d/1H6Pzc3h5j8VfO7IBLvNXX8Qo6UpZHo4PnIhWggeIPMM/edit?usp=sharing"
 template_id = template_url.split('/')[5]
+
+shared_drive_folder_id = "https://drive.google.com/drive/folders/1wR89YMtzfWpL_eGZj0on6DL9yWWYw79s?usp=drive_link"
+shared_drive_folder_id = shared_drive_folder_id.split('/')[5].split('?')[0]
