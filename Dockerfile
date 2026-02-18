@@ -15,6 +15,11 @@ RUN uv sync --frozen --no-cache && rm -rf ~/.cache/uv ~/.cache/pip
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+# 🔥 Copy Google credential file into container
+COPY version-change-automation-abc4823f94ae.json /app/credentials.json
+
+# 🔥 Set environment variable INSIDE container
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json"
 
 RUN python -c "import whisper; whisper.load_model('base')"
 
