@@ -859,6 +859,20 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                         onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
                                         onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
                                         mode={mode}
+                                        onShareComplete={(recipients) => {
+                                            console.log('Share complete callback received with:', recipients);
+                                            const shareMessage = {
+                                                id: Date.now() + 2,
+                                                role: 'assistant',
+                                                content: recipients.map(r => `✅ Sheet shared to ${r.email} as ${r.role}`).join('\n')
+                                            };
+                                            console.log('Adding share message:', shareMessage);
+                                            setUploadMessages(prev => {
+                                                const updated = [...prev, shareMessage];
+                                                console.log('Updated messages:', updated);
+                                                return updated;
+                                            });
+                                        }}
                                     />
                                 )}
 

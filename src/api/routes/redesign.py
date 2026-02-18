@@ -22,7 +22,16 @@ async def generate_tutorial(request: GenerateTutorialRequest):
 
         return {
             "status": "Success",
-            "url": url
+            "preview_button": {
+                "label": "Preview",
+                "action": "open_url",
+                "url": url
+            },
+            "sharing_option": {
+                "label": "Share",
+                "action": "share",
+                "available": True
+            }
         }
 
     except ValueError as e:

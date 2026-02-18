@@ -59,9 +59,22 @@ class TutorialResponse(BaseModel):
     response: dict
 
 
+class PreviewButton(BaseModel):
+    label: str
+    action: str
+    url: str
+
+
+class SharingOption(BaseModel):
+    label: str
+    action: str
+    available: bool
+
+
 class GenerateTutorialResponse(BaseModel):
     status: str
-    url: str
+    preview_button: PreviewButton
+    sharing_option: SharingOption
 
 
 class ShareTutorialResponse(BaseModel):

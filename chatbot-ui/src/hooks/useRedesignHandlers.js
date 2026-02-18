@@ -40,11 +40,11 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
                 const newBotMessage = {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    content: `✅ Tutorial generated successfully!\n\n` +
-                        `URL: ${data.url}\n\n` +
-                        `You can now preview and share the sheet.`,
+                    content: `✅ Tutorial updated and redesigned successfully for ${formData.foss_name} in ${formData.language || 'English'}!\n\nYou can now preview and share the sheet.`,
                     type: 'redesign_result',
-                    redesignData: data
+                    redesignData: data,
+                    previewButton: data.preview_button,
+                    sharingOption: data.sharing_option
                 };
                 setUploadMessages(prev => [...prev, newBotMessage]);
 
