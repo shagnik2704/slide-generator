@@ -105,6 +105,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     const charRefInputRef = useRef(null);
     const [modifyingRow, setModifyingRow] = useState(null);
     const [modificationPrompt, setModificationPrompt] = useState('');
+    const [aspectRatio, setAspectRatio] = useState('16:9');
 
     // Global character reference state - supports multiple images
     const CHAR_REF_KEY = `char_ref_${projectId}`;
@@ -230,7 +231,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         prompt: promptToUse,
                         reference_image_paths: globalCharRef.enabled && globalCharRef.imagePaths?.length > 0 ? globalCharRef.imagePaths : []
                     }],
-                    aspect_ratio: '16:9'
+                    aspect_ratio: aspectRatio
                 })
             });
             const generatedImage = result.images?.find(
@@ -329,7 +330,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 body: JSON.stringify({
                     project_id: projectId,
                     prompts: prompts,
-                    aspect_ratio: '16:9'
+                    aspect_ratio: aspectRatio
                 })
             });
             setSentenceRows(prev => prev.map(s => {
@@ -466,6 +467,37 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         {generatedCount}/{totalGeneratable} generated (sentence-wise)
                         {isSelectionMode && ` • ${selectedCount} selected`}
                     </div>
+                </div>
+
+                {/* Aspect Ratio Toggle */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '8px',
+                    padding: '0.25rem',
+                    border: '1px solid var(--border-primary)',
+                }}>
+                    {['16:9', '4:3'].map(ratio => (
+                        <button
+                            key={ratio}
+                            onClick={() => setAspectRatio(ratio)}
+                            style={{
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                background: aspectRatio === ratio ? 'var(--accent-primary)' : 'transparent',
+                                color: aspectRatio === ratio ? 'white' : 'var(--text-secondary)',
+                            }}
+                        >
+                            {ratio}
+                        </button>
+                    ))}
                 </div>
 
                 {!isSelectionMode ? (
