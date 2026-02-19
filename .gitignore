@@ -54,6 +54,6 @@ output/
 archive/
 logs/
 version-change-automation-abc4823f94ae.json
-docker-compose.override.yml
+docker-compose.yml
 prod-configs/
 chatbot-ui/nginx.conf
