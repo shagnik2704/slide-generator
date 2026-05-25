@@ -231,7 +231,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             <input
                 ref={timedScriptInputRef}
                 type="file"
-                accept=".wav,.mp3,.m4a,.ogg,.flac,.webm"
+                accept=".wav,.mp3,.m4a,.ogg,.flac,.webm,.mp4"
                 onChange={handleTimedScriptFileSelect}
                 style={{ display: 'none' }}
             />

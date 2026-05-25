@@ -24,7 +24,7 @@ async def generate_timed_script_endpoint(
     Language is auto-detected by default.
     
     Args:
-        audio: Audio file (WAV, MP3, etc.)
+        audio: Audio/Video file (WAV, MP3, MP4, etc.)
         language: Language code (optional, auto-detect if not provided)
         
     Returns:
@@ -46,7 +46,7 @@ async def generate_timed_script_endpoint(
         }
     """
     # Validate file type
-    allowed_extensions = {'.wav', '.mp3', '.m4a', '.ogg', '.flac', '.webm'}
+    allowed_extensions = {'.wav', '.mp3', '.m4a', '.ogg', '.flac', '.webm', '.mp4'}
     file_ext = Path(audio.filename).suffix.lower()
     
     if file_ext not in allowed_extensions:

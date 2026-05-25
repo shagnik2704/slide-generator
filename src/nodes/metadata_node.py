@@ -91,7 +91,7 @@ def extract_metadata(state: AgentState) -> dict:
     messages = get_metadata_extraction_messages(user_content)
     
     try:
-        result = structured_llm.invoke(messages)
+        result = structured_llm_openai.invoke(messages)
         
         if result is None:
             print("⚠️ LLM returned None, using fallback metadata")
