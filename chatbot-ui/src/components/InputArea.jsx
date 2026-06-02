@@ -611,22 +611,9 @@ const InputArea = ({
 
                             <button
                                 className="action-pill"
-                                onClick={() => voiceInputRef.current?.click()}
-                                disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
-                                title="Upload script to generate voice audio"
+                                disabled={true}
+                                style={pillButtonStyle(true)}
+                                title="Coming soon"
                             >
                                 <Mic size={16} />
                                 Generate Voice

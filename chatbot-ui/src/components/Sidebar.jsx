@@ -383,20 +383,14 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             </TooltipWrapper>
 
             {/* Voice Generator Button */}
-            <TooltipWrapper text="Voice Generator">
+            <TooltipWrapper text="Voice Generator (Coming Soon)">
                 <button
-                    onClick={() => voiceInputRef.current?.click()}
+                    disabled={true}
                     style={{
                         ...iconButtonStyle,
-                        marginTop: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--bg-tertiary)';
-                        e.currentTarget.style.color = 'var(--accent-primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        marginTop: '0.5rem',
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
                     }}
                 >
                     <Mic size={20} />
@@ -405,20 +399,14 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             </TooltipWrapper>
 
             {/* Image Generator Button */}
-            <TooltipWrapper text="Image Generator">
+            <TooltipWrapper text="Image Generator (Coming Soon)">
                 <button
-                    onClick={() => imageInputRef.current?.click()}
+                    disabled={true}
                     style={{
                         ...iconButtonStyle,
-                        marginTop: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--bg-tertiary)';
-                        e.currentTarget.style.color = 'var(--accent-primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        marginTop: '0.5rem',
+                        opacity: 0.5,
+                        cursor: 'not-allowed'
                     }}
                 >
                     <Image size={20} />
