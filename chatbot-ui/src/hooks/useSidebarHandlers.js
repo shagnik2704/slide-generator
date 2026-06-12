@@ -206,8 +206,10 @@ export function useSidebarHandlers(
      * Generate voice audio for a script file.
      * @param {File} file - Script file to generate voice for
      * @param {string} voiceMode - 'combined' for single file, 'rowwise' for per-row files
+     * @param {string} speaker - voice actor selection
+     * @param {number} pace - speaking speed
      */
-    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined') => {
+    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined', speaker, pace) => {
         const workflowId = Date.now();
         const modeLabel = voiceMode === 'combined' ? '(Full Audio)' : '(Row-wise)';
 
@@ -258,7 +260,9 @@ export function useSidebarHandlers(
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
-                    project_id: parseData.project_id
+                    project_id: parseData.project_id,
+                    speaker: speaker,
+                    pace: pace
                 }),
             });
 

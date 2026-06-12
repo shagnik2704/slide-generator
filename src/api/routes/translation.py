@@ -177,10 +177,12 @@ async def generate_cell_audio(data: GenerateAudioRequest):
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Use translation_id as the identifier for the audio file
+    lang_code = translation.get("language_code", "en")
     audio_path = await generate_voice_for_slide(
         text=text,
         slide_num=data.translation_id,  # Using translation_id for unique naming
-        output_dir=output_dir
+        output_dir=output_dir,
+        language_code=lang_code
     )
     
     if not audio_path:

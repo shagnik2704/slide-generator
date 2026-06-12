@@ -383,14 +383,20 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             </TooltipWrapper>
 
             {/* Voice Generator Button */}
-            <TooltipWrapper text="Voice Generator (Coming Soon)">
+            <TooltipWrapper text="Voice Generator">
                 <button
-                    disabled={true}
+                    onClick={() => voiceInputRef.current?.click()}
                     style={{
                         ...iconButtonStyle,
-                        marginTop: '0.5rem',
-                        opacity: 0.5,
-                        cursor: 'not-allowed'
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
                     }}
                 >
                     <Mic size={20} />

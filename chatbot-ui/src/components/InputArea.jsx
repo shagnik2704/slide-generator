@@ -25,7 +25,9 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
 
     // Voice mode state - 'combined' or 'rowwise'
     const [voiceMode, setVoiceMode] = useState('combined');
-
+    const [speaker, setSpeaker] = useState('ishita');
+    const [pace, setPace] = useState(0.9);
+ 
     // Get the appropriate icon based on upload type
     const getIcon = () => {
         if (isScript) return <FileJson size={24} />;
@@ -34,11 +36,11 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
         if (isWiki) return <BookOpen size={24} />;
         return <File size={24} />;
     };
-
-    // Wrap onConfirm to include voiceMode for voice uploads
+ 
+    // Wrap onConfirm to include voiceMode, speaker, and pace for voice uploads
     const handleConfirm = () => {
         if (isVoice) {
-            onConfirm({ voiceMode });
+            onConfirm({ voiceMode, speaker, pace });
         } else {
             onConfirm();
         }
@@ -177,6 +179,70 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     {voiceMode === 'combined'
                         ? '📢 One audio file for the entire script'
                         : '🎵 Separate audio file for each row'}
+                </div>
+            )}
+
+            {/* Voice Actor and Speed controls */}
+            {isVoice && (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    marginBottom: '1rem',
+                    textAlign: 'left'
+                }}>
+                    {/* Voice Actor selection */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Voice Actor</label>
+                        <select
+                            value={speaker}
+                            onChange={(e) => setSpeaker(e.target.value)}
+                            style={{
+                                padding: '0.55rem 0.75rem',
+                                borderRadius: '0.5rem',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                width: '100%'
+                            }}
+                        >
+                            <option value="ishita">Ishita (Female - Dynamic & Entertaining)</option>
+                            <option value="kavya">Kavya (Female - Clear & Engaging)</option>
+                            <option value="neha">Neha (Female - Conversational)</option>
+                            <option value="shreya">Shreya (Female - Warm)</option>
+                            <option value="aditya">Aditya (Male - Energetic)</option>
+                            <option value="shubh">Shubh (Male - Professional)</option>
+                            <option value="manan">Manan (Male - Conversational)</option>
+                        </select>
+                    </div>
+
+                    {/* Pace / Speed range slider */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Speaking Speed (Pace)</label>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{pace}x</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="2.0"
+                            step="0.05"
+                            value={pace}
+                            onChange={(e) => setPace(parseFloat(e.target.value))}
+                            style={{
+                                width: '100%',
+                                accentColor: 'var(--accent-primary)',
+                                cursor: 'pointer',
+                                height: '6px',
+                                borderRadius: '3px',
+                                background: 'var(--border-color)',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -611,9 +677,21 @@ const InputArea = ({
 
                             <button
                                 className="action-pill"
-                                disabled={true}
-                                style={pillButtonStyle(true)}
-                                title="Coming soon"
+                                onClick={() => voiceInputRef.current?.click()}
+                                disabled={disabled}
+                                style={pillButtonStyle(disabled)}
+                                onMouseEnter={(e) => {
+                                    if (!disabled) {
+                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                }}
                             >
                                 <Mic size={16} />
                                 Generate Voice

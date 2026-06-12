@@ -25,6 +25,14 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
     try:
         json_script = data.get('json_script')
         project_id = data.get('project_id')
+        speaker = data.get('speaker')
+        pace = data.get('pace')
+        
+        if pace is not None:
+            try:
+                pace = float(pace)
+            except (ValueError, TypeError):
+                pace = None
         
         if not json_script:
             raise HTTPException(status_code=400, detail="json_script is required")
@@ -33,6 +41,8 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
         result = await generate_voice_for_script(
             json_script=json_script,
             project_id=project_id,
+            speaker=speaker,
+            pace=pace
         )
         
         print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
@@ -67,6 +77,14 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
     try:
         json_script = data.get('json_script')
         project_id = data.get('project_id')
+        speaker = data.get('speaker')
+        pace = data.get('pace')
+        
+        if pace is not None:
+            try:
+                pace = float(pace)
+            except (ValueError, TypeError):
+                pace = None
         
         if not json_script:
             raise HTTPException(status_code=400, detail="json_script is required")
@@ -75,6 +93,8 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
         result = await generate_voice_combined(
             json_script=json_script,
             project_id=project_id,
+            speaker=speaker,
+            pace=pace
         )
         
         if result.get('success'):

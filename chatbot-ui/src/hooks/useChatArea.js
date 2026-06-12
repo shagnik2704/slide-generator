@@ -190,8 +190,13 @@ export function useChatArea(initialMode = 'create') {
                 sidebarHandlers.handleSidebarQualityUpload(file);
                 break;
             case 'voice':
-                // Pass voiceMode from options
-                sidebarHandlers.handleSidebarVoiceUpload(file, options.voiceMode || 'combined');
+                // Pass voiceMode, speaker, and pace from options
+                sidebarHandlers.handleSidebarVoiceUpload(
+                    file,
+                    options.voiceMode || 'combined',
+                    options.speaker,
+                    options.pace
+                );
                 break;
             case 'images':
                 sidebarHandlers.handleSidebarImageUpload(file);
