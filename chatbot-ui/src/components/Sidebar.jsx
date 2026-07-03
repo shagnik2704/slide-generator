@@ -4,8 +4,10 @@ import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 import HelpModal from './HelpModal';
 import FeedbackModal from './FeedbackModal';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign }) => {
+    const navigate = useNavigate();
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
 
@@ -363,7 +365,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             {/* Script Generator Button */}
             <TooltipWrapper text="Script Generator">
                 <button
-                    onClick={() => scriptInputRef.current?.click()}
+                    onClick={() => navigate('/script-chat')}
                     style={{
                         ...iconButtonStyle,
                         marginTop: '0.75rem'

@@ -299,16 +299,16 @@ def _add_metadata_section(doc, json_data: dict):
         for cell in row.cells:
             _set_cell_padding(cell, top=120, bottom=120, left=120, right=120)
     
-    # Module
+    # Series
     row = meta_table.add_row()
-    style_label(row.cells[0], "Module:")
-    row.cells[1].text = json_data.get('module', '')
+    style_label(row.cells[0], "Series:")
+    row.cells[1].text = json_data.get('series', json_data.get('module', ''))
     add_row_padding(row)
     
-    # Episode
+    # Tutorial
     row = meta_table.add_row()
-    style_label(row.cells[0], "Episode:")
-    row.cells[1].text = json_data.get('episode', '')
+    style_label(row.cells[0], "Tutorial:")
+    row.cells[1].text = json_data.get('tutorial', json_data.get('episode', ''))
     add_row_padding(row)
     
     # Learning Objective (with header and numbered list)
@@ -352,6 +352,9 @@ def _add_metadata_section(doc, json_data: dict):
 
 def _format_visual_cue(slide: dict) -> str:
     """Format the visual cue column for a slide."""
+    if slide.get('visual_cue') is not None:
+        return str(slide['visual_cue'])
+        
     title = slide.get('title', '')
     image_prompt = slide.get('image_prompt', '')
     
@@ -415,7 +418,7 @@ def _extract_metadata(doc) -> dict:
                 
                 if 'title' in label and not metadata.get('title'):
                     metadata['title'] = value
-                elif 'module' in label:
+                elif 'module' in label or 'series' in label:
                     metadata['module'] = value
                 elif 'episode' in label or 'tutorial' in label:
                     metadata['episode'] = value

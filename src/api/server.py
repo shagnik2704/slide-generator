@@ -35,8 +35,14 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing LangGraph agent...")
     app.state.graph = build_graph()
     logger.info("✅ LangGraph agent initialized")
+    
+    # Initialize Script Chat graph (independent pipeline)
+    logger.info("Initializing Script Chat graph...")
+    from src.script_chat.routes import init_script_chat_graph, close_script_chat_graph
+    await init_script_chat_graph()
     yield
     logger.info("🔒 Server shutting down")
+    await close_script_chat_graph()
 
 
 
@@ -99,6 +105,7 @@ from src.api.routes import (
     slides_translation_router,
 )
 from src.api.routes.auth import router as auth_router
+from src.script_chat.routes import router as script_chat_router
 
 # Include routers
 app.include_router(auth_router)
@@ -115,6 +122,7 @@ app.include_router(translation_router)
 app.include_router(redesign_router)
 app.include_router(timed_script_router)
 app.include_router(slides_translation_router)
+app.include_router(script_chat_router)
 
 # Global exception handler for API exceptions
 @app.exception_handler(APIException)
