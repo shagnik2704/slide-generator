@@ -1,8 +1,8 @@
-import json
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 from src.services.compliance_service import check_compliance
+from src.script_chat.schemas import dump_models, parse_script
 
 async def compliance_node(state: ScriptChatState):
     """Runs the existing compliance checks on the approved script."""
@@ -13,6 +13,12 @@ async def compliance_node(state: ScriptChatState):
     if not script:
         writer({"status": "Error: No script to check", "progress": 100})
         return {"current_stage": "error"}
+
+    try:
+        script_payload = dump_models(parse_script(script))
+    except Exception as e:
+        writer({"status": f"Invalid script state: {str(e)}", "progress": 100})
+        return {"current_stage": "error"}
     
     writer({"status": "Preparing script for compliance checks...", "progress": 10})
     
@@ -20,7 +26,7 @@ async def compliance_node(state: ScriptChatState):
     # and optionally other metadata fields
     json_script = {
         "presentation_title": metadata.get("title", "Untitled"),
-        "slides": script
+        "slides": script_payload
     }
     
     writer({"status": "Running admin compliance checks (16 criteria)...", "progress": 30})
@@ -57,6 +63,9 @@ def compliance_review_node(state: ScriptChatState):
         "message": "Review the compliance results. Approve to finalize, or go back to edit the script."
     })
     
+    if not user_decision or not isinstance(user_decision, dict):
+        return {"current_stage": "error"}
+
     action = user_decision.get("action")
     
     if action == "approve":
@@ -67,5 +76,5 @@ def compliance_review_node(state: ScriptChatState):
             "current_stage": "edit",
             "edit_instruction": user_decision.get("instruction", "Fix the compliance issues found above.")
         }
-    else:
-        return {"current_stage": "done"}
+
+    return {"current_stage": "error"}

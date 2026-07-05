@@ -231,6 +231,8 @@ export default function ScriptChatPage() {
   const [complianceResults, setComplianceResults] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [groundingReport, setGroundingReport] = useState(null);
+  const [isEditingOutline, setIsEditingOutline] = useState(false);
+  const [tempOutlineText, setTempOutlineText] = useState('');
 
   // Edit instruction
   const [editInput, setEditInput] = useState('');
@@ -275,6 +277,8 @@ export default function ScriptChatPage() {
 
       if (data.type === 'validation_review') {
         setGroundingReport(data.report);
+        setTempOutlineText(data.report?.validated_content || '');
+        setIsEditingOutline(false);
         setCurrentStage('grounding');
         setActiveTab('validation');
         addChat('agent', `✅ Validation complete. ${data.report?.corrections_made?.length || 0} corrections found.`);
@@ -299,7 +303,7 @@ export default function ScriptChatPage() {
         addChat('agent', `🔍 Compliance: ${s.ai_passed}/${s.total} checks passed`);
       }
     },
-    onDone: (data) => {
+    onDone: () => {
       setIsLoading(false);
       setCurrentStage('done');
       addChat('agent', '🎉 Workflow complete!');
@@ -436,7 +440,7 @@ export default function ScriptChatPage() {
           ) : interruptData ? (
             <div style={styles.inputArea}>
               <div style={styles.hitlBar}>
-                {(interruptType === 'script_review' || interruptType === 'metadata_review') && (
+                {(interruptType === 'script_review' || interruptType === 'metadata_review' || interruptType === 'validation_review') && (
                   <div style={styles.editRow}>
                     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '8px' }}>
                       {interruptType === 'script_review' && (
@@ -458,6 +462,7 @@ export default function ScriptChatPage() {
                           {checkpoints.length > 0 && (
                             <select 
                               style={styles.historySelect}
+                              disabled={isReverting}
                               onChange={async (e) => {
                                 if(!e.target.value) return;
                                 if(!confirm("Revert to this version? Your current edits will be overwritten.")) {
@@ -513,7 +518,9 @@ export default function ScriptChatPage() {
                       placeholder={
                         interruptType === 'metadata_review'
                           ? "Describe metadata edit (e.g., 'Change title to...')..."
-                          : "Describe script edit (e.g., 'Split slide 5 into two')..."
+                          : interruptType === 'validation_review'
+                            ? "Describe outline edit (e.g., 'Add a slide on Keras compilation')..."
+                            : "Describe script edit (e.g., 'Split slide 5 into two')..."
                       }
                       style={styles.editInput}
                       rows={2}
@@ -655,8 +662,69 @@ export default function ScriptChatPage() {
               {/* Show the actual validated content outline */}
               {groundingReport.validated_content && (
                 <div style={{ ...styles.section, marginBottom: '20px' }}>
-                  <h4 style={styles.sectionTitle}>Validated Outline Content</h4>
-                  <pre style={styles.validatedOutlinePre}>{groundingReport.validated_content}</pre>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ ...styles.sectionTitle, margin: 0 }}>Validated Outline Content</h4>
+                    {interruptType === 'validation_review' && (
+                      isEditingOutline ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => {
+                              setIsEditingOutline(false);
+                              setTempOutlineText(groundingReport.validated_content);
+                            }}
+                            style={{
+                              padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                              background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setIsEditingOutline(false);
+                              setIsLoading(true);
+                              try {
+                                await resumeSession(threadId, { action: 'edit', edited_content: tempOutlineText }, sseHandlers());
+                              } catch (err) {
+                                alert("Failed to save edits: " + err.message);
+                              }
+                              setIsLoading(false);
+                            }}
+                            style={{
+                              padding: '4px 8px', borderRadius: '4px', border: 'none',
+                              background: 'var(--accent-primary)', color: '#fff', fontSize: '0.75rem', cursor: 'pointer'
+                            }}
+                          >
+                            Save & Approve
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsEditingOutline(true)}
+                          style={{
+                            padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--accent-primary)',
+                            background: 'transparent', color: 'var(--accent-primary)', fontSize: '0.75rem', cursor: 'pointer'
+                          }}
+                        >
+                          ✏️ Edit Outline
+                        </button>
+                      )
+                    )}
+                  </div>
+                  {isEditingOutline ? (
+                    <textarea
+                      value={tempOutlineText}
+                      onChange={(e) => setTempOutlineText(e.target.value)}
+                      style={{
+                        width: '100%', minHeight: '150px', padding: '8px', borderRadius: '6px',
+                        border: '1px solid var(--border-color)', background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', fontSize: '0.85rem',
+                        lineHeight: 1.5, resize: 'vertical'
+                      }}
+                    />
+                  ) : (
+                    <pre style={styles.validatedOutlinePre}>{tempOutlineText || groundingReport.validated_content}</pre>
+                  )}
                 </div>
               )}
 

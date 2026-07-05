@@ -1,11 +1,11 @@
-import os
 import json
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
+from src.script_chat.llm import invoke_structured, invoke_text
 from src.script_chat.prompts.generation import GENERATION_SYSTEM_PROMPT
+from src.script_chat.schemas import ScriptResult, dump_models, parse_metadata, parse_script
 
 def generate_node(state: ScriptChatState):
     """Generates the pedagogical script based on metadata and outline."""
@@ -15,47 +15,44 @@ def generate_node(state: ScriptChatState):
     
     writer({"status": "Generating pedagogical script...", "progress": 25})
     
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        writer({"status": "Error: OPENAI_API_KEY not found", "progress": 100})
+    try:
+        metadata_model = parse_metadata(metadata)
+    except Exception as e:
+        writer({"status": f"Invalid metadata state: {str(e)}", "progress": 100})
         return {"current_stage": "error"}
-        
-    llm = ChatOpenAI(
-        model="gpt-5.4-mini",
-        temperature=0.4,
-        api_key=api_key
-    ).bind_tools([{"type": "web_search"}])
     
-    prompt = f"""
-    === METADATA ===
-    {json.dumps(metadata, indent=2)}
-    
-    === OUTLINE ===
-    {raw_outline}
-    
-    Generate the JSON array for the script slides now. Ensure the output is ONLY a valid JSON array.
-    """
+    metadata_json = json.dumps(metadata_model.model_dump(), indent=2)
     
     writer({"status": "LLM is writing the script...", "progress": 50})
-    
-    messages = [
-        SystemMessage(content=GENERATION_SYSTEM_PROMPT),
-        HumanMessage(content=prompt)
-    ]
-    
+
     try:
-        response = llm.invoke(messages)
-        text_response = response.content
-        if isinstance(text_response, list):
-            text_response = "".join([block.get("text", "") for block in text_response if isinstance(block, dict) and block.get("type") == "text"])
-        if "```json" in text_response:
-            text_response = text_response.split("```json")[1].split("```")[0]
-        elif "```" in text_response:
-            text_response = text_response.split("```")[1].split("```")[0]
-            
-        parsed_json = json.loads(text_response.strip())
-        script_json = parsed_json.get("script", [])
-        agent_message = parsed_json.get("message", "Here is your generated script.")
+        research_notes = invoke_text(
+            [
+                SystemMessage(content=GENERATION_SYSTEM_PROMPT),
+                HumanMessage(
+                    "Check current technical details needed for this script. "
+                    "Focus on commands, APIs, imports, UI names, and deprecated behavior.\n\n"
+                    f"=== METADATA ===\n{metadata_json}\n\n"
+                    f"=== OUTLINE ===\n{raw_outline}"
+                ),
+            ],
+            model="gpt-5.4-mini",
+            temperature=0.2,
+            tools=[{"type": "web_search"}],
+        )
+        result = invoke_structured(
+            [
+                SystemMessage(content=GENERATION_SYSTEM_PROMPT),
+                HumanMessage(
+                    f"=== METADATA ===\n{metadata_json}\n\n"
+                    f"=== OUTLINE ===\n{raw_outline}\n\n"
+                    f"=== TECHNICAL RESEARCH NOTES ===\n{research_notes}"
+                ),
+            ],
+            ScriptResult,
+            model="gpt-5.4-mini",
+            temperature=0.4,
+        )
     except Exception as e:
         writer({"status": f"Script generation failed: {str(e)}", "progress": 100})
         return {"current_stage": "error"}
@@ -63,15 +60,18 @@ def generate_node(state: ScriptChatState):
     writer({"status": "Script generation complete", "progress": 100})
     
     return {
-        "script": script_json,
+        "script": dump_models(result.script),
         "script_version": state.get("script_version", 0) + 1,
-        # Append the agent message to the chat history
-        "messages": [{"role": "ai", "content": agent_message}]
+        "messages": [{"role": "ai", "content": result.message}]
     }
 
 def script_review_node(state: ScriptChatState):
     """Surfaces generated script for HITL review."""
     script = state.get("script")
+    try:
+        script_payload = dump_models(parse_script(script or []))
+    except Exception:
+        return {"current_stage": "error"}
     
     # We retrieve the last AI message from the state to display in the UI interrupt
     agent_message = "Review the generated script. Approve to continue, or request edits."
@@ -82,7 +82,7 @@ def script_review_node(state: ScriptChatState):
 
     user_decision = interrupt({
         "type": "script_review",
-        "script": script,
+        "script": script_payload,
         "message": agent_message
     })
     
@@ -90,11 +90,12 @@ def script_review_node(state: ScriptChatState):
     
     if action == "approve":
         return {"current_stage": "compliance"}
-    else:
-        # If user requests an edit, loop back to the edit node and save their instruction
+    if action == "edit":
         user_msg = user_decision.get("instruction", "")
         return {
             "current_stage": "edit",
             "edit_instruction": user_msg,
             "messages": [{"role": "user", "content": user_msg}] if user_msg else []
         }
+
+    return {"current_stage": "error"}

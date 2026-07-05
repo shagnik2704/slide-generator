@@ -18,6 +18,28 @@ function getHeaders() {
   };
 }
 
+async function getErrorMessage(resp, fallback) {
+  const body = await resp.json().catch(() => null);
+  return body?.detail || body?.message || fallback;
+}
+
+function dispatchSseEvent(eventType, rawData, handlers) {
+  if (!rawData) return;
+  try {
+    const parsed = JSON.parse(rawData);
+    switch (eventType) {
+      case 'progress': handlers.onProgress?.(parsed); break;
+      case 'token': handlers.onToken?.(parsed); break;
+      case 'interrupt': handlers.onInterrupt?.(parsed); break;
+      case 'state': handlers.onState?.(parsed); break;
+      case 'done': handlers.onDone?.(parsed); break;
+      case 'error': handlers.onError?.(parsed); break;
+    }
+  } catch {
+    handlers.onError?.({ message: `Failed to parse ${eventType} event` });
+  }
+}
+
 /**
  * Start a new script chat session.
  * @param {string} outline - The raw outline text
@@ -30,7 +52,7 @@ export async function startSession(outline, fossName = null) {
     headers: getHeaders(),
     body: JSON.stringify({ outline, foss_name: fossName }),
   });
-  if (!resp.ok) throw new Error(`Start failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Start failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -47,24 +69,24 @@ export function connectStream(threadId, handlers) {
   const eventSource = new EventSource(url);
 
   eventSource.addEventListener('progress', (e) => {
-    handlers.onProgress?.(JSON.parse(e.data));
+    dispatchSseEvent('progress', e.data, handlers);
   });
 
   eventSource.addEventListener('token', (e) => {
-    handlers.onToken?.(JSON.parse(e.data));
+    dispatchSseEvent('token', e.data, handlers);
   });
 
   eventSource.addEventListener('interrupt', (e) => {
-    handlers.onInterrupt?.(JSON.parse(e.data));
+    dispatchSseEvent('interrupt', e.data, handlers);
     eventSource.close();
   });
 
   eventSource.addEventListener('state', (e) => {
-    handlers.onState?.(JSON.parse(e.data));
+    dispatchSseEvent('state', e.data, handlers);
   });
 
   eventSource.addEventListener('done', (e) => {
-    handlers.onDone?.(JSON.parse(e.data));
+    dispatchSseEvent('done', e.data, handlers);
     eventSource.close();
   });
 
@@ -94,8 +116,7 @@ export async function resumeSession(threadId, resumeData, handlers) {
   });
 
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(err.detail || `Resume failed: ${resp.status}`);
+    throw new Error(await getErrorMessage(resp, `Resume failed: ${resp.status}`));
   }
 
   // Parse the SSE response body
@@ -103,38 +124,45 @@ export async function resumeSession(threadId, resumeData, handlers) {
   const decoder = new TextDecoder();
   let buffer = '';
 
+  let currentEvent = { type: 'message', data: '' };
+
+  const processLine = (line) => {
+    line = line.trim();
+    if (!line) {
+      dispatchSseEvent(currentEvent.type, currentEvent.data, handlers);
+      currentEvent = { type: 'message', data: '' };
+      return;
+    }
+
+    if (line.startsWith('event: ')) {
+      currentEvent.type = line.slice(7);
+    } else if (line.startsWith('data: ')) {
+      currentEvent.data = currentEvent.data 
+        ? currentEvent.data + '\n' + line.slice(6)
+        : line.slice(6);
+    }
+  };
+
   while (true) {
     const { value, done } = await reader.read();
-    if (done) break;
+    
+    const decoded = decoder.decode(value || new Uint8Array(), { stream: !done });
+    buffer += decoded;
 
-    buffer += decoder.decode(value, { stream: true });
+    buffer = buffer.replace(/\r\n/g, '\n');
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
 
-    while (buffer.includes('\n\n')) {
-      const [rawEvent, rest] = buffer.split('\n\n', 2);
-      buffer = rest;
+    for (const line of lines) {
+      processLine(line);
+    }
 
-      const lines = rawEvent.trim().split('\n');
-      let eventType = 'message';
-      let data = '';
-
-      for (const line of lines) {
-        if (line.startsWith('event: ')) eventType = line.slice(7);
-        else if (line.startsWith('data: ')) data = line.slice(6);
+    if (done) {
+      if (buffer.trim()) {
+        processLine(buffer);
       }
-
-      if (!data) continue;
-
-      try {
-        const parsed = JSON.parse(data);
-        switch (eventType) {
-          case 'progress': handlers.onProgress?.(parsed); break;
-          case 'token': handlers.onToken?.(parsed); break;
-          case 'interrupt': handlers.onInterrupt?.(parsed); break;
-          case 'state': handlers.onState?.(parsed); break;
-          case 'done': handlers.onDone?.(parsed); break;
-          case 'error': handlers.onError?.(parsed); break;
-        }
-      } catch { /* ignore parse errors */ }
+      processLine('');
+      break;
     }
   }
 }
@@ -148,7 +176,7 @@ export async function manualEdit(threadId, slideNumber, field, value) {
     headers: getHeaders(),
     body: JSON.stringify({ slide_number: slideNumber, field, value }),
   });
-  if (!resp.ok) throw new Error(`Edit failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Edit failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -159,7 +187,7 @@ export async function getHistory(threadId) {
   const resp = await fetch(`${API_URL}/script-chat/history/${threadId}`, {
     headers: getHeaders(),
   });
-  if (!resp.ok) throw new Error(`History failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `History failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -170,7 +198,7 @@ export async function getCheckpoints(threadId) {
   const resp = await fetch(`${API_URL}/script-chat/checkpoints/${threadId}`, {
     headers: getHeaders(),
   });
-  if (!resp.ok) throw new Error(`Checkpoints failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Checkpoints failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -183,7 +211,7 @@ export async function revertState(threadId, checkpointId) {
     headers: getHeaders(),
     body: JSON.stringify({ checkpoint_id: checkpointId }),
   });
-  if (!resp.ok) throw new Error(`Revert failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Revert failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -196,7 +224,7 @@ export async function jumpStage(threadId, targetStage) {
     headers: getHeaders(),
     body: JSON.stringify({ target_stage: targetStage }),
   });
-  if (!resp.ok) throw new Error(`Jump failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Jump failed: ${resp.status}`));
   return resp.json();
 }
 
@@ -207,6 +235,6 @@ export async function exportDocx(threadId) {
   const resp = await fetch(`${API_URL}/script-chat/export-docx/${threadId}`, {
     headers: getHeaders(),
   });
-  if (!resp.ok) throw new Error(`Export DOCX failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Export DOCX failed: ${resp.status}`));
   return resp.blob();
 }

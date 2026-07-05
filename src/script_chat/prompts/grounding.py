@@ -6,12 +6,4 @@ Focus on:
 2. Are the import statements valid?
 3. Is the sequence of steps logical?
 4. Are there any deprecated methods or flags?
-
-Return a structured JSON response wrapped in a ```json block with the following format:
-{
-    "validated_content": "The original content with any necessary technical corrections applied.",
-    "corrections_made": ["List of specific corrections made, if any"],
-    "warnings": ["Any warnings about deprecated features or potential issues"],
-    "is_mostly_correct": true
-}
 """

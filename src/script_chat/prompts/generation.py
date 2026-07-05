@@ -129,29 +129,4 @@ You MUST generate the initial boilerplate sequence exactly as follows for Slides
     Private Limited, SINE, IIT Bombay.
   - **Narration:**
     Thank you for joining.
-
-### Output Format
-You MUST output a valid JSON object. Do not output anything outside the JSON object.
-The object must have exactly two fields:
-- `message`: string (A conversational message explaining to the user what you have generated or changed)
-- `script`: array (The list of slide objects)
-
-Each slide object in the `script` array must have:
-- `slide_number`: integer
-- `slide_type`: string (e.g., "Title Slide", "Learning Objectives", "Demonstration", "Summary")
-- `visual_cue`: string
-- `narration`: string
-
-Example output structure:
-{
-  "message": "I have successfully generated the 14-slide script for creating tensors in Google Colab based on your outline. Please review!",
-  "script": [
-    {
-      "slide_number": 1,
-      "slide_type": "Title Slide",
-      "visual_cue": "Title slide includes:\nName of the tutorial\nEdupyramids Link",
-      "narration": "Welcome to this spoken tutorial on Creating Tensors in Google Colab."
-    }
-  ]
-}
 """

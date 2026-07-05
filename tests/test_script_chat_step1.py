@@ -13,22 +13,18 @@ async def main():
     print("🚀 Running Step 1: Ingestion")
     
     raw_outline = """
-    Tutorial 2: Creating Tensors in Google colab
-
-    Learning Objectives
-    After completing this tutorial, the learner will be able to:
-    1. Understand what a tensor is.
-    2. Create scalar tensors.
-    3. Create vectors.
-    4. Create matrices.
-
-    Example
-    Open note book on a Google colab
-    Let us import tensorflow first
-    import tensorflow as tf
-
-    Now we will create scalar tensors
-    scalar = tf.constant(5)
+    Tutorial 3: Creating Tensors with PyTorch
+    
+    Learning Objectives:
+    1. Understand how to import PyTorch.
+    2. Create tensors on the CPU.
+    3. Create tensors on CUDA/GPU.
+    
+    Example:
+    import torch
+    
+    x = torch.empty(5, 3)
+    print(x)
     """
     
     # Build graph with in-memory checkpointer

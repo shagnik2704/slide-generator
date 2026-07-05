@@ -1,10 +1,10 @@
-import os
 import json
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
+from src.script_chat.llm import invoke_structured
 from src.script_chat.prompts.metadata_edit import METADATA_EDITING_SYSTEM_PROMPT
+from src.script_chat.schemas import ScriptMetadata, dump_model, parse_metadata
 
 def metadata_edit_node(state: ScriptChatState):
     """Applies user's edit instruction to the metadata."""
@@ -18,20 +18,15 @@ def metadata_edit_node(state: ScriptChatState):
     
     writer({"status": f"Applying metadata edit: '{edit_instruction[:60]}...'", "progress": 25})
     
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        writer({"status": "Error: OPENAI_API_KEY not found", "progress": 100})
+    try:
+        current_metadata = parse_metadata(metadata)
+    except Exception as e:
+        writer({"status": f"Invalid metadata state: {str(e)}", "progress": 100})
         return {"current_stage": "error"}
-        
-    llm = ChatOpenAI(
-        model="gpt-5.4-mini",
-        temperature=0.3,
-        api_key=api_key
-    ).bind_tools([{"type": "web_search"}])
-    
+
     prompt = f"""
 === CURRENT METADATA ===
-{json.dumps(metadata, indent=2)}
+{json.dumps(dump_model(current_metadata), indent=2)}
 
 === EDIT INSTRUCTION ===
 {edit_instruction}
@@ -47,16 +42,12 @@ Apply this edit and return the full updated JSON metadata object.
     ]
     
     try:
-        response = llm.invoke(messages)
-        text_response = response.content
-        if isinstance(text_response, list):
-            text_response = "".join([block.get("text", "") for block in text_response if isinstance(block, dict) and block.get("type") == "text"])
-        if "```json" in text_response:
-            text_response = text_response.split("```json")[1].split("```")[0]
-        elif "```" in text_response:
-            text_response = text_response.split("```")[1].split("```")[0]
-            
-        updated_metadata = json.loads(text_response.strip())
+        updated_metadata = invoke_structured(
+            messages,
+            ScriptMetadata,
+            model="gpt-5.4-mini",
+            temperature=0.3,
+        )
     except Exception as e:
         writer({"status": f"Metadata edit failed: {str(e)}", "progress": 100})
         return {"current_stage": "error"}
@@ -64,6 +55,6 @@ Apply this edit and return the full updated JSON metadata object.
     writer({"status": "Metadata edit applied successfully", "progress": 100})
     
     return {
-        "metadata": updated_metadata,
-        "edit_instruction": None  # Clear after use
+        "metadata": dump_model(updated_metadata),
+        "edit_instruction": None
     }

@@ -8,6 +8,4 @@ Extract the following information:
 4. system_requirements: Operating system, software names, and versions required. If none mentioned, infer from the content (e.g. Google Colab, Web Browser).
 5. outline_topics: A list of the main topics covered in the outline (at least 5 items).
 6. meta_tags: A list of keywords for searchability.
-
-Return a structured JSON response wrapped in a ```json block with the exact keys above.
 """

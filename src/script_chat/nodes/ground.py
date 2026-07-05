@@ -1,12 +1,11 @@
-import os
-import json
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
+from src.script_chat.llm import invoke_structured, invoke_text
 from src.script_chat.prompts.grounding import GROUNDING_SYSTEM_PROMPT
-from pydantic import BaseModel, Field
+from src.script_chat.prompts.ground_edit import GROUND_EDITING_SYSTEM_PROMPT
+from src.script_chat.schemas import GroundingReport, dump_model
 
 def ground_node(state: ScriptChatState):
     """Grounds the content using Google Search."""
@@ -19,43 +18,49 @@ def ground_node(state: ScriptChatState):
     
     writer({"status": f"Searching latest docs for {foss_name}...", "progress": 25})
     
-    # Setup OpenAI client
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        writer({"status": "Error: OPENAI_API_KEY not found", "progress": 100})
-        return {"current_stage": "error"}
-        
-    llm = ChatOpenAI(
-        model="gpt-5.4-mini",
-        temperature=0.2,
-        api_key=api_key
-    ).bind_tools([{"type": "web_search"}])
-    
     writer({"status": "Validating code snippets against web results...", "progress": 50})
     
-    messages = [
-        SystemMessage(content=GROUNDING_SYSTEM_PROMPT),
-        HumanMessage(content=f"Please validate this outline for {foss_name}:\n\n{raw_outline}")
-    ]
-    
     try:
-        response = llm.invoke(messages)
-        text_response = response.content
-        if isinstance(text_response, list):
-            text_response = "".join([block.get("text", "") for block in text_response if isinstance(block, dict) and block.get("type") == "text"])
-        if "```json" in text_response:
-            text_response = text_response.split("```json")[1].split("```")[0]
-        elif "```" in text_response:
-            text_response = text_response.split("```")[1].split("```")[0]
-        report_dict = json.loads(text_response.strip())
+        validation_notes = invoke_text(
+            [
+                SystemMessage(content=GROUNDING_SYSTEM_PROMPT),
+                HumanMessage(content=f"Validate this outline for {foss_name}:\n\n{raw_outline}"),
+            ],
+            model="gpt-5.4-mini",
+            temperature=0.2,
+            tools=[{"type": "web_search"}],
+        )
+        report = invoke_structured(
+            [
+                SystemMessage(content=GROUNDING_SYSTEM_PROMPT),
+                HumanMessage(
+                    "Create the final grounding report from this outline and validation notes.\n\n"
+                    f"=== OUTLINE ===\n{raw_outline}\n\n"
+                    f"=== VALIDATION NOTES ===\n{validation_notes}"
+                ),
+            ],
+            GroundingReport,
+            model="gpt-5.4-mini",
+            temperature=0.2,
+        )
     except Exception as e:
         writer({"status": f"Grounding failed: {str(e)}", "progress": 100})
-        return {"current_stage": "error", "grounding_report": None}
+        fallback_report = GroundingReport(
+            validated_content=raw_outline,
+            corrections_made=[],
+            warnings=[f"Grounding validation failed due to system error: {str(e)}"],
+            is_mostly_correct=False,
+            error=str(e),
+        )
+        return {
+            "grounding_report": dump_model(fallback_report)
+        }
+
     
     writer({"status": "Validation complete", "progress": 100})
     
     return {
-        "grounding_report": report_dict
+        "grounding_report": dump_model(report)
     }
 
 def ground_review_node(state: ScriptChatState):
@@ -76,13 +81,74 @@ def ground_review_node(state: ScriptChatState):
     if not user_decision or not isinstance(user_decision, dict):
         return {"current_stage": "error"}
 
-    if user_decision.get("action") == "approve":
+    action = user_decision.get("action")
+    if action == "approve":
         final_content = report_dict.get("validated_content")
-    else:
-        # If user edited the content during review
-        final_content = user_decision.get("edited_content", report_dict.get("validated_content"))
+        return {
+            "current_stage": "metadata",
+            "raw_outline": final_content
+        }
+    elif action == "edit":
+        instruction = user_decision.get("instruction")
+        edited_content = user_decision.get("edited_content")
+        
+        if instruction:
+            # Clear grounding report so the next ground node run recheck doesn't return early
+            return {
+                "current_stage": "grounding_edit",
+                "edit_instruction": instruction,
+                "grounding_report": None
+            }
+        elif edited_content:
+            # Direct manual edit - proceed to metadata stage
+            return {
+                "current_stage": "metadata",
+                "raw_outline": edited_content
+            }
+        else:
+            # Fallback
+            return {
+                "current_stage": "metadata",
+                "raw_outline": report_dict.get("validated_content")
+            }
+            
+    return {"current_stage": "error"}
+
+def ground_edit_node(state: ScriptChatState):
+    """Applies user's edit instruction to the raw outline."""
+    writer = get_stream_writer()
+    raw_outline = state.get("raw_outline", "")
+    edit_instruction = state.get("edit_instruction")
+    
+    if not edit_instruction:
+        return {}
+        
+    writer({"status": "Applying outline edits...", "progress": 50})
+    
+    prompt = f"""
+=== CURRENT OUTLINE ===
+{raw_outline}
+
+=== EDIT INSTRUCTION ===
+{edit_instruction}
+
+Apply the edit instruction and return the full updated outline text.
+"""
+    messages = [
+        SystemMessage(content=GROUND_EDITING_SYSTEM_PROMPT),
+        HumanMessage(content=prompt)
+    ]
+    
+    try:
+        updated_outline = invoke_text(messages, model="gpt-5.4-mini", temperature=0.2)
+    except Exception as e:
+        writer({"status": f"Outline edit failed: {str(e)}", "progress": 100})
+        return {"current_stage": "error"}
+        
+    writer({"status": "Outline edits applied successfully", "progress": 100})
     
     return {
-        "current_stage": "metadata",
-        "raw_outline": final_content # Update with validated/edited content
+        "raw_outline": updated_outline,
+        "edit_instruction": None,
+        "current_stage": "grounding"
     }
