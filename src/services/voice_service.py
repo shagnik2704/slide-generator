@@ -176,8 +176,8 @@ async def generate_voice_for_slide(
         "speaker": speaker,
         "model": "bulbul:v3",
         "pace": pace,
-        "temperature": 0.6,
-        "speech_sample_rate": 24000,
+        "temperature": 0.01,
+        "speech_sample_rate": 48000,
         "output_audio_codec": "wav"
     }
     
@@ -419,8 +419,8 @@ async def generate_voice_combined(
         "speaker": speaker,
         "model": "bulbul:v3",
         "pace": pace,
-        "temperature": 0.6,
-        "speech_sample_rate": 24000,
+        "temperature": 0.01,
+        "speech_sample_rate": 48000,
         "output_audio_codec": "wav"
     }
     
