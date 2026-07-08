@@ -148,14 +148,18 @@ async def start_session(req: StartRequest):
     GET /script-chat/stream/{thread_id} to receive SSE events.
     """
     thread_id = str(uuid.uuid4())
+    config = {"configurable": {"thread_id": thread_id}}
+    
+    # Initialize the graph state in the database checkpointer
     initial_input = {
         "raw_outline": req.outline,
         "foss_name": req.foss_name,
         "messages": [],
         "script_version": 0,
+        "current_stage": "ingest"
     }
     
-    _pending_inputs[thread_id] = initial_input
+    await get_graph().aupdate_state(config, initial_input, as_node="__start__")
     
     return StartResponse(
         thread_id=thread_id,
@@ -163,58 +167,53 @@ async def start_session(req: StartRequest):
     )
 
 
-_pending_inputs: dict = {}
-
-
 @router.get("/stream/{thread_id}")
 async def stream_events(thread_id: str):
     """SSE endpoint. Streams LangGraph events for the given thread.
     
-    On first connection (pending input exists): starts the graph from scratch.
+    On first connection: starts the graph from the saved state.
     On subsequent connections: streams the current state (useful for reconnects).
     """
     config = {"configurable": {"thread_id": thread_id}}
     
-    input_data = _pending_inputs.pop(thread_id, None)
+    state = await get_graph().aget_state(config)
+    if not state.values:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found or expired. Please start a new session."
+        )
     
-    if input_data is None:
-        state = await get_graph().aget_state(config)
-        if not state.values:
-            raise HTTPException(
-                status_code=404,
-                detail="Session not found or expired. Please start a new session."
-            )
-        
-        interrupt_payload = _interrupt_payload(state)
-        is_interrupted = interrupt_payload is not None
-        if not (state.next and not is_interrupted):
-            async def reconnect_stream():
-                if is_interrupted:
-                    yield _sse_event("interrupt", interrupt_payload)
-                else:
-                    yield _sse_event("state", {
-                        "stage": state.values.get("current_stage", "unknown"),
-                        "script_version": state.values.get("script_version", 0)
-                    })
-            return StreamingResponse(
-                reconnect_stream(),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "X-Accel-Buffering": "no",
-                }
-            )
+    interrupt_payload = _interrupt_payload(state)
+    is_interrupted = interrupt_payload is not None
     
-    return StreamingResponse(
-        _stream_graph(config, input_data),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        }
-    )
+    if state.next and not is_interrupted:
+        return StreamingResponse(
+            _stream_graph(config, None),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
+    else:
+        async def reconnect_stream():
+            if is_interrupted:
+                yield _sse_event("interrupt", interrupt_payload)
+            else:
+                yield _sse_event("state", {
+                    "stage": state.values.get("current_stage", "unknown"),
+                    "script_version": state.values.get("script_version", 0)
+                })
+        return StreamingResponse(
+            reconnect_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
 
 
 @router.post("/resume/{thread_id}")
