@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function markdownToInlineHtml(text) {
   if (!text) return '';
@@ -44,14 +52,14 @@ function InlineEditableCell({ editable, field, onEditCell, slide }) {
 
   if (!editable) {
     return (
-      <td className="script-card-cell">
+      <TableCell className="script-card-cell">
         <ScriptMarkdown>{slide[field]}</ScriptMarkdown>
-      </td>
+      </TableCell>
     );
   }
 
   return (
-    <td
+    <TableCell
       className="script-card-cell script-card-cell-editable"
       contentEditable
       onBlur={() => {
@@ -77,21 +85,21 @@ function InlineEditableCell({ editable, field, onEditCell, slide }) {
 export function ScriptReviewCard({ editable, onEditCell, script }) {
   return (
     <div className="script-review-card-table-wrap">
-      <table className="script-review-card-table">
-        <thead>
-          <tr>
-            <th className="script-review-card-number">#</th>
-            <th>Visual Cue</th>
-            <th>Narration</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="script-review-card-table">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="script-review-card-number">#</TableHead>
+            <TableHead>Visual Cue</TableHead>
+            <TableHead>Narration</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {script.map((slide) => (
-            <tr key={slide.slide_number}>
-              <td className="script-review-card-number">
+            <TableRow key={slide.slide_number}>
+              <TableCell className="script-review-card-number">
                 <span>{slide.slide_number}</span>
                 {slide.slide_type && <small>{slide.slide_type}</small>}
-              </td>
+              </TableCell>
               <InlineEditableCell
                 editable={editable}
                 field="visual_cue"
@@ -106,10 +114,10 @@ export function ScriptReviewCard({ editable, onEditCell, script }) {
                 onEditCell={onEditCell}
                 slide={slide}
               />
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -1,6 +1,26 @@
 import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Check, Loader2, MessageSquareText, Send, WandSparkles } from 'lucide-react';
+import { Check, Loader2, MessageSquareText, Send, Sparkles, WandSparkles } from 'lucide-react';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+} from '@/components/ai-elements/conversation';
+import { Message, MessageContent, MessageLabel } from '@/components/ai-elements/message';
+import {
+  PromptInput,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from '@/components/ai-elements/prompt-input';
+import {
+  ReviewActions,
+  ReviewActionsContent,
+  ReviewActionsDescription,
+  ReviewActionsTitle,
+} from '@/components/ai-elements/review-actions';
+import { Button } from '@/components/ui/button';
 
 function Composer({
   disabled,
@@ -14,51 +34,64 @@ function Composer({
 
   if (!interruptType) return null;
 
+  const editPlaceholder = interruptType === 'metadata_review'
+    ? 'Describe the metadata change...'
+    : interruptType === 'validation_review'
+      ? 'Describe the outline change...'
+      : 'Describe the script change...';
+
   return (
     <div className="script-composer">
       {canEdit && (
-        <div className="script-edit-composer">
-          <textarea
-            className="script-input script-input-compact"
+        <PromptInput
+          className="script-edit-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmitEdit();
+          }}
+        >
+          <PromptInputTextarea
             disabled={disabled}
             onChange={(event) => onEditChange(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                onSubmitEdit();
+                if (editInput.trim()) onSubmitEdit();
               }
             }}
-            placeholder={
-              interruptType === 'metadata_review'
-                ? 'Describe the metadata change...'
-                : interruptType === 'validation_review'
-                  ? 'Describe the outline change...'
-                  : 'Describe the script change...'
-            }
+            placeholder={editPlaceholder}
             rows={3}
             value={editInput}
           />
-          <button
+          <PromptInputSubmit
             className="script-icon-button script-icon-button-primary"
             disabled={disabled || !editInput.trim()}
-            onClick={onSubmitEdit}
+            size="icon"
             title="Submit edit request"
-            type="button"
           >
             <Send size={18} aria-hidden="true" />
-          </button>
-        </div>
+          </PromptInputSubmit>
+        </PromptInput>
       )}
 
-      <button
-        className="script-button script-button-success"
-        disabled={disabled}
-        onClick={onApprove}
-        type="button"
-      >
-        <Check size={18} aria-hidden="true" />
-        Approve
-      </button>
+      <ReviewActions>
+        <ReviewActionsContent>
+          <ReviewActionsTitle>Review gate</ReviewActionsTitle>
+          <ReviewActionsDescription>
+            Request a change, or approve this artifact to continue.
+          </ReviewActionsDescription>
+        </ReviewActionsContent>
+        <Button
+          className="script-approve-button"
+          disabled={disabled}
+          onClick={onApprove}
+          variant="success"
+          type="button"
+        >
+          <Check size={17} aria-hidden="true" />
+          Approve
+        </Button>
+      </ReviewActions>
     </div>
   );
 }
@@ -90,68 +123,83 @@ export function AssistantPanel({
       <div className="script-panel-heading">
         <div>
           <span className="script-eyebrow">Assistant</span>
-          <h2>Run control</h2>
+          <h2>Script assistant</h2>
         </div>
         {isLoading && <Loader2 className="script-spin" size={18} aria-hidden="true" />}
       </div>
 
-      <div className="script-chat-log">
-        {showStart && (
-          <div className="script-start-card">
-            <WandSparkles size={24} aria-hidden="true" />
-            <h3>Create a spoken tutorial script</h3>
-            <p>Paste an outline, then review each generated artifact before the workflow advances.</p>
-          </div>
-        )}
+      <Conversation>
+        <ConversationContent className="script-chat-log">
+          {showStart && (
+            <ConversationEmptyState
+              description="Paste your course outline below. I will validate it, draft metadata, generate the script, and pause at each review gate."
+              icon={<WandSparkles size={22} aria-hidden="true" />}
+              title="Ready to build a spoken tutorial"
+            />
+          )}
 
-        {chatLog.map((message) => (
-          <div
-            className={`script-message script-message-${message.role}`}
-            key={`${message.ts}-${message.role}-${message.content.slice(0, 12)}`}
-          >
-            <span>{message.role === 'user' ? 'You' : 'Agent'}</span>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
-        ))}
+          {chatLog.map((message) => (
+            <Message
+              from={message.role}
+              key={`${message.ts}-${message.role}-${message.content.slice(0, 12)}`}
+            >
+              <MessageLabel>{message.role === 'user' ? 'You' : 'Agent'}</MessageLabel>
+              <MessageContent>
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </MessageContent>
+            </Message>
+          ))}
 
-        {isLoading && (
-          <div className="script-message script-message-agent">
-            <span>Agent</span>
-            <div className="script-inline-status">
-              <Loader2 className="script-spin" size={16} aria-hidden="true" />
-              {progressMessage || 'Working...'}
+          {isLoading && (
+            <Message from="agent">
+              <MessageLabel>Agent</MessageLabel>
+              <MessageContent>
+                <div className="script-inline-status">
+                  <Loader2 className="script-spin" size={16} aria-hidden="true" />
+                  {progressMessage || 'Working...'}
+                </div>
+              </MessageContent>
+            </Message>
+          )}
+
+          {errorMessage && (
+            <div className="script-error-banner" role="alert">
+              {errorMessage}
             </div>
-          </div>
-        )}
+          )}
 
-        {errorMessage && (
-          <div className="script-error-banner" role="alert">
-            {errorMessage}
-          </div>
-        )}
-
-        <div ref={endRef} />
-      </div>
+          <div ref={endRef} />
+        </ConversationContent>
+      </Conversation>
 
       {showStart ? (
-        <div className="script-composer">
-          <textarea
-            className="script-input"
-            disabled={isLoading}
-            onChange={(event) => setOutline(event.target.value)}
-            placeholder="Paste your tutorial outline here..."
-            rows={8}
-            value={outline}
-          />
-          <button
-            className="script-button script-button-primary"
-            disabled={isLoading || !outline.trim()}
-            onClick={onStart}
-            type="button"
+        <div className="script-composer script-composer-start">
+          <PromptInput
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!isLoading && outline.trim()) {
+                onStart();
+              }
+            }}
           >
-            <MessageSquareText size={18} aria-hidden="true" />
-            Generate Script
-          </button>
+            <PromptInputTextarea
+              disabled={isLoading}
+              onChange={(event) => setOutline(event.target.value)}
+              placeholder="Paste your tutorial outline here..."
+              rows={8}
+              value={outline}
+            />
+            <PromptInputFooter>
+              <PromptInputTools>
+                <Sparkles size={15} aria-hidden="true" />
+                <span>Review gates stay under your control</span>
+              </PromptInputTools>
+              <PromptInputSubmit disabled={isLoading || !outline.trim()}>
+                <MessageSquareText size={17} aria-hidden="true" />
+                Generate
+              </PromptInputSubmit>
+            </PromptInputFooter>
+          </PromptInput>
         </div>
       ) : (
         <Composer

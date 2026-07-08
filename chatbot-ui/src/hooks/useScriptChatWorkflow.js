@@ -48,6 +48,7 @@ export function useScriptChatWorkflow() {
   const [script, setScript] = useState([]);
   const [scriptVersion, setScriptVersion] = useState(0);
   const [metadata, setMetadata] = useState(null);
+  const [fossName, setFossName] = useState(null);
   const [groundingReport, setGroundingReport] = useState(null);
   const [complianceResults, setComplianceResults] = useState(null);
   const [activeTab, setActiveTab] = useState('validation');
@@ -90,6 +91,7 @@ export function useScriptChatWorkflow() {
       }
       if (data.type === 'metadata_review') {
         setMetadata(data.metadata);
+        setFossName(data.foss_name || null);
       }
       if (data.type === 'script_review') {
         const normalizedScript = normalizeScript(data.script);
@@ -140,6 +142,7 @@ export function useScriptChatWorkflow() {
     setScript([]);
     setScriptVersion(0);
     setMetadata(null);
+    setFossName(null);
     setGroundingReport(null);
     setComplianceResults(null);
     setCheckpoints([]);
@@ -286,6 +289,7 @@ export function useScriptChatWorkflow() {
     editCell,
     editInput,
     errorMessage,
+    fossName,
     groundingReport,
     interruptData,
     interruptType,

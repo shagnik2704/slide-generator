@@ -1,150 +1,128 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Save, X, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 
-/**
- * Converts wiki/markdown bold syntax to HTML for display
- * '''text''' or **text** → <strong>text</strong>
- */
 const wikiToHtml = (text) => {
     if (!text) return '';
     let html = text;
-    // Convert '''text''' to bold (wiki style)
     html = html.replace(/'''([^']+)'''/g, '<strong>$1</strong>');
-    // Convert **text** to bold (markdown style)
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    // Convert newlines to <br>
     html = html.replace(/\n/g, '<br>');
     return html;
 };
 
-/**
- * Converts HTML bold back to wiki syntax for storage
- * <strong>text</strong> → '''text'''
- */
 const htmlToWiki = (html) => {
     if (!html) return '';
     let text = html;
-    // Convert <strong> and <b> to wiki bold
     text = text.replace(/<strong>([^<]+)<\/strong>/gi, "'''$1'''");
     text = text.replace(/<b>([^<]+)<\/b>/gi, "'''$1'''");
-    // Convert <br> to newlines
     text = text.replace(/<br\s*\/?>/gi, '\n');
-    // Remove any remaining HTML tags
     text = text.replace(/<[^>]+>/g, '');
-    // Decode HTML entities
     const textarea = document.createElement('textarea');
     textarea.innerHTML = text;
     return textarea.value;
 };
 
-/**
- * Editable cell that uses contentEditable for true WYSIWYG editing
- */
-const WikiCell = ({ value, onChange, isHeader = false, width }) => {
+const cellBaseStyle = {
+    padding: '0.75rem 1rem',
+    border: '1px solid var(--border-color)',
+    verticalAlign: 'top',
+    minHeight: '2.5em',
+    lineHeight: '1.6',
+    color: 'var(--text-primary)',
+};
+
+const WikiCell = ({
+    value,
+    onChange,
+    width,
+    readOnly = false,
+    issueIds = [],
+    isActive = false,
+    onIssueClick,
+}) => {
     const cellRef = useRef(null);
     const [isFocused, setIsFocused] = useState(false);
 
-    // Update cell content when value changes externally
     useEffect(() => {
-        if (cellRef.current && !isFocused) {
+        if (cellRef.current && !isFocused && !readOnly) {
             cellRef.current.innerHTML = wikiToHtml(value);
         }
-    }, [value, isFocused]);
+    }, [value, isFocused, readOnly]);
+
+    const style = {
+        ...cellBaseStyle,
+        width,
+        backgroundColor: isActive
+            ? 'rgba(217, 48, 37, 0.16)'
+            : issueIds.length
+                ? 'rgba(217, 48, 37, 0.07)'
+                : 'transparent',
+        outline: isFocused ? '2px solid var(--accent-primary)' : 'none',
+        outlineOffset: '-2px',
+        cursor: readOnly ? (issueIds.length ? 'pointer' : 'default') : 'text',
+        boxShadow: isActive ? 'inset 0 0 0 2px #d93025' : 'none',
+    };
+
+    if (readOnly) {
+        return (
+            <td onClick={issueIds.length ? onIssueClick : undefined} style={style}>
+                {issueIds.length > 0 && (
+                    <span style={{
+                        float: 'right',
+                        marginLeft: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: '#d93025',
+                        background: 'rgba(217, 48, 37, 0.12)',
+                        border: '1px solid rgba(217, 48, 37, 0.3)',
+                        borderRadius: '999px',
+                        padding: '0.1rem 0.45rem',
+                    }}>
+                        {issueIds.length}
+                    </span>
+                )}
+                <span dangerouslySetInnerHTML={{ __html: wikiToHtml(value) }} />
+            </td>
+        );
+    }
 
     const handleBlur = () => {
         setIsFocused(false);
         if (cellRef.current) {
             const newValue = htmlToWiki(cellRef.current.innerHTML);
-            if (newValue !== value) {
-                onChange(newValue);
-            }
+            if (newValue !== value) onChange(newValue);
         }
     };
 
-    const handleFocus = () => {
-        setIsFocused(true);
-    };
-
-    const handleKeyDown = (e) => {
-        // Ctrl+B for bold
-        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-            e.preventDefault();
+    const handleKeyDown = (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+            event.preventDefault();
             document.execCommand('bold', false, null);
         }
     };
 
-    const cellStyle = {
-        padding: '0.75rem 1rem',
-        border: '1px solid var(--border-color)',
-        verticalAlign: 'top',
-        backgroundColor: isHeader ? 'var(--bg-secondary)' : 'transparent',
-        fontWeight: isHeader ? 'bold' : 'normal',
-        width: width,
-        minHeight: '2.5em',
-        outline: isFocused ? '2px solid var(--accent-primary)' : 'none',
-        outlineOffset: '-2px',
-        cursor: 'text',
-        lineHeight: '1.6',
-        color: 'var(--text-primary)',
-    };
-
-    if (isHeader) {
-        return (
-            <th style={cellStyle}>
-                {value}
-            </th>
-        );
-    }
-
     return (
         <td
             ref={cellRef}
-            contentEditable={true}
+            contentEditable
             onBlur={handleBlur}
-            onFocus={handleFocus}
+            onFocus={() => setIsFocused(true)}
             onKeyDown={handleKeyDown}
-            style={cellStyle}
-            suppressContentEditableWarning={true}
+            style={style}
+            suppressContentEditableWarning
         />
     );
 };
 
-/**
- * Row controls (move up/down, delete) with animations
- */
 const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumber }) => {
-    const [animating, setAnimating] = useState(null); // 'up' | 'down' | null
-
-    const handleMoveUp = () => {
-        if (isFirst) return;
-        setAnimating('up');
-        setTimeout(() => {
-            onMoveUp();
-            setAnimating(null);
-        }, 150);
-    };
-
-    const handleMoveDown = () => {
-        if (isLast) return;
-        setAnimating('down');
-        setTimeout(() => {
-            onMoveDown();
-            setAnimating(null);
-        }, 150);
-    };
-
-    const buttonStyle = (disabled, direction) => ({
-        background: animating === direction ? 'var(--bg-tertiary)' : 'none',
+    const buttonStyle = (disabled) => ({
+        background: 'none',
         border: '1px solid transparent',
         borderRadius: '8px',
         padding: '6px',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.3 : 1,
         color: 'var(--accent-primary)',
-        transition: 'all 0.15s ease',
-        transform: animating === direction
-            ? (direction === 'up' ? 'translateY(-3px)' : 'translateY(3px)')
-            : 'translateY(0)',
     });
 
     return (
@@ -156,53 +134,15 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
             width: '70px',
             verticalAlign: 'middle',
         }}>
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-            }}>
-                <span style={{
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    color: 'var(--text-primary)',
-                    marginBottom: '4px'
-                }}>
-                    {rowNumber}
-                </span>
-                <button
-                    onClick={handleMoveUp}
-                    disabled={isFirst}
-                    style={buttonStyle(isFirst, 'up')}
-                    className="row-btn"
-                    title="Move row up"
-                >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{rowNumber}</span>
+                <button onClick={onMoveUp} disabled={isFirst} style={buttonStyle(isFirst)} title="Move row up">
                     <ChevronUp size={20} strokeWidth={2.5} />
                 </button>
-                <button
-                    onClick={handleMoveDown}
-                    disabled={isLast}
-                    style={buttonStyle(isLast, 'down')}
-                    className="row-btn"
-                    title="Move row down"
-                >
+                <button onClick={onMoveDown} disabled={isLast} style={buttonStyle(isLast)} title="Move row down">
                     <ChevronDown size={20} strokeWidth={2.5} />
                 </button>
-                <button
-                    onClick={onDelete}
-                    className="row-btn delete-btn"
-                    style={{
-                        background: 'none',
-                        border: '1px solid transparent',
-                        borderRadius: '8px',
-                        padding: '6px',
-                        cursor: 'pointer',
-                        color: '#d93025',
-                        transition: 'all 0.15s ease',
-                        marginTop: '4px',
-                    }}
-                    title="Delete row"
-                >
+                <button onClick={onDelete} style={{ ...buttonStyle(false), color: '#d93025' }} title="Delete row">
                     <Trash2 size={16} />
                 </button>
             </div>
@@ -210,22 +150,53 @@ const RowControls = ({ onMoveUp, onMoveDown, onDelete, isFirst, isLast, rowNumbe
     );
 };
 
-/**
- * Main WikiTable Editor - looks exactly like MediaWiki tables
- */
-const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
+const rowIdForIndex = (index) => `row_${String(index + 1).padStart(3, '0')}`;
+
+const WikiScriptEditor = ({
+    jsonScript,
+    onSave,
+    onClose,
+    isOpen,
+    readOnly = false,
+    fillHeight = false,
+    flushTop = false,
+    showCloseButton = true,
+    showTips = true,
+    annotations = {},
+    issues = [],
+    activeIssueId = null,
+    activeIssue = null,
+    activeIssueCheck = null,
+    onIssueSelect,
+}) => {
     const [slides, setSlides] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalSlides, setOriginalSlides] = useState([]);
+    const rowRefs = useRef({});
+
+    const issueById = useMemo(
+        () => Object.fromEntries((issues || []).map((issue) => [issue.id, issue])),
+        [issues]
+    );
 
     useEffect(() => {
         if (jsonScript?.slides) {
             const slidesCopy = JSON.parse(JSON.stringify(jsonScript.slides));
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSlides(slidesCopy);
             setOriginalSlides(slidesCopy);
             setHasChanges(false);
         }
     }, [jsonScript]);
+
+    useEffect(() => {
+        if (!activeIssueId || !isOpen) return;
+        const activeIssue = issues.find((issue) => issue.id === activeIssueId);
+        const rowId = activeIssue?.evidence?.find((ev) => ev.row_id)?.row_id;
+        if (rowId && rowRefs.current[rowId]) {
+            rowRefs.current[rowId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [activeIssueId, issues, isOpen]);
 
     const updateSlide = (index, field, value) => {
         const updated = [...slides];
@@ -237,8 +208,7 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
     const deleteSlide = (index) => {
         if (slides.length <= 1) return;
         if (window.confirm(`Delete row ${index + 1}?`)) {
-            const updated = slides.filter((_, i) => i !== index);
-            setSlides(updated);
+            setSlides(slides.filter((_, i) => i !== index));
             setHasChanges(true);
         }
     };
@@ -253,21 +223,12 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
     };
 
     const addSlide = () => {
-        const newSlide = {
-            title: '',
-            narration: '',
-            image_prompt: '',
-            slide_type: 'demo'
-        };
-        setSlides([...slides, newSlide]);
+        setSlides([...slides, { title: '', narration: '', image_prompt: '', slide_type: 'demo' }]);
         setHasChanges(true);
     };
 
     const handleSave = () => {
-        const updatedScript = {
-            ...jsonScript,
-            slides: slides
-        };
+        const updatedScript = { ...jsonScript, slides };
         onSave(updatedScript);
         setOriginalSlides(JSON.parse(JSON.stringify(slides)));
         setHasChanges(false);
@@ -280,18 +241,31 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
         }
     };
 
+    const getCellIssues = (rowId, field) => annotations?.[`${rowId}:${field}`] || [];
+    const getRowIssues = (rowId) => Array.from(new Set([
+        ...getCellIssues(rowId, 'visual_cue'),
+        ...getCellIssues(rowId, 'narration'),
+        ...getCellIssues(rowId, 'script'),
+    ]));
+    const selectFirstIssue = (issueIds) => {
+        if (issueIds.length && onIssueSelect) onIssueSelect(issueIds[0]);
+    };
+
     if (!isOpen) return null;
 
     return (
         <div style={{
-            marginTop: '1rem',
+            marginTop: fillHeight || flushTop ? 0 : '1rem',
             background: 'var(--bg-primary)',
             borderRadius: '12px',
             boxShadow: 'var(--shadow-md)',
             overflow: 'hidden',
             border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: fillHeight ? 1 : undefined,
+            minHeight: fillHeight ? 0 : undefined,
         }}>
-            {/* Toolbar */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -299,244 +273,297 @@ const WikiScriptEditor = ({ jsonScript, onSave, onClose, isOpen }) => {
                 padding: '0.875rem 1.25rem',
                 background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-color)',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                flexShrink: 0,
             }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Script Editor
-                    </span>
-                    <span style={{
-                        fontSize: '0.85em',
-                        color: 'var(--text-secondary)',
-                        background: 'var(--bg-tertiary)',
-                        padding: '0.2em 0.6em',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                    }}>
-                        {slides.length} rows
-                    </span>
-                    {hasChanges && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {readOnly ? 'Script Viewer' : 'Script Editor'}
+                        </span>
                         <span style={{
                             fontSize: '0.85em',
-                            color: '#d93025',
-                            fontWeight: 600,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem'
+                            color: 'var(--text-secondary)',
+                            background: 'var(--bg-tertiary)',
+                            padding: '0.2em 0.6em',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-color)',
                         }}>
-                            <span style={{ width: '6px', height: '6px', background: '#d93025', borderRadius: '50%' }}></span>
-                            Unsaved changes
+                            {slides.length} rows
                         </span>
+                        {readOnly && issues.length > 0 && (
+                            <span style={{
+                                fontSize: '0.85em',
+                                color: '#d93025',
+                                background: 'rgba(217, 48, 37, 0.08)',
+                                padding: '0.2em 0.6em',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(217, 48, 37, 0.2)',
+                                fontWeight: 600,
+                            }}>
+                                {issues.length} issue{issues.length !== 1 ? 's' : ''}
+                            </span>
+                        )}
+                        {!readOnly && hasChanges && (
+                            <span style={{ fontSize: '0.85em', color: '#d93025', fontWeight: 600 }}>
+                                Unsaved changes
+                            </span>
+                        )}
+                    </div>
+                    {readOnly && (
+                        activeIssue ? (
+                            <SelectedIssueHeader issue={activeIssue} check={activeIssueCheck} />
+                        ) : (
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                Select an issue to inspect the exact row and cell.
+                            </div>
+                        )
                     )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {hasChanges && (
+                    {!readOnly && hasChanges && (
                         <>
-                            <button
-                                onClick={handleReset}
-                                style={{
-                                    padding: '0.4rem 0.8rem',
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.3rem',
-                                    fontSize: '0.85rem',
-                                    color: 'var(--text-secondary)',
-                                }}
-                            >
+                            <button onClick={handleReset} style={toolbarButtonStyle()}>
                                 <RotateCcw size={14} />
                                 Reset
                             </button>
-                            <button
-                                onClick={handleSave}
-                                style={{
-                                    padding: '0.4rem 0.8rem',
-                                    background: 'var(--accent-primary)',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.3rem',
-                                    fontSize: '0.85rem',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                }}
-                            >
+                            <button onClick={handleSave} style={toolbarButtonStyle(true)}>
                                 <Save size={14} />
                                 Save
                             </button>
                         </>
                     )}
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '0.4rem',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--text-secondary)',
-                        }}
-                    >
-                        <X size={18} />
-                    </button>
+                    {showCloseButton && onClose && (
+                        <button onClick={onClose} style={{ padding: '0.4rem', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Wiki Table */}
             <div style={{
                 padding: '1.25rem',
                 overflowX: 'auto',
+                overflowY: fillHeight ? 'auto' : undefined,
                 background: 'var(--bg-primary)',
+                flex: fillHeight ? 1 : undefined,
+                minHeight: fillHeight ? 0 : undefined,
             }}>
                 <table style={{
                     width: '100%',
+                    minWidth: readOnly ? '760px' : '900px',
                     borderCollapse: 'separate',
                     borderSpacing: '0',
                     fontSize: '14px',
                     lineHeight: '1.6',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                 }}>
                     <thead>
                         <tr>
-                            <th style={{
-                                padding: '0.75rem',
-                                borderRight: '1px solid var(--border-color)',
-                                borderBottom: '1px solid var(--border-color)',
-                                backgroundColor: 'var(--bg-secondary)',
-                                fontWeight: 'bold',
-                                width: '70px',
-                                textAlign: 'center',
-                                color: 'var(--text-primary)',
-                            }}>
-                                #
-                            </th>
-                            <th style={{
-                                padding: '0.75rem',
-                                borderRight: '1px solid var(--border-color)',
-                                borderBottom: '1px solid var(--border-color)',
-                                backgroundColor: 'var(--bg-secondary)',
-                                fontWeight: 'bold',
-                                width: '35%',
-                                color: 'var(--text-primary)',
-                                textAlign: 'left'
-                            }}>
-                                Visual Cue
-                            </th>
-                            <th style={{
-                                padding: '0.75rem',
-                                borderBottom: '1px solid var(--border-color)',
-                                backgroundColor: 'var(--bg-secondary)',
-                                fontWeight: 'bold',
-                                color: 'var(--text-primary)',
-                                textAlign: 'left'
-                            }}>
-                                Narration
-                            </th>
+                            <HeaderCell width="70px" align="center">#</HeaderCell>
+                            <HeaderCell width="35%">Visual Cue</HeaderCell>
+                            <HeaderCell>Narration</HeaderCell>
                         </tr>
                     </thead>
                     <tbody>
-                        {slides.map((slide, index) => (
-                            <tr key={index}>
-                                <RowControls
-                                    rowNumber={index + 1}
-                                    onMoveUp={() => moveSlide(index, index - 1)}
-                                    onMoveDown={() => moveSlide(index, index + 1)}
-                                    onDelete={() => deleteSlide(index)}
-                                    isFirst={index === 0}
-                                    isLast={index === slides.length - 1}
-                                />
-                                <WikiCell
-                                    value={slide.image_prompt || ''}
-                                    onChange={(value) => updateSlide(index, 'image_prompt', value)}
-                                    width="35%"
-                                />
-                                <WikiCell
-                                    value={slide.narration || ''}
-                                    onChange={(value) => updateSlide(index, 'narration', value)}
-                                />
-                            </tr>
-                        ))}
+                        {slides.map((slide, index) => {
+                            const rowId = rowIdForIndex(index);
+                            const rowIssues = getRowIssues(rowId);
+                            const visualIssues = getCellIssues(rowId, 'visual_cue');
+                            const narrationIssues = getCellIssues(rowId, 'narration');
+                            const rowActive = rowIssues.includes(activeIssueId);
+                            return (
+                                <tr
+                                    key={rowId}
+                                    ref={(node) => {
+                                        if (node) rowRefs.current[rowId] = node;
+                                    }}
+                                    style={{ background: rowActive ? 'rgba(217, 48, 37, 0.06)' : 'transparent' }}
+                                >
+                                    {readOnly ? (
+                                        <td
+                                            onClick={() => selectFirstIssue(rowIssues)}
+                                            title={rowIssues.map((id) => issueById[id]?.message).filter(Boolean).join('\n')}
+                                            style={{
+                                                padding: '0.75rem',
+                                                border: '1px solid var(--border-color)',
+                                                backgroundColor: rowIssues.length ? 'rgba(217, 48, 37, 0.1)' : 'var(--bg-secondary)',
+                                                textAlign: 'center',
+                                                fontWeight: 700,
+                                                width: '70px',
+                                                verticalAlign: 'middle',
+                                                color: rowIssues.length ? '#d93025' : 'var(--text-primary)',
+                                                cursor: rowIssues.length ? 'pointer' : 'default',
+                                            }}
+                                        >
+                                            <div>{index + 1}</div>
+                                            {rowIssues.length > 0 && (
+                                                <div style={{
+                                                    marginTop: '0.35rem',
+                                                    fontSize: '0.72rem',
+                                                    borderRadius: '999px',
+                                                    border: '1px solid rgba(217, 48, 37, 0.3)',
+                                                    background: 'var(--bg-primary)',
+                                                    padding: '0.05rem 0.35rem',
+                                                }}>
+                                                    {rowIssues.length}
+                                                </div>
+                                            )}
+                                        </td>
+                                    ) : (
+                                        <RowControls
+                                            rowNumber={index + 1}
+                                            onMoveUp={() => moveSlide(index, index - 1)}
+                                            onMoveDown={() => moveSlide(index, index + 1)}
+                                            onDelete={() => deleteSlide(index)}
+                                            isFirst={index === 0}
+                                            isLast={index === slides.length - 1}
+                                        />
+                                    )}
+                                    <WikiCell
+                                        value={slide.image_prompt || ''}
+                                        onChange={(value) => updateSlide(index, 'image_prompt', value)}
+                                        width="35%"
+                                        readOnly={readOnly}
+                                        issueIds={visualIssues}
+                                        isActive={visualIssues.includes(activeIssueId)}
+                                        onIssueClick={() => selectFirstIssue(visualIssues)}
+                                    />
+                                    <WikiCell
+                                        value={slide.narration || ''}
+                                        onChange={(value) => updateSlide(index, 'narration', value)}
+                                        readOnly={readOnly}
+                                        issueIds={narrationIssues}
+                                        isActive={narrationIssues.includes(activeIssueId)}
+                                        onIssueClick={() => selectFirstIssue(narrationIssues)}
+                                    />
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
-                {/* Add Row Button */}
-                <div style={{
-                    marginTop: '1.25rem',
-                    textAlign: 'center',
-                }}>
-                    <button
-                        onClick={addSlide}
-                        style={{
-                            padding: '0.6rem 1.5rem',
-                            background: 'var(--bg-primary)',
-                            border: '2px dashed var(--border-color)',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.9rem',
-                            color: 'var(--accent-primary)',
-                            fontWeight: 600,
-                            transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                            e.currentTarget.style.background = 'var(--bg-secondary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.background = 'var(--bg-primary)';
-                        }}
-                    >
-                        <Plus size={18} />
-                        Add New Row
-                    </button>
-                </div>
+                {!readOnly && (
+                    <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+                        <button onClick={addSlide} style={addButtonStyle}>
+                            <Plus size={18} />
+                            Add New Row
+                        </button>
+                    </div>
+                )}
 
-                {/* Help text */}
-                <div style={{
-                    marginTop: '1.5rem',
-                    padding: '1rem',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    color: 'var(--text-secondary)',
-                }}>
-                    <strong style={{ color: 'var(--text-primary)' }}>Tips:</strong> Click any cell to edit directly. Use <code style={{
-                        background: 'var(--bg-primary)',
-                        padding: '0.1em 0.4em',
-                        borderRadius: '4px',
-                        border: '1px solid var(--border-color)'
-                    }}>Ctrl+B</code> for bold text.
-                    Text like <strong>'''bold'''</strong> will be rendered as <strong>bold</strong>.
-                </div>
+                {showTips && (
+                    <div style={{
+                        marginTop: '1.5rem',
+                        padding: '1rem',
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                    }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>Tips:</strong>{' '}
+                        {readOnly
+                            ? 'Click a highlighted row or cell to inspect its compliance issue.'
+                            : "Click any cell to edit directly. Use Ctrl+B for bold text. Text like '''bold''' will be rendered as bold."}
+                    </div>
+                )}
             </div>
-
-            <style>{`
-                .row-btn:hover {
-                    background: var(--bg-tertiary) !important;
-                    border-color: var(--accent-primary) !important;
-                    transform: scale(1.1) !important;
-                }
-                .delete-btn:hover {
-                    background: rgba(217, 48, 37, 0.1) !important;
-                    border-color: #d93025 !important;
-                    color: #d93025 !important;
-                }
-            `}</style>
         </div>
     );
+};
+
+const HeaderCell = ({ children, width, align = 'left' }) => (
+    <th style={{
+        padding: '0.75rem',
+        borderRight: children === 'Narration' ? 'none' : '1px solid var(--border-color)',
+        borderBottom: '1px solid var(--border-color)',
+        backgroundColor: 'var(--bg-secondary)',
+        fontWeight: 'bold',
+        width,
+        textAlign: align,
+        color: 'var(--text-primary)',
+    }}>
+        {children}
+    </th>
+);
+
+const SelectedIssueHeader = ({ issue, check }) => {
+    const firstEvidence = issue.evidence?.[0];
+
+    return (
+        <div style={{
+            display: 'grid',
+            gap: '0.3rem',
+            color: 'var(--text-primary)',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <span style={{
+                    border: '1px solid rgba(217, 48, 37, 0.35)',
+                    borderRadius: '999px',
+                    color: issue.severity === 'minor' ? '#f29900' : '#d93025',
+                    background: issue.severity === 'minor' ? 'rgba(242, 153, 0, 0.1)' : 'rgba(217, 48, 37, 0.1)',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '0.12rem 0.45rem',
+                    textTransform: 'uppercase',
+                }}>
+                    {issue.severity || 'issue'}
+                </span>
+                {firstEvidence?.row_number && (
+                    <span style={{
+                        color: 'var(--text-secondary)',
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '999px',
+                        padding: '0.12rem 0.45rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                    }}>
+                        Row {firstEvidence.row_number}
+                        {firstEvidence.field ? `, ${firstEvidence.field.replace('_', ' ')}` : ''}
+                    </span>
+                )}
+            </div>
+            <div style={{ fontWeight: 700 }}>{issue.message}</div>
+            {check?.criteria && (
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.86rem' }}>
+                    {check.criteria}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const toolbarButtonStyle = (primary = false) => ({
+    padding: '0.4rem 0.8rem',
+    background: primary ? 'var(--accent-primary)' : 'var(--bg-primary)',
+    border: primary ? 'none' : '1px solid var(--border-color)',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+    fontSize: '0.85rem',
+    color: primary ? 'white' : 'var(--text-secondary)',
+    fontWeight: primary ? 600 : 400,
+});
+
+const addButtonStyle = {
+    padding: '0.6rem 1.5rem',
+    background: 'var(--bg-primary)',
+    border: '2px dashed var(--border-color)',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.9rem',
+    color: 'var(--accent-primary)',
+    fontWeight: 600,
 };
 
 export default WikiScriptEditor;

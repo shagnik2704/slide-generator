@@ -46,6 +46,7 @@ export default function ScriptChatPage() {
           activeTab={workflow.activeTab}
           checkpoints={workflow.checkpoints}
           complianceResults={workflow.complianceResults}
+          fossName={workflow.fossName}
           groundingReport={workflow.groundingReport}
           interruptType={workflow.interruptType}
           isLoading={workflow.isLoading}

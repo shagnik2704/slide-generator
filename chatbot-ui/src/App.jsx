@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import OutlineChatPage from './pages/OutlineChatPage';
 import ScriptChatPage from './pages/ScriptChatPage';
+import AdminComplianceReviewPage from './pages/AdminComplianceReviewPage';
 
 // Component to handle login route - redirects if already authenticated
 function LoginRoute() {
@@ -88,6 +89,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ScriptChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-compliance-review"
+            element={
+              <ProtectedRoute>
+                <AdminComplianceReviewPage />
               </ProtectedRoute>
             }
           />

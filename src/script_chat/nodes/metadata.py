@@ -40,6 +40,7 @@ def metadata_review_node(state: ScriptChatState):
     user_decision = interrupt({
         "type": "metadata_review",
         "metadata": metadata_dict,
+        "foss_name": state.get("foss_name"),
         "message": "Review the extracted metadata. Please approve or request changes."
     })
     

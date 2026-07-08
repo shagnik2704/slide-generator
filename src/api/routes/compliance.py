@@ -69,6 +69,49 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/check_admin_compliance_v1")
+async def check_admin_compliance_v1_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """
+    Run evidence-based admin compliance checks on a parsed script.
+
+    This is the parallel V1 workflow. It keeps legacy-friendly checks/summary
+    while adding issues, annotations, policy, and artifact_summary.
+    """
+    print("Running evidence-based admin compliance checks...")
+
+    try:
+        json_script = data.get('json_script')
+        if not json_script:
+            raise HTTPException(status_code=400, detail="json_script is required")
+
+        tutorial_type = data.get('tutorial_type') or _detect_tutorial_type(json_script)
+        source_artifact = data.get('source_artifact') or {}
+
+        from src.compliance.workflow import run_admin_script_compliance
+        compliance_report = await run_admin_script_compliance(
+            json_script,
+            tutorial_type=tutorial_type,
+            source_artifact=source_artifact,
+        )
+
+        summary = compliance_report.get('summary', {})
+        print(
+            "✅ Evidence-based compliance complete: "
+            f"{summary.get('ai_passed', 0)} passed, "
+            f"{summary.get('ai_failed', 0)} failed, "
+            f"{summary.get('ai_skipped', 0)} skipped"
+        )
+
+        return compliance_report
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in check_admin_compliance_v1: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/check_outline_compliance")
 async def check_outline_compliance_endpoint(data: dict):
     """

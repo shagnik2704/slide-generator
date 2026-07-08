@@ -7,38 +7,60 @@ import {
   Save,
   X,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { SCRIPT_CHAT_TABS } from '../../lib/scriptChatContract';
 import { ScriptReviewCard } from './ScriptReviewCard';
 
 function EmptyWorkspace({ threadId }) {
   return (
-    <div className="script-empty-workspace">
+    <Card className="script-empty-workspace">
       <h2>{threadId ? 'Waiting for the next review' : 'Paste an outline to begin'}</h2>
       <p>
         {threadId
           ? 'Validation reports, metadata, scripts, and compliance checks appear here as the backend reaches each review gate.'
           : 'The generated artifacts will stay in this workspace while the assistant panel handles workflow control.'}
       </p>
-    </div>
+    </Card>
   );
 }
 
 function TabBar({ activeTab, availableTabs, onChange }) {
   return (
-    <div className="script-tabs" role="tablist" aria-label="Review artifacts">
-      {SCRIPT_CHAT_TABS.map((tab) => (
-        <button
-          className={activeTab === tab.key ? 'is-active' : ''}
-          disabled={!availableTabs.includes(tab.key)}
-          key={tab.key}
-          onClick={() => onChange(tab.key)}
-          role="tab"
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
+    <Tabs className="script-tabs-wrap" onValueChange={onChange} value={activeTab || ''}>
+      <TabsList className="script-tabs" aria-label="Review artifacts">
+        {SCRIPT_CHAT_TABS.map((tab) => (
+          <TabsTrigger
+            disabled={!availableTabs.includes(tab.key)}
+            key={tab.key}
+            value={tab.key}
+          >
+            {tab.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -52,18 +74,21 @@ function ValidationPanel({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(validatedContent);
 
-  if (!groundingReport) return <EmptyWorkspace threadId />;
+  if (!groundingReport) return <EmptyWorkspace />;
 
   return (
-    <section className="script-artifact">
+    <Card className="script-artifact">
       <div className="script-artifact-header">
         <div>
           <span className="script-eyebrow">Validation</span>
           <h2>Grounding report</h2>
         </div>
-        <span className={groundingReport.is_mostly_correct ? 'script-badge success' : 'script-badge warning'}>
+        <Badge
+          className={groundingReport.is_mostly_correct ? 'script-badge success' : 'script-badge warning'}
+          variant={groundingReport.is_mostly_correct ? 'success' : 'warning'}
+        >
           {groundingReport.is_mostly_correct ? 'Mostly correct' : 'Needs attention'}
-        </span>
+        </Badge>
       </div>
 
       <div className="script-section">
@@ -72,47 +97,52 @@ function ValidationPanel({
           {interruptType === 'validation_review' && (
             isEditing ? (
               <div className="script-button-row">
-                <button
+                <Button
                   className="script-icon-button"
                   disabled={isLoading}
                   onClick={() => {
                     setDraft(validatedContent);
                     setIsEditing(false);
                   }}
+                  size="icon"
                   title="Cancel outline edits"
                   type="button"
+                  variant="outline"
                 >
                   <X size={16} aria-hidden="true" />
-                </button>
-                <button
+                </Button>
+                <Button
                   className="script-icon-button script-icon-button-primary"
                   disabled={isLoading || !draft.trim()}
                   onClick={async () => {
                     await onSaveOutline(draft);
                     setIsEditing(false);
                   }}
+                  size="icon"
                   title="Save outline edits"
                   type="button"
                 >
                   <Save size={16} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             ) : (
-              <button
+              <Button
                 className="script-icon-button"
                 disabled={isLoading}
                 onClick={() => setIsEditing(true)}
+                size="icon"
                 title="Edit validated outline"
                 type="button"
+                variant="outline"
               >
                 <Pencil size={16} aria-hidden="true" />
-              </button>
+              </Button>
             )
           )}
         </div>
 
         {isEditing ? (
-          <textarea
+          <Textarea
             className="script-outline-editor"
             onChange={(event) => setDraft(event.target.value)}
             value={draft}
@@ -143,15 +173,29 @@ function ValidationPanel({
           </ul>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
-function MetadataPanel({ metadata }) {
-  if (!metadata) return <EmptyWorkspace threadId />;
+function MetadataTableRow({ label, children }) {
+  return (
+    <tr>
+      <th scope="row">{label}</th>
+      <td>{children}</td>
+    </tr>
+  );
+}
+
+function MetadataPanel({ fossName, metadata }) {
+  if (!metadata) return <EmptyWorkspace />;
+
+  const learningObjectives = metadata.learning_objectives || [];
+  const outlineTopics = metadata.outline_topics || [];
+  const metaTags = metadata.meta_tags || [];
+  const series = fossName || metadata.foss_name || 'Not specified';
 
   return (
-    <section className="script-artifact">
+    <Card className="script-artifact">
       <div className="script-artifact-header">
         <div>
           <span className="script-eyebrow">Metadata</span>
@@ -159,31 +203,40 @@ function MetadataPanel({ metadata }) {
         </div>
       </div>
 
-      <dl className="script-metadata-grid">
-        <div>
-          <dt>Prerequisites</dt>
-          <dd>{metadata.prerequisites || 'None listed'}</dd>
-        </div>
-        <div>
-          <dt>Learning objectives</dt>
-          <dd>
-            <ul className="script-list">
-              {(metadata.learning_objectives || []).map((objective) => (
-                <li key={objective}>{objective}</li>
-              ))}
-            </ul>
-          </dd>
-        </div>
-        <div>
-          <dt>Tags</dt>
-          <dd className="script-tag-row">
-            {(metadata.meta_tags || []).map((tag) => (
-              <span className="script-tag" key={tag}>{tag}</span>
-            ))}
-          </dd>
-        </div>
-      </dl>
-    </section>
+      <div className="script-metadata-table-wrap">
+        <table className="script-metadata-table">
+          <tbody>
+            <MetadataTableRow label="Series">
+              {series}
+            </MetadataTableRow>
+            <MetadataTableRow label="Tutorial:">
+              {metadata.title || 'Untitled tutorial'}
+            </MetadataTableRow>
+            <MetadataTableRow label="Learning Objective:">
+              <div>At the end of this tutorial learner will be able to</div>
+              <ol className="script-metadata-numbered-list">
+                {learningObjectives.map((objective) => (
+                  <li key={objective}>{objective}</li>
+                ))}
+              </ol>
+            </MetadataTableRow>
+            <MetadataTableRow label="Outline">
+              <ul className="script-metadata-bullet-list">
+                {outlineTopics.map((topic) => (
+                  <li key={topic}>{topic}</li>
+                ))}
+              </ul>
+            </MetadataTableRow>
+            <MetadataTableRow label="Meta Tags">
+              {metaTags.join(', ')}
+            </MetadataTableRow>
+            <MetadataTableRow label="Pre-requisite Tutorial">
+              {metadata.prerequisites || 'None listed'}
+            </MetadataTableRow>
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
@@ -200,93 +253,139 @@ function ScriptPanel({
   script,
   scriptVersion,
 }) {
-  if (!script.length) return <EmptyWorkspace threadId />;
+  const [pendingRevertId, setPendingRevertId] = useState(null);
+  const pendingCheckpoint = checkpoints.find((checkpoint) => checkpoint.checkpoint_id === pendingRevertId);
+
+  if (!script.length) return <EmptyWorkspace />;
 
   return (
-    <section className="script-artifact">
+    <Card className="script-artifact">
       <div className="script-artifact-header">
         <div>
           <span className="script-eyebrow">Script</span>
           <h2>Draft v{scriptVersion}</h2>
         </div>
         <div className="script-toolbar">
-          <span className="script-badge">{script.length} slides</span>
-          <button
+          <Badge className="script-badge" variant="secondary">{script.length} slides</Badge>
+          <Button
             className="script-icon-button"
             disabled={isLoading}
             onClick={onLoadCheckpoints}
+            size="icon"
             title="Load version history"
             type="button"
+            variant="outline"
           >
             <History size={16} aria-hidden="true" />
-          </button>
-          <button
-            className="script-icon-button"
-            disabled={isLoading}
-            onClick={() => {
-              if (window.confirm('Jump back to Metadata Review? This will discard unapproved script changes.')) {
-                onJumpToMetadata();
-              }
-            }}
-            title="Return to metadata review"
-            type="button"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-          </button>
-          <button
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="script-icon-button"
+                disabled={isLoading}
+                size="icon"
+                title="Return to metadata review"
+                type="button"
+                variant="outline"
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Return to metadata review?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will discard unapproved script changes and move the workflow back to the metadata review gate.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onJumpToMetadata}>Return</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
             className="script-icon-button script-icon-button-primary"
             disabled={isLoading}
             onClick={onDownload}
+            size="icon"
             title="Download DOCX"
             type="button"
           >
             <Download size={16} aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       </div>
 
       {!!checkpoints.length && (
         <div className="script-version-row">
-          <select
+          <Select
             disabled={isReverting}
-            onChange={(event) => {
-              if (!event.target.value) return;
-              if (window.confirm('Revert to this version? Current script edits will be overwritten.')) {
-                onRevert(event.target.value);
-              }
-              event.target.value = '';
+            onValueChange={setPendingRevertId}
+            value={pendingRevertId || ''}
+          >
+            <SelectTrigger className="script-version-select">
+              <SelectValue placeholder="Revert to version..." />
+            </SelectTrigger>
+            <SelectContent>
+              {checkpoints.map((checkpoint) => (
+                <SelectItem key={checkpoint.checkpoint_id} value={checkpoint.checkpoint_id}>
+                  Version {checkpoint.version} - {new Date(checkpoint.timestamp).toLocaleTimeString()}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <AlertDialog
+            open={Boolean(pendingRevertId)}
+            onOpenChange={(open) => {
+              if (!open) setPendingRevertId(null);
             }}
           >
-            <option value="">Revert to version...</option>
-            {checkpoints.map((checkpoint) => (
-              <option key={checkpoint.checkpoint_id} value={checkpoint.checkpoint_id}>
-                Version {checkpoint.version} · {new Date(checkpoint.timestamp).toLocaleTimeString()}
-              </option>
-            ))}
-          </select>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Revert script version?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {pendingCheckpoint
+                    ? `Current script edits will be overwritten by version ${pendingCheckpoint.version}.`
+                    : 'Current script edits will be overwritten by the selected checkpoint.'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (pendingRevertId) onRevert(pendingRevertId);
+                    setPendingRevertId(null);
+                  }}
+                >
+                  Revert
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
 
       <ScriptReviewCard editable={isReviewing} onEditCell={onEditCell} script={script} />
-    </section>
+    </Card>
   );
 }
 
 function CompliancePanel({ complianceResults }) {
-  if (!complianceResults?.checks) return <EmptyWorkspace threadId />;
+  if (!complianceResults?.checks) return <EmptyWorkspace />;
 
   const summary = complianceResults.summary || {};
 
   return (
-    <section className="script-artifact">
+    <Card className="script-artifact">
       <div className="script-artifact-header">
         <div>
           <span className="script-eyebrow">Compliance</span>
           <h2>Pedagogy checks</h2>
         </div>
         <div className="script-score-row">
-          <span className="script-badge success">{summary.ai_passed || 0} passed</span>
-          <span className="script-badge danger">{summary.ai_failed || 0} failed</span>
+          <Badge className="script-badge success" variant="success">{summary.ai_passed || 0} passed</Badge>
+          <Badge className="script-badge danger" variant="danger">{summary.ai_failed || 0} failed</Badge>
         </div>
       </div>
 
@@ -301,7 +400,7 @@ function CompliancePanel({ complianceResults }) {
           </article>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -309,6 +408,7 @@ export function ReviewWorkspace({
   activeTab,
   checkpoints,
   complianceResults,
+  fossName,
   groundingReport,
   interruptType,
   isLoading,
@@ -351,7 +451,7 @@ export function ReviewWorkspace({
           onSaveOutline={onSaveOutline}
         />
       )}
-      {visibleTab === 'metadata' && <MetadataPanel metadata={metadata} />}
+      {visibleTab === 'metadata' && <MetadataPanel fossName={fossName} metadata={metadata} />}
       {visibleTab === 'script' && (
         <ScriptPanel
           checkpoints={checkpoints}

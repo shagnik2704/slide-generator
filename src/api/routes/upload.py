@@ -85,12 +85,17 @@ async def parse_script(file: UploadFile = File(...), current_user: TokenData = D
         if filename.endswith('.json'):
             # Direct JSON parsing
             json_script = json.loads(content.decode('utf-8'))
+            source_artifact = {"file_type": "json", "hyperlinks": []}
         else:
             # Parse docx/odt using existing parser
             from io import BytesIO
-            from src.services.docx_service import docx_to_json
+            from src.services.docx_service import docx_to_json, extract_docx_hyperlinks
             
             json_script = docx_to_json(BytesIO(content))
+            source_artifact = {
+                "file_type": "docx" if filename.endswith('.docx') else "odt",
+                "hyperlinks": extract_docx_hyperlinks(BytesIO(content)) if filename.endswith('.docx') else []
+            }
         
         # Detect tutorial type (demo or conceptual)
         tutorial_type = _detect_tutorial_type(json_script)
@@ -111,6 +116,7 @@ async def parse_script(file: UploadFile = File(...), current_user: TokenData = D
             "json_script": json_script,
             "project_id": project_id,
             "tutorial_type": tutorial_type,
+            "source_artifact": source_artifact,
             "message": "Script parsed successfully"
         }
     except json.JSONDecodeError as e:

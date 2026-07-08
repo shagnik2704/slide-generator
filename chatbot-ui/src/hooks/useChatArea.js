@@ -93,7 +93,6 @@ export function useChatArea(initialMode = 'create') {
         setIsTyping,
         setCurrentProjectId,
         setQualityReports,
-        setOpenReportId,
         setOpenQualityId
     );
 

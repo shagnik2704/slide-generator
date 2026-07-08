@@ -276,7 +276,7 @@ const WorkflowCard = ({
                             )}
                             {(tool === 'compliance' || tool === 'quality') && (
                                 <ScriptUploadedActions
-                                    msg={{ ...result, id: workflow.id }}
+                                    msg={{ ...result, id: workflow.id, filename: workflow.filename }}
                                     isTyping={isTyping}
                                     openReportId={openReportId}
                                     setOpenReportId={setOpenReportId}

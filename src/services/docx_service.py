@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from io import BytesIO
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Inches, Pt, RGBColor, Twips
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -264,15 +265,27 @@ def docx_to_json(docx_file) -> dict:
     
     return {
         'presentation_title': metadata.get('title', title),
+        'domain': metadata.get('domain', ''),
         'module': metadata.get('module', ''),
         'tutorial': metadata.get('episode', ''),
         'duration': metadata.get('duration', '3-4 min'),
         'learning_objectives': metadata.get('learning_objectives', []),
         'prerequisites': metadata.get('prerequisites', ''),
-        'meta_tags': metadata.get('meta_tags', []),
+        'keywords': metadata.get('keywords', []),
+        'meta_tags': metadata.get('meta_tags', metadata.get('keywords', [])),
         'outline': metadata.get('outline', []),
         'slides': slides
     }
+
+
+def extract_docx_hyperlinks(docx_file) -> list[str]:
+    """Extract external hyperlink targets from a DOCX file."""
+    doc = Document(docx_file)
+    links = []
+    for rel in doc.part.rels.values():
+        if rel.reltype == RT.HYPERLINK:
+            links.append(rel.target_ref)
+    return sorted(set(links))
 
 
 def _add_metadata_section(doc, json_data: dict):
@@ -418,6 +431,8 @@ def _extract_metadata(doc) -> dict:
                 
                 if 'title' in label and not metadata.get('title'):
                     metadata['title'] = value
+                elif 'domain' in label:
+                    metadata['domain'] = value
                 elif 'module' in label or 'series' in label:
                     metadata['module'] = value
                 elif 'episode' in label or 'tutorial' in label:
@@ -426,6 +441,15 @@ def _extract_metadata(doc) -> dict:
                     metadata['duration'] = value
                 elif 'prerequisite' in label:
                     metadata['prerequisites'] = value
+                elif 'keyword' in label or 'meta tag' in label:
+                    metadata['keywords'] = [
+                        item.strip() for item in re.split(r',|\n', value) if item.strip()
+                    ]
+                    metadata['meta_tags'] = metadata['keywords']
+                elif 'outline' in label:
+                    metadata['outline'] = [
+                        item.strip(" •\t") for item in value.split('\n') if item.strip(" •\t")
+                    ]
                 elif 'learning' in label and 'objective' in label:
                     # Split by newlines to get list
                     metadata['learning_objectives'] = [
