@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -24,9 +24,7 @@ const SEVERITY_COLORS = {
 };
 
 const STATUS_LABELS = {
-    issues: 'Issues',
-    failed: 'Failed Checks',
-    skipped: 'Skipped',
+    failed: 'Failed',
     passed: 'Passed',
     all: 'All',
 };
@@ -37,11 +35,13 @@ const ComplianceReviewWorkspace = ({
     isOpen,
     onClose,
     activeIssueId,
+    scrollTrigger = 0,
     onIssueSelect,
     variant = 'overlay',
 }) => {
-    const [filter, setFilter] = useState('issues');
+    const [filter, setFilter] = useState('failed');
     const [isQueueOpen, setIsQueueOpen] = useState(true);
+    const [selectedGroup, setSelectedGroup] = useState(null);
     const queueRailRef = useRef(null);
 
     const checks = useMemo(() => report?.checks || [], [report?.checks]);
@@ -55,25 +55,39 @@ const ComplianceReviewWorkspace = ({
         [checks]
     );
 
+    const groupedIssues = useMemo(() => {
+        const groups = {};
+        issues.forEach((issue) => {
+            const key = issue.criteria_id;
+            if (!groups[key]) {
+                const check = checkById[key];
+                groups[key] = {
+                    criteria_id: key,
+                    criteria: check?.criteria || issue.message || 'Unknown Criterion',
+                    severity: issue.severity,
+                    issues: [],
+                };
+            }
+            groups[key].issues.push(issue);
+        });
+        return Object.values(groups);
+    }, [issues, checkById]);
+
     const activeIssue = useMemo(
         () => issues.find((issue) => issue.id === activeIssueId) || null,
         [issues, activeIssueId]
     );
 
     const visibleChecks = useMemo(() => {
-        if (filter === 'failed') return checks.filter((check) => check.ai_review === false);
-        if (filter === 'skipped') return checks.filter((check) => check.ai_review === null);
         if (filter === 'passed') return checks.filter((check) => check.ai_review === true);
-        return checks;
+        return checks; // for filter === 'all'
     }, [checks, filter]);
 
     const issueCounts = useMemo(() => ({
-        issues: issues.length,
-        failed: checks.filter((check) => check.ai_review === false).length,
-        skipped: checks.filter((check) => check.ai_review === null).length,
+        failed: groupedIssues.length,
         passed: checks.filter((check) => check.ai_review === true).length,
         all: checks.length,
-    }), [checks, issues]);
+    }), [checks, groupedIssues]);
 
     if (!isOpen || !report) return null;
     const isPage = variant === 'page';
@@ -169,44 +183,45 @@ const ComplianceReviewWorkspace = ({
 
                     {isQueueOpen && (
                         <>
-                            <div style={filterBarStyle}>
-                                {['issues', 'failed', 'skipped', 'passed', 'all'].map((item) => (
-                                    <button
-                                        key={item}
-                                        onClick={() => setFilter(item)}
-                                        style={filter === item ? activeFilterStyle : filterButtonStyle}
-                                    >
-                                        {STATUS_LABELS[item]} {issueCounts[item]}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div style={queueRailShellStyle}>
-                                <button
-                                    aria-label="Scroll review queue left"
-                                    onClick={() => scrollQueue(-1)}
-                                    style={queueArrowButtonStyle}
-                                    type="button"
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                                <div ref={queueRailRef} style={isPage ? pageQueueStyle : queueStyle}>
-                                    {filter === 'issues' ? (
-                                        <IssueList
-                                            issues={issues}
-                                            activeIssueId={activeIssueId}
-                                            checkById={checkById}
-                                            onIssueSelect={onIssueSelect}
-                                        />
-                                    ) : (
-                                        <CheckList
-                                            checks={visibleChecks}
-                                            issues={issues}
-                                            activeIssueId={activeIssueId}
-                                            onIssueSelect={onIssueSelect}
-                                        />
-                                    )}
-                                </div>
+                             <div style={filterBarStyle}>
+                                 {['failed', 'passed', 'all'].map((item) => (
+                                     <button
+                                         key={item}
+                                         onClick={() => setFilter(item)}
+                                         style={filter === item ? activeFilterStyle : filterButtonStyle}
+                                     >
+                                         {STATUS_LABELS[item]} {issueCounts[item]}
+                                     </button>
+                                 ))}
+                             </div>
+ 
+                             <div style={queueRailShellStyle}>
+                                 <button
+                                     aria-label="Scroll review queue left"
+                                     onClick={() => scrollQueue(-1)}
+                                     style={queueArrowButtonStyle}
+                                     type="button"
+                                 >
+                                     <ChevronLeft size={18} />
+                                 </button>
+                                 <div ref={queueRailRef} style={isPage ? pageQueueStyle : queueStyle}>
+                                     {filter === 'failed' ? (
+                                          <GroupedIssueList
+                                              groupedIssues={groupedIssues}
+                                              activeIssueId={activeIssueId}
+                                              selectedGroup={selectedGroup}
+                                              checkById={checkById}
+                                              onSelectGroup={setSelectedGroup}
+                                          />
+                                     ) : (
+                                         <CheckList
+                                             checks={visibleChecks}
+                                             issues={issues}
+                                             activeIssueId={activeIssueId}
+                                             onIssueSelect={onIssueSelect}
+                                         />
+                                     )}
+                                 </div>
                                 <button
                                     aria-label="Scroll review queue right"
                                     onClick={() => scrollQueue(1)}
@@ -233,6 +248,7 @@ const ComplianceReviewWorkspace = ({
                             annotations={report.annotations || {}}
                             issues={issues}
                             activeIssueId={activeIssueId}
+                            scrollTrigger={scrollTrigger}
                             activeIssue={activeIssue}
                             activeIssueCheck={activeIssue ? checkById[activeIssue.criteria_id] : null}
                             onIssueSelect={onIssueSelect}
@@ -242,6 +258,17 @@ const ComplianceReviewWorkspace = ({
                     )}
                 </div>
             </div>
+            {selectedGroup && (
+                <ViolationsModal
+                    group={selectedGroup}
+                    activeIssueId={activeIssueId}
+                    onIssueSelect={(id) => {
+                        onIssueSelect(id);
+                        setSelectedGroup(null);
+                    }}
+                    onClose={() => setSelectedGroup(null)}
+                />
+            )}
         </section>
     );
 
@@ -276,37 +303,106 @@ const SummaryTile = ({ label, value, icon, tone }) => {
     );
 };
 
-const IssueList = ({ issues, activeIssueId, checkById, onIssueSelect }) => {
-    if (!issues.length) {
+const GroupedIssueList = ({ groupedIssues, activeIssueId, selectedGroup, checkById, onSelectGroup }) => {
+    if (!groupedIssues.length) {
         return <div style={emptyStateStyle}>No row-level issues were returned for this report.</div>;
     }
 
-    return issues.map((issue) => {
-        const firstEvidence = issue.evidence?.[0];
-        const isActive = issue.id === activeIssueId;
-        const check = checkById[issue.criteria_id];
+    return groupedIssues.map((group) => {
+        const containsActiveIssue = group.issues.some((issue) => issue.id === activeIssueId) || selectedGroup?.criteria_id === group.criteria_id;
 
         return (
             <button
-                key={issue.id}
-                onClick={() => onIssueSelect && onIssueSelect(issue.id)}
-                style={isActive ? activeCardStyle : queueCardStyle}
+                key={group.criteria_id}
+                onClick={() => onSelectGroup && onSelectGroup(group)}
+                style={containsActiveIssue ? activeGroupCardStyle : queueGroupCardStyle}
             >
                 <div style={cardTopLineStyle}>
-                    <SeverityPill severity={issue.severity} />
-                    {firstEvidence?.row_number && (
-                        <span style={rowBadgeStyle}>
-                            Row {firstEvidence.row_number}
-                            {firstEvidence.field ? `, ${formatField(firstEvidence.field)}` : ''}
-                        </span>
-                    )}
+                    <SeverityPill severity={group.severity} />
+                    <span style={rowBadgeStyle}>
+                        {group.issues.length} {group.issues.length === 1 ? 'violation' : 'violations'}
+                    </span>
                 </div>
-                <MarkdownText value={issue.message} style={cardTitleStyle} />
-                {check?.criteria && <MarkdownText value={check.criteria} style={criterionStyle} />}
-                {firstEvidence?.text && <MarkdownText value={firstEvidence.text} style={evidenceTextStyle} />}
+                <MarkdownText value={group.criteria} style={cardTitleStyle} />
+                <div style={clickToViewStyle}>
+                    Click to view violations
+                </div>
             </button>
         );
     });
+};
+
+const ViolationsModal = ({ group, activeIssueId, onIssueSelect, onClose }) => {
+    useEffect(() => {
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onClose]);
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div style={modalBackdropStyle} onClick={onClose}>
+            <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+                <header style={modalHeaderStyle}>
+                    <div>
+                        <div style={modalEyebrowStyle}>
+                            <SeverityPill severity={group.severity} />
+                            <span style={modalOccurrenceBadgeStyle}>
+                                {group.issues.length} {group.issues.length === 1 ? 'occurrence' : 'occurrences'}
+                            </span>
+                        </div>
+                        <h4 style={modalTitleStyle}>{group.criteria}</h4>
+                    </div>
+                    <button onClick={onClose} style={modalCloseButtonStyle} aria-label="Close modal">
+                        <X size={18} />
+                    </button>
+                </header>
+                <div style={modalBodyStyle}>
+                    {group.issues.map((issue) => {
+                        const evidence = issue.evidence?.[0];
+                        const isActive = issue.id === activeIssueId;
+                        return (
+                            <button
+                                key={issue.id}
+                                onClick={() => onIssueSelect(issue.id)}
+                                style={isActive ? activeModalItemStyle : modalItemStyle}
+                            >
+                                <div style={modalItemMetaStyle}>
+                                    {evidence?.row_number && (
+                                        <span style={rowBadgeStyle}>
+                                            Row {evidence.row_number}
+                                            {evidence.field ? `, ${formatField(evidence.field)}` : ''}
+                                        </span>
+                                    )}
+                                </div>
+                                <MarkdownText value={issue.message} style={modalItemMessageStyle} />
+                                {evidence?.text && (
+                                    <div style={modalItemEvidenceStyle}>
+                                        <span style={citedTextLabelStyle}>CITED TEXT</span>
+                                        <MarkdownText value={evidence.text} style={modalItemEvidenceTextStyle} />
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
 };
 
 const CheckList = ({ checks, issues, activeIssueId, onIssueSelect }) => {
@@ -656,7 +752,8 @@ const queueCardStyle = {
 
 const activeCardStyle = {
     ...queueCardStyle,
-    border: '2px solid #d93025',
+    borderColor: '#d93025',
+    boxShadow: '0 0 0 1px #d93025',
     background: 'rgba(217, 48, 37, 0.07)',
 };
 
@@ -748,6 +845,169 @@ const emptyStateStyle = {
     border: '1px dashed var(--border-color)',
     borderRadius: '8px',
     fontSize: '0.9rem',
+};
+
+const queueGroupCardStyle = {
+    ...queueCardStyle,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+};
+
+const activeGroupCardStyle = {
+    ...activeCardStyle,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+};
+
+const clickToViewStyle = {
+    marginTop: '0.75rem',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    color: 'var(--accent-primary)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+};
+
+const modalBackdropStyle = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 2000,
+    background: 'rgba(15, 23, 42, 0.45)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '1.5rem',
+};
+
+const modalContentStyle = {
+    width: 'min(680px, 100%)',
+    maxHeight: 'min(780px, calc(100vh - 4rem))',
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '16px',
+    boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+};
+
+const modalHeaderStyle = {
+    padding: '1.25rem',
+    background: 'var(--bg-secondary)',
+    borderBottom: '1px solid var(--border-color)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '1rem',
+};
+
+const modalEyebrowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginBottom: '0.35rem',
+};
+
+const modalOccurrenceBadgeStyle = {
+    fontSize: '0.8rem',
+    fontWeight: 700,
+    color: 'var(--text-secondary)',
+};
+
+const modalTitleStyle = {
+    margin: 0,
+    fontSize: '1.05rem',
+    fontWeight: 750,
+    color: 'var(--text-primary)',
+    lineHeight: 1.4,
+};
+
+const modalCloseButtonStyle = {
+    padding: '0.25rem',
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+};
+
+const modalBodyStyle = {
+    padding: '1rem',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    flex: 1,
+};
+
+const modalItemStyle = {
+    textAlign: 'left',
+    padding: '1.1rem',
+    background: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.55rem',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02)',
+};
+
+const activeModalItemStyle = {
+    ...modalItemStyle,
+    borderColor: '#d93025',
+    boxShadow: '0 0 0 1px #d93025, 0 4px 12px rgba(217, 48, 37, 0.06)',
+    background: 'rgba(217, 48, 37, 0.07)',
+};
+
+const modalItemMetaStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+};
+
+const modalItemMessageStyle = {
+    fontSize: '0.9rem',
+    fontWeight: 650,
+    color: 'var(--text-primary)',
+    lineHeight: 1.4,
+};
+
+const modalItemEvidenceStyle = {
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border-color)',
+    borderLeft: '3px solid #cbd5e1',
+    borderRadius: '6px',
+    padding: '0.75rem 1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.3rem',
+    marginTop: '0.45rem',
+};
+
+const modalItemEvidenceTextStyle = {
+    fontFamily: 'var(--font-sans), system-ui, sans-serif',
+    fontSize: '0.86rem',
+    color: 'var(--text-secondary)',
+    fontStyle: 'italic',
+    lineHeight: 1.5,
+    wordBreak: 'break-word',
+    whiteSpace: 'pre-wrap',
+};
+
+const citedTextLabelStyle = {
+    color: 'var(--text-secondary)',
+    fontSize: '0.65rem',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
 };
 
 export default ComplianceReviewWorkspace;

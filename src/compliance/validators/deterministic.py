@@ -81,7 +81,46 @@ def run_deterministic_validators(policy: Policy, artifact: ScriptArtifact) -> Tu
     _section_presence("assignment_present", "assignment", add_check, add_issue, artifact)
     _closing_present(add_check, add_issue, artifact)
 
-    return checks, issues
+    # Post-process to split multi-evidence issues into individual ComplianceIssues
+    split_issues = []
+    issue_id_map = {}
+    split_counter = 1
+
+    for issue in issues:
+        if len(issue.evidence) <= 1:
+            new_id = f"det_{split_counter:03d}"
+            split_issues.append(issue.model_copy(update={"id": new_id}))
+            issue_id_map[issue.id] = [new_id]
+            split_counter += 1
+        else:
+            new_ids = []
+            for ev in issue.evidence:
+                new_id = f"det_{split_counter:03d}"
+                message = ev.reason or issue.message
+                split_issues.append(ComplianceIssue(
+                    id=new_id,
+                    criteria_id=issue.criteria_id,
+                    severity=issue.severity,
+                    status=issue.status,
+                    message=message,
+                    evidence=[ev],
+                    suggested_action=issue.suggested_action,
+                ))
+                new_ids.append(new_id)
+                split_counter += 1
+            issue_id_map[issue.id] = new_ids
+
+    # Update checks to map to the new split issue IDs
+    for check in checks:
+        new_check_issues = []
+        for old_id in check.issues:
+            if old_id in issue_id_map:
+                new_check_issues.extend(issue_id_map[old_id])
+            else:
+                new_check_issues.append(old_id)
+        check.issues = new_check_issues
+
+    return checks, split_issues
 
 
 def _two_column_format(add_check, add_issue, rows: List[ScriptRow]) -> None:

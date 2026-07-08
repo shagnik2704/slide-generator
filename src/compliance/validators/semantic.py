@@ -207,24 +207,28 @@ def _semantic_batch_to_results(
                 reason=ev.reason,
             ))
 
-        issue = ComplianceIssue(
-            id=f"sem_{issue_counter:03d}",
-            criteria_id=criterion.id,
-            severity=criterion.severity,
-            message=item.notes or criterion.criteria,
-            evidence=evidence,
-            suggested_action=item.suggested_action or "Review the cited rows and revise the script.",
-        )
-        issue_counter += 1
-        issues.append(issue)
+        issue_ids = []
+        for ev in evidence:
+            issue = ComplianceIssue(
+                id=f"sem_{issue_counter:03d}",
+                criteria_id=criterion.id,
+                severity=criterion.severity,
+                message=_issue_message_for_evidence(criterion, item.notes, ev),
+                evidence=[ev],
+                suggested_action=item.suggested_action or _suggested_action_for_evidence(criterion, ev),
+            )
+            issue_counter += 1
+            issues.append(issue)
+            issue_ids.append(issue.id)
+
         checks.append(CheckResult(
             id=criterion.id,
             criteria=criterion.criteria,
             ai_review=False,
-            ai_notes=issue.message,
+            ai_notes=item.notes or f"{len(issue_ids)} row-level issue(s) found.",
             severity=criterion.severity,
             validator="semantic",
-            issues=[issue.id],
+            issues=issue_ids,
         ))
 
     return checks, issues
@@ -327,6 +331,9 @@ Use British English spelling.
 
 Rules:
 - Every failed check MUST include row_number, field, quoted text, and reason.
+- Each evidence reason MUST be specific to that exact row/cell. Avoid vague phrases like "several rows", "some cues", or "multiple issues".
+- For visual/narration issues, state exactly what narration action is missing, incorrect, or mismatched in the visual cue.
+- For language, terminology, grammar, and factual issues, quote the exact problematic wording and explain the concrete problem.
 - If you cannot cite row/cell evidence, mark the check as passed only if there is truly no issue.
 - Keep notes concise and actionable.
 - Do not invent rows or facts.
@@ -409,6 +416,7 @@ Rules:
 - Mark passed=false only when the notes contain FACTUAL_CONTRADICTION with web evidence.
 - Unsupported, unavailable, weak, or inconclusive evidence must not become a failure.
 - Every failed check MUST include row_number, field, quoted text, and reason.
+- Each evidence reason MUST identify the exact contradicted wording and the source-backed contradiction.
 - Keep notes concise and actionable.
 
 Criteria:
@@ -434,6 +442,56 @@ def _message_content_to_text(response) -> str:
         ]
         return "".join(parts).strip()
     return str(content).strip()
+
+
+def _issue_message_for_evidence(criterion: PolicyCriterion, notes: str, evidence: Evidence) -> str:
+    reason = (evidence.reason or "").strip()
+    if reason:
+        return reason
+
+    location = (
+        f"Row {evidence.row_number}, {evidence.field.replace('_', ' ')}"
+        if evidence.row_number and evidence.field
+        else "Script evidence"
+    )
+    if notes and not _looks_like_vague_summary(notes):
+        return f"{location}: {notes}"
+    return f"{location} needs review for: {criterion.criteria}"
+
+
+def _suggested_action_for_evidence(criterion: PolicyCriterion, evidence: Evidence) -> str:
+    field = (evidence.field or "script").replace("_", " ")
+    if criterion.id == "visual_narration_alignment":
+        return f"Revise the {field} so it includes the exact action or UI state described by the matching narration."
+    if criterion.id == "technical_demo_executability":
+        return "Add the missing step or clarify the cited action so the demo can be followed side-by-side."
+    if criterion.id == "translation_friendly_language":
+        return "Rewrite the cited wording in simpler, direct narration while preserving the meaning."
+    if criterion.id == "grammar_punctuation":
+        return "Correct the cited grammar, spelling, or punctuation issue."
+    if criterion.id == "terminology_clarity_consistency":
+        return "Introduce or reuse the cited term consistently and clearly."
+    if criterion.id == "abbreviations_explained":
+        return "Expand the abbreviation on first use or avoid it."
+    if criterion.id == "technical_ui_terms_bolded":
+        return "Mark the cited UI term, command, file name, or technical term in bold."
+    if criterion.id == "factual_claims_credible":
+        return "Verify the cited claim against the source evidence and correct it if needed."
+    return f"Review and revise the cited {field}."
+
+
+def _looks_like_vague_summary(text: str) -> bool:
+    value = text.lower()
+    vague_markers = (
+        "several",
+        "multiple",
+        "some ",
+        "a few",
+        "many ",
+        "various",
+        "overall",
+    )
+    return any(marker in value for marker in vague_markers)
 
 
 def _factual_notes_have_no_claims(notes: str) -> bool:

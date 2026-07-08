@@ -222,6 +222,41 @@ class AdminComplianceV1Tests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(checks[0].ai_review)
         self.assertEqual(issues, [])
 
+    async def test_semantic_failures_are_split_into_row_level_issues(self):
+        artifact = build_script_artifact(SAMPLE_SCRIPT)
+        criterion = next(c for c in semantic._semantic_criteria(ADMIN_SCRIPT_POLICY_V1) if c.id == "visual_narration_alignment")
+        result = SemanticBatchResult(checks=[
+            SemanticCheckResult(
+                criteria_id=criterion.id,
+                passed=False,
+                notes="Several cues omit key actions mentioned in narration.",
+                evidence=[
+                    SemanticEvidence(
+                        row_number=6,
+                        field="visual_cue",
+                        text="Demo",
+                        reason="Visual cue does not mention opening Firefox before typing the URL.",
+                    ),
+                    SemanticEvidence(
+                        row_number=7,
+                        field="narration",
+                        text="In this tutorial, we learnt to\n• Create tables.",
+                        reason="Narration recap does not match the demonstrated browser action.",
+                    ),
+                ],
+                suggested_action="Align each visual cue with its narration.",
+            )
+        ])
+
+        checks, issues = semantic._semantic_batch_to_results([criterion], artifact, result)
+
+        self.assertFalse(checks[0].ai_review)
+        self.assertEqual(len(issues), 2)
+        self.assertEqual(checks[0].issues, [issue.id for issue in issues])
+        self.assertEqual(issues[0].message, "Visual cue does not mention opening Firefox before typing the URL.")
+        self.assertEqual(issues[0].evidence[0].row_number, 6)
+        self.assertEqual(len(issues[0].evidence), 1)
+
     async def test_factual_supported_claim_returns_pass(self):
         artifact = build_script_artifact(SAMPLE_SCRIPT)
         criterion = next(c for c in semantic._semantic_criteria(ADMIN_SCRIPT_POLICY_V1) if c.id == "factual_claims_credible")

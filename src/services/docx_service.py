@@ -262,9 +262,10 @@ def docx_to_json(docx_file) -> dict:
     
     # Try to extract metadata from document
     metadata = _extract_metadata(doc)
+    presentation_title = metadata.get('title') or title or _infer_presentation_title(slides, metadata)
     
     return {
-        'presentation_title': metadata.get('title', title),
+        'presentation_title': presentation_title,
         'domain': metadata.get('domain', ''),
         'module': metadata.get('module', ''),
         'tutorial': metadata.get('episode', ''),
@@ -418,45 +419,97 @@ def _parse_visual_cue(visual_cue: str) -> tuple:
     return title, image_prompt
 
 
+def _infer_presentation_title(slides: list[dict], metadata: dict) -> str:
+    """Infer title from the first title slide when the metadata table omits it."""
+    if slides:
+        first_slide = slides[0]
+        first_text = "\n".join([
+            str(first_slide.get('title') or ''),
+            str(first_slide.get('image_prompt') or ''),
+            str(first_slide.get('narration') or ''),
+        ])
+        plain = _strip_markup(first_text)
+        match = re.search(r"welcome\s+to\s+(?:the\s+)?spoken\s+tutorial\s+on\s+(.+)", plain, re.IGNORECASE)
+        if match:
+            return _clean_inferred_title(match.group(1))
+
+        title = _clean_inferred_title(first_slide.get('title') or '')
+        if title and not re.fullmatch(r"slide\s+\d+", title, flags=re.IGNORECASE):
+            return title
+
+    tutorial = _clean_inferred_title(metadata.get('episode') or '')
+    tutorial = re.sub(r"^\d+\s*[.)-]\s*", "", tutorial)
+    return tutorial
+
+
+def _strip_markup(text: str) -> str:
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text or "")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _clean_inferred_title(text: str) -> str:
+    text = _strip_markup(str(text or ""))
+    text = re.sub(r"\s+", " ", text).strip(" .:;-")
+    return text
+
+
 def _extract_metadata(doc) -> dict:
     """Extract metadata from document tables."""
     metadata = {}
     
     for table in doc.tables:
+        if _is_script_table(table):
+            continue
+
         # Look for metadata table (has Label | Value format)
         for row in table.rows:
             if len(row.cells) >= 2:
                 label = row.cells[0].text.strip().lower()
+                label_key = _normalise_metadata_label(label)
                 value = row.cells[1].text.strip()
                 
-                if 'title' in label and not metadata.get('title'):
+                if 'title' in label_key and not metadata.get('title'):
                     metadata['title'] = value
-                elif 'domain' in label:
+                elif 'domain' in label_key:
                     metadata['domain'] = value
-                elif 'module' in label or 'series' in label:
+                elif 'module' in label_key or 'series' in label_key:
                     metadata['module'] = value
-                elif 'episode' in label or 'tutorial' in label:
-                    metadata['episode'] = value
-                elif 'duration' in label:
-                    metadata['duration'] = value
-                elif 'prerequisite' in label:
+                elif 'prerequisite' in label_key:
                     metadata['prerequisites'] = value
-                elif 'keyword' in label or 'meta tag' in label:
+                elif 'episode' in label_key or label_key == 'tutorial':
+                    metadata['episode'] = value
+                elif 'duration' in label_key:
+                    metadata['duration'] = value
+                elif 'keyword' in label_key or 'metatag' in label_key:
                     metadata['keywords'] = [
                         item.strip() for item in re.split(r',|\n', value) if item.strip()
                     ]
                     metadata['meta_tags'] = metadata['keywords']
-                elif 'outline' in label:
+                elif 'outline' in label_key:
                     metadata['outline'] = [
                         item.strip(" •\t") for item in value.split('\n') if item.strip(" •\t")
                     ]
-                elif 'learning' in label and 'objective' in label:
+                elif 'learning' in label_key and 'objective' in label_key:
                     # Split by newlines to get list
                     metadata['learning_objectives'] = [
                         obj.strip() for obj in value.split('\n') if obj.strip()
                     ]
     
     return metadata
+
+
+def _normalise_metadata_label(label: str) -> str:
+    """Normalise metadata labels so variants like pre-requisite are recognised."""
+    label = re.sub(r"[\u2010-\u2015\u2212]", "-", label.lower())
+    return re.sub(r"[\s_:\-]+", "", label)
+
+
+def _is_script_table(table) -> bool:
+    if not table.rows or len(table.rows[0].cells) < 2:
+        return False
+    first = table.rows[0].cells[0].text.strip().lower()
+    second = table.rows[0].cells[1].text.strip().lower()
+    return "visual cue" in first and "narration" in second
 
 
 def export_script_docx(json_data: dict, output_dir: str = None) -> dict:

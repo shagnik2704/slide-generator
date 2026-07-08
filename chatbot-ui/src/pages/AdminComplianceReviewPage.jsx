@@ -20,6 +20,12 @@ export default function AdminComplianceReviewPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeIssueId, setActiveIssueId] = useState(null);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+
+  const handleIssueSelect = (id) => {
+    setActiveIssueId(id);
+    setScrollTrigger(Date.now());
+  };
 
   const payload = useMemo(
     () => location.state || readStoredPayload(),
@@ -53,7 +59,8 @@ export default function AdminComplianceReviewPage() {
             isOpen={true}
             variant="page"
             activeIssueId={activeIssueId}
-            onIssueSelect={setActiveIssueId}
+            scrollTrigger={scrollTrigger}
+            onIssueSelect={handleIssueSelect}
           />
         ) : (
           <div style={emptyStateStyle}>

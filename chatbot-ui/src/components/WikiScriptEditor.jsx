@@ -165,6 +165,7 @@ const WikiScriptEditor = ({
     annotations = {},
     issues = [],
     activeIssueId = null,
+    scrollTrigger = 0,
     activeIssue = null,
     activeIssueCheck = null,
     onIssueSelect,
@@ -196,7 +197,7 @@ const WikiScriptEditor = ({
         if (rowId && rowRefs.current[rowId]) {
             rowRefs.current[rowId].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-    }, [activeIssueId, issues, isOpen]);
+    }, [activeIssueId, scrollTrigger, issues, isOpen]);
 
     const updateSlide = (index, field, value) => {
         const updated = [...slides];
