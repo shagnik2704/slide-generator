@@ -228,6 +228,127 @@ body {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+.noise-action-shell {
+  align-items: center;
+  border: 1px solid rgba(45, 62, 142, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(45, 62, 142, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 46px;
+  padding: 2px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.noise-action-shell-content {
+  width: 100%;
+}
+
+.noise-action-button {
+  align-items: center;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  gap: 0.6rem;
+  justify-content: center;
+  min-height: 42px;
+  overflow: hidden;
+  padding: 0.65rem 1.4rem;
+  position: relative;
+  width: 100%;
+  transform: translateZ(0);
+  transition: background 0.25s ease;
+}
+
+.noise-action-button::after {
+  background: linear-gradient(100deg, transparent 18%, rgba(255, 255, 255, 0.36) 44%, transparent 68%);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: translateX(-130%);
+  transition: transform 0.7s ease;
+  z-index: 0;
+}
+
+.noise-action-button > svg,
+.noise-action-button > span,
+.noise-action-button {
+  position: relative;
+}
+
+.noise-action-button > svg,
+.noise-action-button > span {
+  z-index: 1;
+}
+
+.noise-action-button svg {
+  flex: 0 0 auto;
+}
+
+.noise-action-button-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.6rem;
+  justify-content: center;
+  position: relative;
+  text-shadow: 0 1px 10px rgba(15, 23, 42, 0.25);
+  z-index: 1;
+}
+
+.noise-action-shell-muted {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.noise-action-button-muted,
+.noise-action-button-disabled {
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+.noise-action-shell:not(.noise-action-shell-disabled):hover {
+  border-color: rgba(242, 101, 34, 0.45);
+  box-shadow: 0 16px 34px rgba(45, 62, 142, 0.2), 0 0 0 4px rgba(242, 101, 34, 0.1);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.noise-action-button:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.noise-action-button:not(:disabled):hover::after {
+  transform: translateX(130%);
+}
+
+.noise-action-button:focus-visible {
+  outline: 3px solid rgba(242, 101, 34, 0.35);
+  outline-offset: 3px;
+}
+
+.noise-action-shell-disabled,
+.noise-action-button:disabled {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noise-action-shell,
+  .noise-action-button,
+  .noise-action-button::after {
+    animation: none;
+    transition: none;
+  }
+}
+
 /* SlideUp animation for file preview card */
 @keyframes slideUp {
   from {

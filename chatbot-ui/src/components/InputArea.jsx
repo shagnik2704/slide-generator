@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers, Clock } from 'lucide-react';
+import { NoiseBackgroundButton } from './ui/noise-background-button';
 
 // Helper to format file size
 const formatFileSize = (bytes) => {
@@ -465,24 +466,6 @@ const InputArea = ({
 
     const outlineMode = mode === 'outline_chat';
 
-    // Pill button style (Gemini-inspired, enhanced)
-    const pillButtonStyle = (isDisabled) => ({
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.6rem',
-        padding: '0.75rem 1.5rem',
-        borderRadius: '999px',
-        border: '1px solid var(--border-color)',
-        background: isDisabled ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-        color: isDisabled ? 'var(--text-secondary)' : 'var(--text-primary)',
-        fontSize: '0.9rem',
-        fontWeight: 500,
-        cursor: isDisabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.25s ease',
-        opacity: isDisabled ? 0.5 : 1,
-        boxShadow: isDisabled ? 'none' : 'var(--shadow-sm)',
-    });
-
     // Primary button style
     const primaryButtonStyle = (isDisabled) => ({
         flex: 1,
@@ -651,61 +634,37 @@ const InputArea = ({
                                 }
                             `}</style>
 
-                            <button
+                            <NoiseBackgroundButton
                                 className="action-pill"
+                                gradient="blue"
                                 onClick={() => scriptToWikiRef.current?.click()}
                                 disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
                             >
                                 <BookOpen size={16} />
                                 Script to Wiki
-                            </button>
+                            </NoiseBackgroundButton>
 
 
 
-                            <button
+                            <NoiseBackgroundButton
                                 className="action-pill"
+                                gradient="orange"
                                 onClick={() => voiceInputRef.current?.click()}
                                 disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
                             >
                                 <Mic size={16} />
                                 Generate Voice
-                            </button>
+                            </NoiseBackgroundButton>
 
-                            <button
+                            <NoiseBackgroundButton
                                 className="action-pill"
+                                gradient="muted"
                                 disabled={true}
-                                style={pillButtonStyle(true)}
                                 title="Coming soon"
                             >
                                 <FileText size={16} />
                                 Create Slides
-                            </button>
+                            </NoiseBackgroundButton>
                         </div>
                     </>
                 )}
