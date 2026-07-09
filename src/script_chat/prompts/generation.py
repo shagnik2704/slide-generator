@@ -11,10 +11,11 @@ You MUST follow the strict Spoken Tutorial pedagogy:
    - DO NOT include brackets or parenthesized descriptions (e.g., write "Click **Save**" instead of "(Click Save)" or "Save button").
    - Include ONLY the actions that are explicitly mentioned in the narration column for that slide.
    - Write all actions in the **active voice** (e.g., "Click **Save**" instead of "Save is clicked").
-   - Highlight all technical terms, UI elements, commands, and variable names in **bold** (e.g., **Google Colab**, **tensorflow**, **scalar**).
+   - Highlight all technical terms, UI elements, commands, and variable names in **bold** (e.g., **TensorFlow**, **Jupyter Notebook**, **scalar**).
 3. Narration is the exact spoken text.
 4. Narration sentences must be short (ideally under 80 characters) and in simple English.
 5. Tone must be friendly, clear, and direct.
+6. Use the provided metadata faithfully. Do not introduce tool names, platforms, websites, or accounts unless they are supported by the metadata, outline, or research notes.
 
 ### Slide Structure (Mandatory Templates)
 You MUST generate the initial boilerplate sequence exactly as follows for Slides 1 to 6, and the ending boilerplate sequence for the final 3 slides:
@@ -32,9 +33,9 @@ You MUST generate the initial boilerplate sequence exactly as follows for Slides
     Learning Objectives Slide
   - **Narration:**
     By the end of this tutorial, you will be able to:
-    - [Insert Objective 1, bolding key actions and tools, e.g., Use **TensorFlow** in **Google Colab**]
-    - [Insert Objective 2, e.g., Create a new **Google Colab notebook**]
-    - [Insert Objective 3, e.g., Import **TensorFlow** in the **notebook**]
+    - [Insert Objective 1, bolding key actions and tools, e.g., Use **TensorFlow** in a **notebook**]
+    - [Insert Objective 2, e.g., Create a new **notebook** or project file]
+    - [Insert Objective 3, e.g., Import **TensorFlow** or run the required setup]
 
 - **Slide 3: Disclaimer Slide**
   - **Visual Cue:**
@@ -52,7 +53,9 @@ You MUST generate the initial boilerplate sequence exactly as follows for Slides
   - **Narration:**
     To follow this tutorial, you will need a:
     - Computer with internet access
-    - Web browser and a **Google** account for **Google Colab** (or equivalent requirements based on outline/metadata)
+    - [Insert the actual requirements from metadata.system_requirements]
+  - This slide MUST be derived from metadata.system_requirements.
+  - Do NOT mention any other platform unless it is explicitly required by the metadata, outline, or research notes.
 
 - **Slide 5: Pre-requisites**
   - **Visual Cue:**

@@ -401,6 +401,7 @@ async def export_docx_file(thread_id: str):
     state = await _get_state_or_404(config)
         
     metadata = state.values.get("metadata", {})
+    series_name = state.values.get("foss_name") or metadata.get("foss_name") or "Pedagogical Script"
     try:
         script = dump_models(parse_script(state.values.get("script", [])))
     except Exception as e:
@@ -408,7 +409,7 @@ async def export_docx_file(thread_id: str):
     
     docx_data = {
         "presentation_title": metadata.get("title", "Spoken Tutorial Script"),
-        "series": "Pedagogical Script",
+        "series": series_name,
         "tutorial": metadata.get("title", ""),
         "duration": "3-4 min",
         "learning_objectives": metadata.get("learning_objectives", []),

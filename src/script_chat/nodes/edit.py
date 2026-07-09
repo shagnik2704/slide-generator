@@ -2,7 +2,7 @@ import json
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
-from src.script_chat.llm import invoke_structured, invoke_text
+from src.script_chat.llm import invoke_structured_with_responses_tools
 from src.script_chat.prompts.editing import EDITING_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptResult, dump_models, parse_script
 
@@ -17,10 +17,31 @@ def _recent_edit_context(messages: list) -> str:
     return "\n".join(history_lines)
 
 
-def _needs_search(edit_instruction: str) -> bool:
-    lowered = edit_instruction.lower()
-    terms = ("latest", "current", "docs", "documentation", "deprecated", "api", "command", "syntax")
-    return any(term in lowered for term in terms)
+def _compliance_edit_context(compliance_results: dict | None) -> str:
+    if not compliance_results:
+        return "(No compliance results yet)"
+
+    failed_checks = [
+        {
+            "id": check.get("id"),
+            "criteria": check.get("criteria"),
+            "notes": check.get("ai_notes"),
+            "severity": check.get("severity"),
+        }
+        for check in compliance_results.get("checks", [])
+        if check.get("ai_review") is False
+    ]
+    issues = [
+        {
+            "criteria_id": issue.get("criteria_id"),
+            "message": issue.get("message"),
+            "suggested_action": issue.get("suggested_action"),
+            "evidence": issue.get("evidence", [])[:3],
+        }
+        for issue in compliance_results.get("issues", [])[:10]
+    ]
+    return json.dumps({"failed_checks": failed_checks[:10], "issues": issues}, indent=2)
+
 
 def edit_node(state: ScriptChatState):
     """Applies user's edit instruction to the current script."""
@@ -42,38 +63,28 @@ def edit_node(state: ScriptChatState):
     
     conversation_history = _recent_edit_context(state.get("messages", []))
     script_json = json.dumps(dump_models(script_model), indent=2)
-    research_section = ""
-
-    if _needs_search(edit_instruction):
-        try:
-            research_notes = invoke_text(
-                [
-                    SystemMessage(content=EDITING_SYSTEM_PROMPT),
-                    HumanMessage(
-                        "Check current technical details relevant to this edit. "
-                        "Focus only on commands, APIs, imports, UI names, and deprecated behavior.\n\n"
-                        f"=== EDIT INSTRUCTION ===\n{edit_instruction}\n\n"
-                        f"=== CURRENT SCRIPT ===\n{script_json}"
-                    ),
-                ],
-                model="gpt-5.4-mini",
-                temperature=0.2,
-                tools=[{"type": "web_search"}],
-            )
-            research_section = f"\n\n=== TECHNICAL RESEARCH NOTES ===\n{research_notes}"
-        except Exception as e:
-            writer({"status": f"Edit research failed: {str(e)}", "progress": 100})
-            return {"current_stage": "error"}
+    metadata_json = json.dumps(state.get("metadata", {}), indent=2)
+    raw_outline = state.get("raw_outline") or "(No original outline available)"
+    compliance_context = _compliance_edit_context(state.get("compliance_results"))
 
     prompt = f"""
 === RECENT CONVERSATION HISTORY ===
 {conversation_history or "(No prior conversation)"}
 
+=== METADATA ===
+{metadata_json}
+
+=== ORIGINAL OUTLINE ===
+{raw_outline}
+
+=== COMPLIANCE CONTEXT ===
+{compliance_context}
+
 === CURRENT SCRIPT ===
 {script_json}
 
 === EDIT INSTRUCTION ===
-{edit_instruction}{research_section}
+{edit_instruction}
 """
     
     writer({"status": "LLM is editing the script...", "progress": 50})
@@ -84,11 +95,12 @@ def edit_node(state: ScriptChatState):
     ]
     
     try:
-        result = invoke_structured(
+        result = invoke_structured_with_responses_tools(
             messages,
             ScriptResult,
             model="gpt-5.4-mini",
             temperature=0.3,
+            tools=[{"type": "web_search_preview"}],
         )
     except Exception as e:
         writer({"status": f"Edit failed: {str(e)}", "progress": 100})

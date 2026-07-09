@@ -3,7 +3,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
-from src.script_chat.llm import invoke_structured, invoke_text
+from src.script_chat.llm import invoke_structured_with_responses_tools
 from src.script_chat.prompts.generation import GENERATION_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptResult, dump_models, parse_metadata, parse_script
 
@@ -26,32 +26,18 @@ def generate_node(state: ScriptChatState):
     writer({"status": "LLM is writing the script...", "progress": 50})
 
     try:
-        research_notes = invoke_text(
+        result = invoke_structured_with_responses_tools(
             [
                 SystemMessage(content=GENERATION_SYSTEM_PROMPT),
                 HumanMessage(
-                    "Check current technical details needed for this script. "
-                    "Focus on commands, APIs, imports, UI names, and deprecated behavior.\n\n"
                     f"=== METADATA ===\n{metadata_json}\n\n"
                     f"=== OUTLINE ===\n{raw_outline}"
-                ),
-            ],
-            model="gpt-5.4-mini",
-            temperature=0.2,
-            tools=[{"type": "web_search"}],
-        )
-        result = invoke_structured(
-            [
-                SystemMessage(content=GENERATION_SYSTEM_PROMPT),
-                HumanMessage(
-                    f"=== METADATA ===\n{metadata_json}\n\n"
-                    f"=== OUTLINE ===\n{raw_outline}\n\n"
-                    f"=== TECHNICAL RESEARCH NOTES ===\n{research_notes}"
                 ),
             ],
             ScriptResult,
             model="gpt-5.4-mini",
             temperature=0.4,
+            tools=[{"type": "web_search_preview"}],
         )
     except Exception as e:
         writer({"status": f"Script generation failed: {str(e)}", "progress": 100})
