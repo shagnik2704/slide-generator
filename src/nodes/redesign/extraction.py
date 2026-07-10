@@ -1,19 +1,19 @@
-from src.core.state import VCAgentState
-from src.nodes.extract_links import fetch_links
+from src.nodes.redesign.utils.schema import TutorialState, OldTutorial
+from src.nodes.redesign.extract_links import fetch_links
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 
-def extract(url: str) -> dict:
-    response = requests.get(url)
+def extract(url: str) -> OldTutorial:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
 
-    extracted_data = {
-        "outline_title": "",
-        "outline_points": "",
-        "duration": ""
-    }
+    extracted_data = OldTutorial()
 
     # ---------- Extract Outline ----------
     outline_block = soup.find("pre", class_="custom-jumbotron")
@@ -22,14 +22,14 @@ def extract(url: str) -> dict:
 
         lines = [line.strip() for line in text.split("\n") if line.strip()]
 
-        extracted_data["outline_title"] = lines[1]
+        # extracted_data["outline_title"] = lines[1]
 
         # Remaining lines → outline points
         points = ""
         for line in lines[2:]:
             # if not line.startswith("-"):
             points = points + ',' + line
-        extracted_data["outline_points"] = points
+        extracted_data.outline = points
 
     # ---------- Extract Video Metadata ----------
     metadata_table = soup.find("table", class_="table table-bordered table-hover")
@@ -40,26 +40,17 @@ def extract(url: str) -> dict:
             if len(cells) == 4:
                 # key = cells[0].get_text(strip=True).replace(":", "").lower()
                 value = cells[1].get_text(strip=True)
-                extracted_data["duration"] = value
+                delta = datetime.strptime(value, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+                total_seconds = float(delta.total_seconds())
+                extracted_data.duration = total_seconds
 
     return extracted_data
 
 
-def extract_tutorials(state: VCAgentState,foss: str, language: str) -> VCAgentState:
-    url = state["legacy_raw_data"]
-    links = fetch_links(foss,language)
-    print (f"Tutorials found: {len(links)}")
-    for i,link in enumerate(links):
-        print (f"Extracting tutorial outline and information: {i+1}/{len(links)}")
-        extracted_info = extract(link)
-
-        tutorial_row = {
-            "title": extracted_info["outline_title"],
-            "duation": extracted_info["duration"],
-            "subtopics": extracted_info["outline_points"]
-        }
-
-        state["structured_legacy"].append(tutorial_row)
+def extract_tutorials(state: TutorialState) -> TutorialState:
+    link = state.tutorial_link
+    extracted_info = extract(link)
+    state.old_tutorial = extracted_info
     return state
 
 

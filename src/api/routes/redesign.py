@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from src.api.models import GenerateTutorialRequest, GenerateTutorialResponse, ShareTutorialRequest, ShareTutorialResponse
-from src.workflow import run_pipeline
-from src.nodes.gsheet import share_sheet
+from src.nodes.redesign.gsheet import share_sheet
+from src.nodes.redesign.workflow import run_pipeline
+from src.nodes.redesign.utils.schema import GenerateTutorialRequest, GenerateTutorialResponse, ShareTutorialRequest, ShareTutorialResponse
 
 router = APIRouter(prefix="/redesign", tags=["redesign"])
 
@@ -12,18 +12,7 @@ def health_check():
 @router.post("/generate", response_model=GenerateTutorialResponse)
 def generate_tutorial(request: GenerateTutorialRequest):
     try:
-        state, url = run_pipeline(
-            foss_name=request.foss_name,
-            language=request.language,
-            export=True,  # Always export for generation
-            reciept_emails=[],  # No emails for generation
-            reciept_role="writer"  # Default role, not used since no emails
-        )
-
-        return {
-            "status": "Success",
-            "url": url
-        }
+        return run_pipeline(request=request)
 
     except ValueError as e:
         # Handle validation errors (e.g., no tutorials found)
