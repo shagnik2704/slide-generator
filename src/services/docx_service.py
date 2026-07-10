@@ -119,7 +119,7 @@ def _add_formatted_text(cell, text):
     pattern = r'\*\*(.+?)\*\*'
     last_end = 0
     
-    for match in re.finditer(pattern, text):
+    for match in re.finditer(pattern, text, flags=re.DOTALL):
         # Add normal text before this match
         if match.start() > last_end:
             normal_text = text[last_end:match.start()]
@@ -371,6 +371,7 @@ def _format_visual_cue(slide: dict) -> str:
         
     title = slide.get('title', '')
     image_prompt = slide.get('image_prompt', '')
+    title = re.sub(r'\*+', '', str(title)).strip()
     
     # Combine title and image prompt
     parts = []

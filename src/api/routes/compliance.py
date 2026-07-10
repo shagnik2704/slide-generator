@@ -448,3 +448,103 @@ async def export_compliance_report(data: dict, current_user: TokenData = Depends
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/export_admin_compliance_review")
+async def export_admin_compliance_review(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """Export script DOCX in the standard script format with review columns."""
+    from io import BytesIO
+    from docx import Document
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Inches, Pt
+    from fastapi.responses import StreamingResponse
+    from src.services.docx_service import (
+        _add_formatted_text,
+        _add_metadata_section,
+        _format_visual_cue,
+        _set_cell_padding,
+    )
+
+    def row_id_for_index(index: int) -> str:
+        return f"row_{index + 1:03d}"
+
+    def issue_summary(issue: dict, check_by_id: dict) -> str:
+        check = check_by_id.get(issue.get("criteria_id"), {})
+        criterion = check.get("criteria") or issue.get("criteria_id") or "Compliance issue"
+        message = issue.get("message") or check.get("ai_notes") or ""
+        severity = issue.get("severity") or "issue"
+        return f"[{severity.upper()}] {criterion}" + (f"\n{message}" if message else "")
+
+    try:
+        json_script = data.get("json_script") or {}
+        report = data.get("report") or {}
+        comments = data.get("review_comments") or {}
+        slides = json_script.get("slides") or []
+        checks = report.get("checks") or []
+        issues = report.get("issues") or []
+        summary = report.get("summary") or {}
+
+        check_by_id = {check.get("id"): check for check in checks if check.get("id")}
+        issues_by_row = {}
+        for issue in issues:
+            for evidence in issue.get("evidence") or []:
+                row_id = evidence.get("row_id")
+                if row_id:
+                    issues_by_row.setdefault(row_id, []).append(issue_summary(issue, check_by_id))
+
+        title = json_script.get("presentation_title", "Spoken Tutorial Script")
+        doc = Document()
+        heading = doc.add_heading(title, level=0)
+        heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        _add_metadata_section(doc, json_script)
+
+        doc.add_heading("Script", level=1)
+        doc.add_paragraph(
+            "Review the AI feedback and add reviewer notes in the final column. "
+            "Do not modify the table structure."
+        )
+
+        table = doc.add_table(rows=1, cols=4)
+        table.style = "Table Grid"
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        table.columns[0].width = Inches(2.1)
+        table.columns[1].width = Inches(3.0)
+        table.columns[2].width = Inches(2.0)
+        table.columns[3].width = Inches(2.0)
+
+        header_cells = table.rows[0].cells
+        header_cells[0].text = "Visual Cue"
+        header_cells[1].text = "Narration"
+        header_cells[2].text = "AI Review"
+        header_cells[3].text = "Human Notes"
+        for cell in header_cells:
+            cell.paragraphs[0].runs[0].bold = True
+            cell.paragraphs[0].runs[0].font.size = Pt(12)
+
+        for index, slide in enumerate(slides):
+            row_id = slide.get("row_id") or row_id_for_index(index)
+            row = table.add_row()
+            _add_formatted_text(row.cells[0], _format_visual_cue(slide))
+            narration = str(slide.get("narration") or "").replace("\\n", "\n")
+            _add_formatted_text(row.cells[1], narration)
+            _add_formatted_text(row.cells[2], "\n\n".join(issues_by_row.get(row_id, [])))
+            _add_formatted_text(row.cells[3], str(comments.get(row_id) or ""))
+
+            for cell in row.cells:
+                _set_cell_padding(cell, top=100, bottom=100, left=100, right=100)
+
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": "attachment; filename=admin_compliance_script_review.docx"},
+        )
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

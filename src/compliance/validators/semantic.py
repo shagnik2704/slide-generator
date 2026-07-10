@@ -32,7 +32,6 @@ SEMANTIC_GROUPS: Dict[str, Tuple[str, ...]] = {
         "technical_demo_executability",
     ),
     "language_quality": (
-        "translation_friendly_language",
         "grammar_punctuation",
     ),
     "terminology_formatting": (
@@ -48,7 +47,7 @@ SEMANTIC_GROUPS: Dict[str, Tuple[str, ...]] = {
 GROUP_INSTRUCTIONS = {
     "structure_flow": "Focus on outline coverage, sequencing, learner context, and whether the script uses demonstration or analogy rather than only theory.",
     "visual_demo": "Focus on whether each visual cue matches the narration and whether technical/demo steps can be followed side-by-side without missing actions.",
-    "language_quality": "Focus on translation-friendly narration, grammar, spelling, punctuation, and dubbing clarity.",
+    "language_quality": "Focus on grammar, spelling, and punctuation.",
     "terminology_formatting": "Focus on term introduction, consistency, abbreviation expansion, and bold marking for important UI or technical terms.",
     "factuality": "Focus only on check-worthy factual, version, API, historical, etymology, or technical requirement claims.",
     "ungrouped": "Evaluate the listed criteria using row/cell evidence.",
@@ -465,8 +464,6 @@ def _suggested_action_for_evidence(criterion: PolicyCriterion, evidence: Evidenc
         return f"Revise the {field} so it includes the exact action or UI state described by the matching narration."
     if criterion.id == "technical_demo_executability":
         return "Add the missing step or clarify the cited action so the demo can be followed side-by-side."
-    if criterion.id == "translation_friendly_language":
-        return "Rewrite the cited wording in simpler, direct narration while preserving the meaning."
     if criterion.id == "grammar_punctuation":
         return "Correct the cited grammar, spelling, or punctuation issue."
     if criterion.id == "terminology_clarity_consistency":

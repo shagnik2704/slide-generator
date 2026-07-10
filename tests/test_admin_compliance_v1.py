@@ -203,7 +203,7 @@ class AdminComplianceV1Tests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(by_id["visual_narration_alignment"].ai_review)
         self.assertIsNone(by_id["technical_demo_executability"].ai_review)
         self.assertTrue(by_id["script_follows_outline"].ai_review)
-        self.assertTrue(by_id["translation_friendly_language"].ai_review)
+        self.assertTrue(by_id["grammar_punctuation"].ai_review)
 
     async def test_malformed_semantic_failure_without_evidence_is_skipped(self):
         artifact = build_script_artifact(SAMPLE_SCRIPT)

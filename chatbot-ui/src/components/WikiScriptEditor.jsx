@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Save, X, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
+import { Download, Save, X, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 
 const wikiToHtml = (text) => {
     if (!text) return '';
@@ -66,21 +66,6 @@ const WikiCell = ({
     if (readOnly) {
         return (
             <td onClick={issueIds.length ? onIssueClick : undefined} style={style}>
-                {issueIds.length > 0 && (
-                    <span style={{
-                        float: 'right',
-                        marginLeft: '0.5rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        color: '#d93025',
-                        background: 'rgba(217, 48, 37, 0.12)',
-                        border: '1px solid rgba(217, 48, 37, 0.3)',
-                        borderRadius: '999px',
-                        padding: '0.1rem 0.45rem',
-                    }}>
-                        {issueIds.length}
-                    </span>
-                )}
                 <span dangerouslySetInnerHTML={{ __html: wikiToHtml(value) }} />
             </td>
         );
@@ -169,6 +154,11 @@ const WikiScriptEditor = ({
     activeIssue = null,
     activeIssueCheck = null,
     onIssueSelect,
+    showCommentColumn = false,
+    reviewComments = {},
+    onReviewCommentChange,
+    onDownloadReview,
+    isDownloadingReview = false,
 }) => {
     const [slides, setSlides] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
@@ -293,19 +283,6 @@ const WikiScriptEditor = ({
                         }}>
                             {slides.length} rows
                         </span>
-                        {readOnly && issues.length > 0 && (
-                            <span style={{
-                                fontSize: '0.85em',
-                                color: '#d93025',
-                                background: 'rgba(217, 48, 37, 0.08)',
-                                padding: '0.2em 0.6em',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(217, 48, 37, 0.2)',
-                                fontWeight: 600,
-                            }}>
-                                {issues.length} issue{issues.length !== 1 ? 's' : ''}
-                            </span>
-                        )}
                         {!readOnly && hasChanges && (
                             <span style={{ fontSize: '0.85em', color: '#d93025', fontWeight: 600 }}>
                                 Unsaved changes
@@ -340,6 +317,17 @@ const WikiScriptEditor = ({
                             <X size={18} />
                         </button>
                     )}
+                    {readOnly && onDownloadReview && (
+                        <button
+                            onClick={onDownloadReview}
+                            disabled={isDownloadingReview}
+                            style={toolbarButtonStyle()}
+                            type="button"
+                        >
+                            <Download size={14} />
+                            {isDownloadingReview ? 'Preparing...' : 'Download'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -353,7 +341,7 @@ const WikiScriptEditor = ({
             }}>
                 <table style={{
                     width: '100%',
-                    minWidth: readOnly ? '760px' : '900px',
+                    minWidth: readOnly ? (showCommentColumn ? '1080px' : '760px') : '900px',
                     borderCollapse: 'separate',
                     borderSpacing: '0',
                     fontSize: '14px',
@@ -367,6 +355,7 @@ const WikiScriptEditor = ({
                             <HeaderCell width="70px" align="center">#</HeaderCell>
                             <HeaderCell width="35%">Visual Cue</HeaderCell>
                             <HeaderCell>Narration</HeaderCell>
+                            {showCommentColumn && <HeaderCell width="280px">Reviewer Comments</HeaderCell>}
                         </tr>
                     </thead>
                     <tbody>
@@ -401,18 +390,6 @@ const WikiScriptEditor = ({
                                             }}
                                         >
                                             <div>{index + 1}</div>
-                                            {rowIssues.length > 0 && (
-                                                <div style={{
-                                                    marginTop: '0.35rem',
-                                                    fontSize: '0.72rem',
-                                                    borderRadius: '999px',
-                                                    border: '1px solid rgba(217, 48, 37, 0.3)',
-                                                    background: 'var(--bg-primary)',
-                                                    padding: '0.05rem 0.35rem',
-                                                }}>
-                                                    {rowIssues.length}
-                                                </div>
-                                            )}
                                         </td>
                                     ) : (
                                         <RowControls
@@ -441,6 +418,13 @@ const WikiScriptEditor = ({
                                         isActive={narrationIssues.includes(activeIssueId)}
                                         onIssueClick={() => selectFirstIssue(narrationIssues)}
                                     />
+                                    {showCommentColumn && (
+                                        <CommentCell
+                                            value={reviewComments[rowId] || ''}
+                                            onChange={(value) => onReviewCommentChange?.(rowId, value)}
+                                            rowNumber={index + 1}
+                                        />
+                                    )}
                                 </tr>
                             );
                         })}
@@ -480,7 +464,7 @@ const WikiScriptEditor = ({
 const HeaderCell = ({ children, width, align = 'left' }) => (
     <th style={{
         padding: '0.75rem',
-        borderRight: children === 'Narration' ? 'none' : '1px solid var(--border-color)',
+        borderRight: '1px solid var(--border-color)',
         borderBottom: '1px solid var(--border-color)',
         backgroundColor: 'var(--bg-secondary)',
         fontWeight: 'bold',
@@ -490,6 +474,22 @@ const HeaderCell = ({ children, width, align = 'left' }) => (
     }}>
         {children}
     </th>
+);
+
+const CommentCell = ({ value, onChange, rowNumber }) => (
+    <td style={{
+        ...cellBaseStyle,
+        width: '280px',
+        backgroundColor: 'var(--bg-secondary)',
+    }}>
+        <textarea
+            aria-label={`Reviewer comments for row ${rowNumber}`}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Add reviewer comment..."
+            style={commentTextareaStyle}
+        />
+    </td>
 );
 
 const SelectedIssueHeader = ({ issue, check }) => {
@@ -565,6 +565,21 @@ const addButtonStyle = {
     fontSize: '0.9rem',
     color: 'var(--accent-primary)',
     fontWeight: 600,
+};
+
+const commentTextareaStyle = {
+    width: '100%',
+    minHeight: '96px',
+    resize: 'vertical',
+    border: '1px solid var(--border-color)',
+    borderRadius: '8px',
+    background: 'var(--bg-primary)',
+    color: 'var(--text-primary)',
+    fontFamily: 'inherit',
+    fontSize: '0.88rem',
+    lineHeight: 1.45,
+    padding: '0.65rem',
+    outlineColor: 'var(--accent-primary)',
 };
 
 export default WikiScriptEditor;

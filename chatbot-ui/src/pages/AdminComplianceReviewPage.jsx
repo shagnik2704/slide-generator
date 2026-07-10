@@ -31,9 +31,30 @@ export default function AdminComplianceReviewPage() {
     () => location.state || readStoredPayload(),
     [location.state]
   );
+  const [reviewComments, setReviewComments] = useState(() => payload?.reviewComments || {});
 
   const report = payload?.report || payload?.complianceReport;
   const jsonScript = payload?.jsonScript;
+
+  const handleReviewCommentChange = (rowId, value) => {
+    setReviewComments((current) => {
+      const next = { ...current, [rowId]: value };
+      if (!value.trim()) delete next[rowId];
+
+      if (typeof window !== 'undefined' && payload) {
+        try {
+          window.sessionStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ ...payload, reviewComments: next })
+          );
+        } catch (error) {
+          console.error('Failed to persist reviewer comments:', error);
+        }
+      }
+
+      return next;
+    });
+  };
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -61,6 +82,8 @@ export default function AdminComplianceReviewPage() {
             activeIssueId={activeIssueId}
             scrollTrigger={scrollTrigger}
             onIssueSelect={handleIssueSelect}
+            reviewComments={reviewComments}
+            onReviewCommentChange={handleReviewCommentChange}
           />
         ) : (
           <div style={emptyStateStyle}>

@@ -22,7 +22,6 @@ ADMIN_SCRIPT_POLICY_V1 = Policy(
         PolicyCriterion(id="sentence_hard_limit", criteria="Does every applicable narration sentence stay within 80 characters?", category="formatting", severity="major", validator="deterministic"),
         PolicyCriterion(id="sentence_soft_target", criteria="Are most applicable narration sentences within 60 characters?", category="formatting", severity="minor", validator="deterministic"),
         PolicyCriterion(id="one_sentence_per_line", criteria="Does each narration sentence start on a new line?", category="formatting", severity="minor", validator="deterministic"),
-        PolicyCriterion(id="translation_friendly_language", criteria="Is the narration simple, direct, and easy to translate/dub?", category="semantic", severity="major", validator="semantic"),
         PolicyCriterion(id="grammar_punctuation", criteria="Is the narration grammatically correct with proper spelling and punctuation?", category="semantic", severity="major", validator="semantic"),
         PolicyCriterion(id="terminology_clarity_consistency", criteria="Are technical terms introduced clearly and used consistently?", category="semantic", severity="major", validator="semantic"),
         PolicyCriterion(id="abbreviations_explained", criteria="Are abbreviations avoided or explained on first use?", category="semantic", severity="minor", validator="semantic"),

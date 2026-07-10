@@ -10,12 +10,10 @@ import {
     ChevronUp,
     CircleDashed,
     Download,
-    ListChecks,
     X,
 } from 'lucide-react';
 import WikiScriptEditor from './WikiScriptEditor';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { apiBlob } from '../services/api';
 
 const SEVERITY_COLORS = {
     blocker: '#a50e0e',
@@ -38,10 +36,13 @@ const ComplianceReviewWorkspace = ({
     scrollTrigger = 0,
     onIssueSelect,
     variant = 'overlay',
+    reviewComments = {},
+    onReviewCommentChange,
 }) => {
     const [filter, setFilter] = useState('failed');
     const [isQueueOpen, setIsQueueOpen] = useState(true);
     const [selectedGroup, setSelectedGroup] = useState(null);
+    const [isDownloadingReview, setIsDownloadingReview] = useState(false);
     const queueRailRef = useRef(null);
 
     const checks = useMemo(() => report?.checks || [], [report?.checks]);
@@ -101,19 +102,14 @@ const ComplianceReviewWorkspace = ({
 
     const handleDownloadDocx = async () => {
         try {
-            const response = await fetch(`${API_URL}/export_compliance_report`, {
+            const blob = await apiBlob('/export_compliance_report', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     checks,
                     summary,
                     format: 'docx',
                 }),
             });
-
-            if (!response.ok) throw new Error('Failed to generate DOCX');
-
-            const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -125,6 +121,35 @@ const ComplianceReviewWorkspace = ({
         } catch (error) {
             console.error('DOCX download error:', error);
             alert('Failed to download. Is the backend running?');
+        }
+    };
+
+    const handleDownloadReview = async () => {
+        if (!jsonScript) return;
+        setIsDownloadingReview(true);
+        try {
+            const blob = await apiBlob('/export_admin_compliance_review', {
+                method: 'POST',
+                body: JSON.stringify({
+                    json_script: jsonScript,
+                    report,
+                    review_comments: reviewComments,
+                    format: 'docx',
+                }),
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'admin_compliance_script_review.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Review DOCX download error:', error);
+            alert('Failed to download the script review. Is the backend running?');
+        } finally {
+            setIsDownloadingReview(false);
         }
     };
 
@@ -162,7 +187,6 @@ const ComplianceReviewWorkspace = ({
                 <SummaryTile label="Passed" value={summary.ai_passed || 0} icon={<CheckCircle2 size={18} />} tone="pass" />
                 <SummaryTile label="Failed" value={summary.ai_failed || 0} icon={<AlertTriangle size={18} />} tone="fail" />
                 <SummaryTile label="Skipped" value={summary.ai_skipped || 0} icon={<CircleDashed size={18} />} tone="skip" />
-                <SummaryTile label="Major" value={summary.major || 0} icon={<ListChecks size={18} />} tone="major" />
             </div>
 
             <div className="compliance-review-main" style={isPage ? pageMainGridStyle : mainGridStyle}>
@@ -210,7 +234,6 @@ const ComplianceReviewWorkspace = ({
                                               groupedIssues={groupedIssues}
                                               activeIssueId={activeIssueId}
                                               selectedGroup={selectedGroup}
-                                              checkById={checkById}
                                               onSelectGroup={setSelectedGroup}
                                           />
                                      ) : (
@@ -252,6 +275,11 @@ const ComplianceReviewWorkspace = ({
                             activeIssue={activeIssue}
                             activeIssueCheck={activeIssue ? checkById[activeIssue.criteria_id] : null}
                             onIssueSelect={onIssueSelect}
+                            showCommentColumn={true}
+                            reviewComments={reviewComments}
+                            onReviewCommentChange={onReviewCommentChange}
+                            onDownloadReview={handleDownloadReview}
+                            isDownloadingReview={isDownloadingReview}
                         />
                     ) : (
                         <div style={emptyStateStyle}>No parsed script is available for row-level viewing.</div>
@@ -303,7 +331,7 @@ const SummaryTile = ({ label, value, icon, tone }) => {
     );
 };
 
-const GroupedIssueList = ({ groupedIssues, activeIssueId, selectedGroup, checkById, onSelectGroup }) => {
+const GroupedIssueList = ({ groupedIssues, activeIssueId, selectedGroup, onSelectGroup }) => {
     if (!groupedIssues.length) {
         return <div style={emptyStateStyle}>No row-level issues were returned for this report.</div>;
     }
@@ -805,18 +833,6 @@ const criterionStyle = {
     WebkitBoxOrient: 'vertical',
     WebkitLineClamp: 2,
     overflow: 'hidden',
-};
-
-const evidenceTextStyle = {
-    marginTop: '0.45rem',
-    color: 'var(--text-secondary)',
-    fontSize: '0.82rem',
-    display: '-webkit-box',
-    WebkitBoxOrient: 'vertical',
-    WebkitLineClamp: 2,
-    overflow: 'hidden',
-    borderLeft: '3px solid rgba(217, 48, 37, 0.3)',
-    paddingLeft: '0.5rem',
 };
 
 const rowBadgeStyle = {
