@@ -38,6 +38,38 @@ import {
 import { useChatArea } from '../hooks/useChatArea';
 import { apiJson, apiFormData } from '../services/api';
 
+const timedScriptSteps = (filename, job) => {
+    const isComplete = job.status === 'completed';
+    const isFailed = job.status === 'failed';
+    const isTranscribing = job.status === 'running' || job.current_stage === 'transcribing';
+
+    return [
+        { label: `Uploading ${filename}`, status: 'complete' },
+        {
+            label: 'Transcribing audio with Whisper',
+            status: isTranscribing || isComplete ? (isComplete ? 'complete' : 'processing') : 'pending',
+        },
+        {
+            label: isFailed ? 'Timed script failed' : 'Generating sentence timestamps',
+            status: isComplete ? 'complete' : (isFailed ? 'error' : 'pending'),
+        },
+    ];
+};
+
+const timedScriptWorkflowFromJob = (job) => ({
+    id: job.job_id,
+    jobId: job.job_id,
+    type: 'workflow',
+    tool: 'timed_script',
+    filename: job.original_filename || 'timed script audio',
+    status: job.status === 'completed' ? 'complete' : (job.status === 'failed' ? 'error' : 'processing'),
+    currentStep: job.status === 'completed' ? 3 : (job.status === 'running' ? 1 : 0),
+    steps: timedScriptSteps(job.original_filename || 'audio', job),
+    role: 'assistant',
+    error: job.error_message || undefined,
+    result: job.result ? { timedScriptData: job.result } : undefined,
+});
+
 /**
  * ChatArea - Main chat interface component
  * 
@@ -136,6 +168,27 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
     const [batchQualityFiles, setBatchQualityFiles] = React.useState(null); // For batch sidebar flow
     const [qualityModalMessage, setQualityModalMessage] = React.useState(null);  // For message button flow
 
+    // Restore previously submitted timed-script jobs when the user returns.
+    React.useEffect(() => {
+        let cancelled = false;
+        apiJson('/timed-script/jobs')
+            .then(({ jobs = [] }) => {
+                if (cancelled) return;
+                const restored = jobs.map(timedScriptWorkflowFromJob);
+                setUploadMessages(prev => {
+                    const existingIds = new Set(prev.map(message => message.id));
+                    return [...restored.filter(message => !existingIds.has(message.id)), ...prev];
+                });
+            })
+            .catch(() => {
+                // Job history is supplementary; the rest of ChatArea remains usable.
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [setUploadMessages]);
+
     // Auto-open quality modal when a quality file is staged from sidebar
     React.useEffect(() => {
         if (stagedFile?.type === 'quality') {
@@ -167,56 +220,32 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
         setUploadMessages(prev => [...prev, initialWorkflow]);
 
         try {
-            // Update to step 1 - uploading complete, now transcribing
             setUploadMessages(prev => prev.map(msg =>
                 msg.id === workflowId ? {
                     ...msg,
-                    currentStep: 1,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'processing' },
-                        { label: 'Generating sentence timestamps', status: 'pending' }
-                    ]
+                    status: 'processing',
                 } : msg
             ));
 
-            // Call the API
             const formData = new FormData();
             formData.append('audio', file);
-            const timedScriptData = await apiFormData('/timed-script/generate', formData);
+            const queuedJob = await apiFormData('/timed-script/generate', formData);
+            const jobId = queuedJob.job_id;
 
-            // Update to step 2 - generating timestamps
-            setUploadMessages(prev => prev.map(msg =>
-                msg.id === workflowId ? {
-                    ...msg,
-                    currentStep: 2,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'complete' },
-                        { label: 'Generating sentence timestamps', status: 'processing' }
-                    ]
-                } : msg
-            ));
+            const updateFromJob = (job) => {
+                const workflow = timedScriptWorkflowFromJob(job);
+                setUploadMessages(prev => prev.map(msg => (
+                    msg.id === workflowId ? { ...msg, ...workflow } : msg
+                )));
+            };
 
-            // Small delay for visual feedback
-            await new Promise(r => setTimeout(r, 500));
-
-            // Update to complete
-            setUploadMessages(prev => prev.map(msg =>
-                msg.id === workflowId ? {
-                    ...msg,
-                    status: 'complete',
-                    currentStep: 3,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'complete' },
-                        { label: 'Timestamps generated', status: 'complete' }
-                    ],
-                    result: {
-                        timedScriptData: timedScriptData
-                    }
-                } : msg
-            ));
+            let job = queuedJob;
+            while (job.status !== 'completed' && job.status !== 'failed') {
+                updateFromJob(job);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                job = await apiJson(`/timed-script/jobs/${jobId}`);
+            }
+            updateFromJob(job);
 
         } catch (error) {
             console.error('Timed script generation error:', error);

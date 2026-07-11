@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
+from uuid import UUID
 
 from fastapi import Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -21,7 +22,7 @@ class TokenData(BaseModel):
     """Token payload data."""
     email: str
     name: str
-    sub: str
+    sub: str  # Stable application user UUID
     picture: str = ""  # Google profile picture URL
 
 
@@ -34,10 +35,11 @@ def validate_email_domain(email: str) -> bool:
     return email_lower.endswith(domain_lower)
 
 
-def create_access_token(email: str, name: str, picture: str = "") -> str:
+def create_access_token(subject: str, email: str, name: str, picture: str = "") -> str:
     """Create a JWT access token.
     
     Args:
+        subject: Stable user ID assigned by this application
         email: User email address
         name: User display name
         picture: User profile picture URL
@@ -45,9 +47,10 @@ def create_access_token(email: str, name: str, picture: str = "") -> str:
     Returns:
         Encoded JWT token string
     """
+    normalized_subject = str(UUID(subject))
     expire = datetime.utcnow() + timedelta(hours=settings.jwt_expiration_hours)
     payload = {
-        "sub": email,
+        "sub": normalized_subject,
         "email": email,
         "name": name,
         "picture": picture,
@@ -79,6 +82,12 @@ def verify_token(token: str) -> Optional[TokenData]:
         
         if email is None or sub is None:
             logger.warning("Token missing required fields (email or sub)")
+            return None
+
+        try:
+            sub = str(UUID(sub))
+        except (TypeError, ValueError, AttributeError):
+            logger.info("Token uses a legacy non-UUID subject; re-authentication required")
             return None
             
         return TokenData(email=email, name=name, sub=sub, picture=picture)

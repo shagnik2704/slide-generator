@@ -1,6 +1,9 @@
 import os
 import unittest
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+os.environ["LANGSMITH_TRACING"] = "false"
 
 from fastapi import HTTPException
 from langgraph.checkpoint.memory import MemorySaver
@@ -11,6 +14,9 @@ from src.script_chat.graph import build_script_chat_graph
 from src.script_chat import routes
 from src.script_chat.routes import ManualEditRequest, ResumeRequest
 from src.script_chat.schemas import GroundingReport, ScriptMetadata, ScriptResult, ScriptSlide, parse_script
+
+
+TEST_USER = SimpleNamespace(sub="tester@example.com")
 
 
 class ScriptChatSchemaTests(unittest.TestCase):
@@ -159,8 +165,40 @@ def make_state(values, interrupt_type=None):
 
 
 class ScriptChatRouteTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.original_get_thread = routes.get_thread
+        self.original_update_thread = routes.update_thread
+        self.original_create_thread = routes.create_thread
+        self.original_delete_thread = routes.delete_thread
+        self.original_archive_thread = routes.archive_thread
+        routes.get_thread = AsyncMock(return_value={"thread_id": "thread", "user_id": TEST_USER.sub})
+        routes.update_thread = AsyncMock()
+        routes.create_thread = AsyncMock()
+        routes.delete_thread = AsyncMock()
+        routes.archive_thread = AsyncMock(return_value=True)
+
     async def asyncTearDown(self):
         routes._graph = None
+        routes.get_thread = self.original_get_thread
+        routes.update_thread = self.original_update_thread
+        routes.create_thread = self.original_create_thread
+        routes.delete_thread = self.original_delete_thread
+        routes.archive_thread = self.original_archive_thread
+
+    async def test_start_session_creates_an_owned_thread_before_checkpointing(self):
+        graph = FakeGraph(make_state({}))
+        routes._graph = graph
+
+        result = await routes.start_session(
+            routes.StartRequest(outline="Create a TensorFlow tensor", foss_name="TensorFlow"),
+            TEST_USER,
+        )
+
+        routes.create_thread.assert_awaited_once()
+        create_args = routes.create_thread.await_args.args
+        self.assertEqual(create_args[:3], (result.thread_id, TEST_USER.sub, "TensorFlow"))
+        self.assertEqual(create_args[3], "Create a TensorFlow tensor")
+        self.assertEqual(graph.update["raw_outline"], "Create a TensorFlow tensor")
 
     async def test_manual_edit_requires_script_review_interrupt(self):
         routes._graph = FakeGraph(
@@ -184,6 +222,7 @@ class ScriptChatRouteTests(unittest.IsolatedAsyncioTestCase):
             await routes.manual_edit(
                 "thread",
                 ManualEditRequest(slide_number=1, field="narration", value="Updated"),
+                TEST_USER,
             )
 
         self.assertEqual(ctx.exception.status_code, 400)
@@ -210,11 +249,32 @@ class ScriptChatRouteTests(unittest.IsolatedAsyncioTestCase):
         result = await routes.manual_edit(
             "thread",
             ManualEditRequest(slide_number=1, field="narration", value="Updated"),
+            TEST_USER,
         )
 
         self.assertTrue(result["success"])
         self.assertEqual(graph.update["script"][0]["narration"], "Updated")
         self.assertEqual(graph.update["script_version"], 2)
+        routes.update_thread.assert_awaited_once()
+
+    async def test_thread_access_returns_not_found_for_a_different_user(self):
+        routes.get_thread = AsyncMock(return_value=None)
+        routes._graph = FakeGraph(make_state({"script": []}, interrupt_type="script_review"))
+
+        with self.assertRaises(HTTPException) as ctx:
+            await routes.manual_edit(
+                "thread",
+                ManualEditRequest(slide_number=1, field="narration", value="Updated"),
+                TEST_USER,
+            )
+
+        self.assertEqual(ctx.exception.status_code, 404)
+
+    async def test_archive_is_scoped_to_the_current_user(self):
+        result = await routes.archive_thread_endpoint("thread", TEST_USER)
+
+        self.assertTrue(result["success"])
+        routes.archive_thread.assert_awaited_once_with("thread", TEST_USER.sub)
 
 
 if __name__ == "__main__":
