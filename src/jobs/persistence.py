@@ -99,21 +99,75 @@ async def list_jobs(
             return await cursor.fetchall()
 
 
-async def claim_job(job_id: str) -> Optional[dict[str, Any]]:
-    """Atomically claim a queued job; duplicate deliveries become no-ops."""
+async def claim_job(
+    job_id: str,
+    celery_task_id: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Atomically claim a job for processing, returning the claimed row or None.
+
+    A job is claimable when it is still ``queued`` or when the *same* Celery
+    task is being redelivered after a worker crash (a ``running`` row whose
+    ``celery_task_id`` matches). The latter case is what keeps a job from being
+    stuck in ``running`` forever when ``task_acks_late`` +
+    ``task_reject_on_worker_lost`` cause Redis to redeliver the task. Any other
+    delivery — a stale duplicate, or a row already owned by a different task —
+    is a no-op and returns None.
+
+    The owning ``celery_task_id`` is recorded on claim so redelivery matching
+    works even if the API's ``attach_celery_task`` update raced the worker.
+    """
     async with get_pool().connection() as connection:
         async with connection.cursor() as cursor:
             await cursor.execute(
                 f"""
                 UPDATE background_jobs
                 SET status = 'running', progress = 10, current_stage = 'transcribing',
-                    started_at = NOW(), updated_at = NOW()
-                WHERE id = %s AND status = 'queued'
+                    celery_task_id = COALESCE(%s, celery_task_id),
+                    started_at = COALESCE(started_at, NOW()), updated_at = NOW()
+                WHERE id = %s
+                  AND (
+                    status = 'queued'
+                    OR (status = 'running' AND %s::text IS NOT NULL AND celery_task_id = %s)
+                  )
                 RETURNING {JOB_COLUMNS}
                 """,
-                (job_id,),
+                (celery_task_id, job_id, celery_task_id, celery_task_id),
             )
             return await cursor.fetchone()
+
+
+async def reap_stale_jobs(
+    timeout_seconds: int,
+    job_type: Optional[str] = None,
+) -> list[dict[str, Any]]:
+    """Fail jobs stuck in ``running`` past ``timeout_seconds``; return the rows.
+
+    This is the safety net for the case a redelivery cannot cover: the worker
+    died and the broker never re-queued the task (message lost, no worker
+    online, broker restarted). Such a row would otherwise stay ``running``
+    forever and any UI polling it would poll forever. Returning the affected
+    rows lets the caller clean up each job's input file.
+    """
+    type_clause = "AND job_type = %s" if job_type else ""
+    params: list[Any] = [timeout_seconds]
+    if job_type:
+        params.append(job_type)
+    async with get_pool().connection() as connection:
+        async with connection.cursor() as cursor:
+            await cursor.execute(
+                f"""
+                UPDATE background_jobs
+                SET status = 'failed',
+                    error_message = 'Job exceeded the maximum processing time and was marked as failed by the stale-job reaper.',
+                    completed_at = NOW(), updated_at = NOW()
+                WHERE status = 'running'
+                  AND COALESCE(started_at, updated_at) < NOW() - (%s * INTERVAL '1 second')
+                  {type_clause}
+                RETURNING {JOB_COLUMNS}
+                """,
+                params,
+            )
+            return await cursor.fetchall()
 
 
 async def get_job_for_worker(job_id: str) -> Optional[dict[str, Any]]:
