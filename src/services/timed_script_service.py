@@ -6,7 +6,6 @@ Designed for use with TTS-generated audio from the voice_service.
 """
 
 import logging
-import whisper
 import re
 from pathlib import Path
 from typing import Optional
@@ -28,8 +27,12 @@ def get_whisper_model():
     Model is loaded once and reused for all transcriptions.
     """
     global _whisper_model
-    
+
     if _whisper_model is None:
+        # Imported lazily so modules that only enqueue work (API, Celery task
+        # dispatch) can import this service without the heavy whisper-worker dep.
+        import whisper
+
         logger.info(f"Loading Whisper '{MODEL_SIZE}' model...")
         _whisper_model = whisper.load_model(MODEL_SIZE)
         logger.info(f"✅ Whisper model loaded")

@@ -183,6 +183,8 @@ Configuration is read from environment variables (loaded from a `.env` file at t
 | `DATABASE_POOL_MIN_SIZE` / `DATABASE_POOL_MAX_SIZE` | `1` / `5` | Connection pool bounds |
 | `DATABASE_POOL_TIMEOUT_SECONDS` | `10` | Pool checkout timeout |
 | `CELERY_BROKER_URL` | `redis://localhost:6379/0` | Redis broker for background jobs |
+| `TIMED_SCRIPT_JOB_TIMEOUT_SECONDS` | `1800` | A timed-script job still `running` past this is treated as stuck and marked `failed` by the stale-job reaper. Set comfortably above the slowest transcription. |
+| `TIMED_SCRIPT_REAPER_INTERVAL_SECONDS` | `300` | How often a `celery beat` process runs the stale-job reaper. The worker also reaps opportunistically on every job, so `beat` is optional. |
 
 ### Auth
 
@@ -231,9 +233,10 @@ Migrations live in `migrations/versions/` and are applied by `python -m src.scri
 Long-running work is offloaded to Celery so the API stays responsive.
 
 - **Enqueue:** `POST /timed-script/generate` streams the upload to disk, inserts a `background_jobs` row (`create_job`), then `celery_app.send_task("src.workers.tasks.process_timed_script", ...)` and records the Celery task id.
-- **Worker:** `src/workers/tasks.py::process_timed_script` atomically claims the job (`queued → running`; duplicate deliveries become no-ops), runs Whisper transcription (`generate_timed_script`), then writes `completed` (with `result`) or `failed`. The upload is deleted afterward.
+- **Worker:** `src/workers/tasks.py::process_timed_script` atomically claims the job (`queued → running`; duplicate deliveries become no-ops), runs Whisper transcription (`generate_timed_script`), then writes `completed` (with `result`) or `failed`. The upload is deleted only once the job reaches a terminal state.
 - **Poll:** clients poll `GET /timed-script/jobs/{job_id}` (or list via `GET /timed-script/jobs`). Server-side paths are never exposed in responses.
 - **Queue routing:** the timed-script task is routed to the `whisper` queue; the Whisper worker container consumes only that queue with `--concurrency=1` / `worker_prefetch_multiplier=1` (one heavy job at a time).
+- **Crash recovery:** with `task_acks_late` + `task_reject_on_worker_lost`, a worker that dies mid-transcription has its task redelivered. The task is bound (`self.request.id`), so `claim_job` can re-claim its own `running` row on redelivery instead of leaving it stuck forever; the input file survives because it is deleted only on a terminal state. As a backstop, a **stale-job reaper** fails jobs that have been `running` past `TIMED_SCRIPT_JOB_TIMEOUT_SECONDS` (run opportunistically on every job and, optionally, on a `celery beat` schedule) so the polling UI always terminates.
 
 Celery config lives in `src/workers/celery_app.py`; job persistence in `src/jobs/persistence.py`.
 
