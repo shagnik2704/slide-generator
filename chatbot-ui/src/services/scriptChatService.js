@@ -57,7 +57,53 @@ export async function startSession(outline, fossName = null) {
 }
 
 /**
- * Connect to the SSE stream for a thread.
+ * Consume an authenticated SSE response. Native EventSource cannot send the
+ * bearer token stored in localStorage, so Script Chat uses fetch streaming.
+ */
+async function consumeSseResponse(resp, handlers) {
+  if (!resp.body) throw new Error('Streaming response has no body');
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let currentEvent = { type: 'message', data: '' };
+
+  const processLine = (line) => {
+    line = line.trim();
+    if (!line) {
+      dispatchSseEvent(currentEvent.type, currentEvent.data, handlers);
+      currentEvent = { type: 'message', data: '' };
+      return;
+    }
+
+    if (line.startsWith('event: ')) {
+      currentEvent.type = line.slice(7);
+    } else if (line.startsWith('data: ')) {
+      currentEvent.data = currentEvent.data
+        ? `${currentEvent.data}\n${line.slice(6)}`
+        : line.slice(6);
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    buffer = buffer.replace(/\r\n/g, '\n');
+
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    lines.forEach(processLine);
+
+    if (done) {
+      if (buffer.trim()) processLine(buffer);
+      processLine('');
+      break;
+    }
+  }
+}
+
+/**
+ * Connect to the SSE stream for a thread using an authenticated fetch request.
  * Returns a cleanup function.
  *
  * @param {string} threadId
@@ -65,39 +111,24 @@ export async function startSession(outline, fossName = null) {
  * @returns {() => void} cleanup function
  */
 export function connectStream(threadId, handlers) {
-  const url = `${API_URL}/script-chat/stream/${threadId}`;
-  const eventSource = new EventSource(url);
+  const controller = new AbortController();
 
-  eventSource.addEventListener('progress', (e) => {
-    dispatchSseEvent('progress', e.data, handlers);
-  });
+  void (async () => {
+    try {
+      const resp = await fetch(`${API_URL}/script-chat/stream/${threadId}`, {
+        headers: getHeaders(),
+        signal: controller.signal,
+      });
+      if (!resp.ok) throw new Error(await getErrorMessage(resp, `Stream failed: ${resp.status}`));
+      await consumeSseResponse(resp, handlers);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        handlers.onError?.({ message: error.message || 'Connection lost.' });
+      }
+    }
+  })();
 
-  eventSource.addEventListener('token', (e) => {
-    dispatchSseEvent('token', e.data, handlers);
-  });
-
-  eventSource.addEventListener('interrupt', (e) => {
-    dispatchSseEvent('interrupt', e.data, handlers);
-    eventSource.close();
-  });
-
-  eventSource.addEventListener('state', (e) => {
-    dispatchSseEvent('state', e.data, handlers);
-  });
-
-  eventSource.addEventListener('done', (e) => {
-    dispatchSseEvent('done', e.data, handlers);
-    eventSource.close();
-  });
-
-  eventSource.addEventListener('error', (e) => {
-    // SSE spec fires 'error' on connection close too
-    if (eventSource.readyState === EventSource.CLOSED) return;
-    handlers.onError?.(e);
-  });
-
-  // Return cleanup
-  return () => eventSource.close();
+  return () => controller.abort();
 }
 
 /**
@@ -119,52 +150,7 @@ export async function resumeSession(threadId, resumeData, handlers) {
     throw new Error(await getErrorMessage(resp, `Resume failed: ${resp.status}`));
   }
 
-  // Parse the SSE response body
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  let currentEvent = { type: 'message', data: '' };
-
-  const processLine = (line) => {
-    line = line.trim();
-    if (!line) {
-      dispatchSseEvent(currentEvent.type, currentEvent.data, handlers);
-      currentEvent = { type: 'message', data: '' };
-      return;
-    }
-
-    if (line.startsWith('event: ')) {
-      currentEvent.type = line.slice(7);
-    } else if (line.startsWith('data: ')) {
-      currentEvent.data = currentEvent.data 
-        ? currentEvent.data + '\n' + line.slice(6)
-        : line.slice(6);
-    }
-  };
-
-  while (true) {
-    const { value, done } = await reader.read();
-    
-    const decoded = decoder.decode(value || new Uint8Array(), { stream: !done });
-    buffer += decoded;
-
-    buffer = buffer.replace(/\r\n/g, '\n');
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      processLine(line);
-    }
-
-    if (done) {
-      if (buffer.trim()) {
-        processLine(buffer);
-      }
-      processLine('');
-      break;
-    }
-  }
+  await consumeSseResponse(resp, handlers);
 }
 
 /**
@@ -188,6 +174,29 @@ export async function getHistory(threadId) {
     headers: getHeaders(),
   });
   if (!resp.ok) throw new Error(await getErrorMessage(resp, `History failed: ${resp.status}`));
+  return resp.json();
+}
+
+/**
+ * List persistent Script Chat threads owned by the logged-in user.
+ */
+export async function listThreads() {
+  const resp = await fetch(`${API_URL}/script-chat/threads`, {
+    headers: getHeaders(),
+  });
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Thread list failed: ${resp.status}`));
+  return resp.json();
+}
+
+/**
+ * Archive a thread without deleting its LangGraph checkpoint history.
+ */
+export async function archiveThread(threadId) {
+  const resp = await fetch(`${API_URL}/script-chat/threads/${threadId}/archive`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Archive failed: ${resp.status}`));
   return resp.json();
 }
 

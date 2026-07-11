@@ -25,18 +25,14 @@ project_root = Path(__file__).parent.parent.parent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the LangGraph agent at startup."""
-    # Initialize DB
-    from src.services.database import init_db
-    init_db()
-    print("✅ Database initialized")
+    """Initialize application workflows and their PostgreSQL persistence."""
     
     from src.core.agent import build_graph
     logger.info("Initializing LangGraph agent...")
     app.state.graph = build_graph()
     logger.info("✅ LangGraph agent initialized")
     
-    # Initialize Script Chat graph (independent pipeline)
+    # Script Chat owns the first PostgreSQL-backed application persistence path.
     logger.info("Initializing Script Chat graph...")
     from src.script_chat.routes import init_script_chat_graph, close_script_chat_graph
     await init_script_chat_graph()
@@ -162,10 +158,27 @@ def root():
 
 
 @app.get("/health")
-def health():
-    """Health check endpoint."""
+async def health():
+    """Readiness check for the API and Script Chat PostgreSQL pool."""
+    try:
+        from src.script_chat.persistence import check_script_chat_database
+
+        await check_script_chat_database()
+    except Exception:
+        logger.exception("Script Chat database readiness check failed")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "database": "unavailable",
+                "environment": settings.environment,
+                "service": "Spoken Tutorial Generator API",
+            },
+        )
+
     return {
         "status": "healthy",
+        "database": "healthy",
         "environment": settings.environment,
         "service": "Spoken Tutorial Generator API",
     }

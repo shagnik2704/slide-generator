@@ -39,6 +39,23 @@ class Settings(BaseModel):
     # Environment
     environment: str = Field(default="development", alias="ENVIRONMENT")
     debug: bool = Field(default=False, alias="DEBUG")
+
+    # Persistence
+    #
+    # Script Chat uses this same PostgreSQL instance for its application metadata
+    # and LangGraph checkpoints. Keep credentials out of source control by
+    # setting DATABASE_URL in the deployment environment.
+    database_url: str = Field(
+        default="postgresql://spoken_tutorial:spoken_tutorial@localhost:5432/spoken_tutorial",
+        alias="DATABASE_URL",
+    )
+    database_pool_min_size: int = Field(default=1, ge=1, alias="DATABASE_POOL_MIN_SIZE")
+    database_pool_max_size: int = Field(default=5, ge=1, alias="DATABASE_POOL_MAX_SIZE")
+    database_pool_timeout_seconds: float = Field(
+        default=10.0,
+        gt=0,
+        alias="DATABASE_POOL_TIMEOUT_SECONDS",
+    )
     
     @field_validator("jwt_secret_key", mode="before")
     @classmethod
@@ -101,6 +118,16 @@ _settings_dict = {
     "FRONTEND_URL": os.getenv("FRONTEND_URL", "http://127.0.0.1:5173"),
     "ENVIRONMENT": os.getenv("ENVIRONMENT", "development"),
     "DEBUG": os.getenv("DEBUG", "false").lower() == "true",
+    "DATABASE_URL": os.getenv(
+        "DATABASE_URL",
+        "postgresql://spoken_tutorial:spoken_tutorial@localhost:5432/spoken_tutorial",
+    ),
+    "DATABASE_POOL_MIN_SIZE": int(os.getenv("DATABASE_POOL_MIN_SIZE", "1")),
+    "DATABASE_POOL_MAX_SIZE": int(os.getenv("DATABASE_POOL_MAX_SIZE", "5")),
+    "DATABASE_POOL_TIMEOUT_SECONDS": float(os.getenv("DATABASE_POOL_TIMEOUT_SECONDS", "10")),
 }
 
 settings = Settings(**_settings_dict)
+
+if settings.database_pool_max_size < settings.database_pool_min_size:
+    raise ValueError("DATABASE_POOL_MAX_SIZE must be greater than or equal to DATABASE_POOL_MIN_SIZE")

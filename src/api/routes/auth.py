@@ -15,6 +15,7 @@ from src.api.exceptions import (
     AuthorizationError,
     InternalServerError,
 )
+from src.users.persistence import upsert_user
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +91,12 @@ async def google_callback(code: str):
             email = user_info.get("email", "")
             name = user_info.get("name", "")
             picture = user_info.get("picture", "")
+            provider_subject = user_info.get("id", "")
             
             if not email:
                 raise ValidationError("Email not provided by Google")
+            if not provider_subject:
+                raise ValidationError("Stable account identifier not provided by Google")
             
             # Validate email domain
             if not validate_email_domain(email):
@@ -101,8 +105,22 @@ async def google_callback(code: str):
                     f"Email domain must be {settings.allowed_email_domain}"
                 )
             
-            # Create JWT token with picture
-            jwt_token = create_access_token(email=email, name=name, picture=picture)
+            user = await upsert_user(
+                provider="google",
+                provider_subject=provider_subject,
+                email=email,
+                name=name,
+                picture=picture,
+            )
+
+            # The JWT subject is our stable user UUID. Google identity details
+            # remain in the users table and can be refreshed on each login.
+            jwt_token = create_access_token(
+                subject=str(user["id"]),
+                email=user["email"],
+                name=user["name"] or "",
+                picture=user["picture"] or "",
+            )
             
             # Redirect to frontend with token
             redirect_url = f"{settings.frontend_url}/auth/callback?token={jwt_token}"

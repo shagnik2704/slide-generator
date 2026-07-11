@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  archiveThread,
   connectStream,
   exportDocx,
   getCheckpoints,
+  getHistory,
   jumpStage,
+  listThreads,
   manualEdit,
   resumeSession,
   revertState,
@@ -57,6 +60,8 @@ export function useScriptChatWorkflow() {
   const [checkpoints, setCheckpoints] = useState([]);
   const [isReverting, setIsReverting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [threads, setThreads] = useState([]);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(false);
   const streamCleanupRef = useRef(null);
 
   const addChat = useCallback((role, content) => {
@@ -69,6 +74,22 @@ export function useScriptChatWorkflow() {
   }, []);
 
   useEffect(() => stopStream, [stopStream]);
+
+  const refreshThreads = useCallback(async () => {
+    setIsLoadingThreads(true);
+    try {
+      const response = await listThreads();
+      setThreads(response.threads || []);
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsLoadingThreads(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshThreads();
+  }, [refreshThreads]);
 
   const makeHandlers = useCallback(() => ({
     onProgress: (data) => {
@@ -85,6 +106,7 @@ export function useScriptChatWorkflow() {
       setInterruptData(data);
       setActiveTab(tabFromInterrupt(data.type));
       setCurrentStage(stageFromNode(data.type));
+      void refreshThreads();
 
       if (data.type === 'validation_review') {
         setGroundingReport(data.report);
@@ -116,6 +138,7 @@ export function useScriptChatWorkflow() {
       setInterruptData(null);
       setInterruptType(null);
       addChat('agent', 'Workflow complete.');
+      void refreshThreads();
     },
     onError: (err) => {
       const message = err?.message || 'Connection lost.';
@@ -124,7 +147,7 @@ export function useScriptChatWorkflow() {
       setErrorMessage(message);
       addChat('agent', `Error: ${message}`);
     },
-  }), [addChat, scriptVersion]);
+  }), [addChat, refreshThreads, scriptVersion]);
 
   const connectToThread = useCallback((nextThreadId) => {
     stopStream();
@@ -151,13 +174,88 @@ export function useScriptChatWorkflow() {
     try {
       const { thread_id } = await startSession(outline);
       setThreadId(thread_id);
+      void refreshThreads();
       connectToThread(thread_id);
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message);
       addChat('agent', `Failed to start: ${err.message}`);
     }
-  }, [addChat, connectToThread, outline]);
+  }, [addChat, connectToThread, outline, refreshThreads]);
+
+  const newThread = useCallback(() => {
+    stopStream();
+    setThreadId(null);
+    setOutline('');
+    setCurrentStage(null);
+    setIsLoading(false);
+    setProgressMessage('');
+    setInterruptData(null);
+    setInterruptType(null);
+    setScript([]);
+    setScriptVersion(0);
+    setMetadata(null);
+    setFossName(null);
+    setGroundingReport(null);
+    setComplianceResults(null);
+    setActiveTab('validation');
+    setEditInput('');
+    setChatLog([]);
+    setCheckpoints([]);
+    setErrorMessage('');
+  }, [stopStream]);
+
+  const openThread = useCallback(async (nextThreadId) => {
+    if (!nextThreadId) return;
+    stopStream();
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      const history = await getHistory(nextThreadId);
+      const interrupt = history.interrupt_payload || null;
+      const restoredStage = history.status === 'completed'
+        ? 'done'
+        : stageFromNode(history.current_stage);
+
+      setThreadId(nextThreadId);
+      setOutline(history.raw_outline || '');
+      setCurrentStage(restoredStage);
+      setInterruptData(interrupt);
+      setInterruptType(interrupt?.type || null);
+      setScript(normalizeScript(history.script));
+      setScriptVersion(history.script_version || 0);
+      setMetadata(history.metadata || null);
+      setFossName(history.foss_name || null);
+      setGroundingReport(history.grounding_report || null);
+      setComplianceResults(history.compliance_results || null);
+      setActiveTab(tabFromInterrupt(interrupt?.type));
+      setCheckpoints([]);
+      setChatLog([
+        ...(history.raw_outline ? [makeMessage('user', history.raw_outline)] : []),
+        makeMessage('agent', `Restored saved workflow at ${history.current_stage || 'unknown'}.`),
+      ]);
+
+      if (!interrupt && ['created', 'running'].includes(history.status)) {
+        connectToThread(nextThreadId);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMessage(err.message);
+    }
+  }, [connectToThread, stopStream]);
+
+  const archiveSavedThread = useCallback(async (targetThreadId) => {
+    if (!targetThreadId) return;
+    try {
+      await archiveThread(targetThreadId);
+      if (targetThreadId === threadId) newThread();
+      await refreshThreads();
+    } catch (err) {
+      setErrorMessage(err.message);
+    }
+  }, [newThread, refreshThreads, threadId]);
 
   const resume = useCallback(async (action, payload = {}) => {
     if (!threadId) return;
@@ -294,10 +392,13 @@ export function useScriptChatWorkflow() {
     interruptData,
     interruptType,
     isLoading,
+    isLoadingThreads,
     isReverting,
     jumpToMetadata,
     loadCheckpoints,
     metadata,
+    newThread,
+    openThread,
     outline,
     progressMessage,
     revertToCheckpoint,
@@ -310,5 +411,8 @@ export function useScriptChatWorkflow() {
     start,
     submitEditInstruction,
     threadId,
+    threads,
+    archiveSavedThread,
+    refreshThreads,
   };
 }

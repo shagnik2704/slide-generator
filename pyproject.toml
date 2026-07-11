@@ -97,10 +97,7 @@ dependencies = [
   "yarl==1.22.0",
   "zipp==3.23.0",
   "zstandard==0.25.0",
-  "sqlalchemy==2.0.36",
   "pypdf2==3.0.1",
-  "langgraph-checkpoint-sqlite>=2.0.11",
-  "aiosqlite<0.22.0",
   "langchain-openai>=0.3.35",
   "pydub>=0.25.1",
   "beautifulsoup4>=4.12.3",
@@ -110,8 +107,16 @@ dependencies = [
   "gspread>=6.2.1",
   "python-jose[cryptography]>=3.5.0",
   "pdfplumber>=0.11.4",
-  "sqlite-vec>=0.1.6",
   "prometheus-fastapi-instrumentator>=7.1.0",
+  "langgraph-checkpoint-postgres>=2.0.0",
+  "psycopg[binary,pool]>=3.2.0",
+  "alembic>=1.15,<2.0",
+  "sqlalchemy>=2.0,<3.0",
+  "celery[redis]>=5.4,<6.0",
+]
+
+[project.optional-dependencies]
+whisper-worker = [
   "openai-whisper>=20250625",
 ]
 
@@ -121,4 +126,3 @@ packages = ["src"]
 [tool.uv]
 extra-index-url = ["https://download.pytorch.org/whl/cpu"]
 index-strategy = "unsafe-best-match"
-

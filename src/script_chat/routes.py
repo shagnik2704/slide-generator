@@ -4,15 +4,26 @@ import uuid
 import logging
 from copy import deepcopy
 from typing import Literal, Optional
-from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.types import Command
 
+from src.api.auth import TokenData, get_current_user
 from src.script_chat.graph import build_script_chat_graph
+from src.script_chat.persistence import (
+    archive_thread,
+    close_script_chat_pool,
+    create_thread,
+    delete_thread,
+    get_pool,
+    get_thread,
+    list_threads,
+    open_script_chat_pool,
+    update_thread,
+)
 from src.script_chat.schemas import (
     EditableScriptField,
     ResumeAction,
@@ -41,6 +52,15 @@ async def _get_state_or_404(config: dict):
     return state
 
 
+async def _get_owned_state_or_404(thread_id: str, current_user: TokenData):
+    """Load graph state only after verifying that this user owns the thread."""
+    if not await get_thread(thread_id, current_user.sub):
+        # Deliberately avoid exposing whether another user's UUID exists.
+        raise HTTPException(status_code=404, detail="Thread not found")
+    config = {"configurable": {"thread_id": thread_id}}
+    return await _get_state_or_404(config)
+
+
 def _interrupt_payload(state):
     if getattr(state, "tasks", None):
         for task in state.tasks:
@@ -50,21 +70,20 @@ def _interrupt_payload(state):
 
 async def init_script_chat_graph():
     global _graph
-    db_dir = Path(__file__).parent.parent.parent / "data"
-    db_dir.mkdir(exist_ok=True)
-    db_path = str(db_dir / "script_chat.db")
-    
-    context_manager = AsyncSqliteSaver.from_conn_string(db_path)
-    saver = await context_manager.__aenter__()
-    router.state_saver = context_manager
-    _graph = build_script_chat_graph(checkpointer=saver)
-    logger.info("✅ Script Chat graph initialized with AsyncSqliteSaver")
+    await open_script_chat_pool()
+    try:
+        saver = AsyncPostgresSaver(get_pool())
+        _graph = build_script_chat_graph(checkpointer=saver)
+    except Exception:
+        await close_script_chat_pool()
+        raise
+    logger.info("✅ Script Chat graph initialized with AsyncPostgresSaver")
 
 async def close_script_chat_graph():
-    saver = getattr(router, "state_saver", None)
-    if saver:
-        await saver.__aexit__(None, None, None)
-        logger.info("🔒 Script Chat AsyncSqliteSaver connection closed")
+    global _graph
+    _graph = None
+    await close_script_chat_pool()
+    logger.info("🔒 Script Chat PostgreSQL pool closed")
 
 class StartRequest(BaseModel):
     outline: str = Field(min_length=1)
@@ -107,6 +126,11 @@ async def _stream_graph(config: dict, input_data=None):
       - "updates": Node completion state updates
     """
     try:
+        await update_thread(
+            config["configurable"]["thread_id"],
+            current_stage=None,
+            status="running",
+        )
         stream_input = input_data if input_data is not None else None
         graph = get_graph()
         
@@ -129,19 +153,39 @@ async def _stream_graph(config: dict, input_data=None):
         
         state = await graph.aget_state(config)
         interrupt_payload = _interrupt_payload(state)
+        current_stage = state.values.get("current_stage", "unknown")
+        metadata = state.values.get("metadata") or {}
+        title = metadata.get("title") if isinstance(metadata, dict) else getattr(metadata, "title", None)
+        status = "awaiting_review" if interrupt_payload else "completed"
+        if current_stage == "error":
+            status = "failed"
+        await update_thread(
+            config["configurable"]["thread_id"],
+            current_stage=current_stage,
+            status=status,
+            title=title,
+        )
         if interrupt_payload:
             yield _sse_event("interrupt", interrupt_payload)
         else:
             yield _sse_event("done", {
-                "stage": state.values.get("current_stage", "unknown")
+                "stage": current_stage
             })
     
     except Exception as e:
         logger.error(f"SSE stream error: {e}", exc_info=True)
+        try:
+            await update_thread(
+                config["configurable"]["thread_id"],
+                current_stage="error",
+                status="failed",
+            )
+        except Exception:
+            logger.exception("Failed to persist Script Chat stream failure")
         yield _sse_event("error", {"message": str(e)})
 
 @router.post("/start", response_model=StartResponse)
-async def start_session(req: StartRequest):
+async def start_session(req: StartRequest, current_user: TokenData = Depends(get_current_user)):
     """Start a new script chat session.
     
     Returns a thread_id. Client should immediately connect to 
@@ -159,7 +203,13 @@ async def start_session(req: StartRequest):
         "current_stage": "ingest"
     }
     
-    await get_graph().aupdate_state(config, initial_input, as_node="__start__")
+    outline_preview = " ".join(req.outline.split())[:240]
+    await create_thread(thread_id, current_user.sub, req.foss_name, outline_preview)
+    try:
+        await get_graph().aupdate_state(config, initial_input, as_node="__start__")
+    except Exception:
+        await delete_thread(thread_id, current_user.sub)
+        raise
     
     return StartResponse(
         thread_id=thread_id,
@@ -168,20 +218,14 @@ async def start_session(req: StartRequest):
 
 
 @router.get("/stream/{thread_id}")
-async def stream_events(thread_id: str):
+async def stream_events(thread_id: str, current_user: TokenData = Depends(get_current_user)):
     """SSE endpoint. Streams LangGraph events for the given thread.
     
     On first connection: starts the graph from the saved state.
     On subsequent connections: streams the current state (useful for reconnects).
     """
     config = {"configurable": {"thread_id": thread_id}}
-    
-    state = await get_graph().aget_state(config)
-    if not state.values:
-        raise HTTPException(
-            status_code=404,
-            detail="Session not found or expired. Please start a new session."
-        )
+    state = await _get_owned_state_or_404(thread_id, current_user)
     
     interrupt_payload = _interrupt_payload(state)
     is_interrupted = interrupt_payload is not None
@@ -217,13 +261,17 @@ async def stream_events(thread_id: str):
 
 
 @router.post("/resume/{thread_id}")
-async def resume_session(thread_id: str, req: ResumeRequest):
+async def resume_session(
+    thread_id: str,
+    req: ResumeRequest,
+    current_user: TokenData = Depends(get_current_user),
+):
     """Resume from an interrupt (HITL gate).
     
     Returns an SSE stream of events as the graph continues executing.
     """
     config = {"configurable": {"thread_id": thread_id}}
-    state = await _get_state_or_404(config)
+    state = await _get_owned_state_or_404(thread_id, current_user)
     if not state.next or _interrupt_payload(state) is None:
         raise HTTPException(
             status_code=400,
@@ -250,11 +298,15 @@ async def resume_session(thread_id: str, req: ResumeRequest):
 
 
 @router.put("/edit/{thread_id}")
-async def manual_edit(thread_id: str, req: ManualEditRequest):
+async def manual_edit(
+    thread_id: str,
+    req: ManualEditRequest,
+    current_user: TokenData = Depends(get_current_user),
+):
     """Direct manual edit to a slide while paused at script review."""
     config = {"configurable": {"thread_id": thread_id}}
 
-    state = await _get_state_or_404(config)
+    state = await _get_owned_state_or_404(thread_id, current_user)
     interrupt_payload = _interrupt_payload(state)
     if not interrupt_payload or interrupt_payload.get("type") != "script_review":
         raise HTTPException(status_code=400, detail="Manual edits are only allowed during script review")
@@ -287,6 +339,11 @@ async def manual_edit(thread_id: str, req: ManualEditRequest):
             "script_version": state.values.get("script_version", 0) + 1,
         },
     )
+    await update_thread(
+        thread_id,
+        current_stage=state.values.get("current_stage", "script_review"),
+        status="awaiting_review",
+    )
     
     return {
         "success": True,
@@ -297,9 +354,12 @@ async def manual_edit(thread_id: str, req: ManualEditRequest):
 
 
 @router.get("/history/{thread_id}")
-async def get_history(thread_id: str):
+async def get_history(thread_id: str, current_user: TokenData = Depends(get_current_user)):
     """Retrieve the current state and conversation history for a thread."""
     config = {"configurable": {"thread_id": thread_id}}
+    thread = await get_thread(thread_id, current_user.sub)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
     state = await _get_state_or_404(config)
     
     values = state.values
@@ -309,6 +369,7 @@ async def get_history(thread_id: str):
     
     return {
         "thread_id": thread_id,
+        "raw_outline": values.get("raw_outline"),
         "current_stage": values.get("current_stage", "unknown"),
         "foss_name": values.get("foss_name"),
         "script_version": values.get("script_version", 0),
@@ -318,13 +379,34 @@ async def get_history(thread_id: str):
         "compliance_results": values.get("compliance_results"),
         "is_interrupted": is_interrupted,
         "interrupt_payload": interrupt_payload,
+        "status": thread["status"],
+        "created_at": thread["created_at"],
+        "updated_at": thread["updated_at"],
     }
 
 
+@router.get("/threads")
+async def get_threads(current_user: TokenData = Depends(get_current_user)):
+    """List the logged-in user's persistent Script Chat threads."""
+    return {"threads": await list_threads(current_user.sub)}
+
+
+@router.post("/threads/{thread_id}/archive")
+async def archive_thread_endpoint(
+    thread_id: str,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Archive a thread owned by the current user without deleting checkpoints."""
+    if not await archive_thread(thread_id, current_user.sub):
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return {"success": True, "thread_id": thread_id}
+
+
 @router.get("/checkpoints/{thread_id}")
-async def get_checkpoints(thread_id: str):
+async def get_checkpoints(thread_id: str, current_user: TokenData = Depends(get_current_user)):
     """Retrieve the list of past state snapshots (edits/versions)."""
     config = {"configurable": {"thread_id": thread_id}}
+    await _get_owned_state_or_404(thread_id, current_user)
     graph = get_graph()
     
     checkpoints = []
@@ -349,10 +431,15 @@ async def get_checkpoints(thread_id: str):
 
 
 @router.post("/revert/{thread_id}")
-async def revert_state(thread_id: str, req: RevertRequest):
+async def revert_state(
+    thread_id: str,
+    req: RevertRequest,
+    current_user: TokenData = Depends(get_current_user),
+):
     """Reverts the thread's state back to a past checkpoint's values."""
     config = {"configurable": {"thread_id": thread_id}}
     graph = get_graph()
+    await _get_owned_state_or_404(thread_id, current_user)
     
     past_config = {"configurable": {"thread_id": thread_id, "checkpoint_id": req.checkpoint_id}}
     past_state = await graph.aget_state(past_config)
@@ -367,21 +454,31 @@ async def revert_state(thread_id: str, req: RevertRequest):
             raise HTTPException(status_code=400, detail=f"Past checkpoint has invalid script: {str(e)}") from e
 
     await graph.aupdate_state(config, past_state.values)
+    await update_thread(
+        thread_id,
+        current_stage=past_state.values.get("current_stage", "unknown"),
+        status="awaiting_review" if _interrupt_payload(past_state) else "running",
+    )
     
     return {"success": True, "message": f"Successfully reverted to script version {past_state.values.get('script_version')}"}
 
 
 @router.post("/jump/{thread_id}")
-async def jump_stage(thread_id: str, req: JumpRequest):
+async def jump_stage(
+    thread_id: str,
+    req: JumpRequest,
+    current_user: TokenData = Depends(get_current_user),
+):
     """Move a paused thread to a supported review/continuation point."""
     config = {"configurable": {"thread_id": thread_id}}
     graph = get_graph()
     
-    state = await _get_state_or_404(config)
+    state = await _get_owned_state_or_404(thread_id, current_user)
     if req.target_stage == "metadata_review":
         if not state.values.get("metadata"):
             raise HTTPException(status_code=400, detail="Cannot jump to metadata review without metadata")
         await graph.aupdate_state(config, {"current_stage": "metadata"}, as_node="metadata")
+        await update_thread(thread_id, current_stage="metadata", status="awaiting_review")
         return {"success": True, "message": "Successfully jumped to metadata_review"}
 
     as_node = "metadata_review" if req.target_stage == "generate" else "script_review"
@@ -390,15 +487,19 @@ async def jump_stage(thread_id: str, req: JumpRequest):
         {"current_stage": req.target_stage}, 
         as_node=as_node,
     )
+    await update_thread(thread_id, current_stage=req.target_stage, status="awaiting_review")
     
     return {"success": True, "message": f"Successfully jumped to {req.target_stage}"}
 
 
 @router.get("/export-docx/{thread_id}")
-async def export_docx_file(thread_id: str):
+async def export_docx_file(
+    thread_id: str,
+    current_user: TokenData = Depends(get_current_user),
+):
     """Retrieve the current script state and export it to a Word document (.docx)."""
     config = {"configurable": {"thread_id": thread_id}}
-    state = await _get_state_or_404(config)
+    state = await _get_owned_state_or_404(thread_id, current_user)
         
     metadata = state.values.get("metadata", {})
     series_name = state.values.get("foss_name") or metadata.get("foss_name") or "Pedagogical Script"
