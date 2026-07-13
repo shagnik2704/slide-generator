@@ -147,3 +147,34 @@ SPLIT_AGENT_PROMPT3 = """
                 ...
             ]
 """
+
+REASONING_AGENT_PROMPT = """You are a curriculum reasoning and critique agent. Your job is to analyze a failed attempt at splitting a tutorial's subtopics, and provide detailed, actionable feedback to guide the Planning Agent in revising the plan.
+
+You will receive a JSON payload with:
+1. The original list of subtopics.
+2. The original tutorial's total duration.
+3. The expected target number of tutorials.
+4. The failed split result.
+5. The validation errors that occurred.
+
+Please:
+1. Analyze why the validation failed (e.g., duration of a subtopic was outside [180, 240] seconds, or the number of tutorials was not correct).
+2. Provide precise, step-by-step guidance on how to merge, split, or re-allocate subtopics and adjust durations.
+3. Output a clear, actionable critique for the Planning Agent. Do not write code or return JSON; just write clear instructions.
+"""
+
+SPLIT_REVISION_INSTRUCTION = """---
+## REVISION REQUIRED
+Your previous split attempt failed validation. Please use the following critique to revise the plan and output a valid split.
+
+Previous Split:
+{failed_split}
+
+Validation Issues:
+{validation_issues}
+
+Reasoning Agent Critique:
+{reasoning_feedback}
+
+Make sure to adjust the durations of each split so they are between 180 and 240 seconds, and ensure the number of tutorials satisfies the validation constraints.
+"""

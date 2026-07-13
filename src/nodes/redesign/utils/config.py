@@ -67,27 +67,27 @@ class _LazyLLM:
     @property
     def __class__(self):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_gemini()
+            _LazyLLM._instance = get_llm_openai()
         return _LazyLLM._instance.__class__
     
     def __getattr__(self, name):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_gemini()
+            _LazyLLM._instance = get_llm_openai()
         return getattr(_LazyLLM._instance, name)
     
     def __call__(self, *args, **kwargs):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_gemini()
+            _LazyLLM._instance = get_llm_openai()
         return _LazyLLM._instance(*args, **kwargs)
     
     def invoke(self, *args, **kwargs):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_gemini()
+            _LazyLLM._instance = get_llm_openai()
         return _LazyLLM._instance.invoke(*args, **kwargs)
     
     def bind_tools(self, *args, **kwargs):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_gemini()
+            _LazyLLM._instance = get_llm_openai()
         return _LazyLLM._instance.bind_tools(*args, **kwargs)
 
 

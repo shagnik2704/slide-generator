@@ -43,6 +43,7 @@ Thumbs.db
 uploads/
 
 # Output directories
+results/
 output/
 *.tex
 *.aux

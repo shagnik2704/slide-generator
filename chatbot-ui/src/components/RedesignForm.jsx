@@ -7,13 +7,28 @@ import { Send, X, Plus, Share2, Eye } from 'lucide-react';
  */
 export default function RedesignForm({ onSubmit, onCancel }) {
     const navigate = useNavigate();
-    const [step, setStep] = useState('generate'); // 'generate' | 'preview'
+    const [step, setStep] = useState('generate'); // 'generate' | 'progress' | 'preview'
     const [generatedUrl, setGeneratedUrl] = useState('');
     const [hasShared, setHasShared] = useState(false);
     const [fossName, setFossName] = useState('');
     const [language, setLanguage] = useState('English');
     const [recipients, setRecipients] = useState([{ email: '', role: 'writer' }]);
     const [errors, setErrors] = useState({});
+    
+    // Progress States
+    const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState('');
+    const [progressStage, setProgressStage] = useState('');
+
+    const stagesOrder = ['init', 'fetch_links', 'extraction', 'tech_intelligence', 'duration_split', 'tabulation', 'export', 'completed'];
+    
+    const isStageCompleted = (stageKey, currentStage) => {
+        const currentIdx = stagesOrder.indexOf(currentStage);
+        const keyIdx = stagesOrder.indexOf(stageKey);
+        if (currentStage === 'failed') return false;
+        if (currentStage === 'completed') return true;
+        return keyIdx < currentIdx;
+    };
 
     const handleAddRecipient = () => {
         setRecipients([...recipients, { email: '', role: 'writer' }]);
@@ -51,16 +66,34 @@ export default function RedesignForm({ onSubmit, onCancel }) {
             return;
         }
 
-        // Submit generate request
-        const result = await onSubmit({
-            type: 'generate',
-            foss_name: fossName.trim(),
-            language: language.trim() || 'English'
-        });
+        // Change step to progress indicator
+        setStep('progress');
+        setProgress(0);
+        setProgressMessage('Queuing task...');
+        setProgressStage('init');
 
-        if (result && result.url) {
-            setGeneratedUrl(result.url);
-            setStep('preview');
+        try {
+            // Submit generate request
+            const result = await onSubmit({
+                type: 'generate',
+                foss_name: fossName.trim(),
+                language: language.trim() || 'English',
+                onProgress: (progressInfo) => {
+                    setProgress(progressInfo.progress || 0);
+                    setProgressMessage(progressInfo.message || '');
+                    setProgressStage(progressInfo.stage || '');
+                }
+            });
+
+            if (result && result.url) {
+                setGeneratedUrl(result.url);
+                setStep('preview');
+            } else {
+                setStep('generate');
+            }
+        } catch (err) {
+            console.error(err);
+            setStep('generate');
         }
     };
 
@@ -144,7 +177,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                     color: 'var(--text-primary)',
                     margin: 0
                 }}>
-                    {step === 'generate' ? 'Generate Tutorial' : 'Preview & Share'}
+                    {step === 'generate' ? 'Generate Tutorial' : step === 'progress' ? 'Redesign Progress' : 'Preview & Share'}
                 </h2>
                 {onCancel && (
                     <button
@@ -178,7 +211,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                 )}
             </div>
 
-            {step === 'generate' ? (
+            {step === 'generate' && (
                 <form onSubmit={handleGenerate}>
                     {/* FOSS Name */}
                     <div style={{ marginBottom: '1.25rem' }}>
@@ -378,7 +411,126 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                         Update and Redesign
                     </button>
                 </form>
-            ) : (
+            )}
+
+            {step === 'progress' && (
+                <div style={{ padding: '1rem 0' }}>
+                    <style>{`
+                        @keyframes pulse {
+                            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+                            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+                            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+                        }
+                    `}</style>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '1rem'
+                    }}>
+                        <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                            Progress Stage: <span style={{ color: 'var(--accent-primary)', textTransform: 'capitalize' }}>{progressStage.replace('_', ' ')}</span>
+                        </span>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                            {progress}%
+                        </span>
+                    </div>
+
+                    {/* Progress Bar Container */}
+                    <div style={{
+                        width: '100%',
+                        height: '8px',
+                        background: 'var(--border-color)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        marginBottom: '1.5rem',
+                        position: 'relative'
+                    }}>
+                        <div style={{
+                            width: `${progress}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, var(--accent-primary) 0%, #3b82f6 100%)',
+                            borderRadius: '4px',
+                            transition: 'width 0.4s ease-out',
+                            boxShadow: '0 0 8px var(--accent-primary)'
+                        }} />
+                    </div>
+
+                    {/* Message Box */}
+                    <div style={{
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '0.5rem',
+                        padding: '1rem',
+                        fontSize: '0.9rem',
+                        color: 'var(--text-primary)',
+                        marginBottom: '2rem',
+                        fontFamily: 'monospace',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        boxShadow: 'inset var(--shadow-sm)'
+                    }}>
+                        <div className="pulse-indicator" style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: 'var(--accent-primary)',
+                            boxShadow: '0 0 6px var(--accent-primary)',
+                            animation: 'pulse 1.5s infinite'
+                        }} />
+                        <span style={{ wordBreak: 'break-all' }}>{progressMessage || 'Processing...'}</span>
+                    </div>
+
+                    {/* Stepper Checklist */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {[
+                            { key: 'init', label: 'Initialize Workspace' },
+                            { key: 'fetch_links', label: 'Fetch Tutorial Links' },
+                            { key: 'extraction', label: 'Extract Contents' },
+                            { key: 'tech_intelligence', label: 'AI Tech Intelligence' },
+                            { key: 'duration_split', label: 'Duration Split LangGraph' },
+                            { key: 'tabulation', label: 'Tabulate Results' },
+                            { key: 'export', label: 'Export to Google Sheets' }
+                        ].map((s, i) => {
+                            const isDone = isStageCompleted(s.key, progressStage);
+                            const isActive = progressStage === s.key;
+                            
+                            return (
+                                <div key={s.key} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    color: isDone ? 'var(--text-primary)' : isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                    fontWeight: isActive ? 600 : 400,
+                                    fontSize: '0.9rem',
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    <div style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        border: isDone ? 'none' : '2px solid var(--border-color)',
+                                        background: isDone ? '#10b981' : isActive ? 'var(--accent-primary)' : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: isDone || isActive ? 'white' : 'var(--text-secondary)',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold',
+                                        transition: 'all 0.3s ease'
+                                    }}>
+                                        {isDone ? '✓' : i + 1}
+                                    </div>
+                                    <span>{s.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {step === 'preview' && (
                 <div>
                     {/* Preview */}
                     <div style={{ marginBottom: '1.5rem' }}>

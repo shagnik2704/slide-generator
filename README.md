@@ -19,6 +19,7 @@ AI-powered tool for generating Spoken Tutorial content: scripts, slides, and nar
 | **MediaWiki Export** | One-click export to Spoken Tutorial wiki table format |
 | **Image Prompt Enhancement** | AI-enhanced prompts for slide visuals with review UI |
 | **Outline Chat** | Interactive wizard to build course outlines step-by-step |
+| **[Tutorial Redesign](docs/redesign.md)** | Modernize, update software versions, split, and export tutorials to Sheets |
 
 ---
 
@@ -79,6 +80,13 @@ npm install && npm run dev       # Starts on http://localhost:5173
 
 ---
 
+## Documentation
+
+Detailed design specifications and system workflows:
+- **[Tutorial Redesign Module](docs/redesign.md)**: Scrapers, LLM-based tech version updates, LangGraph duration split workflow, and automated Google Sheets export.
+
+---
+
 ## Project Structure
 
 ```
@@ -91,11 +99,13 @@ slide-generator/
 │   │       ├── upload.py          # File uploads, parsing, compliance
 │   │       ├── generation.py      # Script/slides/video generation
 │   │       ├── download.py        # File downloads
-│   │       └── outline_chat/      # Interactive outline wizard
+│   │       ├── outline_chat/      # Interactive outline wizard
+│   │       └── redesign.py        # Tutorial redesign API routes
 │   ├── core/
 │   │   ├── agent.py               # LangGraph workflow definition
 │   │   └── state.py               # AgentState TypedDict
 │   ├── nodes/                     # LangGraph processing nodes
+│   │   └── redesign/              # Tutorial redesign agents and split workflows
 │   └── services/                  # Business logic (PDF, LaTeX, TTS)
 ├── chatbot-ui/
 │   └── src/
@@ -145,6 +155,13 @@ slide-generator/
 | `/outline_chat` | POST | Multi-turn outline builder |
 | `/outline_chat/{id}/edit` | POST | Edit a previous answer |
 | `/outline_chat/{id}/export` | GET | Export completed outline |
+
+### Tutorial Redesign
+| Endpoint | Method | Description |
+|:---------|:------:|:------------|
+| `/redesign/generate` | POST | Enqueues background task to redesign and split FOSS tutorials |
+| `/redesign/progress/{task_id}` | GET | Get real-time status/progress of redesign task |
+| `/redesign/share` | POST | Share a generated Google Sheet with email recipients |
 
 ---
 

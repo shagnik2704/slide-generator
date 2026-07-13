@@ -25,6 +25,11 @@ class SplitedTutorial(BaseModel):
 
 class SplitedTutorialList(BaseModel):
     tutorials: list[SplitedTutorial]
+    total_duration: float = 0.0
+
+class SplitValidationResponse(BaseModel):
+    is_valid: bool
+    issues: list[str]
 
 class TutorialState(BaseModel):
     tutorial_name: str
@@ -54,10 +59,12 @@ class GenerateTutorialRequest(BaseModel):
     export: bool = True
     reciept_emails: list[str] = []
     reciept_role: str = "writer"
+    webhook_url: str | None = None
 
 class GenerateTutorialResponse(BaseModel):
     status: str
     url: str
+    task_id: str | None = None
 
 
 class ShareTutorialResponse(BaseModel):

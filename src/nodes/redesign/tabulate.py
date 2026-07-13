@@ -2,6 +2,7 @@ from src.nodes.redesign.utils.schema import TutorialState
 import pandas as pd
 # from inputs import foss_name,language
 import re
+from datetime import timedelta
 
 
 def empty_row():
@@ -19,7 +20,7 @@ def empty_row():
     }
 
 
-def form_final_table(state: TutorialState, output_csv_path: str = None, tutorial_index: int = 1):
+def form_final_table(state: TutorialState, output_csv_path: str = None, tutorial_index: int = 1, start_new_t_index: int = 1):
     table = []
     
     # 1. Old tutorial info
@@ -57,7 +58,7 @@ def form_final_table(state: TutorialState, output_csv_path: str = None, tutorial
     # Calculate max length to align logs and new/split tutorials
     max_len = max(len(updated_items), len(logs))
 
-    new_t_counter = 1
+    new_t_counter = start_new_t_index
     for j in range(max_len):
         row = empty_row()
 
@@ -88,7 +89,7 @@ def form_final_table(state: TutorialState, output_csv_path: str = None, tutorial
             row["New T#"] = f"New T{new_t_counter}"
             row["New Title"] = title
             row["New Subtopics"] = subtopic
-            row["New Tutorial Duration"] = str(duration)
+            row["New Tutorial Duration"] = str(timedelta(seconds=int(duration)))
             new_t_counter += 1
 
         table.append(row)
@@ -111,6 +112,6 @@ def form_final_table(state: TutorialState, output_csv_path: str = None, tutorial
         df.to_csv(csv_path, index=False)
         print(f"Saved final table to {csv_path}")
 
-    # Return state
-    return state
+    # Return state and updated counter
+    return state, new_t_counter
 
