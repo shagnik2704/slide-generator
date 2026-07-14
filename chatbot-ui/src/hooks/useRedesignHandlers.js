@@ -43,7 +43,7 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
 
                     while (!isCompleted) {
                         await new Promise(resolve => setTimeout(resolve, 1500));
-                        
+
                         try {
                             const progressData = await apiJson(`/redesign/progress/${taskId}`, {
                                 method: 'GET'
@@ -105,12 +105,12 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
 
             } catch (error) {
                 console.error("Error:", error);
-                
-                const isNotFoundError = error.message && 
-                    (error.message.includes("No tutorials found") || 
-                     error.message.includes("not available in the selected language"));
-                
-                const errorMessageText = isNotFoundError 
+
+                const isNotFoundError = error.message &&
+                    (error.message.includes("No tutorials found") ||
+                        error.message.includes("not available in the selected language"));
+
+                const errorMessageText = isNotFoundError
                     ? `⚠️ ${error.message}\n\nPlease try selecting a different language or FOSS that has available tutorials.`
                     : error.message || "Sorry, something went wrong generating the tutorial.";
 
@@ -123,7 +123,7 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
                     }
                     return msg;
                 }));
-                
+
                 throw error;
             } finally {
                 setIsTyping(false);

@@ -2,6 +2,7 @@
 AI-powered compliance checking service for Spoken Tutorial scripts.
 Uses Gemini LLM to evaluate scripts against the official checklist.
 """
+from langchain_openai import ChatOpenAI
 import json
 import re
 from typing import Dict, List, Tuple
@@ -186,7 +187,8 @@ async def check_compliance(json_script: dict, tutorial_type: str = "conceptual")
         model="gemini-2.5-flash",
         temperature=0.3,    
     )
-    structured_llm = llm.with_structured_output(ComplianceResults)
+    llm_openai = ChatOpenAI(model='gpt-5.2')
+    structured_llm = llm_openai.with_structured_output(ComplianceResults)
     
     # Build the prompt
     prompt = f"""You are a Spoken Tutorial script reviewer. Evaluate this script against the official compliance checklist.

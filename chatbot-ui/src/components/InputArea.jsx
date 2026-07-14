@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers, Clock } from 'lucide-react';
+import { NoiseBackgroundButton } from './ui/noise-background-button';
 
 // Helper to format file size
 const formatFileSize = (bytes) => {
@@ -21,22 +22,26 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
     const isScript = uploadType === 'script';
     const isVoice = uploadType === 'voice';
     const isTimedScript = uploadType === 'timed_script';
+    const isWiki = uploadType === 'wiki';
 
     // Voice mode state - 'combined' or 'rowwise'
     const [voiceMode, setVoiceMode] = useState('combined');
-
+    const [speaker, setSpeaker] = useState('ishita');
+    const [pace, setPace] = useState(0.9);
+ 
     // Get the appropriate icon based on upload type
     const getIcon = () => {
         if (isScript) return <FileJson size={24} />;
         if (isTimedScript) return <Clock size={24} />;
         if (isVoice) return <Mic size={24} />;
+        if (isWiki) return <BookOpen size={24} />;
         return <File size={24} />;
     };
-
-    // Wrap onConfirm to include voiceMode for voice uploads
+ 
+    // Wrap onConfirm to include voiceMode, speaker, and pace for voice uploads
     const handleConfirm = () => {
         if (isVoice) {
-            onConfirm({ voiceMode });
+            onConfirm({ voiceMode, speaker, pace });
         } else {
             onConfirm();
         }
@@ -178,6 +183,70 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                 </div>
             )}
 
+            {/* Voice Actor and Speed controls */}
+            {isVoice && (
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    marginBottom: '1rem',
+                    textAlign: 'left'
+                }}>
+                    {/* Voice Actor selection */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Voice Actor</label>
+                        <select
+                            value={speaker}
+                            onChange={(e) => setSpeaker(e.target.value)}
+                            style={{
+                                padding: '0.55rem 0.75rem',
+                                borderRadius: '0.5rem',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                width: '100%'
+                            }}
+                        >
+                            <option value="ishita">Ishita (Female - Dynamic & Entertaining)</option>
+                            <option value="kavya">Kavya (Female - Clear & Engaging)</option>
+                            <option value="neha">Neha (Female - Conversational)</option>
+                            <option value="shreya">Shreya (Female - Warm)</option>
+                            <option value="aditya">Aditya (Male - Energetic)</option>
+                            <option value="shubh">Shubh (Male - Professional)</option>
+                            <option value="manan">Manan (Male - Conversational)</option>
+                        </select>
+                    </div>
+
+                    {/* Pace / Speed range slider */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Speaking Speed (Pace)</label>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{pace}x</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="2.0"
+                            step="0.05"
+                            value={pace}
+                            onChange={(e) => setPace(parseFloat(e.target.value))}
+                            style={{
+                                width: '100%',
+                                accentColor: 'var(--accent-primary)',
+                                cursor: 'pointer',
+                                height: '6px',
+                                borderRadius: '3px',
+                                background: 'var(--border-color)',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* Timed Script Description */}
             {isTimedScript && (
                 <div style={{
@@ -205,6 +274,36 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     }}>
                         Uses AI (Whisper) to transcribe your audio and generate sentence-level timestamps.
                         Results can be downloaded as a DOCX file.
+                    </div>
+                </div>
+            )}
+
+            {/* Wiki Conversion Description */}
+            {isWiki && (
+                <div style={{
+                    padding: '0.75rem 1rem',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: '0.75rem',
+                    marginBottom: '1rem',
+                }}>
+                    <div style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-primary)',
+                        fontWeight: 500,
+                        marginBottom: '0.35rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                    }}>
+                        <BookOpen size={14} style={{ color: 'var(--accent-primary)' }} />
+                        MediaWiki Conversion
+                    </div>
+                    <div style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.4,
+                    }}>
+                        Converts your DOCX script to MediaWiki format. Ideal for uploading tutorials to the Spoken Tutorial Wiki.
                     </div>
                 </div>
             )}
@@ -281,7 +380,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     }}
                 >
                     <Check size={16} />
-                    {isTimedScript ? 'Generate Timed Script' : 'Confirm Upload'}
+                    {isTimedScript ? 'Generate Timed Script' : isWiki ? 'Convert to Wiki' : 'Confirm Upload'}
                 </button>
             </div>
         </div>
@@ -367,24 +466,6 @@ const InputArea = ({
 
     const outlineMode = mode === 'outline_chat';
 
-    // Pill button style (Gemini-inspired, enhanced)
-    const pillButtonStyle = (isDisabled) => ({
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.6rem',
-        padding: '0.75rem 1.5rem',
-        borderRadius: '999px',
-        border: '1px solid var(--border-color)',
-        background: isDisabled ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-        color: isDisabled ? 'var(--text-secondary)' : 'var(--text-primary)',
-        fontSize: '0.9rem',
-        fontWeight: 500,
-        cursor: isDisabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.25s ease',
-        opacity: isDisabled ? 0.5 : 1,
-        boxShadow: isDisabled ? 'none' : 'var(--shadow-sm)',
-    });
-
     // Primary button style
     const primaryButtonStyle = (isDisabled) => ({
         flex: 1,
@@ -456,7 +537,7 @@ const InputArea = ({
                                 <Sparkles size={18} />
                                 <span>Welcome</span>
                             </div>
-                            <h1 style={{
+                            <h1 className="welcome-heading" style={{
                                 fontSize: '2rem',
                                 fontWeight: 600,
                                 color: 'var(--text-primary)',
@@ -473,7 +554,7 @@ const InputArea = ({
                             maxWidth: '600px',
                             marginBottom: '1.5rem',
                         }}>
-                            <div style={{
+                            <div className="welcome-input-box" style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 padding: '1rem 1.25rem',
@@ -482,12 +563,12 @@ const InputArea = ({
                                 border: '1px solid var(--border-color)',
                                 boxShadow: 'var(--shadow-sm)',
                             }}>
-                                <span style={{
+                                <span className="welcome-disclaimer" style={{
                                     flex: 1,
                                     color: 'var(--text-secondary)',
                                     fontSize: '0.95rem',
                                 }}>
-                                    Disclaimer: The server may take time to respond...Please be patient.
+                                    AI generated content may have mistakes, please cross check.
                                 </span>
                                 <div style={{
                                     display: 'flex',
@@ -525,66 +606,65 @@ const InputArea = ({
                         </div>
 
                         {/* Quick action pills */}
-                        <div style={{
+                        <div className="action-pills-container" style={{
                             display: 'flex',
                             flexWrap: 'wrap',
                             gap: '0.75rem',
                             justifyContent: 'center',
                         }}>
+                            <style>{`
+                                @media (max-width: 768px) {
+                                    .welcome-heading {
+                                        font-size: 1.5rem !important;
+                                    }
+                                    .welcome-disclaimer {
+                                        font-size: 0.85rem !important;
+                                    }
+                                    .action-pills-container {
+                                        flex-direction: column !important;
+                                        align-items: stretch !important;
+                                        width: 100% !important;
+                                        max-width: 300px !important;
+                                        margin: 0 auto !important;
+                                    }
+                                    .action-pill {
+                                        width: 100% !important;
+                                        justify-content: center !important;
+                                    }
+                                }
+                            `}</style>
 
-                            <button
+                            <NoiseBackgroundButton
+                                className="action-pill"
+                                gradient="blue"
                                 onClick={() => scriptToWikiRef.current?.click()}
                                 disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
                             >
                                 <BookOpen size={16} />
                                 Script to Wiki
-                            </button>
+                            </NoiseBackgroundButton>
 
 
 
-                            <button
+                            <NoiseBackgroundButton
+                                className="action-pill"
+                                gradient="orange"
                                 onClick={() => voiceInputRef.current?.click()}
                                 disabled={disabled}
-                                style={pillButtonStyle(disabled)}
-                                onMouseEnter={(e) => {
-                                    if (!disabled) {
-                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
-                                title="Upload script to generate voice audio"
                             >
                                 <Mic size={16} />
                                 Generate Voice
-                            </button>
+                            </NoiseBackgroundButton>
 
-                            <button
+                            <NoiseBackgroundButton
+                                className="action-pill"
+                                gradient="muted"
                                 disabled={true}
-                                style={pillButtonStyle(true)}
                                 title="Coming soon"
                             >
                                 <FileText size={16} />
                                 Create Slides
-                            </button>
+                            </NoiseBackgroundButton>
                         </div>
                     </>
                 )}
@@ -615,7 +695,7 @@ const InputArea = ({
                             uploadType={stagedFile.type}
                             onConfirm={handleConfirmUpload}
                             onCancel={handleCancelUpload}
-                            disabled={disabled}
+                            disabled={false}
                         />
                     </div>
                 )}
@@ -699,7 +779,7 @@ const InputArea = ({
                                 color: 'var(--text-secondary)',
                                 padding: '0.5rem',
                             }}>
-                                Use the sidebar to generate voice,slides,images or run compliance checks
+                                AI may make mistakes, please cross check.
                             </div>
                         )}
                     </>
@@ -732,7 +812,7 @@ const InputArea = ({
                         uploadType={stagedFile.type}
                         onConfirm={handleConfirmUpload}
                         onCancel={handleCancelUpload}
-                        disabled={disabled}
+                        disabled={false}
                     />
                 </div>
             )}

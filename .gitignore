@@ -10,20 +10,36 @@ env/
 *.egg-info/
 dist/
 build/
-# uv.lock removed so it can be committed
+node_modules/
+
+# Dependency and test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+coverage.xml
+htmlcov/
+
+# Keep the lockfile tracked for reproducible builds
 data/
 .uv-cache/
 .uvcache/
-generated_images
+
 # Environment variables
 .env
-.env.local
+.env.*
+!.env.example
+!.env.*.example
 
 # Generated files
 script_*.json
 static/*
 !static/logo.png
 *.db
+*.sqlite
+*.sqlite3
 generated_images/
 
 # IDE
@@ -47,13 +63,21 @@ results/
 output/
 *.tex
 *.aux
-*.log
 *.out
 *.synctex.gz
 
 # Local Generated Data
 archive/
 logs/
+version-change-automation-abc4823f94ae.json
+docker-compose.yml
+prod-configs/
+chatbot-ui/nginx.conf
+certs/
+*.pem
+*.key
+*.p12
+*.crt
 
 
 version-change-automation-abc4823f94ae.json

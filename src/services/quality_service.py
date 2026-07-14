@@ -8,6 +8,7 @@ import json
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 # Import supported languages from translation service
 from src.services.translation_service import SUPPORTED_LANGUAGES
@@ -77,6 +78,7 @@ async def check_quality(json_script: dict, language_code: str = "hi") -> dict:
         model="gemini-2.5-flash",
         temperature=0.3,
     )
+    llm_openai = ChatOpenAI(model='gpt-5.2')
     
     slides = json_script.get("slides", [])[:-1]
     if not slides:
@@ -105,7 +107,7 @@ Translate ONLY the narration text from English to {lang_name}. Follow these rule
 
 Return the {lang_name} translation for each slide."""
 
-        forward_llm = llm.with_structured_output(TranslationBatch)
+        forward_llm = llm_openai.with_structured_output(TranslationBatch)
         forward_result = await forward_llm.ainvoke(forward_prompt)
         
         if not forward_result or not forward_result.slides:
@@ -128,7 +130,7 @@ Translate these {lang_name} narrations back to English. Be literal and accurate 
 
 Return the English translation for each slide."""
 
-        back_llm = llm.with_structured_output(BackTranslationBatch)
+        back_llm = llm_openai.with_structured_output(BackTranslationBatch)
         back_result = await back_llm.ainvoke(back_prompt)
         
         if not back_result or not back_result.slides:
@@ -165,7 +167,7 @@ For each slide, determine if the MEANING is preserved:
 
 Overall quality passes if average score >= 4."""
 
-        compare_llm = llm.with_structured_output(ComparisonResults)
+        compare_llm = llm_openai.with_structured_output(ComparisonResults)
         compare_result = await compare_llm.ainvoke(compare_prompt)
         
         if not compare_result:
@@ -204,7 +206,7 @@ Overall quality passes if average score >= 4."""
         # Build translated script with comparison data
         translated_script = {
             "title": json_script.get("presentation_title", json_script.get("title", "Untitled")),
-            f"title_{language_code}": await _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm, lang_name),
+            f"title_{language_code}": await _translate_title(json_script.get("presentation_title", json_script.get("title", "")), llm_openai, lang_name),
             "slides": []
         }
         

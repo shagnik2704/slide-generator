@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from io import BytesIO
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Inches, Pt, RGBColor, Twips
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -118,7 +119,7 @@ def _add_formatted_text(cell, text):
     pattern = r'\*\*(.+?)\*\*'
     last_end = 0
     
-    for match in re.finditer(pattern, text):
+    for match in re.finditer(pattern, text, flags=re.DOTALL):
         # Add normal text before this match
         if match.start() > last_end:
             normal_text = text[last_end:match.start()]
@@ -261,18 +262,31 @@ def docx_to_json(docx_file) -> dict:
     
     # Try to extract metadata from document
     metadata = _extract_metadata(doc)
+    presentation_title = metadata.get('title') or title or _infer_presentation_title(slides, metadata)
     
     return {
-        'presentation_title': metadata.get('title', title),
+        'presentation_title': presentation_title,
+        'domain': metadata.get('domain', ''),
         'module': metadata.get('module', ''),
         'tutorial': metadata.get('episode', ''),
         'duration': metadata.get('duration', '3-4 min'),
         'learning_objectives': metadata.get('learning_objectives', []),
         'prerequisites': metadata.get('prerequisites', ''),
-        'meta_tags': metadata.get('meta_tags', []),
+        'keywords': metadata.get('keywords', []),
+        'meta_tags': metadata.get('meta_tags', metadata.get('keywords', [])),
         'outline': metadata.get('outline', []),
         'slides': slides
     }
+
+
+def extract_docx_hyperlinks(docx_file) -> list[str]:
+    """Extract external hyperlink targets from a DOCX file."""
+    doc = Document(docx_file)
+    links = []
+    for rel in doc.part.rels.values():
+        if rel.reltype == RT.HYPERLINK:
+            links.append(rel.target_ref)
+    return sorted(set(links))
 
 
 def _add_metadata_section(doc, json_data: dict):
@@ -299,16 +313,16 @@ def _add_metadata_section(doc, json_data: dict):
         for cell in row.cells:
             _set_cell_padding(cell, top=120, bottom=120, left=120, right=120)
     
-    # Module
+    # Series
     row = meta_table.add_row()
-    style_label(row.cells[0], "Module:")
-    row.cells[1].text = json_data.get('module', '')
+    style_label(row.cells[0], "Series:")
+    row.cells[1].text = json_data.get('series', json_data.get('module', ''))
     add_row_padding(row)
     
-    # Episode
+    # Tutorial
     row = meta_table.add_row()
-    style_label(row.cells[0], "Episode:")
-    row.cells[1].text = json_data.get('episode', '')
+    style_label(row.cells[0], "Tutorial:")
+    row.cells[1].text = json_data.get('tutorial', json_data.get('episode', ''))
     add_row_padding(row)
     
     # Learning Objective (with header and numbered list)
@@ -352,8 +366,12 @@ def _add_metadata_section(doc, json_data: dict):
 
 def _format_visual_cue(slide: dict) -> str:
     """Format the visual cue column for a slide."""
+    if slide.get('visual_cue') is not None:
+        return str(slide['visual_cue'])
+        
     title = slide.get('title', '')
     image_prompt = slide.get('image_prompt', '')
+    title = re.sub(r'\*+', '', str(title)).strip()
     
     # Combine title and image prompt
     parts = []
@@ -402,34 +420,97 @@ def _parse_visual_cue(visual_cue: str) -> tuple:
     return title, image_prompt
 
 
+def _infer_presentation_title(slides: list[dict], metadata: dict) -> str:
+    """Infer title from the first title slide when the metadata table omits it."""
+    if slides:
+        first_slide = slides[0]
+        first_text = "\n".join([
+            str(first_slide.get('title') or ''),
+            str(first_slide.get('image_prompt') or ''),
+            str(first_slide.get('narration') or ''),
+        ])
+        plain = _strip_markup(first_text)
+        match = re.search(r"welcome\s+to\s+(?:the\s+)?spoken\s+tutorial\s+on\s+(.+)", plain, re.IGNORECASE)
+        if match:
+            return _clean_inferred_title(match.group(1))
+
+        title = _clean_inferred_title(first_slide.get('title') or '')
+        if title and not re.fullmatch(r"slide\s+\d+", title, flags=re.IGNORECASE):
+            return title
+
+    tutorial = _clean_inferred_title(metadata.get('episode') or '')
+    tutorial = re.sub(r"^\d+\s*[.)-]\s*", "", tutorial)
+    return tutorial
+
+
+def _strip_markup(text: str) -> str:
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text or "")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _clean_inferred_title(text: str) -> str:
+    text = _strip_markup(str(text or ""))
+    text = re.sub(r"\s+", " ", text).strip(" .:;-")
+    return text
+
+
 def _extract_metadata(doc) -> dict:
     """Extract metadata from document tables."""
     metadata = {}
     
     for table in doc.tables:
+        if _is_script_table(table):
+            continue
+
         # Look for metadata table (has Label | Value format)
         for row in table.rows:
             if len(row.cells) >= 2:
                 label = row.cells[0].text.strip().lower()
+                label_key = _normalise_metadata_label(label)
                 value = row.cells[1].text.strip()
                 
-                if 'title' in label and not metadata.get('title'):
+                if 'title' in label_key and not metadata.get('title'):
                     metadata['title'] = value
-                elif 'module' in label:
+                elif 'domain' in label_key:
+                    metadata['domain'] = value
+                elif 'module' in label_key or 'series' in label_key:
                     metadata['module'] = value
-                elif 'episode' in label or 'tutorial' in label:
-                    metadata['episode'] = value
-                elif 'duration' in label:
-                    metadata['duration'] = value
-                elif 'prerequisite' in label:
+                elif 'prerequisite' in label_key:
                     metadata['prerequisites'] = value
-                elif 'learning' in label and 'objective' in label:
+                elif 'episode' in label_key or label_key == 'tutorial':
+                    metadata['episode'] = value
+                elif 'duration' in label_key:
+                    metadata['duration'] = value
+                elif 'keyword' in label_key or 'metatag' in label_key:
+                    metadata['keywords'] = [
+                        item.strip() for item in re.split(r',|\n', value) if item.strip()
+                    ]
+                    metadata['meta_tags'] = metadata['keywords']
+                elif 'outline' in label_key:
+                    metadata['outline'] = [
+                        item.strip(" •\t") for item in value.split('\n') if item.strip(" •\t")
+                    ]
+                elif 'learning' in label_key and 'objective' in label_key:
                     # Split by newlines to get list
                     metadata['learning_objectives'] = [
                         obj.strip() for obj in value.split('\n') if obj.strip()
                     ]
     
     return metadata
+
+
+def _normalise_metadata_label(label: str) -> str:
+    """Normalise metadata labels so variants like pre-requisite are recognised."""
+    label = re.sub(r"[\u2010-\u2015\u2212]", "-", label.lower())
+    return re.sub(r"[\s_:\-]+", "", label)
+
+
+def _is_script_table(table) -> bool:
+    if not table.rows or len(table.rows[0].cells) < 2:
+        return False
+    first = table.rows[0].cells[0].text.strip().lower()
+    second = table.rows[0].cells[1].text.strip().lower()
+    return "visual cue" in first and "narration" in second
 
 
 def export_script_docx(json_data: dict, output_dir: str = None) -> dict:

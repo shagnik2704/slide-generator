@@ -105,6 +105,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     const charRefInputRef = useRef(null);
     const [modifyingRow, setModifyingRow] = useState(null);
     const [modificationPrompt, setModificationPrompt] = useState('');
+    const [aspectRatio, setAspectRatio] = useState('16:9');
 
     // Global character reference state - supports multiple images
     const CHAR_REF_KEY = `char_ref_${projectId}`;
@@ -230,7 +231,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         prompt: promptToUse,
                         reference_image_paths: globalCharRef.enabled && globalCharRef.imagePaths?.length > 0 ? globalCharRef.imagePaths : []
                     }],
-                    aspect_ratio: '16:9'
+                    aspect_ratio: aspectRatio
                 })
             });
             const generatedImage = result.images?.find(
@@ -329,7 +330,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                 body: JSON.stringify({
                     project_id: projectId,
                     prompts: prompts,
-                    aspect_ratio: '16:9'
+                    aspect_ratio: aspectRatio
                 })
             });
             setSentenceRows(prev => prev.map(s => {
@@ -397,10 +398,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
         overflow: 'hidden',
         marginTop: '1rem',
         position: 'relative',
-        width: 'calc(100vw - 180px)',
+        width: '100%',
         maxWidth: '1200px',
-        left: '50%',
-        transform: 'translateX(-50%)',
     };
 
     const headerStyle = {
@@ -458,7 +457,7 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
     };
 
     return (
-        <div style={containerStyle}>
+        <div className="image-workflow-container" style={containerStyle}>
             {/* Header */}
             <div style={headerStyle}>
                 <Image size={22} style={{ color: 'var(--accent-primary)' }} />
@@ -468,6 +467,37 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                         {generatedCount}/{totalGeneratable} generated (sentence-wise)
                         {isSelectionMode && ` • ${selectedCount} selected`}
                     </div>
+                </div>
+
+                {/* Aspect Ratio Toggle */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '8px',
+                    padding: '0.25rem',
+                    border: '1px solid var(--border-primary)',
+                }}>
+                    {['16:9', '4:3'].map(ratio => (
+                        <button
+                            key={ratio}
+                            onClick={() => setAspectRatio(ratio)}
+                            style={{
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                background: aspectRatio === ratio ? 'var(--accent-primary)' : 'transparent',
+                                color: aspectRatio === ratio ? 'white' : 'var(--text-secondary)',
+                            }}
+                        >
+                            {ratio}
+                        </button>
+                    ))}
                 </div>
 
                 {!isSelectionMode ? (
@@ -790,12 +820,22 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                     ) : row.isEditing ? (
                                         <textarea
                                             autoFocus
+                                            ref={(el) => {
+                                                if (el) {
+                                                    el.style.height = 'auto';
+                                                    el.style.height = el.scrollHeight + 'px';
+                                                }
+                                            }}
                                             value={row.enhancedPrompt}
                                             onChange={(e) => setSentenceRows(prev => prev.map(s =>
                                                 s.rowNumber === row.rowNumber && s.sentenceIndex === row.sentenceIndex
                                                     ? { ...s, enhancedPrompt: e.target.value }
                                                     : s
                                             ))}
+                                            onInput={(e) => {
+                                                e.target.style.height = 'auto';
+                                                e.target.style.height = e.target.scrollHeight + 'px';
+                                            }}
                                             onBlur={() => saveEdit(row.rowNumber, row.sentenceIndex, row.enhancedPrompt)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Escape') cancelEdit(row.rowNumber, row.sentenceIndex);
@@ -816,7 +856,8 @@ const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
                                                 fontSize: '0.85rem',
                                                 lineHeight: '1.5',
                                                 fontFamily: 'inherit',
-                                                outline: 'none'
+                                                outline: 'none',
+                                                overflow: 'hidden',
                                             }}
                                         />
                                     ) : (

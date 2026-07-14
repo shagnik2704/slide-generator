@@ -27,10 +27,6 @@ class GenerateVideoRequest(BaseModel):
     pdf_path: Optional[str] = None
 
 
-class GenerateSlidesRequest(BaseModel):
-    json_script: dict
-
-
 class ExportMediaWikiRequest(BaseModel):
     json_script: dict
 
@@ -39,3 +35,48 @@ class DownloadScriptDocxRequest(BaseModel):
     json_script: dict
 
 
+class TutorialRequest(BaseModel):
+    foss_name: str
+    language: str = "English"
+    export: bool = True
+    user_emails: list[str] = []
+    user_role: str = "writer" 
+
+
+class GenerateTutorialRequest(BaseModel):
+    foss_name: str
+    language: str = "English"
+
+
+class ShareTutorialRequest(BaseModel):
+    url: str
+    recipients: list[dict]  # [{"email": str, "role": str}]
+
+
+class TutorialResponse(BaseModel):
+    status: str
+    url: str
+    response: dict
+
+
+class PreviewButton(BaseModel):
+    label: str
+    action: str
+    url: str
+
+
+class SharingOption(BaseModel):
+    label: str
+    action: str
+    available: bool
+
+
+class GenerateTutorialResponse(BaseModel):
+    status: str
+    preview_button: PreviewButton
+    sharing_option: SharingOption
+
+
+class ShareTutorialResponse(BaseModel):
+    status: str
+    message: str

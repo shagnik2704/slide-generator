@@ -1,37 +1,49 @@
-import React, { useState } from 'react';
-import { FileText, Languages } from 'lucide-react';
-import ComplianceReport from '../ComplianceReport';
+import React from 'react';
+import { ClipboardCheck, Languages } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import QualityReport from '../QualityReport';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const ADMIN_COMPLIANCE_REVIEW_STORAGE_KEY = 'adminComplianceReviewPayload';
 
 /**
  * Action buttons for messages with type === 'script_uploaded'
  */
 export default function ScriptUploadedActions({
     msg,
-    isTyping,
-    openReportId,
-    setOpenReportId,
     openQualityId,
     setOpenQualityId,
     qualityReports,
     isQualityLoading,
-    onGenerateSlides,
     onQualityCheck,
     onOpenQualityModal,  // New: Opens the language selection modal
-    onUpdateComplianceReport,
 }) {
+    const navigate = useNavigate();
+
+    const openComplianceReview = () => {
+        const payload = {
+            report: msg.complianceReport,
+            jsonScript: msg.jsonScript,
+            filename: msg.filename,
+            projectId: msg.projectId,
+        };
+
+        window.sessionStorage.setItem(
+            ADMIN_COMPLIANCE_REVIEW_STORAGE_KEY,
+            JSON.stringify(payload)
+        );
+        navigate('/admin-compliance-review', { state: payload });
+    };
+
     return (
         <div style={{ marginTop: '1rem', marginLeft: '3rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             {/* View Report Button */}
             {msg.complianceReport && (
                 <button
-                    onClick={() => setOpenReportId(openReportId === msg.id ? null : msg.id)}
+                    onClick={openComplianceReview}
                     style={{
                         padding: '0.75rem 1.5rem',
-                        background: openReportId === msg.id ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                        color: openReportId === msg.id ? 'white' : 'var(--text-primary)',
+                        background: 'var(--accent-primary)',
+                        color: 'white',
                         border: '1px solid var(--border-color)',
                         borderRadius: '0.75rem',
                         cursor: 'pointer',
@@ -51,17 +63,10 @@ export default function ScriptUploadedActions({
                         e.currentTarget.style.boxShadow = 'none';
                     }}
                 >
-                    📋 {openReportId === msg.id ? 'Close Report' : 'View Report'}
+                    <ClipboardCheck size={18} />
+                    Open Review Workspace
                 </button>
             )}
-
-            {/* Inline Compliance Report */}
-            <ComplianceReport
-                report={msg.complianceReport}
-                isOpen={openReportId === msg.id}
-                onSave={(updated) => onUpdateComplianceReport(msg.id, updated)}
-                onClose={() => setOpenReportId(null)}
-            />
 
             {/* View Quality Report Toggle - for sidebar quality flow */}
             {(qualityReports[msg.id] || msg.qualityReport) && msg.hideQualityCheck && (

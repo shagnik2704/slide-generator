@@ -16,9 +16,14 @@ RUN uv sync --frozen --no-cache && rm -rf ~/.cache/uv ~/.cache/pip
 ENV PATH="/app/.venv/bin:$PATH"
 
 
-RUN python -c "import whisper; whisper.load_model('base')"
+COPY version-change-automation-abc4823f94ae.json /app/credentials.json
+
+
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json"
 
 COPY src/ ./src/
+COPY migrations/ ./migrations/
+COPY alembic.ini ./alembic.ini
 
 RUN mkdir -p uploads output data static
 

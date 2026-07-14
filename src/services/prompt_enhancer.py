@@ -127,7 +127,7 @@ def enhance_prompts(json_script: dict, project_id: Optional[int] = None) -> dict
         return {"enhanced_prompts": skip_results, "project_id": project_id}
     
     # Call LLM to enhance prompts - now sentence-level
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     
     # Import shared system prompt for enhancement
     from src.services.image_styles import ENHANCEMENT_SYSTEM_PROMPT

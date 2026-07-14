@@ -22,7 +22,12 @@ from src.nodes.content_node import generate_content
 from src.nodes.merge_node import merge_script
 
 # === ROUTING ===
-from src.routing.router import route_step
+def route_step(state: AgentState):
+    """Routes the initial step based on the mode."""
+    mode = state.get("mode", "script_only")
+    print(f"DEBUG: route_step mode={mode}")
+    # Default: script generation (outline is always provided by user)
+    return "script"
 
 
 def build_graph(checkpointer=None):
@@ -40,8 +45,6 @@ def build_graph(checkpointer=None):
     # === ROUTING FROM START ===
     builder.add_conditional_edges(START, route_step, {
         "script": "extract_metadata",  # Start with metadata extraction
-        "pdf": "extract_metadata",     # Temporary: route PDF to script for now
-        "video": "extract_metadata"    # Temporary: route video to script for now
     })
 
 

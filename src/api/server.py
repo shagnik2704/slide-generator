@@ -25,18 +25,20 @@ project_root = Path(__file__).parent.parent.parent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the LangGraph agent at startup."""
-    # Initialize DB
-    from src.services.database import init_db
-    init_db()
-    print("✅ Database initialized")
+    """Initialize application workflows and their PostgreSQL persistence."""
     
     from src.core.agent import build_graph
     logger.info("Initializing LangGraph agent...")
     app.state.graph = build_graph()
     logger.info("✅ LangGraph agent initialized")
+    
+    # Script Chat owns the first PostgreSQL-backed application persistence path.
+    logger.info("Initializing Script Chat graph...")
+    from src.script_chat.routes import init_script_chat_graph, close_script_chat_graph
+    await init_script_chat_graph()
     yield
     logger.info("🔒 Server shutting down")
+    await close_script_chat_graph()
 
 
 
@@ -85,24 +87,38 @@ app.mount("/output", StaticFiles(directory=str(output_dir), check_dir=False), na
 # Import routers after app is created (they will use app.state.graph)
 from src.api.routes import (
     upload_router,
+    compliance_router,
+    quality_router,
+    voice_router,
+    images_router,
+    slides_router,
     generation_router,
     download_router,
     outline_chat_router,
     translation_router,
     redesign_router,
     timed_script_router,
+    slides_translation_router,
 )
 from src.api.routes.auth import router as auth_router
+from src.script_chat.routes import router as script_chat_router
 
 # Include routers
 app.include_router(auth_router)
 app.include_router(upload_router)
+app.include_router(compliance_router)
+app.include_router(quality_router)
+app.include_router(voice_router)
+app.include_router(images_router)
+app.include_router(slides_router)
 app.include_router(generation_router)
 app.include_router(download_router)
 app.include_router(outline_chat_router)
 app.include_router(translation_router)
 app.include_router(redesign_router)
 app.include_router(timed_script_router)
+app.include_router(slides_translation_router)
+app.include_router(script_chat_router)
 
 # Global exception handler for API exceptions
 @app.exception_handler(APIException)
@@ -142,10 +158,27 @@ def root():
 
 
 @app.get("/health")
-def health():
-    """Health check endpoint."""
+async def health():
+    """Readiness check for the API and Script Chat PostgreSQL pool."""
+    try:
+        from src.script_chat.persistence import check_script_chat_database
+
+        await check_script_chat_database()
+    except Exception:
+        logger.exception("Script Chat database readiness check failed")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "database": "unavailable",
+                "environment": settings.environment,
+                "service": "Spoken Tutorial Generator API",
+            },
+        )
+
     return {
         "status": "healthy",
+        "database": "healthy",
         "environment": settings.environment,
         "service": "Spoken Tutorial Generator API",
     }

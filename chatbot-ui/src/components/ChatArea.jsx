@@ -38,6 +38,38 @@ import {
 import { useChatArea } from '../hooks/useChatArea';
 import { apiJson, apiFormData } from '../services/api';
 
+const timedScriptSteps = (filename, job) => {
+    const isComplete = job.status === 'completed';
+    const isFailed = job.status === 'failed';
+    const isTranscribing = job.status === 'running' || job.current_stage === 'transcribing';
+
+    return [
+        { label: `Uploading ${filename}`, status: 'complete' },
+        {
+            label: 'Transcribing audio with Whisper',
+            status: isTranscribing || isComplete ? (isComplete ? 'complete' : 'processing') : 'pending',
+        },
+        {
+            label: isFailed ? 'Timed script failed' : 'Generating sentence timestamps',
+            status: isComplete ? 'complete' : (isFailed ? 'error' : 'pending'),
+        },
+    ];
+};
+
+const timedScriptWorkflowFromJob = (job) => ({
+    id: job.job_id,
+    jobId: job.job_id,
+    type: 'workflow',
+    tool: 'timed_script',
+    filename: job.original_filename || 'timed script audio',
+    status: job.status === 'completed' ? 'complete' : (job.status === 'failed' ? 'error' : 'processing'),
+    currentStep: job.status === 'completed' ? 3 : (job.status === 'running' ? 1 : 0),
+    steps: timedScriptSteps(job.original_filename || 'audio', job),
+    role: 'assistant',
+    error: job.error_message || undefined,
+    result: job.result ? { timedScriptData: job.result } : undefined,
+});
+
 /**
  * ChatArea - Main chat interface component
  * 
@@ -136,6 +168,27 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
     const [batchQualityFiles, setBatchQualityFiles] = React.useState(null); // For batch sidebar flow
     const [qualityModalMessage, setQualityModalMessage] = React.useState(null);  // For message button flow
 
+    // Restore previously submitted timed-script jobs when the user returns.
+    React.useEffect(() => {
+        let cancelled = false;
+        apiJson('/timed-script/jobs')
+            .then(({ jobs = [] }) => {
+                if (cancelled) return;
+                const restored = jobs.map(timedScriptWorkflowFromJob);
+                setUploadMessages(prev => {
+                    const existingIds = new Set(prev.map(message => message.id));
+                    return [...restored.filter(message => !existingIds.has(message.id)), ...prev];
+                });
+            })
+            .catch(() => {
+                // Job history is supplementary; the rest of ChatArea remains usable.
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [setUploadMessages]);
+
     // Auto-open quality modal when a quality file is staged from sidebar
     React.useEffect(() => {
         if (stagedFile?.type === 'quality') {
@@ -167,56 +220,32 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
         setUploadMessages(prev => [...prev, initialWorkflow]);
 
         try {
-            // Update to step 1 - uploading complete, now transcribing
             setUploadMessages(prev => prev.map(msg =>
                 msg.id === workflowId ? {
                     ...msg,
-                    currentStep: 1,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'processing' },
-                        { label: 'Generating sentence timestamps', status: 'pending' }
-                    ]
+                    status: 'processing',
                 } : msg
             ));
 
-            // Call the API
             const formData = new FormData();
             formData.append('audio', file);
-            const timedScriptData = await apiFormData('/timed-script/generate', formData);
+            const queuedJob = await apiFormData('/timed-script/generate', formData);
+            const jobId = queuedJob.job_id;
 
-            // Update to step 2 - generating timestamps
-            setUploadMessages(prev => prev.map(msg =>
-                msg.id === workflowId ? {
-                    ...msg,
-                    currentStep: 2,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'complete' },
-                        { label: 'Generating sentence timestamps', status: 'processing' }
-                    ]
-                } : msg
-            ));
+            const updateFromJob = (job) => {
+                const workflow = timedScriptWorkflowFromJob(job);
+                setUploadMessages(prev => prev.map(msg => (
+                    msg.id === workflowId ? { ...msg, ...workflow } : msg
+                )));
+            };
 
-            // Small delay for visual feedback
-            await new Promise(r => setTimeout(r, 500));
-
-            // Update to complete
-            setUploadMessages(prev => prev.map(msg =>
-                msg.id === workflowId ? {
-                    ...msg,
-                    status: 'complete',
-                    currentStep: 3,
-                    steps: [
-                        { label: `Uploading ${file.name}`, status: 'complete' },
-                        { label: 'Transcribing audio with Whisper', status: 'complete' },
-                        { label: 'Timestamps generated', status: 'complete' }
-                    ],
-                    result: {
-                        timedScriptData: timedScriptData
-                    }
-                } : msg
-            ));
+            let job = queuedJob;
+            while (job.status !== 'completed' && job.status !== 'failed') {
+                updateFromJob(job);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                job = await apiJson(`/timed-script/jobs/${jobId}`);
+            }
+            updateFromJob(job);
 
         } catch (error) {
             console.error('Timed script generation error:', error);
@@ -597,10 +626,11 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            position: 'relative'
+            position: 'relative',
+            overflowX: 'hidden'
         }}>
             {/* Header */}
-            <header style={{
+            <header className="chat-header" style={{
                 padding: '1rem 1.5rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
@@ -618,11 +648,12 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {showSidebarToggle && (
                         <button
+                            className="hamburger-btn"
                             onClick={toggleSidebar}
                             style={{
-                                background: 'var(--bg-tertiary)',
+                                background: isSidebarOpen ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
                                 border: 'none',
-                                color: 'var(--text-primary)',
+                                color: isSidebarOpen ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -633,18 +664,6 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 height: '40px',
                                 transition: 'all 0.3s ease',
                                 boxShadow: 'var(--shadow-sm)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'var(--accent-primary)';
-                                e.currentTarget.style.color = 'white';
-                                e.currentTarget.style.transform = 'scale(1.15)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'var(--bg-tertiary)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                                e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                             }}
                         >
                             <Menu size={24} strokeWidth={2.5} />
@@ -666,7 +685,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             alt="EduPyramids"
                             style={{ height: '36px' }}
                         />
-                        <div style={{
+                        {/* Full title - hidden on mobile */}
+                        <div className="header-title-full" style={{
                             fontWeight: 600,
                             fontSize: '1.25rem',
                             fontFamily: '"Outfit", sans-serif',
@@ -677,11 +697,22 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             <span style={{ color: 'var(--accent-secondary)' }}>Spoken</span>
                             <span style={{ color: 'var(--accent-primary)' }}>Tutorial Generator</span>
                         </div>
+                        {/* Short title - shown only on mobile */}
+                        <div className="header-title-short" style={{
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            fontFamily: '"Outfit", sans-serif',
+                            display: 'none',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                        }}>
+                            <span style={{ color: 'var(--accent-secondary)' }}>STG</span>
+                        </div>
                     </Link>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Mode Navigation */}
-                    <div style={{
+                <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                    {/* Mode Navigation - hidden on mobile */}
+                    <div className="hide-on-mobile" style={{
                         display: 'flex',
                         background: 'var(--bg-secondary)',
                         borderRadius: '0.75rem',
@@ -770,6 +801,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     {/* Clear Session button */}
                     {mode === 'create' && uploadMessages.length > 0 && (
                         <button
+                            className="clear-session-btn"
                             onClick={handleClearSession}
                             style={{
                                 padding: '0.25rem 0.75rem',
@@ -795,15 +827,15 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             }}
                         >
                             <Trash2 size={14} />
-                            Clear Session
+                            <span>Clear Session</span>
                         </button>
                     )}
 
                     <ThemeToggle />
 
-                    {/* User Profile - Compact version in header */}
-                    {showSidebarToggle && !isSidebarOpen && (
-                        <div style={{ marginLeft: '0.5rem' }}>
+                    {/* User Profile - Compact version in header (always show on mobile) */}
+                    {showSidebarToggle && (
+                        <div className="header-user-profile" style={{ marginLeft: '0.5rem' }}>
                             <UserProfile compact={true} />
                         </div>
                     )}
@@ -828,7 +860,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                 onCancel={() => setMode('create')}
                             />
                         )}
-                        
+
                         {/* Message list */}
                         {activeMessages.map((msg) => (
                             <div key={msg.id}>
@@ -856,6 +888,20 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                         onConfirmation={mode === 'outline_chat' ? handleConfirmation : null}
                                         onEditAnswer={mode === 'outline_chat' ? handleEditAnswer : null}
                                         mode={mode}
+                                        onShareComplete={(recipients) => {
+                                            console.log('Share complete callback received with:', recipients);
+                                            const shareMessage = {
+                                                id: Date.now() + 2,
+                                                role: 'assistant',
+                                                content: recipients.map(r => `✅ Sheet shared to ${r.email} as ${r.role}`).join('\n')
+                                            };
+                                            console.log('Adding share message:', shareMessage);
+                                            setUploadMessages(prev => {
+                                                const updated = [...prev, shareMessage];
+                                                console.log('Updated messages:', updated);
+                                                return updated;
+                                            });
+                                        }}
                                     />
                                 )}
 

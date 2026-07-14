@@ -75,7 +75,7 @@ const WikiCell = ({ value, onChange, width, placeholder, style = {} }) => {
  * Matches WikiScriptEditor styling exactly
  * Uses isOpen prop to control visibility
  */
-const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
+const ComplianceReport = ({ report, isOpen, onClose, onSave, activeIssueId = null, onIssueSelect }) => {
     const [checks, setChecks] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalChecks, setOriginalChecks] = useState([]);
@@ -93,6 +93,8 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
     if (!isOpen || !report) return null;
 
     const { summary } = report;
+    const issues = report.issues || [];
+    const issueById = Object.fromEntries(issues.map(issue => [issue.id, issue]));
 
     const updateCheck = (index, field, value) => {
         const updated = [...checks];
@@ -146,7 +148,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
     };
 
     return (
-        <div style={{
+        <div className="compliance-report" style={{
             marginTop: '1rem',
             background: 'var(--bg-primary)',
             borderRadius: '12px',
@@ -155,13 +157,15 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
             border: '1px solid var(--border-color)',
         }}>
             {/* Toolbar - Exactly like WikiScriptEditor */}
-            <div style={{
+            <div className="report-toolbar" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '0.875rem 1.25rem',
                 background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
             }}>
                 <div style={{
                     display: 'flex',
@@ -284,11 +288,88 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                 </div>
             </div>
 
+            {issues.length > 0 && (
+                <div style={{
+                    padding: '1rem 1.25rem',
+                    background: 'var(--bg-primary)',
+                    borderBottom: '1px solid var(--border-color)',
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.75rem',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap',
+                    }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>Evidence Issues</strong>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            Click an issue to jump to the script row.
+                        </span>
+                    </div>
+                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                        {issues.map((issue) => {
+                            const firstEvidence = issue.evidence?.[0];
+                            const isActive = activeIssueId === issue.id;
+                            return (
+                                <button
+                                    key={issue.id}
+                                    onClick={() => onIssueSelect && onIssueSelect(issue.id)}
+                                    style={{
+                                        textAlign: 'left',
+                                        padding: '0.75rem',
+                                        borderRadius: '8px',
+                                        border: isActive ? '2px solid #d93025' : '1px solid var(--border-color)',
+                                        background: isActive ? 'rgba(217, 48, 37, 0.08)' : 'var(--bg-secondary)',
+                                        cursor: onIssueSelect ? 'pointer' : 'default',
+                                        color: 'var(--text-primary)',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <span style={{
+                                            fontSize: '0.72rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.04em',
+                                            color: issue.severity === 'major' || issue.severity === 'blocker' ? '#d93025' : 'var(--text-secondary)',
+                                            fontWeight: 700,
+                                        }}>
+                                            {issue.severity}
+                                        </span>
+                                        {firstEvidence?.row_number && (
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                                Row {firstEvidence.row_number}
+                                                {firstEvidence.field ? ` · ${firstEvidence.field.replace('_', ' ')}` : ''}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={{ marginTop: '0.35rem', fontWeight: 600 }}>
+                                        {issue.message}
+                                    </div>
+                                    {firstEvidence?.text && (
+                                        <div style={{
+                                            marginTop: '0.35rem',
+                                            color: 'var(--text-secondary)',
+                                            fontSize: '0.85rem',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}>
+                                            {firstEvidence.text}
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Wiki Table */}
-            <div style={{
+            <div className="compliance-table-wrapper" style={{
                 padding: '1.25rem',
                 overflowX: 'auto',
                 background: 'var(--bg-primary, #fff)',
+                WebkitOverflowScrolling: 'touch',
             }}>
                 <table style={{
                     width: '100%',
@@ -371,8 +452,14 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                             return (
                                 <tr
                                     key={check.id || index}
+                                    onClick={() => {
+                                        const firstIssue = check.issues?.[0];
+                                        if (firstIssue && onIssueSelect) onIssueSelect(firstIssue);
+                                    }}
                                     style={{
                                         backgroundColor: isFailed ? 'rgba(217, 48, 37, 0.05)' : 'transparent',
+                                        cursor: check.issues?.length && onIssueSelect ? 'pointer' : 'default',
+                                        outline: check.issues?.includes(activeIssueId) ? '2px solid #d93025' : 'none',
                                     }}
                                 >
                                     {/* Row Number */}
@@ -397,6 +484,11 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                         fontWeight: isFailed ? 600 : 400,
                                     }}>
                                         {check.criteria}
+                                        {check.issues?.length > 0 && (
+                                            <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', color: '#d93025', fontWeight: 600 }}>
+                                                {check.issues.length} linked issue{check.issues.length !== 1 ? 's' : ''}
+                                            </div>
+                                        )}
                                     </td>
                                     {/* AI Status - Tick/Cross */}
                                     <td style={{
@@ -431,7 +523,7 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                                         value={check.human_review || ''}
                                         onChange={(value) => updateCheck(index, 'human_review', value)}
                                         width="25%"
-                                        placeholder="Add your review..."
+                                        placeholder={issueById[check.issues?.[0]]?.suggested_action || "Add your review..."}
                                         style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-color)' }}
                                     />
                                 </tr>
@@ -439,6 +531,11 @@ const ComplianceReport = ({ report, isOpen, onClose, onSave }) => {
                         })}
                     </tbody>
                 </table>
+
+                {/* Mobile scroll hint */}
+                <div className="table-scroll-hint">
+                    ← Scroll horizontally to see all columns →
+                </div>
 
                 {/* Help text */}
                 <div style={{

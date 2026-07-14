@@ -10,6 +10,13 @@ from langchain_core.runnables import Runnable
 
 os.makedirs("work_dir", exist_ok=True)
 
+# Semaphore configuration for concurrent operations
+SEMAPHORE_CONFIG = {
+    "extraction": 8,    # HTTP is cheap, concurrent parsing is safe
+    "update": 3,        # LLM + search_tool is expensive and rate-limited
+    "split": 4          # Pure LLM, moderate usage
+}
+
 # Lazy-loaded instances to prevent import-time failures
 _llm_openrouter = None
 _llm_openai = None
@@ -22,7 +29,7 @@ def get_llm_openrouter():
     global _llm_openrouter
     if _llm_openrouter is None:
         _llm_openrouter = ChatOpenAI(
-            model="xiaomi/mimo-v2-flash:free",
+            model="arcee-ai/trinity-large-preview:free",
             api_key=os.getenv("OPENROUTER_API_KEY"),
             base_url="https://openrouter.ai/api/v1",
         )
@@ -34,7 +41,7 @@ def get_llm_openai():
     global _llm_openai
     if _llm_openai is None:
         _llm_openai = ChatOpenAI(
-            model="gpt-5.2",
+            model="gpt-4o-mini-2024-07-18",
             api_key=os.getenv("OPENAI_API_KEY")
         )
     return _llm_openai
@@ -46,7 +53,7 @@ def get_llm_gemini():
     if _llm_gemini is None:
         _llm_gemini = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash", 
-            google_api_key=os.getenv("GEMINI_KEY")  # Fixed: use google_api_key
+            google_api_key=os.getenv("GOOGLE_API_KEY")  # Fixed: use google_api_key
         )
     return _llm_gemini
 
@@ -130,3 +137,6 @@ def search_long_query(query):
 
 template_url = "https://docs.google.com/spreadsheets/d/1H6Pzc3h5j8VfO7IBLvNXX8Qo6UpZHo4PnIhWggeIPMM/edit?usp=sharing"
 template_id = template_url.split('/')[5]
+
+shared_drive_folder_id = "https://drive.google.com/drive/folders/1wR89YMtzfWpL_eGZj0on6DL9yWWYw79s?usp=drive_link"
+shared_drive_folder_id = shared_drive_folder_id.split('/')[5].split('?')[0]

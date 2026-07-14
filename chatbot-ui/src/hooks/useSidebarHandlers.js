@@ -12,7 +12,6 @@ import { apiFormData, apiJson } from '../services/api';
  * @param {Function} setIsTyping - State setter for typing indicator
  * @param {Function} setCurrentProjectId - State setter for project ID
  * @param {Function} setQualityReports - State setter for quality reports
- * @param {Function} setOpenReportId - State setter for open report ID
  * @param {Function} setOpenQualityId - State setter for open quality ID
  * @returns {Object} Sidebar handler functions
  */
@@ -21,7 +20,6 @@ export function useSidebarHandlers(
     setIsTyping,
     setCurrentProjectId,
     setQualityReports,
-    setOpenReportId,
     setOpenQualityId
 ) {
 
@@ -69,11 +67,12 @@ export function useSidebarHandlers(
             ));
 
             // Step 2: Run compliance check
-            const complianceReport = await apiJson('/check_compliance', {
+            const complianceReport = await apiJson('/check_admin_compliance_v1', {
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
-                    tutorial_type: parseData.tutorial_type
+                    tutorial_type: parseData.tutorial_type,
+                    source_artifact: parseData.source_artifact || {}
                 }),
             });
 
@@ -98,8 +97,6 @@ export function useSidebarHandlers(
                 } : msg
             ));
 
-            setOpenReportId(workflowId);
-
         } catch (error) {
             console.error("Compliance check error:", error);
             setUploadMessages(prev => prev.map(msg =>
@@ -112,7 +109,7 @@ export function useSidebarHandlers(
         } finally {
             setIsTyping(false);
         }
-    }, [setUploadMessages, setIsTyping, setCurrentProjectId, setOpenReportId]);
+    }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
 
     /**
      * Run Quality Compliance check on a script file.
@@ -206,8 +203,10 @@ export function useSidebarHandlers(
      * Generate voice audio for a script file.
      * @param {File} file - Script file to generate voice for
      * @param {string} voiceMode - 'combined' for single file, 'rowwise' for per-row files
+     * @param {string} speaker - voice actor selection
+     * @param {number} pace - speaking speed
      */
-    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined') => {
+    const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined', speaker, pace) => {
         const workflowId = Date.now();
         const modeLabel = voiceMode === 'combined' ? '(Full Audio)' : '(Row-wise)';
 
@@ -258,7 +257,9 @@ export function useSidebarHandlers(
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: parseData.json_script,
-                    project_id: parseData.project_id
+                    project_id: parseData.project_id,
+                    speaker: speaker,
+                    pace: pace
                 }),
             });
 
@@ -566,7 +567,7 @@ export function useSidebarHandlers(
      * Parses all files, sends to /batch_check_quality, displays results.
      * @param {File[]} files - Array of files to check
      */
-    const handleSidebarBatchQualityUpload = useCallback(async (files) => {
+    const handleSidebarBatchQualityUpload = useCallback(async (files, languageCode = 'hi') => {
         const workflowId = Date.now();
         const initialWorkflow = {
             id: workflowId,
@@ -755,4 +756,3 @@ export function useSidebarHandlers(
         handleSidebarScriptGenerate,
     };
 }
-
