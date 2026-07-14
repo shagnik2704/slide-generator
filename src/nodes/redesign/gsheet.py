@@ -9,8 +9,8 @@ from src.core.state import VCAgentState
 from src.utils.VC_utils import template_id, shared_drive_folder_id
 
 from googleapiclient.discovery import build
-from google.oauth2 import service_account
-import gspread
+from src.nodes.redesign.utils.schema import SharedAgentState
+from src.nodes.redesign.utils.config import template_id
 
 CRED_FILE_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
@@ -63,18 +63,17 @@ def _get_drive_service():
 
 #--------------------------------------------------------------
 
-def export_to_sheets(state: VCAgentState,
-                     foss_name: str,
-                     language: str,
+def export_to_sheets(state: SharedAgentState,
                      user_emails: list[str],
                      user_role: str = "writer"  # "writer" | "reader" | "commenter"
                      ) -> str:
 
     client = _get_gspread_client()
     drive_service = _get_drive_service()
-    
+    foss_name = state.data.foss_name
+    language = state.data.language
     generated_sheet_name = f"VC-{foss_name}_{language}"
-    print(f"Copying template to {generated_sheet_name} in Shared Drive...")
+    # print(f"Copying template to {generated_sheet_name}...")
 
     # new_sheet = client.copy(template_id, title=generated_sheet_name)
 
@@ -98,7 +97,14 @@ def export_to_sheets(state: VCAgentState,
 
 
     # df = pd.read_csv(f"results/temp_{foss_name}_{language}.csv")
-    df = pd.DataFrame(state["final_table"])
+    if hasattr(state, "output_csv_path") and state.output_csv_path and os.path.exists(state.output_csv_path):
+        df = pd.read_csv(state.output_csv_path)
+    elif isinstance(state, dict) and "output_csv_path" in state and state["output_csv_path"] and os.path.exists(state["output_csv_path"]):
+        df = pd.read_csv(state["output_csv_path"])
+    elif isinstance(state, dict) and "final_table" in state:
+        df = pd.DataFrame(state["final_table"])
+    else:
+        df = pd.DataFrame(getattr(state, "final_table", []))
     df = df.fillna("")
     data_to_upload = [df.columns.values.tolist()] + df.values.tolist()
 

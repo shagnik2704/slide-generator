@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 load_dotenv()
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
+from langchain_core.runnables import Runnable
+
+
+os.makedirs("work_dir", exist_ok=True)
 
 # Semaphore configuration for concurrent operations
 SEMAPHORE_CONFIG = {
@@ -66,6 +70,12 @@ def get_search_client():
 class _LazyLLM:
     """Wrapper that lazily initializes the LLM on first use."""
     _instance = None
+
+    @property
+    def __class__(self):
+        if _LazyLLM._instance is None:
+            _LazyLLM._instance = get_llm_openai()
+        return _LazyLLM._instance.__class__
     
     def __getattr__(self, name):
         if _LazyLLM._instance is None:
@@ -95,7 +105,34 @@ llm = _LazyLLM()
 @tool
 def search_tool(query: str):
     """Search the web for latest software updates."""
-    return get_search_client().search(query=query, max_results=3, topic='general')
+    return get_search_client().search(query=query, max_results=2, topic='general')
+
+def chunk_text(text, max_len=250):
+    chunks, current = [], ""
+    for item in text.split(","):
+        if len(current) + len(item) < max_len:
+            current += item + ","
+        else:
+            chunks.append(current.strip(","))
+            current = item + ","
+    chunks.append(current.strip(","))
+    return chunks  
+
+@tool
+def search_long_query(query):
+    """
+    Search the web for latest software updates.
+    Query will be chunked into smaller queries and searched.
+    Returns the combined results.
+    """
+    queries = chunk_text(query)
+
+    docs = []
+    for q in queries:
+        res = search_tool(q)
+        docs.extend(res)
+
+    return docs
 
 
 template_url = "https://docs.google.com/spreadsheets/d/1H6Pzc3h5j8VfO7IBLvNXX8Qo6UpZHo4PnIhWggeIPMM/edit?usp=sharing"

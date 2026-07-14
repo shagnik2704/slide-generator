@@ -59,6 +59,7 @@ Thumbs.db
 uploads/
 
 # Output directories
+results/
 output/
 *.tex
 *.aux
@@ -77,3 +78,6 @@ certs/
 *.key
 *.p12
 *.crt
+
+
+version-change-automation-abc4823f94ae.json
