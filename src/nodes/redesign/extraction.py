@@ -54,9 +54,5 @@ def extract_tutorials(state: TutorialState) -> TutorialState:
     return state
 
 
-def extract_tutorials(state: VCAgentState, foss: str, language: str) -> VCAgentState:
-    """Synchronous wrapper for extract_tutorials_async."""
-    return asyncio.run(extract_tutorials_async(state, foss, language))
-
 
 

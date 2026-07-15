@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { User, Bot, Check, X, Edit2, Save, XCircle, Eye, Share2, Plus, Trash2 } from 'lucide-react';
-import { apiJson } from '../services/api';
+import { User, Bot, Check, X, Edit2, Save, XCircle, Eye, Share2, Plus, Trash2, Download } from 'lucide-react';
+import { apiJson, API_URL } from '../services/api';
 
 const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareComplete }) => {
     const isUser = message.role === 'user';
@@ -292,21 +292,17 @@ const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareCom
                                 )}
                             </div>
                             
-                            {/* Redesign Result Buttons */}
-                            {message.type === 'redesign_result' && message.previewButton && message.sharingOption && (
+                            {/* Redesign Result Download Button */}
+                            {message.type === 'redesign_result' && message.downloadButton && (
                                 <div style={{
                                     display: 'flex',
                                     gap: '0.75rem',
                                     marginTop: '1rem',
                                     flexWrap: 'wrap'
                                 }}>
-                                    {/* Preview Button */}
-                                    <button
-                                        onClick={() => {
-                                            if (message.previewButton.url) {
-                                                window.open(message.previewButton.url, '_blank');
-                                            }
-                                        }}
+                                    <a
+                                        href={`${API_URL}/download/redesign/${message.downloadButton.filename}`}
+                                        download={message.downloadButton.filename}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -319,6 +315,7 @@ const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareCom
                                             cursor: 'pointer',
                                             fontWeight: 600,
                                             fontSize: '0.9rem',
+                                            textDecoration: 'none',
                                             transition: 'all 0.3s ease',
                                             boxShadow: 'var(--shadow-md)'
                                         }}
@@ -331,216 +328,9 @@ const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareCom
                                             e.currentTarget.style.boxShadow = 'var(--shadow-md)';
                                         }}
                                     >
-                                        <Eye size={18} />
-                                        {message.previewButton.label}
-                                    </button>
-                                    
-                                    {/* Share Button */}
-                                    {message.sharingOption.available && !showShareForm && (
-                                        <button
-                                            onClick={() => setShowShareForm(true)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.6rem 1.2rem',
-                                                background: 'linear-gradient(135deg, #10b981, #059669)',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.5rem',
-                                                cursor: 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '0.9rem',
-                                                transition: 'all 0.3s ease',
-                                                boxShadow: 'var(--shadow-md)'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 8px 16px rgba(16, 185, 129, 0.4)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                            }}
-                                        >
-                                            <Share2 size={18} />
-                                            {message.sharingOption.label}
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                            
-                            {/* Inline Share Form */}
-                            {message.type === 'redesign_result' && message.previewButton && showShareForm && (
-                                <div style={{
-                                    marginTop: '1.5rem',
-                                    padding: '1rem',
-                                    background: 'var(--bg-tertiary)',
-                                    borderRadius: '0.75rem',
-                                    border: '1px solid var(--border-color)'
-                                }}>
-                                    <h4 style={{
-                                        margin: '0 0 1rem 0',
-                                        fontSize: '0.95rem',
-                                        fontWeight: 600,
-                                        color: 'var(--text-primary)'
-                                    }}>
-                                        Share with Recipients
-                                    </h4>
-
-                                    {/* Recipients List */}
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        {recipients.map((recipient, index) => (
-                                            <div key={index} style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: '1fr 100px 40px',
-                                                gap: '0.5rem',
-                                                marginBottom: '0.75rem',
-                                                alignItems: 'flex-end'
-                                            }}>
-                                                <input
-                                                    type="email"
-                                                    placeholder="Enter email address"
-                                                    value={recipient.email}
-                                                    onChange={(e) => handleRecipientChange(index, 'email', e.target.value)}
-                                                    disabled={isSharing}
-                                                    style={{
-                                                        padding: '0.6rem',
-                                                        borderRadius: '0.5rem',
-                                                        border: '1px solid var(--border-color)',
-                                                        background: 'var(--bg-primary)',
-                                                        color: 'var(--text-primary)',
-                                                        fontSize: '0.85rem',
-                                                        fontFamily: 'inherit',
-                                                        opacity: isSharing ? 0.6 : 1
-                                                    }}
-                                                />
-                                                <select
-                                                    value={recipient.role}
-                                                    onChange={(e) => handleRecipientChange(index, 'role', e.target.value)}
-                                                    disabled={isSharing}
-                                                    style={{
-                                                        padding: '0.6rem',
-                                                        borderRadius: '0.5rem',
-                                                        border: '1px solid var(--border-color)',
-                                                        background: 'var(--bg-primary)',
-                                                        color: 'var(--text-primary)',
-                                                        fontSize: '0.85rem',
-                                                        fontFamily: 'inherit',
-                                                        cursor: isSharing ? 'not-allowed' : 'pointer',
-                                                        opacity: isSharing ? 0.6 : 1
-                                                    }}
-                                                >
-                                                    <option value="reader">Reader</option>
-                                                    <option value="writer">Writer</option>
-                                                    <option value="commenter">Commenter</option>
-                                                </select>
-                                                <button
-                                                    onClick={() => handleRemoveRecipient(index)}
-                                                    disabled={recipients.length === 1 || isSharing}
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: '1px solid var(--border-color)',
-                                                        color: 'var(--text-secondary)',
-                                                        cursor: recipients.length === 1 || isSharing ? 'not-allowed' : 'pointer',
-                                                        padding: '0.6rem',
-                                                        borderRadius: '0.5rem',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        opacity: recipients.length === 1 || isSharing ? 0.5 : 1,
-                                                    }}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))}
-
-                                        {/* Add Recipient Button */}
-                                        <button
-                                            onClick={handleAddRecipient}
-                                            disabled={isSharing}
-                                            style={{
-                                                background: 'transparent',
-                                                border: '1px dashed var(--border-color)',
-                                                color: 'var(--accent-primary)',
-                                                cursor: isSharing ? 'not-allowed' : 'pointer',
-                                                padding: '0.6rem',
-                                                borderRadius: '0.5rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                fontWeight: 500,
-                                                fontSize: '0.85rem',
-                                                width: '100%',
-                                                opacity: isSharing ? 0.5 : 1
-                                            }}
-                                        >
-                                            <Plus size={16} />
-                                            Add recipient
-                                        </button>
-                                    </div>
-
-                                    {/* Message */}
-                                    {shareMessage && (
-                                        <div style={{
-                                            padding: '0.6rem 0.75rem',
-                                            borderRadius: '0.5rem',
-                                            marginBottom: '0.75rem',
-                                            fontSize: '0.85rem',
-                                            background: shareMessage.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                                            color: shareMessage.type === 'error' ? '#ef4444' : '#10b981',
-                                            border: `1px solid ${shareMessage.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-                                        }}>
-                                            {shareMessage.text}
-                                        </div>
-                                    )}
-
-                                    {/* Action Buttons */}
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: '0.5rem',
-                                        justifyContent: 'flex-end'
-                                    }}>
-                                        <button
-                                            onClick={() => setShowShareForm(false)}
-                                            disabled={isSharing}
-                                            style={{
-                                                padding: '0.5rem 1rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid var(--border-color)',
-                                                background: 'transparent',
-                                                color: 'var(--text-primary)',
-                                                cursor: isSharing ? 'not-allowed' : 'pointer',
-                                                fontWeight: 500,
-                                                fontSize: '0.85rem',
-                                                opacity: isSharing ? 0.5 : 1
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleShareSubmit}
-                                            disabled={isSharing}
-                                            style={{
-                                                padding: '0.5rem 1rem',
-                                                borderRadius: '0.5rem',
-                                                border: 'none',
-                                                background: 'linear-gradient(135deg, #10b981, #059669)',
-                                                color: 'white',
-                                                cursor: isSharing ? 'not-allowed' : 'pointer',
-                                                fontWeight: 600,
-                                                fontSize: '0.85rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                opacity: isSharing ? 0.6 : 1
-                                            }}
-                                        >
-                                            <Share2 size={16} />
-                                            {isSharing ? 'Sharing...' : 'Share'}
-                                        </button>
-                                    </div>
+                                        <Download size={18} />
+                                        {message.downloadButton.label}
+                                    </a>
                                 </div>
                             )}
                         </div>

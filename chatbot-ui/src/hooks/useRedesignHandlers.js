@@ -64,11 +64,18 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
 
                                     let contentText = `${icon} [${progressData.progress}%] ${progressData.message}`;
                                     if (progressData.status === "completed") {
-                                        contentText += `\n\nGoogle Sheet URL: ${progressData.url}`;
+                                        contentText += `\n\nExcel file generated successfully! You can download it below.`;
                                     }
                                     return {
                                         ...msg,
-                                        content: contentText
+                                        content: contentText,
+                                        ...(progressData.status === "completed" ? {
+                                            type: 'redesign_result',
+                                            downloadButton: {
+                                                label: 'Download XLSX',
+                                                filename: progressData.url
+                                            }
+                                        } : {})
                                     };
                                 }
                                 return msg;
@@ -83,9 +90,12 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
                                 };
                             } else if (progressData.status === 'failed') {
                                 isCompleted = true;
-                                throw new Error(progressData.message || "Failed to generate tutorial.");
+                                throw { isPipelineFailure: true, message: progressData.message || "Failed to generate tutorial." };
                             }
                         } catch (pollError) {
+                            if (pollError && pollError.isPipelineFailure) {
+                                throw new Error(pollError.message);
+                            }
                             console.error("Polling error:", pollError);
                         }
                     }
@@ -94,10 +104,12 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
                         id: Date.now() + 1,
                         role: 'assistant',
                         content: `✅ Tutorial generated successfully!\n\n` +
-                            `URL: ${initData.url}\n\n` +
-                            `You can now preview and share the sheet.`,
+                            `Excel file generated successfully! You can download it below.`,
                         type: 'redesign_result',
-                        redesignData: initData
+                        downloadButton: {
+                            label: 'Download XLSX',
+                            filename: initData.url
+                        }
                     };
                     setUploadMessages(prev => prev.map(msg => msg.id === statusMessageId ? newBotMessage : msg));
                     return initData;
@@ -125,45 +137,6 @@ export function useRedesignHandlers(setUploadMessages, setIsTyping) {
                 }));
 
                 throw error;
-            } finally {
-                setIsTyping(false);
-            }
-        } else if (formData.type === 'share') {
-            setIsTyping(true);
-
-            const statusMessage = {
-                id: Date.now(),
-                role: 'assistant',
-                content: `Sharing sheet with ${formData.recipients.length} recipients...`
-            };
-            setUploadMessages(prev => [...prev, statusMessage]);
-
-            try {
-                const data = await apiJson('/redesign/share', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        url: formData.url,
-                        recipients: formData.recipients
-                    }),
-                });
-
-                const newBotMessage = {
-                    id: Date.now() + 1,
-                    role: 'assistant',
-                    content: `✅ ${data.message}`,
-                    type: 'share_result',
-                    shareData: data
-                };
-                setUploadMessages(prev => [...prev, newBotMessage]);
-
-            } catch (error) {
-                console.error("Error:", error);
-                const errorMessage = {
-                    id: Date.now() + 1,
-                    role: 'assistant',
-                    content: error.message || "Sorry, something went wrong sharing the sheet."
-                };
-                setUploadMessages(prev => [...prev, errorMessage]);
             } finally {
                 setIsTyping(false);
             }

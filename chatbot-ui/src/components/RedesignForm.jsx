@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, X, Plus, Share2, Eye } from 'lucide-react';
+import { Send, X, Download, AlertTriangle } from 'lucide-react';
+import { API_URL } from '../services/api';
 
 /**
  * RedesignForm - Form component for submitting tutorial redesign requests
@@ -19,8 +20,11 @@ export default function RedesignForm({ onSubmit, onCancel }) {
     const [progress, setProgress] = useState(0);
     const [progressMessage, setProgressMessage] = useState('');
     const [progressStage, setProgressStage] = useState('');
+    
+    // Failure State
+    const [failureReason, setFailureReason] = useState('');
 
-    const stagesOrder = ['init', 'fetch_links', 'extraction', 'tech_intelligence', 'duration_split', 'tabulation', 'export', 'completed'];
+    const stagesOrder = ['init', 'fetch_links', 'extraction', 'tech_intelligence', 'duration_split', 'tabulation', 'completed'];
     
     const isStageCompleted = (stageKey, currentStage) => {
         const currentIdx = stagesOrder.indexOf(currentStage);
@@ -73,6 +77,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
         setProgressStage('init');
 
         try {
+            setFailureReason('');
             // Submit generate request
             const result = await onSubmit({
                 type: 'generate',
@@ -93,7 +98,8 @@ export default function RedesignForm({ onSubmit, onCancel }) {
             }
         } catch (err) {
             console.error(err);
-            setStep('generate');
+            setFailureReason(err.message || 'An unknown error occurred during tutorial redesign.');
+            setStep('failed');
         }
     };
 
@@ -177,7 +183,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                     color: 'var(--text-primary)',
                     margin: 0
                 }}>
-                    {step === 'generate' ? 'Generate Tutorial' : step === 'progress' ? 'Redesign Progress' : 'Preview & Share'}
+                    {step === 'generate' ? 'Generate Tutorial' : step === 'progress' ? 'Redesign Progress' : step === 'failed' ? 'Redesign Failed' : 'Preview & Share'}
                 </h2>
                 {onCancel && (
                     <button
@@ -490,8 +496,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                             { key: 'extraction', label: 'Extract Contents' },
                             { key: 'tech_intelligence', label: 'AI Tech Intelligence' },
                             { key: 'duration_split', label: 'Duration Split LangGraph' },
-                            { key: 'tabulation', label: 'Tabulate Results' },
-                            { key: 'export', label: 'Export to Google Sheets' }
+                            { key: 'tabulation', label: 'Tabulate Results' }
                         ].map((s, i) => {
                             const isDone = isStageCompleted(s.key, progressStage);
                             const isActive = progressStage === s.key;
@@ -532,13 +537,14 @@ export default function RedesignForm({ onSubmit, onCancel }) {
 
             {step === 'preview' && (
                 <div>
-                    {/* Preview */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            Preview Sheet
+                    {/* Download */}
+                    <div style={{ marginBottom: '1.5rem', textAlign: 'center', padding: '1rem 0' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                            Redesign Complete!
                         </h3>
-                        <button
-                            onClick={() => window.open(generatedUrl, '_blank')}
+                        <a
+                            href={`${API_URL}/download/redesign/${generatedUrl}`}
+                            download={generatedUrl}
                             style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -550,6 +556,7 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                                 borderRadius: '0.5rem',
                                 fontSize: '0.95rem',
                                 fontWeight: 600,
+                                textDecoration: 'none',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
                                 boxShadow: 'var(--shadow-sm)'
@@ -565,146 +572,66 @@ export default function RedesignForm({ onSubmit, onCancel }) {
                                 e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                             }}
                         >
-                            <Eye size={16} />
-                            Preview in New Tab
-                        </button>
+                            <Download size={16} />
+                            Download XLSX File
+                        </a>
                     </div>
+                </div>
+            )}
 
-                    {/* Share Form */}
-                    <form onSubmit={handleShare}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                            <Share2 size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                            Share with Users
-                        </h3>
-
-                        {/* Receipt Emails and Roles */}
-                        <div style={{ marginBottom: '1.25rem' }}>
-                            <label style={labelStyle}>Receipt Emails and Roles</label>
-                            {recipients.map((recipient, index) => (
-                                <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                    <input
-                                        type="email"
-                                        value={recipient.email}
-                                        onChange={(e) => {
-                                            handleRecipientChange(index, 'email', e.target.value);
-                                            if (errors.emails) setErrors({ ...errors, emails: null });
-                                        }}
-                                        style={{
-                                            ...inputStyle,
-                                            borderColor: errors.emails ? '#ef4444' : 'var(--border-color)',
-                                            flex: 1
-                                        }}
-                                        placeholder="user@example.com"
-                                    />
-                                    <select
-                                        value={recipient.role}
-                                        onChange={(e) => handleRecipientChange(index, 'role', e.target.value)}
-                                        style={{
-                                            ...inputStyle,
-                                            width: '120px',
-                                            padding: '0.75rem 0.5rem'
-                                        }}
-                                    >
-                                        <option value="writer">Writer</option>
-                                        <option value="commenter">Commenter</option>
-                                        <option value="reader">Reader</option>
-                                    </select>
-                                    {recipients.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveRecipient(index)}
-                                            style={{
-                                                background: 'transparent',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '0.5rem',
-                                                color: 'var(--text-secondary)',
-                                                cursor: 'pointer',
-                                                padding: '0.75rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.borderColor = '#ef4444';
-                                                e.currentTarget.style.color = '#ef4444';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.borderColor = 'var(--border-color)';
-                                                e.currentTarget.style.color = 'var(--text-secondary)';
-                                            }}
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button
-                                type="button"
-                                onClick={handleAddRecipient}
-                                style={{
-                                    background: 'transparent',
-                                    border: '1px dashed var(--border-color)',
-                                    borderRadius: '0.5rem',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer',
-                                    padding: '0.5rem 0.75rem',
-                                    fontSize: '0.85rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                                    e.currentTarget.style.color = 'var(--accent-primary)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                    e.currentTarget.style.color = 'var(--text-secondary)';
-                                }}
-                            >
-                                <Plus size={14} />
-                                Add Recipient
-                            </button>
-                            {errors.emails && <div style={errorStyle}>{errors.emails}</div>}
-                        </div>
-
-                        {/* Share Button */}
-                        <button
-                            type="submit"
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1.5rem',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.5rem',
-                                fontSize: '0.95rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                transition: 'all 0.2s ease',
-                                boxShadow: 'var(--shadow-sm)'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.opacity = '0.9';
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.opacity = '1';
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                            }}
-                        >
-                            <Share2 size={16} />
-                            Share
-                        </button>
-                    </form>
+            {step === 'failed' && (
+                <div style={{ padding: '1rem 0', textAlign: 'center' }}>
+                    <AlertTriangle size={48} color="#ef4444" style={{ marginBottom: '1rem' }} />
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                        Redesign Process Failed
+                    </h3>
+                    <div style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid #ef4444',
+                        borderRadius: '0.5rem',
+                        padding: '1rem',
+                        color: '#ef4444',
+                        fontSize: '0.95rem',
+                        marginBottom: '1.5rem',
+                        textAlign: 'left',
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'monospace'
+                    }}>
+                        <strong>Reason:</strong> {failureReason || 'An unknown error occurred during the redesign process.'}
+                    </div>
+                    <button
+                        onClick={() => {
+                            setStep('generate');
+                            setFailureReason('');
+                        }}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.75rem 1.5rem',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.5rem',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.9';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                        }}
+                    >
+                        Try Again
+                    </button>
                 </div>
             )}
         </div>

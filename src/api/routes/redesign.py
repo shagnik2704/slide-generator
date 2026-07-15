@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 import logging
-from src.nodes.redesign.gsheet import share_sheet
 from src.nodes.redesign.workflow import run_pipeline
 from src.nodes.redesign.utils.schema import GenerateTutorialRequest, GenerateTutorialResponse, ShareTutorialRequest, ShareTutorialResponse
 
@@ -83,15 +82,5 @@ def get_progress(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
     return redesign_tasks[task_id]
 
-@router.post("/share", response_model=ShareTutorialResponse)
-def share_tutorial(request: ShareTutorialRequest):
-    try:
-        message = share_sheet(request.url, request.recipients)
-        return {
-            "status": "Success",
-            "message": message
-        }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
     

@@ -86,3 +86,26 @@ async def download_zip(project_id: str, filename: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/redesign/{filename}")
+async def download_redesign_file(filename: str):
+    """
+    Serve redesign generated files (CSV or XLSX) with attachment header for download.
+    """
+    try:
+        filepath = project_root / "results" / filename
+        
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        media_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' if filename.endswith('.xlsx') else 'text/csv'
+        
+        return FileResponse(
+            path=str(filepath),
+            filename=filename,
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
