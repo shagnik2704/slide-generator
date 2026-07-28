@@ -38,7 +38,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
     
-            - name: Work out image name and tags
+      - name: Work out image name and tags
         id: meta
         uses: docker/metadata-action@v5
         with:
