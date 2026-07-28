@@ -1,34 +1,58 @@
-# Python
-venv/
-.venv/
-__pycache__/
-*.pyc
-*.pyo
+.env
+.env.*
+certs/
+*.pem
+*.key
+*.crt
+*.p12
 
-# Node (frontend has its own Dockerfile)
-node_modules/
-chatbot-ui/node_modules/
+.venv
 
-# Git
-.git/
+**/__pycache__
+
+*.py[cod]
+static/*
+!static/logo.png
+
+
+.git
+
 .gitignore
 
-# Secrets (NEVER put in image!)
-.env
-.env.local
-.env.production
 
-# Generated files (mount as volumes instead)
-static/
-uploads/
+
 output/
-*.pdf
-*.mp3
-*.mp4   
 
-# IDE
+uploads/
+
+data/
+
+static/
+
+archive/
+
+logs
+
+
+
+chatbot-ui
+
+node_modules
+
+
+
+tests/
+
+docs/
+
+*.mp3
+
+*.md
+
+
+
 .vscode/
+
 .idea/
 
-# OS
 .DS_Store
