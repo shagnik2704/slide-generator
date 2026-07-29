@@ -235,7 +235,10 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
             const updateFromJob = (job) => {
                 const workflow = timedScriptWorkflowFromJob(job);
                 setUploadMessages(prev => prev.map(msg => (
-                    msg.id === workflowId ? { ...msg, ...workflow } : msg
+                    // Keep the message's own id: timedScriptWorkflowFromJob sets
+                    // id to the job UUID, and spreading that would stop every
+                    // later poll from matching this message.
+                    msg.id === workflowId ? { ...msg, ...workflow, id: workflowId } : msg
                 )));
             };
 
