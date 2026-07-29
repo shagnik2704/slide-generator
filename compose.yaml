@@ -1,0 +1,122 @@
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${POSTGRES_USER:-spoken_tutorial}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spoken_tutorial}
+  CELERY_BROKER_URL: redis://redis:6379/0
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-spoken_tutorial}
+      POSTGRES_USER: ${POSTGRES_USER:-spoken_tutorial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  
+  migrate:
+    image: ghcr.io/shagnik2704/slide-generator-backend:${IMAGE_TAG:-latest}
+    command: ["python", "-m", "src.script_chat.migrate"]
+    env_file: .env
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+  
+  backend:
+    image: ghcr.io/shagnik2704/slide-generator-backend:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      <<: *app-env
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+      DATABASE_POOL_MAX_SIZE: ${DATABASE_POOL_MAX_SIZE:-5}
+    volumes:
+      - uploads:/app/uploads
+      - output:/app/output
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  whisper-worker:
+    image: ghcr.io/shagnik2704/slide-generator-worker:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      <<: *app-env
+      DATABASE_POOL_MAX_SIZE: ${DATABASE_POOL_MAX_SIZE:-2}
+    volumes:
+      - uploads:/app/uploads
+    init: true
+    stop_grace_period: 300s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+  
+  frontend:
+    image: ghcr.io/shagnik2704/slide-generator-frontend:${IMAGE_TAG:-latest}
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+  
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:12.3.2
+    environment:
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:
+  output:
+  prometheus_data:
+  grafana_data:

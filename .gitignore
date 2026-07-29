@@ -70,14 +70,13 @@ output/
 archive/
 logs/
 version-change-automation-abc4823f94ae.json
-docker-compose.yml
-prod-configs/
-chatbot-ui/nginx.conf
 certs/
 *.pem
 *.key
 *.p12
 *.crt
+compose.override.yaml
+
 
 
 version-change-automation-abc4823f94ae.json
