@@ -58,3 +58,54 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+  
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Work out the image tag
+        id: tag
+        run: echo "value=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Copy config to the server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          proxy_host:     ${{ secrets.GATEWAY_HOST }}
+          proxy_username: ${{ secrets.GATEWAY_USER }}
+          proxy_key:      ${{ secrets.GATEWAY_SSH_KEY }}
+          host:     ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "compose.yaml,deploy/prometheus.yml"
+          target: ${{ secrets.PROJECT_PATH }}
+
+      - name: Pull images and restart
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+        with:
+          proxy_host:     ${{ secrets.GATEWAY_HOST }}
+          proxy_username: ${{ secrets.GATEWAY_USER }}
+          proxy_key:      ${{ secrets.GATEWAY_SSH_KEY }}
+          host:     ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: TAG
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.PROJECT_PATH }}
+
+            if grep -q '^IMAGE_TAG=' .env; then
+              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$TAG|" .env
+            else
+              echo "IMAGE_TAG=$TAG" >> .env
+            fi
+
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker compose ps

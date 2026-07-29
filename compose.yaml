@@ -28,9 +28,7 @@ services:
       retries: 20
   
   migrate:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
+    image: ghcr.io/shagnik2704/slide-generator-backend:${IMAGE_TAG:-latest}
     command: ["python", "-m", "src.script_chat.migrate"]
     env_file: .env
     environment:
@@ -41,9 +39,7 @@ services:
     restart: "no"
   
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
+    image: ghcr.io/shagnik2704/slide-generator-backend:${IMAGE_TAG:-latest}
     env_file: .env
     environment:
       <<: *app-env
@@ -70,9 +66,7 @@ services:
         condition: service_completed_successfully
 
   whisper-worker:
-    build:
-      context: .
-      dockerfile: docker/worker.Dockerfile
+    image: ghcr.io/shagnik2704/slide-generator-worker:${IMAGE_TAG:-latest}
     env_file: .env
     environment:
       <<: *app-env
@@ -90,8 +84,7 @@ services:
         condition: service_completed_successfully
   
   frontend:
-    build:
-      context: ./chatbot-ui
+    image: ghcr.io/shagnik2704/slide-generator-frontend:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8080:80"
     depends_on:

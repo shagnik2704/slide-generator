@@ -75,6 +75,8 @@ certs/
 *.key
 *.p12
 *.crt
+compose.override.yaml
+
 
 
 version-change-automation-abc4823f94ae.json
