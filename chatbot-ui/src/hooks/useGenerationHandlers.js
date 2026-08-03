@@ -5,6 +5,7 @@
 
 import { useCallback } from 'react';
 import { apiJson } from '../services/api';
+import { getThemeColor } from '../utils/slideTheme';
 
 /**
  * Hook for generation-related handlers.
@@ -83,7 +84,8 @@ export function useGenerationHandlers(setUploadMessages, setIsTyping, currentPro
                 body: JSON.stringify({
                     json_script: jsonScript,
                     project_id: projectId || currentProjectId,
-                    style_mode: "standard"
+                    style_mode: "standard",
+                    theme_color: getThemeColor()
                 }),
             });
 
@@ -136,7 +138,8 @@ export function useGenerationHandlers(setUploadMessages, setIsTyping, currentPro
                 method: 'POST',
                 body: JSON.stringify({
                     json_script: jsonScript || null,
-                    tutorial_name: tutorialName
+                    tutorial_name: tutorialName,
+                    theme_color: getThemeColor()
                 })
             });
 

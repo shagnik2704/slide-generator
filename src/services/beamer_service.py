@@ -2,7 +2,34 @@
 Beamer slide template generation service.
 Generates LaTeX Beamer templates with boilerplate slides filled in.
 """
+import re
 from typing import Optional, List
+
+
+# The slate grey the decks have always used, as a hex colour.
+DEFAULT_THEME_COLOR = "#708094"
+
+_HEX_COLOR_RE = re.compile(r"^#?(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
+
+
+def normalize_theme_color(value: Optional[str]) -> str:
+    """Validate a caller-supplied theme colour, returning 6 uppercase hex digits.
+
+    The result is interpolated straight into a .tex file that the user then
+    compiles, so anything that is not a plain hex colour is rejected outright
+    rather than escaped.
+    """
+    if value is None or value == "":
+        value = DEFAULT_THEME_COLOR
+    if not isinstance(value, str) or not _HEX_COLOR_RE.match(value.strip()):
+        raise ValueError(
+            f"Invalid theme colour {value!r}; expected a hex colour such as {DEFAULT_THEME_COLOR}"
+        )
+
+    digits = value.strip().lstrip("#").upper()
+    if len(digits) == 3:  # #abc -> #aabbcc
+        digits = "".join(char * 2 for char in digits)
+    return digits
 
 
 def generate_beamer_template(
@@ -21,6 +48,7 @@ def generate_beamer_template(
     domain_expert: Optional[str] = None,
     domain_expert_org: Optional[str] = None,
     code_file_info: Optional[str] = None,
+    theme_color: Optional[str] = None,
 ) -> str:
     """
     Generate a Beamer LaTeX template with boilerplate slides.
@@ -41,10 +69,17 @@ def generate_beamer_template(
         domain_expert: Name of the domain expert (for Thank You slide)
         domain_expert_org: Organization of domain expert
         code_file_info: Optional code file description
-    
+        theme_color: Hex colour for frame titles, bullets and title-slide
+            accents (e.g. "#1F4E79"). Defaults to the slate grey used so far.
+
     Returns:
         Complete LaTeX Beamer document as a string
+
+    Raises:
+        ValueError: If theme_color is not a hex colour.
     """
+    theme_hex = normalize_theme_color(theme_color)
+
     # Default content if not provided
     lo_items = learning_objectives or ["Sample learning objective 1", "Sample learning objective 2"]
     prereq_items = prerequisites or ["familiar with basic concepts", "No coding knowledge is required"]
@@ -80,9 +115,9 @@ def generate_beamer_template(
 \usetikzlibrary{{calc}}
 
 % --- Colors and beamer setup ---
-\definecolor{{grey}}{{rgb}}{{0.44, 0.5, 0.58}}
-\setbeamercolor{{structure}}{{fg=grey}}
-\setbeamercolor{{alerted text}}{{fg=grey}}
+\definecolor{{themecolor}}{{HTML}}{{{theme_hex}}}
+\setbeamercolor{{structure}}{{fg=themecolor}}
+\setbeamercolor{{alerted text}}{{fg=themecolor}}
 
 % --- Bottom-right logo on ALL slides via background template ---
 \addtobeamertemplate{{background}}{{%

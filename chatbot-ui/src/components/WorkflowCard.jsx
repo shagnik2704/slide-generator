@@ -21,6 +21,7 @@ import ImageWorkflow from './ImageWorkflow';
 import VoicePreview from './VoicePreview';
 import TranslationResults from './TranslationResults';
 import SlidesPreview from './SlidesPreview';
+import SlideThemePicker from './SlideThemePicker';
 import BatchResultsList from './BatchResultsList';
 import QualityReport from './QualityReport';
 import TimedScriptResults from './TimedScriptResults';
@@ -49,7 +50,8 @@ const WorkflowCard = ({
     openEditorId,
     setOpenEditorId,
     onDownloadScriptDocx,
-    onSaveScriptEdit
+    onSaveScriptEdit,
+    onGenerateSlides
 }) => {
     const [isOpen, setIsOpen] = useState(true);
 
@@ -164,7 +166,7 @@ const WorkflowCard = ({
             {/* Body */}
             {isOpen && (
                 <div style={contentStyle}>
-                    {status === 'processing' && (
+                    {(status === 'processing' || status === 'awaiting_color') && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {/* Steps List */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -225,6 +227,38 @@ const WorkflowCard = ({
                                     {progress}% Complete
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {status === 'awaiting_color' && tool === 'slides' && (
+                        <div style={{
+                            marginTop: '1rem',
+                            paddingTop: '1rem',
+                            borderTop: '1px solid var(--border-color)'
+                        }}>
+                            <SlideThemePicker isOpen={true} />
+                            <button
+                                onClick={() => onGenerateSlides?.(workflow.id, workflow.pendingParse, workflow.filename)}
+                                style={{
+                                    marginTop: '0.75rem',
+                                    width: '100%',
+                                    padding: '0.7rem 1.25rem',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 600,
+                                    background: 'var(--accent-primary)',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                <Presentation size={18} />
+                                Generate slides
+                            </button>
                         </div>
                     )}
 

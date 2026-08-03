@@ -118,6 +118,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
         handleSidebarBatchQualityUpload,
         handleGenerateScript,
         handleGenerateSlides,
+        generateSlidesForWorkflow,
         handleCreateSlides,
         handleApprove,
         handleConfirmation,
@@ -884,6 +885,7 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                         setOpenEditorId={setOpenEditorId}
                                         onDownloadScriptDocx={handleDownloadScriptDocx}
                                         onSaveScriptEdit={handleSaveScriptEdit}
+                                        onGenerateSlides={generateSlidesForWorkflow}
                                     />
                                 ) : (
                                     <MessageBubble

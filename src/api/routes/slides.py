@@ -28,14 +28,23 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
         zip_url: URL to download ZIP with .tex and assets
     """
     print("🎴 Generating Beamer slides template...")
-    
+
+    # Validated before the try below so the 400 is not swallowed into a 500,
+    # and before any LLM work, since the colour ends up inside the .tex
+    from src.services.beamer_service import normalize_theme_color
+    try:
+        theme_color = normalize_theme_color(data.get('theme_color'))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
     try:
         json_script = data.get('json_script')
         tutorial_name = data.get('tutorial_name', 'Tutorial Name')
-        
+
         # Initialize template parameters
         template_params = {
             "tutorial_name": tutorial_name,
+            "theme_color": theme_color,
         }
         
         # Extract content from script using LLM if provided

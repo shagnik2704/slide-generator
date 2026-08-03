@@ -5,6 +5,7 @@
 
 import { useCallback } from 'react';
 import { apiFormData, apiJson } from '../services/api';
+import { getThemeColor } from '../utils/slideTheme';
 
 /**
  * Hook for sidebar-triggered handlers.
@@ -412,42 +413,83 @@ export function useSidebarHandlers(
             const parseData = await apiFormData('/parse_script', formData);
             setCurrentProjectId(parseData.project_id);
 
-            // Update to Step 2
+            // Pause: let the user pick a slide colour before we generate, so the
+            // deck is built once in their colour (generation runs an LLM step).
             setUploadMessages(prev => prev.map(msg =>
                 msg.id === workflowId ? {
                     ...msg,
+                    status: 'awaiting_color',
                     currentStep: 1,
+                    pendingParse: {
+                        json_script: parseData.json_script,
+                        project_id: parseData.project_id
+                    },
                     steps: [
                         { label: `Parsing ${file.name}`, status: 'complete' },
-                        { label: 'Generating Beamer slides', status: 'processing' },
+                        { label: 'Choose slide colour', status: 'processing' },
                         { label: 'Template ready', status: 'pending' }
                     ]
                 } : msg
             ));
 
-            // Step 2: Generate slides
+        } catch (error) {
+            console.error("Slides parse error:", error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message
+                } : msg
+            ));
+        } finally {
+            setIsTyping(false);
+        }
+    }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
+
+    /**
+     * Generate the Beamer deck for a slides workflow that is waiting on a
+     * colour choice. The chosen colour is read from localStorage (getThemeColor).
+     */
+    const generateSlidesForWorkflow = useCallback(async (workflowId, pendingParse, filename) => {
+        if (!pendingParse) return;
+        setIsTyping(true);
+
+        setUploadMessages(prev => prev.map(msg =>
+            msg.id === workflowId ? {
+                ...msg,
+                status: 'processing',
+                currentStep: 1,
+                steps: [
+                    { label: `Parsing ${filename || 'script'}`, status: 'complete' },
+                    { label: 'Generating Beamer slides', status: 'processing' },
+                    { label: 'Template ready', status: 'pending' }
+                ]
+            } : msg
+        ));
+
+        try {
             const data = await apiJson('/generate_slides', {
                 method: 'POST',
                 body: JSON.stringify({
-                    json_script: parseData.json_script,
-                    project_id: parseData.project_id
+                    json_script: pendingParse.json_script,
+                    project_id: pendingParse.project_id,
+                    theme_color: getThemeColor()
                 })
             });
 
-            // Update to Complete
             setUploadMessages(prev => prev.map(msg =>
                 msg.id === workflowId ? {
                     ...msg,
                     status: 'complete',
                     currentStep: 3,
                     steps: [
-                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Parsing ${filename || 'script'}`, status: 'complete' },
                         { label: 'Generating Beamer slides', status: 'complete' },
                         { label: 'Template ready', status: 'complete' }
                     ],
                     result: {
                         slidesData: data,
-                        projectId: parseData.project_id
+                        projectId: pendingParse.project_id
                     }
                 } : msg
             ));
@@ -464,7 +506,7 @@ export function useSidebarHandlers(
         } finally {
             setIsTyping(false);
         }
-    }, [setUploadMessages, setIsTyping, setCurrentProjectId]);
+    }, [setUploadMessages, setIsTyping]);
 
     /**
      * Run Batch Compliance check on multiple script files in parallel.
@@ -751,6 +793,7 @@ export function useSidebarHandlers(
         handleSidebarVoiceUpload,
         handleSidebarImageUpload,
         handleSlidesUpload,
+        generateSlidesForWorkflow,
         handleSidebarBatchComplianceUpload,
         handleSidebarBatchQualityUpload,
         handleSidebarScriptGenerate,

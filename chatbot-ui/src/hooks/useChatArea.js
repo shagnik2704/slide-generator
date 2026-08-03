@@ -287,6 +287,7 @@ export function useChatArea(initialMode = 'create') {
         handleSidebarVoiceUpload: sidebarHandlers.handleSidebarVoiceUpload,
         handleSidebarImageUpload: sidebarHandlers.handleSidebarImageUpload,
         handleSidebarSlidesUpload: sidebarHandlers.handleSlidesUpload,
+        generateSlidesForWorkflow: sidebarHandlers.generateSlidesForWorkflow,
         handleSidebarBatchComplianceUpload: sidebarHandlers.handleSidebarBatchComplianceUpload,
         handleSidebarBatchQualityUpload: sidebarHandlers.handleSidebarBatchQualityUpload,
         handleSidebarScriptUpload: uploadHandlers.handleSendMessage, // Reuse upload handler
