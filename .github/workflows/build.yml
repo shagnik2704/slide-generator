@@ -108,4 +108,33 @@ jobs:
 
             docker compose pull
             docker compose up -d --remove-orphans
+
+            echo "Waiting for backend and whisper-worker health checks..."
+            healthy=0
+            for i in $(seq 1 24); do
+              backend_status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q backend)" 2>/dev/null || echo "starting")
+              worker_status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q whisper-worker)" 2>/dev/null || echo "starting")
+              echo "  [$i/24] backend=$backend_status whisper-worker=$worker_status"
+
+              if [ "$backend_status" = "healthy" ] && [ "$worker_status" = "healthy" ]; then
+                healthy=1
+                break
+              fi
+              if [ "$backend_status" = "unhealthy" ] || [ "$worker_status" = "unhealthy" ]; then
+                break
+              fi
+              sleep 10
+            done
+
             docker compose ps
+
+            if [ "$healthy" != "1" ]; then
+              echo "::error::Deploy did not reach a healthy state within the timeout"
+              echo "--- backend logs ---"
+              docker compose logs --tail 50 backend
+              echo "--- whisper-worker logs ---"
+              docker compose logs --tail 50 whisper-worker
+              exit 1
+            fi
+
+            echo "Deploy verified: backend and whisper-worker are healthy"
