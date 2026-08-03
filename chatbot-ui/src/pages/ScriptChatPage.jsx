@@ -105,6 +105,7 @@ export default function ScriptChatPage() {
           isReverting={workflow.isReverting}
           metadata={workflow.metadata}
           onDownload={workflow.downloadDocx}
+          onDownloadWiki={workflow.downloadWiki}
           onEditCell={workflow.editCell}
           onJumpToMetadata={workflow.jumpToMetadata}
           onLoadCheckpoints={workflow.loadCheckpoints}

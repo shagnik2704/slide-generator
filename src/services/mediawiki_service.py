@@ -30,38 +30,127 @@ def escape_mediawiki(text: str) -> str:
     return text
 
 
+# Boilerplate slide labels, longest/most specific first so substring matching
+# picks "Pre-requisite Slide" over the bare "Pre-requisites".
+STANDARD_SLIDE_LABELS = [
+    "Learning Objectives Slide",
+    "System Requirements Slide",
+    "Acknowledgement Slide",
+    "Pre-requisite Slide",
+    "Prerequisites Slide",
+    "Disclaimer Slide",
+    "Assignment Slide",
+    "Code file Slide",
+    "Thank You Slide",
+    "Closing Slide",
+    "Summary Slide",
+    "Title Slide",
+    "Pre-requisites",
+    "Prerequisites",
+]
+
+# "Slide 5", "Slide [N-3]" — the leading line of a current-format visual cue.
+_SLIDE_NUMBER_RE = re.compile(r"^Slide\s+[\w\[\]\-]+$", re.IGNORECASE)
+
+EDUPYRAMIDS_URL = "https://EduPyramids.org"
+
+
+def _is_prerequisite_label(line: str) -> bool:
+    """Whether a slide-label line is the boilerplate Pre-requisites slide."""
+    return "requisit" in line.lower()
+
+
 def format_visual_cue(image_prompt: str, title: str = "") -> str:
-    """Format the visual cue column content."""
-    if not image_prompt:
-        return "'''" + title + "'''" if title else ""
-    
-    # Convert bold markers
-    visual_cue = convert_markdown_bold_to_mediawiki(image_prompt)
-    
-    # Standard slides are formatted with 'Show Slide'
-    standard_slides = [
-        "Title Slide",
-        "Learning Objectives Slide",
-        "System Requirements Slide",
-        "Pre-requisite Slide",
-        "Prerequisites Slide",
-        "Assignment Slide",
-        "Summary Slide",
-        "Acknowledgement Slide",
-        "Thank You Slide",
-        "Closing Slide"
-    ]
-    
-    # Check if it's a standard slide
-    for slide_name in standard_slides:
-        if slide_name.lower() in image_prompt.lower():
-            # For Pre-requisite slide, include the URL if present
-            if "pre-requisite" in slide_name.lower() and "edupyramids" in image_prompt.lower():
-                return f"'''Pre-requisite Slide'''<br><br>EduPyramids.org"
-            return f"'''{slide_name}'''"
-    
-    # For content slides, use the image_prompt as descriptor
-    return visual_cue
+    """Format the visual cue column for a legacy slide (title + image_prompt).
+
+    Legacy slides keep the on-screen text in `image_prompt` (with `title` as a
+    fallback). This used to collapse any boilerplate slide to its bare bold
+    label, dropping the names on the Acknowledgement slide and the sentences on
+    the Disclaimer / Thank-You slides. It now preserves every line, exactly like
+    the current-format path (which also bolds slide labels and keeps the
+    prerequisite EduPyramids link).
+    """
+    return format_visual_cue_text(image_prompt or title)
+
+
+def _is_slide_label(line: str) -> bool:
+    """Whether a visual cue line is a boilerplate slide heading worth bolding."""
+    if line.startswith("'''"):
+        return False
+    if _SLIDE_NUMBER_RE.match(line):
+        return True
+    return line.lower() in {label.lower() for label in STANDARD_SLIDE_LABELS}
+
+
+def format_visual_cue_text(visual_cue: str) -> str:
+    """Format a current-format visual cue.
+
+    Unlike the legacy `image_prompt` (a bare label such as "Summary Slide"), a
+    script-chat `visual_cue` carries real multi-line content — the slide
+    heading, on-screen bullets and links like the EduPyramids URL. Collapsing it
+    to a label would drop that, so every line is preserved here.
+    """
+    if not visual_cue:
+        return ""
+
+    text = convert_newlines_to_mediawiki(convert_markdown_bold_to_mediawiki(visual_cue))
+
+    formatted_lines = []
+    is_prerequisite = False
+    for line in text.split('\n'):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith('•'):
+            formatted_lines.append(f"* {stripped[1:].strip()}")
+        elif stripped.startswith('- '):
+            formatted_lines.append(f"* {stripped[2:].strip()}")
+        else:
+            # A slide label sometimes arrives already wrapped in bold from the
+            # source (markdown ** **), even as one bold span running across two
+            # lines ("Slide 5" + "Pre-requisite slide"). Detect on the unbolded
+            # text so the label — and the prerequisite link — is still found, and
+            # re-emit a single clean bold label.
+            plain = stripped.replace("'''", "").strip()
+            if _is_slide_label(plain):
+                if _is_prerequisite_label(plain):
+                    is_prerequisite = True
+                formatted_lines.append(f"'''{plain}'''")
+            else:
+                formatted_lines.append(stripped)
+
+    # Space the blocks so the visual-cue column reads like the narration one:
+    # a blank line between paragraphs/headings, but consecutive bullets stay a
+    # tight list so MediaWiki renders them cleanly.
+    parts = []
+    for index, line in enumerate(formatted_lines):
+        if index:
+            both_bullets = line.startswith('* ') and formatted_lines[index - 1].startswith('* ')
+            parts.append('\n' if both_bullets else '<br><br>\n')
+        parts.append(line)
+    result = ''.join(parts)
+
+    # The prerequisite slide always points to EduPyramids, even when the source
+    # cue only carried the bare label.
+    if is_prerequisite and "edupyramids" not in result.lower():
+        result += f"<br><br>\n{EDUPYRAMIDS_URL}"
+
+    return result
+
+
+def resolve_slides(json_data: dict) -> list:
+    """Return the slide list, accepting both `slides` (legacy) and `script`."""
+    return json_data.get('slides') or json_data.get('script') or []
+
+
+def resolve_slide_visual_cue(slide: dict) -> str:
+    """Format a slide's visual cue, whichever script format it came from."""
+    if slide.get('visual_cue') is not None:
+        return format_visual_cue_text(str(slide['visual_cue']))
+    return format_visual_cue(
+        slide.get('image_prompt', ''),
+        slide.get('title', '') or slide.get('slide_type', ''),
+    )
 
 
 def format_narration(narration: str) -> str:
@@ -114,20 +203,16 @@ def create_mediawiki_script(json_data: dict, output_filename: str = None) -> str
     wiki_content += "! width=\"65%\" | '''Narration'''\n\n"
     
     # Process each slide
-    for slide in json_data.get('slides', []):
-        title = slide.get('title', '')
-        narration = slide.get('narration', '')
-        image_prompt = slide.get('image_prompt', '')
-        
+    for slide in resolve_slides(json_data):
         # Add row separator
         wiki_content += "|-\n"
-        
+
         # Format Visual Cue column
-        visual_cue = format_visual_cue(image_prompt, title)
+        visual_cue = resolve_slide_visual_cue(slide)
         wiki_content += f"|| {visual_cue}\n"
-        
+
         # Format Narration column
-        formatted_narration = format_narration(narration)
+        formatted_narration = format_narration(slide.get('narration', ''))
         wiki_content += f"|| {formatted_narration}\n\n"
     
     # Close the table
@@ -152,17 +237,44 @@ def create_mediawiki_script(json_data: dict, output_filename: str = None) -> str
     return full_content
 
 
+def resolve_metadata(json_data: dict) -> dict:
+    """Read script metadata from either format.
+
+    Legacy payloads keep these keys flat at the top level; script-chat nests
+    them under `metadata` with a few different names (`title`,
+    `outline_topics`).
+    """
+    nested = json_data.get('metadata') or {}
+
+    def pick(flat_key: str, nested_key: str = None):
+        return json_data.get(flat_key) or nested.get(nested_key or flat_key)
+
+    return {
+        'title': pick('presentation_title', 'title') or 'Spoken Tutorial Script',
+        'module': pick('module') or pick('series') or '',
+        'episode': pick('episode') or pick('tutorial') or '',
+        'duration': pick('duration') or '',
+        'prerequisites': pick('prerequisites') or '',
+        'system_requirements': pick('system_requirements') or '',
+        'learning_objectives': pick('learning_objectives') or [],
+        'outline': pick('outline', 'outline_topics') or [],
+        'meta_tags': pick('meta_tags') or [],
+    }
+
+
 def generate_metadata_section(json_data: dict) -> str:
     """Generate the metadata section in MediaWiki format."""
-    title = json_data.get('presentation_title', 'Spoken Tutorial Script')
-    module = json_data.get('module', '')
-    episode = json_data.get('episode', '')
-    duration = json_data.get('duration', '')
-    prerequisites = json_data.get('prerequisites', '')
-    learning_objectives = json_data.get('learning_objectives', [])
-    meta_tags = json_data.get('meta_tags', [])
-    outline = json_data.get('outline', [])
-    
+    metadata_values = resolve_metadata(json_data)
+    title = metadata_values['title']
+    module = metadata_values['module']
+    episode = metadata_values['episode']
+    duration = metadata_values['duration']
+    prerequisites = metadata_values['prerequisites']
+    system_requirements = metadata_values['system_requirements']
+    learning_objectives = metadata_values['learning_objectives']
+    meta_tags = metadata_values['meta_tags']
+    outline = metadata_values['outline']
+
     # Build metadata as a MediaWiki table
     metadata = "== Script Metadata ==\n\n"
     metadata += "{| class=\"wikitable\"\n"
@@ -185,7 +297,11 @@ def generate_metadata_section(json_data: dict) -> str:
     # Prerequisites
     if prerequisites:
         metadata += f"|-\n! Prerequisites\n| {convert_markdown_bold_to_mediawiki(prerequisites)}\n"
-    
+
+    # System Requirements
+    if system_requirements:
+        metadata += f"|-\n! System Requirements\n| {convert_markdown_bold_to_mediawiki(system_requirements)}\n"
+
     # Learning Objectives
     if learning_objectives:
         obj_list = "\n".join([f"* {convert_markdown_bold_to_mediawiki(obj)}" for obj in learning_objectives])
@@ -220,9 +336,8 @@ def export_to_mediawiki(json_data: dict, output_dir: str = None) -> dict:
     Returns:
         Dictionary with 'content' (string) and 'file_path' (if saved to file)
     """
-    from pathlib import Path
     import time
-    
+
     # Generate filename
     project_root = Path(__file__).parent.parent.parent
     if output_dir is None:
@@ -234,15 +349,13 @@ def export_to_mediawiki(json_data: dict, output_dir: str = None) -> dict:
     
     # Generate unique filename
     timestamp = int(time.time())
-    title_slug = json_data.get('presentation_title', 'script').replace(' ', '_')[:30]
+    title_slug = resolve_metadata(json_data)['title'].replace(' ', '_')[:30]
     filename = output_dir / f"{title_slug}_{timestamp}.wiki"
     
-    # Generate content and save
-    content = create_mediawiki_script(json_data, str(filename))
-    
-    # Also return the raw content (if filename was provided, content is the path)
-    wiki_content = create_mediawiki_script(json_data)  # Get content without saving
-    
+    # Render once, then persist that same content
+    wiki_content = create_mediawiki_script(json_data)
+    filename.write_text(wiki_content, encoding='utf-8')
+
     return {
         "content": wiki_content,
         "file_path": str(filename)

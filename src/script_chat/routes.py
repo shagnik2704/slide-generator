@@ -1,4 +1,5 @@
 """FastAPI routes for the Script Chat flow."""
+import io
 import json
 import uuid
 import logging
@@ -541,3 +542,54 @@ async def export_docx_file(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to generate docx: {str(e)}")
+
+
+@router.get("/export-wiki/{thread_id}")
+async def export_wiki_file(
+    thread_id: str,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Retrieve the current script state and export it to MediaWiki markup (.wiki)."""
+    state = await _get_owned_state_or_404(thread_id, current_user)
+
+    metadata = state.values.get("metadata", {})
+    series_name = state.values.get("foss_name") or metadata.get("foss_name") or "Pedagogical Script"
+    try:
+        script = dump_models(parse_script(state.values.get("script", [])))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid script state: {str(e)}") from e
+
+    wiki_data = {
+        "presentation_title": metadata.get("title", "Spoken Tutorial Script"),
+        "series": series_name,
+        "tutorial": metadata.get("title", ""),
+        "duration": "3-4 min",
+        "learning_objectives": metadata.get("learning_objectives", []),
+        "prerequisites": metadata.get("prerequisites", ""),
+        "system_requirements": metadata.get("system_requirements", ""),
+        "meta_tags": metadata.get("meta_tags", []),
+        "outline": metadata.get("outline_topics", []),
+        "slides": script,
+    }
+
+    from src.services.mediawiki_service import create_mediawiki_script
+    try:
+        content = create_mediawiki_script(wiki_data)
+
+        title_slug = metadata.get("title", "script").lower().replace(" ", "_")
+        title_slug = "".join([c for c in title_slug if c.isalnum() or c == "_"])[:40]
+        filename = f"{title_slug}_script.wiki"
+
+        return StreamingResponse(
+            io.BytesIO(content.encode("utf-8")),
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to generate wiki: {str(e)}")

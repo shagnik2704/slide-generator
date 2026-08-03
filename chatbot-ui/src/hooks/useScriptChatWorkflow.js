@@ -3,6 +3,7 @@ import {
   archiveThread,
   connectStream,
   exportDocx,
+  exportWiki,
   getCheckpoints,
   getHistory,
   jumpStage,
@@ -20,6 +21,17 @@ import {
 
 function makeMessage(role, content) {
   return { role, content, ts: Date.now() };
+}
+
+function triggerBlobDownload(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
 
 function summarizeInterrupt(type, data, version) {
@@ -351,30 +363,26 @@ export function useScriptChatWorkflow() {
     }
   }, [connectToThread, threadId]);
 
-  const downloadDocx = useCallback(async () => {
+  const runExport = useCallback(async (exporter, extension) => {
     if (!threadId) return;
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const blob = await exportDocx(threadId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const blob = await exporter(threadId);
       const titleSlug = (metadata?.title || 'script')
         .toLowerCase()
         .replace(/\s+/g, '_')
         .replace(/[^a-z0-9_]/g, '');
-      link.href = url;
-      link.download = `${titleSlug}_script.docx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      triggerBlobDownload(blob, `${titleSlug}_script.${extension}`);
     } catch (err) {
       setErrorMessage(err.message);
     } finally {
       setIsLoading(false);
     }
   }, [metadata?.title, threadId]);
+
+  const downloadDocx = useCallback(() => runExport(exportDocx, 'docx'), [runExport]);
+  const downloadWiki = useCallback(() => runExport(exportWiki, 'wiki'), [runExport]);
 
   return {
     activeTab,
@@ -384,6 +392,7 @@ export function useScriptChatWorkflow() {
     complianceResults,
     currentStage,
     downloadDocx,
+    downloadWiki,
     editCell,
     editInput,
     errorMessage,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   ArrowLeft,
   Download,
+  FileCode,
   History,
   Pencil,
   Save,
@@ -246,6 +247,7 @@ function ScriptPanel({
   isReviewing,
   isReverting,
   onDownload,
+  onDownloadWiki,
   onEditCell,
   onJumpToMetadata,
   onLoadCheckpoints,
@@ -304,6 +306,17 @@ function ScriptPanel({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button
+            className="script-icon-button"
+            disabled={isLoading}
+            onClick={onDownloadWiki}
+            size="icon"
+            title="Download MediaWiki (.wiki)"
+            type="button"
+            variant="outline"
+          >
+            <FileCode size={16} aria-hidden="true" />
+          </Button>
           <Button
             className="script-icon-button script-icon-button-primary"
             disabled={isLoading}
@@ -415,6 +428,7 @@ export function ReviewWorkspace({
   isReverting,
   metadata,
   onDownload,
+  onDownloadWiki,
   onEditCell,
   onJumpToMetadata,
   onLoadCheckpoints,
@@ -459,6 +473,7 @@ export function ReviewWorkspace({
           isReviewing={interruptType === 'script_review'}
           isReverting={isReverting}
           onDownload={onDownload}
+          onDownloadWiki={onDownloadWiki}
           onEditCell={onEditCell}
           onJumpToMetadata={onJumpToMetadata}
           onLoadCheckpoints={onLoadCheckpoints}

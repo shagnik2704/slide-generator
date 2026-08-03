@@ -247,3 +247,14 @@ export async function exportDocx(threadId) {
   if (!resp.ok) throw new Error(await getErrorMessage(resp, `Export DOCX failed: ${resp.status}`));
   return resp.blob();
 }
+
+/**
+ * Export the script to MediaWiki markup for script.spoken-tutorial.org.
+ */
+export async function exportWiki(threadId) {
+  const resp = await fetch(`${API_URL}/script-chat/export-wiki/${threadId}`, {
+    headers: getHeaders(),
+  });
+  if (!resp.ok) throw new Error(await getErrorMessage(resp, `Export wiki failed: ${resp.status}`));
+  return resp.blob();
+}
