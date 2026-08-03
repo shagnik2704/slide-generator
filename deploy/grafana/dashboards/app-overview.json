@@ -169,7 +169,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -188,7 +188,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -201,7 +201,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -220,7 +220,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -233,7 +233,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -250,7 +250,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "time_series",
@@ -263,7 +263,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -280,7 +280,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -306,7 +306,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -323,7 +323,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -336,7 +336,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -355,7 +355,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -368,7 +368,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -385,7 +385,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "time_series",
@@ -398,7 +398,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -415,7 +415,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -441,7 +441,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -460,7 +460,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -473,7 +473,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -492,7 +492,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
@@ -505,7 +505,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -522,7 +522,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "time_series",
@@ -535,7 +535,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "slide-generator-postgres"
       },
       "fieldConfig": {
@@ -552,7 +552,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "slide-generator-postgres"
           },
           "format": "table",
