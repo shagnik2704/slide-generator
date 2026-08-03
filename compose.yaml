@@ -15,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -26,7 +27,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-  
+    restart: unless-stopped
+
   migrate:
     image: ghcr.io/shagnik2704/slide-generator-backend:${IMAGE_TAG:-latest}
     command: ["python", "-m", "src.script_chat.migrate"]
@@ -66,6 +68,7 @@ services:
       retries: 3
       start_period: 40s
     init: true
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,8 +85,19 @@ services:
       DATABASE_POOL_MAX_SIZE: ${DATABASE_POOL_MAX_SIZE:-2}
     volumes:
       - uploads:/app/uploads
+    # `inspect ping` goes out over the broker and back, so it proves the worker
+    # process is alive AND that Redis is reachable — not merely that the
+    # container is running. It is slow, hence the long interval and timeout.
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A src.workers.celery_app:celery_app inspect ping -d celery@$$HOSTNAME | grep -q pong"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      # The worker loads a 140MB Whisper model before it can answer.
+      start_period: 60s
     init: true
     stop_grace_period: 300s
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,12 +115,14 @@ services:
         condition: service_healthy
       grafana:
         condition: service_started
-  
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v3.1.0
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:12.3.2
@@ -119,6 +135,7 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    restart: unless-stopped
 
 
 
