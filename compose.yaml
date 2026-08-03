@@ -46,6 +46,15 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
       DATABASE_POOL_MAX_SIZE: ${DATABASE_POOL_MAX_SIZE:-5}
+      # Each uvicorn worker keeps its own counters, so a scrape hits whichever
+      # worker answers and Prometheus reads the jumps as counter resets. This
+      # makes the workers write to shared files that /metrics aggregates.
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
+    # prometheus_client requires this directory to be empty at startup — stale
+    # files from a previous run inflate the counts. tmpfs is memory-backed and
+    # recreated empty on every container start, so no cleanup step is needed.
+    tmpfs:
+      - /tmp/prometheus
     volumes:
       - uploads:/app/uploads
       - output:/app/output
