@@ -1,0 +1,579 @@
+{
+  "id": null,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Health",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slide-generator-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slide-generator-prometheus"
+          },
+          "expr": "up{job=\"backend\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Backend",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slide-generator-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slide-generator-prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{status=\"5xx\"}[5m])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "title": "5xx errors (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slide-generator-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slide-generator-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "title": "p95 latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slide-generator-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slide-generator-prometheus"
+          },
+          "expr": "sum(rate(http_requests_total[5m])) by (status)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Request rate by status",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 6,
+      "panels": [],
+      "title": "Users",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
+      "id": 7,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM users",
+          "refId": "A"
+        }
+      ],
+      "title": "Total users",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 10
+      },
+      "id": 8,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM users WHERE last_login_at > now() - interval '7 days'",
+          "refId": "A"
+        }
+      ],
+      "title": "Active (7d)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 10
+      },
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total users\" FROM users ORDER BY created_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Signups over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 10,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT email, provider, last_login_at, created_at FROM users ORDER BY last_login_at DESC NULLS LAST LIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent logins",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Jobs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 27
+      },
+      "id": 12,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT status, count(*) FROM background_jobs GROUP BY status",
+          "refId": "A"
+        }
+      ],
+      "title": "Jobs by status",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 27
+      },
+      "id": 13,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT avg(extract(epoch from (completed_at - started_at))) AS value FROM background_jobs WHERE status = 'completed'",
+          "refId": "A"
+        }
+      ],
+      "title": "Avg completion time",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 14,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total jobs\" FROM background_jobs ORDER BY created_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Jobs over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 15,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT id, job_type, status, current_stage, progress, started_at, now() - started_at AS running_for FROM background_jobs WHERE status = 'running' ORDER BY started_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Currently running jobs",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 16,
+      "panels": [],
+      "title": "Script Chat",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 44
+      },
+      "id": 17,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(*) AS value FROM script_chat_threads",
+          "refId": "A"
+        }
+      ],
+      "title": "Total threads",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 44
+      },
+      "id": 18,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(distinct user_id) AS value FROM script_chat_threads",
+          "refId": "A"
+        }
+      ],
+      "title": "Distinct users",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 44
+      },
+      "id": 19,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total threads\" FROM script_chat_threads ORDER BY created_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Threads over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "slide-generator-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 20,
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT status, count(*) FROM script_chat_threads GROUP BY status",
+          "refId": "A"
+        }
+      ],
+      "title": "Threads by status",
+      "type": "piechart"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "slide-generator"
+  ],
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "App Overview",
+  "uid": "slide-generator-app-overview"
+}
