@@ -81,7 +81,7 @@ jobs:
           host:     ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "compose.yaml,deploy/prometheus.yml"
+          source: "compose.yaml,deploy"
           target: ${{ secrets.PROJECT_PATH }}
 
       - name: Pull images and restart
