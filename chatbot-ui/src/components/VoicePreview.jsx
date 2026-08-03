@@ -5,20 +5,31 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * VoicePreview - Displays audio players for generated voice files
- * Supports both:
+ * Supports:
  * - audio_urls: Multiple files (one per slide)
  * - audio_url: Single combined file (entire script)
+ * - both: a stitched run returns the joined narration plus the per-slide files
+ *   it was built from, so an inconsistent slide can be found and redone
  */
 export default function VoicePreview({ voiceData, isOpen = true }) {
     const [playingSlide, setPlayingSlide] = useState(null);
 
     if (!voiceData || !isOpen) return null;
 
-    // Support both formats
-    const { audio_urls, audio_url, zip_url, generated_slides, total_slides, errors, duration_estimate } = voiceData;
+    const {
+        audio_urls,
+        audio_url,
+        slide_audio_urls,
+        zip_url,
+        generated_slides,
+        total_slides,
+        errors,
+        duration_estimate,
+    } = voiceData;
 
-    // Check if this is a combined (single file) response
-    const isCombined = audio_url && !audio_urls;
+    const slideAudio = audio_urls || slide_audio_urls;
+    const hasSlideAudio = slideAudio && Object.keys(slideAudio).length > 0;
+    const hasFullAudio = Boolean(audio_url);
 
     const handlePlay = (slideNum, audioRef) => {
         if (playingSlide === slideNum) {
@@ -56,7 +67,7 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Volume2 size={20} style={{ color: 'var(--accent-primary)' }} />
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {isCombined ? 'Full Audio' : 'Audio Preview'}
+                        {hasFullAudio ? 'Full Audio' : 'Audio Preview'}
                     </span>
                     <span style={{
                         fontSize: '0.85rem',
@@ -65,7 +76,9 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.5rem'
                     }}>
-                        {isCombined ? `${total_slides} Rows` : `${generated_slides}/${total_slides} Rows`}
+                        {generated_slides == null
+                            ? `${total_slides} Rows`
+                            : `${generated_slides}/${total_slides} Rows`}
                     </span>
                     {duration_estimate && (
                         <span style={{
@@ -104,13 +117,13 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                         }}
                     >
                         <Download size={16} />
-                        {isCombined ? 'Download Audio' : 'Download All'}
+                        {zip_url ? 'Download All' : 'Download Audio'}
                     </a>
                 )}
             </div>
 
             {/* Combined Audio - Single Player */}
-            {isCombined && (
+            {hasFullAudio && (
                 <AudioPlayer
                     slideNum="full"
                     url={`${API_URL}${audio_url}`}
@@ -121,14 +134,16 @@ export default function VoicePreview({ voiceData, isOpen = true }) {
                 />
             )}
 
-            {/* Multiple Audio Players Grid */}
-            {!isCombined && audio_urls && (
+            {/* Per-slide players. Shown alongside the full audio after a
+                stitched run so individual slides can be checked. */}
+            {hasSlideAudio && (
                 <div className="voice-preview-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                     gap: '0.75rem',
+                    marginTop: hasFullAudio ? '0.75rem' : 0,
                 }}>
-                    {Object.entries(audio_urls).map(([slideNum, url]) => (
+                    {Object.entries(slideAudio).map(([slideNum, url]) => (
                         <AudioPlayer
                             key={slideNum}
                             slideNum={slideNum}

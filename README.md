@@ -207,6 +207,7 @@ Configuration is read from environment variables (loaded from a `.env` file at t
 | `OPENAI_API_KEY` | Semantic + factuality compliance checks (skipped if unset) |
 | `TAVILY_API_KEY` | Web search (outline chat, version-change pipeline) |
 | `SARVAM_API_KEY` | Sarvam TTS voices |
+| `SARVAM_PRONUNCIATION_DICT_ID` | Optional. Id of a Sarvam pronunciation dictionary (branding/jargon fixes) applied to every TTS request. TTS runs without correction if unset. |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Google Sheets export (Version Change Automation) via Workload Identity Federation |
 
 > The frontend reads `VITE_API_URL` at build time (default `/api` in Docker, empty/proxy in dev).

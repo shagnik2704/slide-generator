@@ -1,6 +1,32 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers, Clock } from 'lucide-react';
+import { Upload, FileJson, Send, Sparkles, FileText, Mic, Video, X, Check, File, BookOpen, FileAudio, Layers, ListMusic, Clock } from 'lucide-react';
 import { NoiseBackgroundButton } from './ui/noise-background-button';
+
+// How the narration audio is produced.
+// - combined: one continuous file, synthesized with as few seams as possible
+// - stitched: one file per slide, joined into a full narration — keeps the
+//   individual files so a slide that reads inconsistently can be redone alone
+// - rowwise: one file per slide, left separate
+const VOICE_MODES = [
+    {
+        id: 'combined',
+        label: 'Combined',
+        icon: FileAudio,
+        hint: '📢 One audio file for the entire script',
+    },
+    {
+        id: 'stitched',
+        label: 'Per-slide + Join',
+        icon: ListMusic,
+        hint: '🔗 One file per slide, plus the slides joined into full audio',
+    },
+    {
+        id: 'rowwise',
+        label: 'Row-wise',
+        icon: Layers,
+        hint: '🎵 Separate audio file for each row',
+    },
+];
 
 // Helper to format file size
 const formatFileSize = (bytes) => {
@@ -124,50 +150,31 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     background: 'var(--bg-tertiary)',
                     borderRadius: '0.75rem',
                 }}>
-                    <button
-                        onClick={() => setVoiceMode('combined')}
-                        style={{
-                            flex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '0.6rem 1rem',
-                            borderRadius: '0.5rem',
-                            border: 'none',
-                            background: voiceMode === 'combined' ? 'var(--accent-primary)' : 'transparent',
-                            color: voiceMode === 'combined' ? 'white' : 'var(--text-secondary)',
-                            fontSize: '0.8rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                        }}
-                    >
-                        <FileAudio size={16} />
-                        Combined
-                    </button>
-                    <button
-                        onClick={() => setVoiceMode('rowwise')}
-                        style={{
-                            flex: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '0.6rem 1rem',
-                            borderRadius: '0.5rem',
-                            border: 'none',
-                            background: voiceMode === 'rowwise' ? 'var(--accent-primary)' : 'transparent',
-                            color: voiceMode === 'rowwise' ? 'white' : 'var(--text-secondary)',
-                            fontSize: '0.8rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                        }}
-                    >
-                        <Layers size={16} />
-                        Row-wise
-                    </button>
+                    {VOICE_MODES.map(({ id, label, icon: Icon }) => (
+                        <button
+                            key={id}
+                            onClick={() => setVoiceMode(id)}
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                padding: '0.6rem 0.5rem',
+                                borderRadius: '0.5rem',
+                                border: 'none',
+                                background: voiceMode === id ? 'var(--accent-primary)' : 'transparent',
+                                color: voiceMode === id ? 'white' : 'var(--text-secondary)',
+                                fontSize: '0.75rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                            }}
+                        >
+                            <Icon size={16} />
+                            {label}
+                        </button>
+                    ))}
                 </div>
             )}
             {isVoice && (
@@ -177,9 +184,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
                     marginBottom: '0.75rem',
                     textAlign: 'center',
                 }}>
-                    {voiceMode === 'combined'
-                        ? '📢 One audio file for the entire script'
-                        : '🎵 Separate audio file for each row'}
+                    {VOICE_MODES.find((m) => m.id === voiceMode)?.hint}
                 </div>
             )}
 

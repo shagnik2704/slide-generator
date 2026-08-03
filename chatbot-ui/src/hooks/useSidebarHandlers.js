@@ -203,13 +203,19 @@ export function useSidebarHandlers(
     /**
      * Generate voice audio for a script file.
      * @param {File} file - Script file to generate voice for
-     * @param {string} voiceMode - 'combined' for single file, 'rowwise' for per-row files
+     * @param {string} voiceMode - 'combined' for a single continuous file,
+     *   'stitched' for per-slide files joined into one, 'rowwise' for per-row
+     *   files left separate
      * @param {string} speaker - voice actor selection
      * @param {number} pace - speaking speed
      */
     const handleSidebarVoiceUpload = useCallback(async (file, voiceMode = 'combined', speaker, pace) => {
         const workflowId = Date.now();
-        const modeLabel = voiceMode === 'combined' ? '(Full Audio)' : '(Row-wise)';
+        const modeLabel = {
+            combined: '(Full Audio)',
+            stitched: '(Per-slide + Joined)',
+            rowwise: '(Row-wise)',
+        }[voiceMode] ?? '(Full Audio)';
 
         const initialWorkflow = {
             id: workflowId,
@@ -249,10 +255,11 @@ export function useSidebarHandlers(
                 } : msg
             ));
 
-            // Step 2: Generate voice based on mode
-            const endpoint = voiceMode === 'combined'
-                ? '/generate_voice_combined'
-                : '/generate_voice';
+            // Step 2: Generate voice based on mode. 'combined' and 'stitched'
+            // both return one audio file; they differ in how it is built.
+            const endpoint = voiceMode === 'rowwise'
+                ? '/generate_voice'
+                : '/generate_voice_combined';
 
             const voiceData = await apiJson(endpoint, {
                 method: 'POST',
@@ -260,7 +267,8 @@ export function useSidebarHandlers(
                     json_script: parseData.json_script,
                     project_id: parseData.project_id,
                     speaker: speaker,
-                    pace: pace
+                    pace: pace,
+                    ...(voiceMode === 'stitched' && { source: 'per_slide' }),
                 }),
             });
 
