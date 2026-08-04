@@ -11,13 +11,17 @@ datasources:
 
   - name: Postgres
     uid: slide-generator-postgres
-    type: postgres
+    type: grafana-postgresql-datasource
     url: postgres:5432
-    database: spoken_tutorial
     user: grafana_ro
     secureJsonData:
       password: $GRAFANA_DB_PASSWORD
     jsonData:
+      # Must live under jsonData, not the legacy top-level `database:` key.
+      # The backend still reads the legacy field, so queries succeed via the
+      # API either way — but the frontend only looks here, and without it
+      # every panel fails with "no default database configured".
+      database: spoken_tutorial
       sslmode: disable
       postgresVersion: 1600
     isDefault: false
