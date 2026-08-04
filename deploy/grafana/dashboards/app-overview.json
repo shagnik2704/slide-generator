@@ -586,6 +586,307 @@
       ],
       "title": "Threads by status",
       "type": "piechart"
+    },
+    {
+      "id": 21,
+      "type": "row",
+      "title": "Who did what",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 60
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Users who never used it",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS value FROM users u\nWHERE NOT EXISTS (SELECT 1 FROM script_chat_threads t WHERE t.user_id = u.id)\n  AND NOT EXISTS (SELECT 1 FROM background_jobs j WHERE j.user_id = u.id)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Threads finished",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS value FROM script_chat_threads WHERE status = 'completed'",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Threads awaiting review",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS value FROM script_chat_threads WHERE status = 'awaiting_review'",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "barchart",
+      "title": "Where threads stall (by stage)",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT current_stage, count(*) AS threads FROM script_chat_threads GROUP BY 1 ORDER BY 2 DESC",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 26,
+      "type": "table",
+      "title": "Activity by user",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 69
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT u.email,\n       count(DISTINCT t.thread_id) AS threads,\n       count(DISTINCT j.id)        AS jobs,\n       u.last_login_at,\n       u.created_at                AS joined\nFROM users u\nLEFT JOIN script_chat_threads t ON t.user_id = u.id\nLEFT JOIN background_jobs   j ON j.user_id = u.id\nGROUP BY u.email, u.last_login_at, u.created_at\nORDER BY threads DESC, jobs DESC, u.last_login_at DESC NULLS LAST",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 27,
+      "type": "table",
+      "title": "Jobs per user",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 69
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT u.email,\n       count(*) FILTER (WHERE j.status = 'completed') AS completed,\n       count(*) FILTER (WHERE j.status = 'failed')    AS failed,\n       count(*)                                       AS total\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nGROUP BY u.email\nORDER BY total DESC",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 28,
+      "type": "table",
+      "title": "Recent activity \u2014 who did what",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 78
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT t.created_at            AS \"time\",\n       u.email,\n       'script chat'             AS activity,\n       coalesce(nullif(t.title, ''), '(untitled)') AS detail,\n       t.current_stage           AS stage,\n       t.status\nFROM script_chat_threads t\nJOIN users u ON u.id = t.user_id\nUNION ALL\nSELECT j.created_at,\n       u.email,\n       'timed script',\n       coalesce(j.original_filename, '(no filename)'),\n       coalesce(j.current_stage, ''),\n       j.status\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nORDER BY 1 DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 29,
+      "type": "table",
+      "title": "Transcription runtimes",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 88
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT j.completed_at AS \"time\",\n       u.email,\n       coalesce(j.original_filename, '?') AS file,\n       round(extract(epoch FROM (j.completed_at - j.started_at))) AS seconds\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nWHERE j.completed_at IS NOT NULL\nORDER BY 1 DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 30,
+      "type": "table",
+      "title": "Failed jobs",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 88
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT j.created_at AS \"time\",\n       u.email,\n       coalesce(j.original_filename, '?') AS file,\n       left(coalesce(j.error_message, ''), 200) AS error\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nWHERE j.status = 'failed'\nORDER BY 1 DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
     }
   ],
   "refresh": "1m",
