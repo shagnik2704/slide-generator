@@ -193,7 +193,9 @@
           },
           "format": "table",
           "rawSql": "SELECT count(*) AS value FROM users",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Total users",
@@ -225,7 +227,9 @@
           },
           "format": "table",
           "rawSql": "SELECT count(*) AS value FROM users WHERE last_login_at > now() - interval '7 days'",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Active (7d)",
@@ -255,7 +259,9 @@
           },
           "format": "time_series",
           "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total users\" FROM users ORDER BY created_at",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Signups over time",
@@ -285,7 +291,9 @@
           },
           "format": "table",
           "rawSql": "SELECT email, provider, last_login_at, created_at FROM users ORDER BY last_login_at DESC NULLS LAST LIMIT 20",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Recent logins",
@@ -328,7 +336,9 @@
           },
           "format": "table",
           "rawSql": "SELECT status, count(*) FROM background_jobs GROUP BY status",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Jobs by status",
@@ -360,7 +370,9 @@
           },
           "format": "table",
           "rawSql": "SELECT avg(extract(epoch from (completed_at - started_at))) AS value FROM background_jobs WHERE status = 'completed'",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Avg completion time",
@@ -390,7 +402,9 @@
           },
           "format": "time_series",
           "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total jobs\" FROM background_jobs ORDER BY created_at",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Jobs over time",
@@ -420,7 +434,9 @@
           },
           "format": "table",
           "rawSql": "SELECT id, job_type, status, current_stage, progress, started_at, now() - started_at AS running_for FROM background_jobs WHERE status = 'running' ORDER BY started_at",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Currently running jobs",
@@ -465,7 +481,9 @@
           },
           "format": "table",
           "rawSql": "SELECT count(*) AS value FROM script_chat_threads",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Total threads",
@@ -497,7 +515,9 @@
           },
           "format": "table",
           "rawSql": "SELECT count(distinct user_id) AS value FROM script_chat_threads",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Distinct users",
@@ -527,7 +547,9 @@
           },
           "format": "time_series",
           "rawSql": "SELECT created_at AS time, count(*) OVER (ORDER BY created_at) AS \"Total threads\" FROM script_chat_threads ORDER BY created_at",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Threads over time",
@@ -557,7 +579,9 @@
           },
           "format": "table",
           "rawSql": "SELECT status, count(*) FROM script_chat_threads GROUP BY status",
-          "refId": "A"
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
         }
       ],
       "title": "Threads by status",
