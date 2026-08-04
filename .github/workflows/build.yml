@@ -109,6 +109,19 @@ jobs:
             docker compose pull
             docker compose up -d --remove-orphans
 
+            # Grafana reads provisioning/datasources/*.yaml only at startup —
+            # unlike dashboards, which it re-reads every updateIntervalSeconds.
+            # `up -d` won't recreate Grafana when just a mounted file changed
+            # (compose.yaml is identical), so a datasource edit would ship to
+            # the server and silently never take effect. Restart unconditionally:
+            # it costs ~10s on a service nothing depends on, and that is cheaper
+            # than a config change that looks deployed but isn't.
+            # Non-fatal: set -e is active, and a Grafana hiccup should not abort
+            # the run before the backend/worker health check below gets to gate
+            # the deploy. Surfaced as a GitHub warning annotation instead.
+            docker compose restart grafana \
+              || echo "::warning::grafana restart failed; datasource provisioning changes may not be live"
+
             echo "Waiting for backend and whisper-worker health checks..."
             healthy=0
             for i in $(seq 1 24); do
