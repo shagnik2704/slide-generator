@@ -719,13 +719,36 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT current_stage, count(*) AS threads FROM script_chat_threads GROUP BY 1 ORDER BY 2 DESC",
+          "rawSql": "SELECT current_stage AS stage, count(*)::int AS threads\nFROM script_chat_threads\nGROUP BY 1\nORDER BY 2 DESC",
           "refId": "A"
         }
       ],
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
         "overrides": []
+      },
+      "options": {
+        "xField": "stage",
+        "orientation": "horizontal",
+        "showValue": "always",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       }
     },
     {
