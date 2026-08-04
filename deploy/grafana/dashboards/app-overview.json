@@ -115,7 +115,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{handler!~\"/metrics|/health\"}[5m])) by (le))",
           "refId": "A"
         }
       ],
@@ -146,7 +146,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(http_requests_total[5m])) by (status)",
+          "expr": "sum(rate(http_requests_total{handler!~\"/metrics|/health\"}[5m])) by (status)",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
