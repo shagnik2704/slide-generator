@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 716" role="img"
+     aria-label="Production architecture: a host nginx terminates TLS and forwards to the only published port, 127.0.0.1:8080, behind which eight Docker Compose services run — frontend, backend, PostgreSQL, Redis, whisper-worker, a shared uploads volume, Prometheus and Grafana — with the backend alone calling external AI services.">
+  <title>Spoken Tutorial Generator — production architecture</title>
+  <style>
+    :root {
+      --bg: #ffffff; --ink: #1c2540; --muted: #5a6478;
+      --line: #5a6a9f; --accent: #e05d10;
+      --boundary-s: #8a93b0; --boundary-f: #f7f9fc;
+      --app-f: #eef1fa; --app-s: #2D3E8E;
+      --db-f: #f3eefb; --db-s: #7a5cb8;
+      --red-f: #fdecec; --red-s: #c0504d;
+      --mon-f: #fdf0e7; --mon-s: #e05d10;
+      --vol-f: #fbf5e0; --vol-s: #a8922e;
+      --ext-f: #f2f4f7; --ext-s: #8b95a8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117; --ink: #e7ecf8; --muted: #9aa6c0;
+        --line: #8b9cd8; --accent: #ff9550;
+        --boundary-s: #3d4a6e; --boundary-f: #11182a;
+        --app-f: #1a2340; --app-s: #7d92e0;
+        --db-f: #241b3a; --db-s: #a98ae0;
+        --red-f: #3a1c1c; --red-s: #e08a87;
+        --mon-f: #3a2413; --mon-s: #ff9550;
+        --vol-f: #333018; --vol-s: #cdb85a;
+        --ext-f: #1a2130; --ext-s: #6b7893;
+      }
+    }
+    text { font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: var(--ink); }
+    .t  { font-size: 15px; font-weight: 600; }
+    .s  { font-size: 11.5px; fill: var(--muted); }
+    .el { font-size: 11px; fill: var(--muted); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+    .bt { font-size: 12px; font-weight: 600; fill: var(--muted); }
+    .edge  { stroke: var(--line); stroke-width: 1.6; fill: none; }
+    .dash  { stroke-dasharray: 5 4; }
+    .head  { fill: var(--line); }
+    .card  { stroke-width: 1.6; rx: 10; }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path class="head" d="M0,0 L9,3.5 L0,7 z"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="716" fill="var(--bg)"/>
+
+  <!-- entry row -->
+  <rect x="40" y="36" width="180" height="60" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="130" y="61" text-anchor="middle" class="t">Browser</text>
+  <text x="130" y="79" text-anchor="middle" class="s">creation.edupyramids.org</text>
+
+  <rect x="292" y="36" width="220" height="60" class="card" fill="var(--mon-f)" stroke="var(--mon-s)"/>
+  <text x="402" y="61" text-anchor="middle" class="t">Host nginx</text>
+  <text x="402" y="79" text-anchor="middle" class="s">TLS · Let&#8217;s Encrypt · :443</text>
+
+  <line x1="220" y1="66" x2="288" y2="66" class="edge" marker-end="url(#a)"/>
+  <text x="254" y="56" text-anchor="middle" class="el">HTTPS</text>
+
+  <!-- compose boundary -->
+  <rect x="40" y="128" width="1000" height="472" rx="14" fill="var(--boundary-f)" stroke="var(--boundary-s)" stroke-width="1.4" stroke-dasharray="8 6"/>
+  <text x="60" y="152" class="bt">Docker Compose network — only 127.0.0.1:8080 is published</text>
+
+  <!-- nginx -> frontend -->
+  <line x1="360" y1="96" x2="240" y2="166" class="edge" marker-end="url(#a)"/>
+  <text x="330" y="122" text-anchor="middle" class="el">127.0.0.1:8080</text>
+
+  <!-- frontend -->
+  <rect x="72" y="168" width="252" height="92" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="198" y="192" text-anchor="middle" class="t">frontend</text>
+  <text x="198" y="210" text-anchor="middle" class="s">nginx + React 19 SPA</text>
+  <text x="198" y="226" text-anchor="middle" class="s">routes /api · /static · /output</text>
+  <text x="198" y="242" text-anchor="middle" class="s">/grafana · SPA fallback</text>
+
+  <!-- backend -->
+  <rect x="420" y="168" width="260" height="92" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="550" y="192" text-anchor="middle" class="t">backend</text>
+  <text x="550" y="210" text-anchor="middle" class="s">FastAPI · uvicorn × 4</text>
+  <text x="550" y="226" text-anchor="middle" class="s">15 routers · 2 LangGraph graphs</text>
+  <text x="550" y="242" text-anchor="middle" class="s">/metrics (multiprocess)</text>
+
+  <line x1="324" y1="214" x2="416" y2="214" class="edge" marker-end="url(#a)"/>
+  <text x="370" y="204" text-anchor="middle" class="el">/api &#8594; :8000</text>
+
+  <!-- postgres -->
+  <rect x="420" y="320" width="220" height="76" class="card" fill="var(--db-f)" stroke="var(--db-s)"/>
+  <text x="530" y="346" text-anchor="middle" class="t">PostgreSQL 16</text>
+  <text x="530" y="364" text-anchor="middle" class="s">users · threads · jobs</text>
+  <text x="530" y="380" text-anchor="middle" class="s">+ LangGraph checkpoints</text>
+
+  <line x1="530" y1="260" x2="530" y2="316" class="edge" marker-end="url(#a)"/>
+  <text x="540" y="292" class="el">SQL (shared pool)</text>
+
+  <!-- redis -->
+  <rect x="760" y="320" width="190" height="76" class="card" fill="var(--red-f)" stroke="var(--red-s)"/>
+  <text x="855" y="346" text-anchor="middle" class="t">Redis 7</text>
+  <text x="855" y="364" text-anchor="middle" class="s">Celery broker only</text>
+  <text x="855" y="380" text-anchor="middle" class="s">(no result backend)</text>
+
+  <line x1="682" y1="230" x2="808" y2="316" class="edge" marker-end="url(#a)"/>
+  <text x="778" y="264" text-anchor="middle" class="el">send_task</text>
+
+  <!-- whisper worker -->
+  <rect x="760" y="452" width="230" height="92" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="875" y="476" text-anchor="middle" class="t">whisper-worker</text>
+  <text x="875" y="494" text-anchor="middle" class="s">Celery · queue=whisper · conc. 1</text>
+  <text x="875" y="510" text-anchor="middle" class="s">Whisper base baked into image</text>
+  <text x="875" y="526" text-anchor="middle" class="s">stop grace 300 s</text>
+
+  <line x1="860" y1="396" x2="860" y2="448" class="edge" marker-end="url(#a)"/>
+  <text x="870" y="426" class="el">consume</text>
+
+  <line x1="756" y1="480" x2="646" y2="380" class="edge" marker-end="url(#a)"/>
+  <text x="716" y="440" text-anchor="middle" class="el">progress + result (JSONB)</text>
+
+  <!-- uploads volume -->
+  <rect x="450" y="470" width="180" height="64" class="card" fill="var(--vol-f)" stroke="var(--vol-s)"/>
+  <text x="540" y="496" text-anchor="middle" class="t" font-size="13.5">uploads volume</text>
+  <text x="540" y="514" text-anchor="middle" class="s">file path travels the queue</text>
+
+  <polyline points="430,260 398,286 398,502 446,502" class="edge dash" fill="none" marker-end="url(#a)"/>
+  <text x="390" y="430" text-anchor="end" class="el">writes upload</text>
+  <line x1="634" y1="502" x2="756" y2="502" class="edge dash" marker-end="url(#a)"/>
+  <text x="695" y="492" text-anchor="middle" class="el">reads file</text>
+
+  <!-- prometheus -->
+  <rect x="72" y="320" width="210" height="72" class="card" fill="var(--mon-f)" stroke="var(--mon-s)"/>
+  <text x="177" y="346" text-anchor="middle" class="t">Prometheus</text>
+  <text x="177" y="364" text-anchor="middle" class="s">prometheus_data volume</text>
+
+  <line x1="284" y1="336" x2="424" y2="248" class="edge dash" marker-end="url(#a)"/>
+  <text x="352" y="278" text-anchor="middle" class="el">scrapes /metrics · 15 s</text>
+
+  <!-- grafana -->
+  <rect x="72" y="452" width="240" height="92" class="card" fill="var(--mon-f)" stroke="var(--mon-s)"/>
+  <text x="192" y="476" text-anchor="middle" class="t">Grafana 12</text>
+  <text x="192" y="494" text-anchor="middle" class="s">datasources + dashboards</text>
+  <text x="192" y="510" text-anchor="middle" class="s">provisioned from deploy/ in git</text>
+  <text x="192" y="526" text-anchor="middle" class="s">served at /grafana/</text>
+
+  <line x1="150" y1="452" x2="150" y2="396" class="edge dash" marker-end="url(#a)"/>
+  <line x1="316" y1="484" x2="446" y2="384" class="edge dash" marker-end="url(#a)"/>
+  <text x="392" y="446" text-anchor="middle" class="el">grafana_ro (read-only SQL)</text>
+
+  <!-- outbound to external -->
+  <line x1="700" y1="264" x2="700" y2="632" class="edge" marker-end="url(#a)"/>
+  <text x="712" y="588" class="el">outbound HTTPS</text>
+
+  <!-- external strip -->
+  <rect x="40" y="636" width="1000" height="56" class="card" fill="var(--ext-f)" stroke="var(--ext-s)"/>
+  <text x="540" y="659" text-anchor="middle" class="t" font-size="13.5">External services</text>
+  <text x="540" y="678" text-anchor="middle" class="s">OpenAI · Google Gemini · Sarvam TTS · Tavily · Google Sheets (WIF) · LangSmith tracing</text>
+
+  <!-- legend -->
+  <line x1="806" y1="152" x2="846" y2="152" class="edge" marker-end="url(#a)"/>
+  <text x="852" y="156" class="el">request / data path</text>
+  <line x1="806" y1="170" x2="846" y2="170" class="edge dash" marker-end="url(#a)"/>
+  <text x="852" y="174" class="el">observability / shared files</text>
+</svg>
