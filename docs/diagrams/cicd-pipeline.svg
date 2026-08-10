@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 470" role="img"
+     aria-label="CI/CD pipeline: a push to main builds three images in parallel on GitHub Actions and pushes them to GHCR; only if all three succeed does the deploy job SSH through a gateway host to the production VPS, copy configuration, retag, pull and restart services, then a health gate fails the run unless backend and worker report healthy. Rollback is retagging to a previous sha.">
+  <title>Spoken Tutorial Generator — CI/CD pipeline</title>
+  <style>
+    :root {
+      --bg: #ffffff; --ink: #1c2540; --muted: #5a6478;
+      --line: #5a6a9f; --ok: #1e7a3a; --bad: #b3392f;
+      --app-f: #eef1fa; --app-s: #2D3E8E;
+      --db-f: #f3eefb; --db-s: #7a5cb8;
+      --mon-f: #fdf0e7; --mon-s: #e05d10;
+      --vps-f: #eaf6ee; --vps-s: #3f9b57;
+      --accent: #e05d10;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117; --ink: #e7ecf8; --muted: #9aa6c0;
+        --line: #8b9cd8; --ok: #5fd382; --bad: #ff8a7f;
+        --app-f: #1a2340; --app-s: #7d92e0;
+        --db-f: #241b3a; --db-s: #a98ae0;
+        --mon-f: #3a2413; --mon-s: #ff9550;
+        --vps-f: #14291b; --vps-s: #66c584;
+        --accent: #ff9550;
+      }
+    }
+    text { font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: var(--ink); }
+    .t  { font-size: 15px; font-weight: 600; }
+    .s  { font-size: 11.5px; fill: var(--muted); }
+    .st { font-size: 12px; }
+    .el { font-size: 11px; fill: var(--muted); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+    .edge { stroke: var(--line); stroke-width: 1.6; fill: none; }
+    .dash { stroke-dasharray: 5 4; }
+    .head { fill: var(--line); }
+    .card { stroke-width: 1.6; rx: 10; }
+    .num  { font-size: 11px; font-weight: 700; fill: var(--vps-s); }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path class="head" d="M0,0 L9,3.5 L0,7 z"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="470" fill="var(--bg)"/>
+
+  <!-- developer -->
+  <rect x="40" y="64" width="170" height="64" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="125" y="90" text-anchor="middle" class="t">Developer</text>
+  <text x="125" y="108" text-anchor="middle" class="s">merge / push &#8594; main</text>
+
+  <!-- actions -->
+  <rect x="278" y="40" width="270" height="126" class="card" fill="var(--app-f)" stroke="var(--app-s)"/>
+  <text x="413" y="66" text-anchor="middle" class="t">GitHub Actions — build</text>
+  <text x="413" y="88" text-anchor="middle" class="s">3-image matrix, in parallel:</text>
+  <text x="413" y="104" text-anchor="middle" class="s">backend · worker · frontend</text>
+  <text x="413" y="120" text-anchor="middle" class="s">linux/amd64 · BuildKit cache</text>
+  <text x="413" y="140" text-anchor="middle" class="s" font-weight="600">deploy runs only if all 3 pass</text>
+
+  <line x1="210" y1="96" x2="274" y2="96" class="edge" marker-end="url(#a)"/>
+
+  <!-- ghcr -->
+  <rect x="626" y="56" width="200" height="84" class="card" fill="var(--db-f)" stroke="var(--db-s)"/>
+  <text x="726" y="84" text-anchor="middle" class="t">GHCR (private)</text>
+  <text x="726" y="102" text-anchor="middle" class="s">immutable sha-&#60;commit&#62; tags</text>
+  <text x="726" y="118" text-anchor="middle" class="s">+ latest on main</text>
+
+  <line x1="548" y1="98" x2="622" y2="98" class="edge" marker-end="url(#a)"/>
+  <text x="585" y="88" text-anchor="middle" class="el">push</text>
+
+  <!-- gateway -->
+  <rect x="278" y="250" width="230" height="64" class="card" fill="var(--mon-f)" stroke="var(--mon-s)"/>
+  <text x="393" y="276" text-anchor="middle" class="t">Gateway host</text>
+  <text x="393" y="294" text-anchor="middle" class="s">SSH proxy hop · key auth</text>
+
+  <line x1="413" y1="166" x2="413" y2="246" class="edge" marker-end="url(#a)"/>
+  <text x="425" y="212" class="el">deploy job (SSH)</text>
+
+  <!-- vps -->
+  <rect x="570" y="212" width="470" height="188" class="card" fill="var(--vps-f)" stroke="var(--vps-s)"/>
+  <text x="805" y="238" text-anchor="middle" class="t">Production VPS (shared with 2 other projects)</text>
+  <text x="592" y="264" class="num">1</text><text x="608" y="264" class="st">scp compose.yaml + deploy/ — config only, no source code</text>
+  <text x="592" y="286" class="num">2</text><text x="608" y="286" class="st">write IMAGE_TAG=sha-&#60;commit&#62; into .env</text>
+  <text x="592" y="308" class="num">3</text><text x="608" y="308" class="st">docker compose pull (from GHCR)</text>
+  <text x="592" y="330" class="num">4</text><text x="608" y="330" class="st">up -d --remove-orphans · restart grafana (provisioning)</text>
+  <text x="592" y="352" class="num">5</text><text x="608" y="352" class="st">health gate: backend /health + worker broker ping, &#8804; 4 min</text>
+  <line x1="588" y1="366" x2="1022" y2="366" stroke="var(--vps-s)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="592" y="386" class="st" font-weight="600" fill="var(--accent)">Rollback: IMAGE_TAG &#8594; previous sha, up -d — seconds, no rebuild</text>
+
+  <line x1="512" y1="282" x2="566" y2="282" class="edge" marker-end="url(#a)"/>
+  <line x1="726" y1="144" x2="726" y2="208" class="edge dash" marker-end="url(#a)"/>
+  <text x="738" y="180" class="el">pull images</text>
+
+  <!-- outcomes -->
+  <line x1="1040" y1="306" x2="1062" y2="306" class="edge" opacity="0"/>
+  <text x="60" y="356" class="st" fill="var(--ok)" font-weight="600">healthy &#8594; run succeeds, deploy verified</text>
+  <text x="60" y="378" class="st" fill="var(--bad)" font-weight="600">unhealthy &#8594; CI run fails + last 50 log lines of each service</text>
+  <line x1="60" y1="390" x2="60" y2="390" class="edge" opacity="0"/>
+
+  <!-- caption strip -->
+  <text x="40" y="440" class="s">Secrets: GATEWAY_HOST/USER/SSH_KEY · VM_HOST/USER · SSH_PRIVATE_KEY · PROJECT_PATH — the server never holds source code, only compose.yaml, deploy/ and .env</text>
+</svg>

@@ -2,7 +2,7 @@
 
 AI-powered platform for producing [Spoken Tutorial](https://spoken-tutorial.org/) content — outlines, scripts, slides, voice narration, images, and translations — from a simple course outline. Built for the Spoken Tutorial Project at IIT Bombay.
 
-**Live:** [spokenai.live](https://spokenai.live)
+**Live:** [creation.edupyramids.org](https://creation.edupyramids.org) (sign-in restricted to `@edupyramids.org` Google accounts)
 
 ---
 
@@ -19,9 +19,11 @@ AI-powered platform for producing [Spoken Tutorial](https://spoken-tutorial.org/
 - [Key Workflows](#key-workflows)
 - [API Reference](#api-reference)
 - [Frontend](#frontend)
-- [Deployment](#deployment)
+- [Deployment & CI/CD](#deployment--cicd)
+- [Monitoring](#monitoring)
 - [Development](#development)
 - [Project Structure](#project-structure)
+- [Further Documentation](#further-documentation)
 
 ---
 
@@ -29,12 +31,14 @@ AI-powered platform for producing [Spoken Tutorial](https://spoken-tutorial.org/
 
 The Spoken Tutorial Generator is a full-stack application (FastAPI backend + React frontend) that automates the Spoken Tutorial content-authoring pipeline. It combines several LLM-driven workflows — outline interviews, script generation, compliance review, translation, and voice/image/slide generation — behind a single chat-style UI.
 
-The backend has recently moved from a single-process SQLite setup to a **PostgreSQL-backed, horizontally-scalable architecture**:
+The platform runs as a **PostgreSQL-backed, containerised production system**:
 
 - **PostgreSQL** stores users, chat threads, background-job records, and LangGraph checkpoints.
 - **Celery + Redis** run long/heavy tasks (Whisper transcription) out-of-band from the API.
 - **Alembic** manages the relational schema; LangGraph's `AsyncPostgresSaver` manages checkpoint tables.
 - A dedicated **Whisper worker container** isolates the heavy speech-to-text dependency from the API image.
+- **CI/CD builds images in GitHub Actions, ships them via GHCR**, and refuses to complete a deploy unless the stack reports healthy; rollback takes seconds.
+- **Prometheus + Grafana** (provisioned entirely from files in this repo) provide request, job, and per-user activity dashboards.
 
 ---
 
@@ -44,15 +48,15 @@ The backend has recently moved from a single-process SQLite setup to a **Postgre
 |:--------|:------------|
 | **Script Chat** | Conversational, human-in-the-loop script authoring via a LangGraph state machine (ingest → grounding → metadata → generation → editing → compliance). Streams progress over SSE, pauses at review gates, supports manual edits, checkpoint/version history, revert, and stage jumps. Persisted per-user in PostgreSQL. |
 | **Outline Chat** | Phased SME interview (warmup → outcomes → examples → structure → metadata → review) that builds a Spoken Tutorial course outline, with streaming SSE, field editing, validation, and PDF/JSON export. |
-| **Script Generation** | LangGraph pipeline (metadata → boilerplate → content → merge → evaluator loop) that turns an outline into a structured JSON script. |
-| **Slides Generation** | Beamer LaTeX slides, auto-populated from scripts via LLM content extraction. |
-| **Voice Generation** | Google Gemini TTS — per-slide audio (ZIP) or a single combined tutorial audio. |
-| **Image Generation** | AI-enhanced prompts → image generation, with prompt-review UI, reference-image upload, and per-image editing. |
+| **Script Generation** | LangGraph pipeline (metadata → parallel boilerplate + content → merge) that turns an outline into a structured JSON script. |
+| **Slides Generation** | Beamer LaTeX slides, auto-populated from scripts via LLM content extraction, with a theme colour picker. |
+| **Voice Generation** | Sarvam TTS — per-slide audio (ZIP) or a single combined tutorial audio, with optional pronunciation-dictionary correction for domain terms. |
+| **Image Generation** | AI-enhanced prompts → image generation (Gemini), with prompt-review UI, reference-image upload, and per-image editing. |
 | **Compliance** | Evidence-based admin-script compliance (`admin_script_v1` policy, 25 criteria) combining deterministic validators with LLM semantic + factuality checks, plus an admin review workspace. Pedagogy/quality compliance via back-translation. |
 | **Translation** | Multi-language batch translation with an editable translation grid, per-cell TTS, and DOCX export. |
 | **Slides Translation** | Translate `.tex` Beamer files to 11+ Indian languages with XeLaTeX Unicode support. |
-| **Timed Script** | Upload audio/video → **background** Whisper transcription → sentence-level timestamps → DOCX export. |
-| **MediaWiki Export** | One-click export to Spoken Tutorial wiki table format (from JSON or DOCX). |
+| **Timed Script** | Upload audio/video → **background** Whisper transcription → sentence-level timestamps → DOCX export. Progress visible in the UI, restored on page reload. |
+| **MediaWiki Export** | One-click export to Spoken Tutorial wiki table format (from JSON or DOCX, including from a Script Chat thread). |
 | **Version Change Automation** | Scrapes spoken-tutorial.org → LLM + Tavily web search for version updates → splits long tutorials into 3–4 min fragments → tabulates old-vs-new comparison → exports to Google Sheets via Workload Identity Federation. |
 | **Google OAuth** | Domain-restricted Google authentication issuing JWTs; stable per-user identity in PostgreSQL. |
 
@@ -60,42 +64,47 @@ The backend has recently moved from a single-process SQLite setup to a **Postgre
 
 ## Architecture
 
+![Production architecture](docs/diagrams/architecture.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
+```mermaid
+flowchart TB
+    B([Browser]) -->|HTTPS| N["Host nginx — TLS, Let's Encrypt"]
+    N -->|"forwards to 127.0.0.1:8080"| F
+
+    subgraph net ["Docker Compose network — only 127.0.0.1:8080 published"]
+        F["frontend — nginx + React 19 SPA<br/>routes /api · /static · /output · /grafana<br/>SPA fallback for the rest"]
+        A["backend — FastAPI<br/>uvicorn × WEB_CONCURRENCY (4)<br/>15 routers · 2 LangGraph graphs<br/>/metrics (multiprocess-aggregated)"]
+        P[("PostgreSQL 16<br/>users · threads · jobs · checkpoints")]
+        R[("Redis 7<br/>Celery broker only")]
+        W["whisper-worker — Celery<br/>queue=whisper · concurrency=1<br/>Whisper base model baked in"]
+        PR["Prometheus"]
+        G["Grafana 12<br/>dashboards provisioned from git"]
+
+        F -->|"/api/ → :8000"| A
+        F -->|"/grafana/"| G
+        A -->|"SQL (shared psycopg pool)"| P
+        A -->|send_task| R
+        R -->|consume| W
+        W -->|"progress + result (JSONB)"| P
+        A <-.->|shared uploads volume| W
+        PR -.->|"scrape /metrics · 15 s"| A
+        G -.-> PR
+        G -.->|"grafana_ro (read-only)"| P
+    end
+
+    A --> X["External services<br/>OpenAI · Google Gemini · Sarvam TTS · Tavily<br/>Google Sheets (WIF) · LangSmith tracing"]
 ```
-┌───────────────────────────────────────────────────────────────────────────┐
-│                     Frontend — React 19 + Vite 7 (Nginx)                    │
-│  Pages: Create · Outline Chat · Script Chat · Admin Compliance Review       │
-│  Auth: Google OAuth → JWT (bearer, localStorage) · SSE streaming            │
-└───────────────────────────────────────────────────────────────────────────┘
-                         │ HTTPS  (/api reverse proxy)
-                         ▼
-┌───────────────────────────────────────────────────────────────────────────┐
-│                    Backend API — FastAPI (uvicorn, 4 workers)               │
-│  15 routers · Prometheus /metrics · security + CORS middleware              │
-│  LangGraph graphs:  core script pipeline  +  Script Chat (checkpointed)     │
-│  Enqueues heavy work to Celery; never runs Whisper in-process               │
-└───────────────────────────────────────────────────────────────────────────┘
-        │ send_task                    │ SQL (asyncpg/psycopg pool)
-        ▼                              ▼
-┌──────────────────────┐   ┌──────────────────────────────────────────────┐
-│  Redis (Celery broker)│   │            PostgreSQL 16                      │
-└──────────┬───────────┘   │  users · script_chat_threads ·               │
-           │ consume        │  background_jobs   (Alembic-managed)          │
-           ▼                │  checkpoints…      (LangGraph-managed)        │
-┌──────────────────────┐   └──────────────────────────────────────────────┘
-│  Whisper worker       │
-│  (Celery, queue=whisper)│  speech-to-text → writes result to background_jobs
-└──────────────────────┘
-                         │
-                         ▼
-   External AI / services:  Google Gemini (text · TTS · image) ·
-   OpenAI (semantic compliance) · Tavily (web search) · Sarvam (TTS) ·
-   OpenAI Whisper (local, base model) · Google Sheets (WIF)
-```
+
+</details>
 
 Key points:
 
+- In production **only `127.0.0.1:8080` is published** on the host; PostgreSQL, Redis, Prometheus, and Grafana are reachable solely on the internal Compose network.
 - A **single shared PostgreSQL connection pool** lives in `src/script_chat/persistence.py`; the `jobs` and `users` modules import it rather than opening their own.
-- The **API image contains no Whisper/torch** — those live only in `Dockerfile.whisper-worker`.
+- The **API image contains no Whisper/torch** — those live only in `docker/worker.Dockerfile`.
 - **Redis is only the Celery broker** (no result backend); job results are stored in the `background_jobs.result` JSONB column.
 
 ---
@@ -108,14 +117,15 @@ Key points:
 | Async jobs | Celery 5, Redis 7 |
 | Database | PostgreSQL 16, psycopg 3 (pooled), SQLAlchemy + Alembic (migrations), LangGraph `AsyncPostgresSaver` (checkpoints) |
 | Frontend | React 19, Vite 7, React Router 6, Tailwind CSS v4, Radix UI (shadcn-style), `motion`, lucide-react, react-markdown |
-| AI / LLM | Google Gemini (text, TTS, image), OpenAI (semantic compliance, `gpt-5.2`), Sarvam (TTS) |
+| AI / LLM | OpenAI (`gpt-5.4-mini`, `gpt-5.2`, `gpt-5-nano` — Script Chat, semantic compliance, fallback), Google Gemini (`gemini-2.5-flash` — core generation nodes, prompt enhancement; `gemini-3-pro-image-preview` — images), Sarvam (TTS) |
 | Search | Tavily API |
-| Speech-to-text | OpenAI Whisper (local, `base` model) |
+| Speech-to-text | OpenAI Whisper (local, `base` model, dedicated worker container) |
 | PDF / Slides | LaTeX (Beamer / XeLaTeX), python-docx, ReportLab, PyMuPDF, pdfplumber |
 | Video / Audio | FFmpeg, MoviePy, pydub |
 | Auth | Google OAuth 2.0, python-jose (JWT) |
-| Infra | Docker Compose, Nginx (SSL), GitHub Actions CI/CD (WIF + SSH), Prometheus |
-| Package mgmt | uv (Python), npm (JS) |
+| Infra | Docker Compose (`compose.yaml` + dev override), GitHub Actions → GHCR → SSH deploy, nginx, Prometheus + Grafana 12 (provisioned as code) |
+| Observability | Prometheus (multiprocess client), Grafana dashboards-as-code, LangSmith tracing (project `slide-generator`) |
+| Package mgmt | uv (Python, `uv.lock`), npm (JS, `package-lock.json`) |
 
 ---
 
@@ -123,30 +133,54 @@ Key points:
 
 ### Prerequisites
 
-- **Python 3.11** (project supports `>=3.10,<3.13`) via [uv](https://github.com/astral-sh/uv): `curl -Ls https://astral.sh/uv/install.sh | sh`
-- **Node.js 20+**
-- **PostgreSQL 16** and **Redis 7** (or use the Docker Compose services below)
-- **LaTeX** for PDF/slide generation: `brew install --cask mactex-no-gui` (macOS) or `apt install texlive-full texlive-xetex` (Linux)
-- **FFmpeg** for audio/video: `brew install ffmpeg` or `apt install ffmpeg`
+- **Docker + Docker Compose** (Option A needs nothing else)
+- For local processes (Option B): **Python 3.11** (project supports `>=3.10,<3.13`) via [uv](https://github.com/astral-sh/uv), **Node.js 20+**, **LaTeX** (`brew install --cask mactex-no-gui` / `apt install texlive-full texlive-xetex`), **FFmpeg**
 
 ### Option A — Docker Compose (recommended)
 
-The committed `docker-compose.postgres.yml` brings up Postgres, Redis, runs migrations, and starts the API + Whisper worker:
+`compose.yaml` is the single source of truth for all eight services. To build images from source instead of pulling from GHCR, create a `compose.override.yaml` at the project root (**local-only — it is gitignored**, so a fresh clone will not have it); Compose picks it up automatically:
 
-```bash
-# 1. Create a .env file at the project root (see Configuration below)
+```yaml
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
 
-# 2. Bring up the data services, run migrations, start API + worker
-docker compose -f docker-compose.postgres.yml up --build -d
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+
+  whisper-worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+
+  frontend:
+    build:
+      context: ./chatbot-ui
 ```
 
-The `migrate` service runs `python -m src.script_chat.migrate` (Alembic + LangGraph checkpoint setup) and must complete before the backend and worker start — this is wired via `depends_on`.
+```bash
+# 1. Create .env at the project root (see Configuration).
+#    Compose refuses to start without POSTGRES_PASSWORD,
+#    GRAFANA_ADMIN_PASSWORD and GRAFANA_DB_PASSWORD.
+
+# 2. Build and start everything
+docker compose up -d --build
+
+# Stack: postgres, redis, migrate (one-shot), backend, whisper-worker,
+#        frontend, prometheus, grafana   →  http://localhost:8080
+```
+
+The `migrate` service runs `python -m src.script_chat.migrate` (Alembic + LangGraph checkpoint setup); `backend` and `whisper-worker` wait for it to exit successfully before starting.
 
 ### Option B — Local processes
 
 ```bash
 # --- Data services (if not already running) ---
-docker compose -f docker-compose.postgres.yml up -d postgres redis
+docker compose up -d postgres redis
 
 # --- Backend ---
 uv sync                              # install Python deps
@@ -171,26 +205,31 @@ npm install && npm run dev           # Vite dev server on http://localhost:5173
 
 ## Configuration
 
-Configuration is read from environment variables (loaded from a `.env` file at the project root). Backend settings are validated in `src/api/config.py`.
+Configuration is read from environment variables (loaded from a `.env` file at the project root). Backend settings are validated in `src/api/config.py`. There is no committed `.env.example` — the tables below are the reference.
 
 ### Core
 
 | Variable | Default | Description |
 |:---------|:--------|:------------|
-| `ENVIRONMENT` | `development` | `development` or `production` (enables stricter validation; disables `/docs` in prod) |
+| `ENVIRONMENT` | `development` | `development` or `production`. Production disables `/docs`, tightens CORS, and **rejects weak `JWT_SECRET_KEY` values at boot**. |
 | `DEBUG` | `false` | Enables request logging middleware |
-| `DATABASE_URL` | `postgresql://spoken_tutorial:spoken_tutorial@localhost:5432/spoken_tutorial` | PostgreSQL DSN (used for app tables **and** LangGraph checkpoints) |
-| `DATABASE_POOL_MIN_SIZE` / `DATABASE_POOL_MAX_SIZE` | `1` / `5` | Connection pool bounds |
+| `DATABASE_URL` | `postgresql://spoken_tutorial:spoken_tutorial@localhost:5432/spoken_tutorial` | PostgreSQL DSN (app tables **and** LangGraph checkpoints). In Compose it is composed from the `POSTGRES_*` variables. |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `spoken_tutorial` / `spoken_tutorial` / **required** | Compose-level database bootstrap; `POSTGRES_PASSWORD` has no default. |
+| `DATABASE_POOL_MIN_SIZE` / `DATABASE_POOL_MAX_SIZE` | `1` / `5` (backend), `2` (worker) | Connection pool bounds |
 | `DATABASE_POOL_TIMEOUT_SECONDS` | `10` | Pool checkout timeout |
 | `CELERY_BROKER_URL` | `redis://localhost:6379/0` | Redis broker for background jobs |
-| `TIMED_SCRIPT_JOB_TIMEOUT_SECONDS` | `1800` | A timed-script job still `running` past this is treated as stuck and marked `failed` by the stale-job reaper. Set comfortably above the slowest transcription. |
-| `TIMED_SCRIPT_REAPER_INTERVAL_SECONDS` | `300` | How often a `celery beat` process runs the stale-job reaper. The worker also reaps opportunistically on every job, so `beat` is optional. |
+| `WEB_CONCURRENCY` | `4` | uvicorn worker count for the backend container |
+| `IMAGE_TAG` | `latest` | Which GHCR image tag Compose runs. **Written by the deploy pipeline** (`sha-<commit>`); doubles as the rollback pointer. |
+| `TIMED_SCRIPT_JOB_TIMEOUT_SECONDS` | `1800` | A timed-script job still `running` past this is treated as stuck and failed by the stale-job reaper. |
+| `TIMED_SCRIPT_REAPER_INTERVAL_SECONDS` | `300` | Reaper cadence when run via `celery beat` (optional — the worker also reaps opportunistically on every job). |
+
+> `PROMETHEUS_MULTIPROC_DIR` is set by `compose.yaml` (to a tmpfs), not by `.env` — see [Monitoring](#monitoring).
 
 ### Auth
 
 | Variable | Description |
 |:---------|:------------|
-| `JWT_SECRET_KEY` | **Required.** Must be ≥32 chars in production |
+| `JWT_SECRET_KEY` | **Required.** Must be ≥32 chars in production (`openssl rand -hex 32`) |
 | `JWT_ALGORITHM` | JWT signing algorithm (default `HS256`) |
 | `JWT_EXPIRATION_HOURS` | Token lifetime (default `24`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth credentials |
@@ -203,12 +242,20 @@ Configuration is read from environment variables (loaded from a `.env` file at t
 
 | Variable | Used for |
 |:---------|:---------|
-| `GOOGLE_API_KEY` | Gemini text, TTS, and image generation |
-| `OPENAI_API_KEY` | Semantic + factuality compliance checks (skipped if unset) |
-| `TAVILY_API_KEY` | Web search (outline chat, version-change pipeline) |
+| `OPENAI_API_KEY` | Script Chat nodes, semantic + factuality compliance checks (compliance skipped if unset), fallback LLM in core generation nodes |
+| `GOOGLE_API_KEY` | Gemini text and image generation |
+| `TAVILY_API_KEY` | Web search (outline chat, factuality, version-change pipeline) |
 | `SARVAM_API_KEY` | Sarvam TTS voices |
-| `SARVAM_PRONUNCIATION_DICT_ID` | Optional. Id of a Sarvam pronunciation dictionary (branding/jargon fixes) applied to every TTS request. TTS runs without correction if unset. |
+| `SARVAM_PRONUNCIATION_DICT_ID` | Optional. Sarvam pronunciation dictionary (branding/jargon fixes) applied to every TTS request. |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Google Sheets export (Version Change Automation) via Workload Identity Federation |
+
+### Observability
+
+| Variable | Used for |
+|:---------|:---------|
+| `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` | Grafana admin login (password **required** by Compose) |
+| `GRAFANA_DB_PASSWORD` | Password of the read-only `grafana_ro` PostgreSQL role, expanded inside the provisioned datasource. **Required** by Compose. |
+| `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_ENDPOINT` / `LANGCHAIN_PROJECT` | Zero-code LLM tracing of all LangChain/LangGraph calls into the `slide-generator` LangSmith project |
 
 > The frontend reads `VITE_API_URL` at build time (default `/api` in Docker, empty/proxy in dev).
 
@@ -236,8 +283,9 @@ Long-running work is offloaded to Celery so the API stays responsive.
 - **Enqueue:** `POST /timed-script/generate` streams the upload to disk, inserts a `background_jobs` row (`create_job`), then `celery_app.send_task("src.workers.tasks.process_timed_script", ...)` and records the Celery task id.
 - **Worker:** `src/workers/tasks.py::process_timed_script` atomically claims the job (`queued → running`; duplicate deliveries become no-ops), runs Whisper transcription (`generate_timed_script`), then writes `completed` (with `result`) or `failed`. The upload is deleted only once the job reaches a terminal state.
 - **Poll:** clients poll `GET /timed-script/jobs/{job_id}` (or list via `GET /timed-script/jobs`). Server-side paths are never exposed in responses.
-- **Queue routing:** the timed-script task is routed to the `whisper` queue; the Whisper worker container consumes only that queue with `--concurrency=1` / `worker_prefetch_multiplier=1` (one heavy job at a time).
+- **Queue routing:** the timed-script task is routed to the `whisper` queue; the Whisper worker container consumes only that queue with `--concurrency=1` / `worker_prefetch_multiplier=1` (one heavy job at a time) and `--max-tasks-per-child=15` to bound native-library memory creep.
 - **Crash recovery:** with `task_acks_late` + `task_reject_on_worker_lost`, a worker that dies mid-transcription has its task redelivered. The task is bound (`self.request.id`), so `claim_job` can re-claim its own `running` row on redelivery instead of leaving it stuck forever; the input file survives because it is deleted only on a terminal state. As a backstop, a **stale-job reaper** fails jobs that have been `running` past `TIMED_SCRIPT_JOB_TIMEOUT_SECONDS` (run opportunistically on every job and, optionally, on a `celery beat` schedule) so the polling UI always terminates.
+- **Deploy safety:** the worker container has `stop_grace_period: 300s`, so in-flight transcriptions finish before a deploy replaces it.
 
 Celery config lives in `src/workers/celery_app.py`; job persistence in `src/jobs/persistence.py`.
 
@@ -251,12 +299,19 @@ Celery config lives in `src/workers/celery_app.py`; job persistence in `src/jobs
 
 A checkpointed LangGraph state machine for conversational, human-in-the-loop script authoring:
 
+![Script Chat state machine](docs/diagrams/script-chat-graph.svg)
+
+<details>
+<summary>Node list (text form)</summary>
+
 ```
 START → ingest → ground → ground_review ⇄ ground_edit
                         → metadata → metadata_review ⇄ metadata_edit
                         → generate → script_review ⇄ edit
                         → compliance → compliance_review → END
 ```
+
+</details>
 
 - State (`ScriptChatState`): messages, raw outline, grounding report, metadata, script (slides), version counter, compliance/quality results, current stage.
 - Human-in-the-loop **interrupts** at each `*_review` gate; the client resumes with `approve` or `edit` via `POST /script-chat/resume/{thread_id}`.
@@ -276,11 +331,14 @@ Streaming SSE, general chat with Tavily web search, snapshot endpoint, and PDF/J
 
 ### Script Generation Pipeline (`src/core/agent.py`)
 
+A stateless 4-node graph with one parallel fan-out/fan-in — `generate_boilerplate` and `generate_content` run concurrently off the extracted metadata:
+
 ```
-Outline → metadata_node → boilerplate_node → content_node → merge_node → Evaluator
-                                                                  ↓ pass → Final JSON script
-                                                                  ↓ fail → loop back with feedback
+START → extract_metadata ──┬──→ generate_boilerplate ──┐
+                            └──→ generate_content ──────┴──→ merge_script → END
 ```
+
+(An evaluator/retry node exists under `src/nodes/_archive/` but is **not** wired into the active graph.)
 
 ### Admin Compliance (`src/compliance/`)
 
@@ -311,7 +369,7 @@ All application endpoints (except `/`, `/health`, `/metrics`, and the `/auth/*` 
 |:---------|:------:|:------------|
 | `/` | GET | Service info |
 | `/health` | GET | Health check (verifies PostgreSQL pool; 503 if unhealthy) |
-| `/metrics` | GET | Prometheus metrics |
+| `/metrics` | GET | Prometheus metrics (aggregated across uvicorn workers) |
 
 ### Authentication (`/auth`)
 
@@ -395,6 +453,7 @@ All application endpoints (except `/`, `/health`, `/metrics`, and the `/auth/*` 
 | `/script-chat/revert/{thread_id}` | POST | Revert to a checkpoint |
 | `/script-chat/jump/{thread_id}` | POST | Jump to a stage |
 | `/script-chat/export-docx/{thread_id}` | GET | Export current script as DOCX |
+| `/script-chat/export-wiki/{thread_id}` | GET | Export current script as MediaWiki markup |
 
 ### Outline Chat & Redesign
 
@@ -437,29 +496,61 @@ React 19 + Vite 7 SPA in `chatbot-ui/`, styled with Tailwind CSS v4 and Radix-ba
 
 **Services:** `src/services/api.js` is the generic fetch wrapper (bearer injection, 401 → logout, 403 → domain error); `src/services/scriptChatService.js` drives the Script Chat SSE flow using authenticated `fetch` streaming.
 
+**Production container** (`chatbot-ui/Dockerfile` + `nginx.conf`): multi-stage build — Node builds the bundle, `nginx:1.27-alpine` serves it and owns application routing: `/api/` → backend (300 s proxy timeouts — generation can run minutes), `/static/` and `/output/` → backend static mounts, `/grafana/` → Grafana, `/assets/` long-cached, everything else → SPA fallback.
+
 **Scripts:** `npm run dev` · `npm run build` · `npm run preview` · `npm run lint`
 
 ---
 
-## Deployment
+## Deployment & CI/CD
 
-Production runs on a GCP VM via Docker Compose behind Nginx (SSL). CI/CD is GitHub Actions (`.github/workflows/deploy.yml`):
+Production runs on a Linux VPS (shared with two other organisation projects) as Docker Compose services behind a host nginx that terminates TLS (Let's Encrypt). **Images are never built on the server** — they are built in CI and pulled from the GitHub Container Registry.
 
-1. Push to `main` triggers the workflow.
-2. GitHub Actions authenticates to GCP via **Workload Identity Federation** (keyless).
-3. It SSHes into the VM, pulls, and runs `docker compose up --build -d`.
+![CI/CD pipeline](docs/diagrams/cicd-pipeline.svg)
 
-Containers:
+<details>
+<summary>Diagram source (Mermaid)</summary>
 
-- **backend** — FastAPI (uvicorn, 4 workers) on `:8000`, health-checked at `/health`.
-- **whisper-worker** — Celery worker consuming the `whisper` queue (built from `Dockerfile.whisper-worker`, bakes the Whisper `base` model into the image).
-- **migrate** — one-shot `python -m src.script_chat.migrate`, gates backend/worker startup.
-- **postgres** (16) and **redis** (7) — data services with health checks and named volumes.
-- **frontend** — Nginx serving the built React app + reverse-proxying `/api` to the backend (see `chatbot-ui/Dockerfile`).
+```mermaid
+flowchart LR
+    D([Push to main]) --> M["Build matrix<br/>backend · worker · frontend<br/>linux/amd64 · BuildKit cache"]
+    M -->|push images| REG[("GHCR<br/>sha-&lt;commit&gt; + latest")]
+    M -->|all 3 succeed| DEP["Deploy job<br/>SSH via gateway host"]
+    DEP --> VM["VPS: scp compose.yaml + deploy/<br/>set IMAGE_TAG → pull → up -d<br/>restart grafana"]
+    REG -.->|docker compose pull| VM
+    VM --> H{"Health gate<br/>backend + worker<br/>up to 4 min"}
+    H -->|healthy| OK([Deploy verified])
+    H -->|unhealthy| FAIL["CI run fails<br/>+ last 50 log lines of each service"]
+```
 
-SSL certificates are managed with Let's Encrypt (certbot) on the host and mounted into Nginx. Prometheus scrape config is in `prometheus.yml`; the API exposes `/metrics`.
+</details>
 
-> The repo commits `docker-compose.postgres.yml` (Postgres + Redis + migrate + backend + worker). The host-specific `docker-compose.yml` (backend + frontend + certs, gitignored) is provisioned per-environment.
+**Pipeline** (`.github/workflows/build.yml`, on push to `main`):
+
+1. **Build** — a three-image matrix (`backend`, `worker`, `frontend`) builds in parallel on GitHub Actions (linux/amd64, BuildKit cache), and pushes to `ghcr.io/shagnik2704/slide-generator-{backend,worker,frontend}` tagged `sha-<commit>` (immutable) and `latest` (main only).
+2. **Deploy** — gated on **all three** builds succeeding. SSHes to the VPS through a gateway host, copies `compose.yaml` + `deploy/` (configuration only — no source code reaches the server), writes `IMAGE_TAG=sha-<commit>` into `.env`, then `docker compose pull` + `up -d --remove-orphans`.
+3. **Grafana restart** — datasource provisioning is read only at Grafana startup, so the deploy restarts Grafana unconditionally (non-fatal on failure).
+4. **Health gate** — polls the backend health check (a live database round-trip) and the worker's Celery broker ping for up to 4 minutes. An unhealthy stack **fails the CI run** and dumps the last 50 log lines of each service.
+
+**Rollback** (seconds, no rebuild):
+
+```bash
+# on the VPS
+sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=sha-<previous>/' .env && docker compose up -d
+```
+
+The server holds only `compose.yaml`, `deploy/` and `.env` — the `.env` file doubles as the record of what is deployed. Full operational detail (SSH topology, secrets inventory, procedures) is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+---
+
+## Monitoring
+
+Everything is provisioned from files in this repository — a wiped Grafana volume fully self-heals.
+
+- **Prometheus** (`deploy/prometheus.yml`) scrapes the backend `/metrics` every 15 s. The backend runs multiple uvicorn workers, so metrics use `prometheus_client` **multiprocess mode**: workers write to a shared `PROMETHEUS_MULTIPROC_DIR` on a tmpfs (recreated empty each start) and `/metrics` serves the aggregate — without this, scrapes hit whichever worker answers and counters read ~1000× too high.
+- **Grafana 12** at `/grafana/` behind the frontend nginx. Two provisioned datasources (`deploy/grafana/provisioning/`): Prometheus, and PostgreSQL via the dedicated **read-only `grafana_ro` role** (SELECT-only — a mistaken dashboard query cannot modify data).
+- **Dashboards as code** (`deploy/grafana/dashboards/app-overview.json`): request health and p95 latency (self-monitoring endpoints excluded), 5xx rate (deliberately including health-check 503s — they signal database outages), per-user activity, job runtimes, and where script threads stall by stage.
+- **LangSmith** traces every LangChain/LangGraph LLM call (zero code — env vars only) into the `slide-generator` project, with per-node token/cost attribution (~$0.05 per script end-to-end).
 
 ---
 
@@ -470,7 +561,7 @@ SSL certificates are managed with Let's Encrypt (certbot) on the host and mounte
 uv sync                              # install deps
 uv run python -m src.script_chat.migrate   # apply migrations
 uv run python -m src.api             # run API
-uv run pytest                        # run tests (tests/)
+uv run pytest                        # run tests (tests/ — 22 modules, Postgres-backed tests need the DB up)
 
 # Create a new migration (hand-written; migrations are not autogenerated)
 uv run alembic -c alembic.ini revision -m "description"
@@ -492,11 +583,11 @@ Code conventions (layering, imports, docstrings, error handling, naming) are doc
 slide-generator/
 ├── src/
 │   ├── api/
-│   │   ├── server.py            # FastAPI app: routers, middleware, lifespan, Prometheus
+│   │   ├── server.py            # FastAPI app: 15 routers, middleware, lifespan, Prometheus
 │   │   ├── config.py            # Pydantic settings (env validation)
 │   │   ├── auth.py / auth/      # JWT + Google OAuth
 │   │   ├── middleware.py        # Security headers + request logging
-│   │   └── routes/              # 14 route modules (+ outline_chat/ with 14 submodules)
+│   │   └── routes/              # route modules (+ outline_chat/ with 14 submodules)
 │   ├── script_chat/             # Script Chat: LangGraph graph, nodes, prompts,
 │   │   │                        #   persistence.py (shared pool), migrate.py, routes.py
 │   │   └── nodes/               # ingest, ground, metadata, generate, edit, compliance…
@@ -509,19 +600,29 @@ slide-generator/
 │   ├── services/                # Business logic (voice, image, docx, pdf, latex, translation…)
 │   ├── utils/                   # LLM init, audio/pdf helpers
 │   └── workflow.py              # Version Change Automation runner
-├── migrations/                  # Alembic migrations (users, threads, background_jobs)
+├── migrations/                  # Alembic migrations (threads, users, background_jobs)
 ├── alembic.ini
-├── chatbot-ui/                  # React 19 + Vite 7 frontend
-├── docs/                        # Design notes, code structure, sample docs
-├── tests/                       # pytest suite
-├── Dockerfile                   # Backend/API image (Python + FFmpeg, no Whisper)
-├── Dockerfile.whisper-worker    # Whisper worker image (adds openai-whisper + base model)
-├── docker-compose.postgres.yml  # Postgres + Redis + migrate + backend + worker
-├── prometheus.yml               # Monitoring scrape config
-└── .github/workflows/deploy.yml # CI/CD (WIF + SSH deploy)
+├── chatbot-ui/                  # React 19 + Vite 7 frontend + its Dockerfile + nginx.conf
+├── docker/
+│   ├── backend.Dockerfile       # API image (uv multi-stage, Python 3.11 + FFmpeg, no Whisper)
+│   └── worker.Dockerfile        # Whisper worker image (bakes the base model at build time)
+├── deploy/
+│   ├── prometheus.yml           # Scrape config
+│   └── grafana/                 # Provisioned datasources + dashboards (as code)
+├── compose.yaml                 # Single source of truth for all 8 services
+├── compose.override.yaml        # Dev-only, LOCAL-ONLY (gitignored): adds build: stanzas
+├── docs/                        # HLD, deployment runbook, diagrams/, code conventions
+├── tests/                       # pytest suite (22 modules)
+└── .github/workflows/build.yml  # CI/CD: build matrix → GHCR → health-gated deploy
 ```
 
 ---
+
+## Further Documentation
+
+- [`docs/HLD.md`](docs/HLD.md) — high-level design: system overview, pipelines, data model, integrations, deployment topology.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — operations runbook: server layout, deploy/rollback procedures, secrets inventory, monitoring access, known follow-ups.
+- [`docs/.code-structure.md`](docs/.code-structure.md) — code conventions.
 
 ## License
 

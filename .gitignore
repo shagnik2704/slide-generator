@@ -80,3 +80,6 @@ compose.override.yaml
 
 
 version-change-automation-abc4823f94ae.json
+# Claude Code local state and review artifacts
+.lavish/
+.claude/
