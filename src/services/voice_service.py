@@ -37,9 +37,10 @@ SARVAM_LANG_MAP = {
 SUPPORTED_SARVAM_CODES = set(SARVAM_LANG_MAP.values())
 
 # Voice configuration constants for Sarvam TTS
-# Female voice options: 'kavya' (default), 'shreya', 'neha', 'ritu', 'ishita'
-# Male voice options: 'shubh', 'aditya', 'manan'
-DEFAULT_SPEAKER = "kavya"
+# Tier 1 (lowest error rate): 'priya', 'ishita' (female), 'mani', 'shubh' (male)
+# Other female: 'kavya', 'shreya', 'neha', 'ritu'
+# Other male: 'aditya', 'manan'
+DEFAULT_SPEAKER = "priya"
 DEFAULT_PACE = 0.9         # Slower pace (1.0 is default)
 
 # Bulbul v3 accepts at most 2500 characters per request. A 3-4 minute tutorial
@@ -344,8 +345,8 @@ async def _synthesize_chunk(
         "speaker": speaker,
         "model": "bulbul:v3",
         "pace": pace,
-        "temperature": 0.01,
-        "speech_sample_rate": 48000,
+        "temperature": 0.4,
+        "speech_sample_rate": 22050,
         "output_audio_codec": "wav"
     }
     if dict_id:

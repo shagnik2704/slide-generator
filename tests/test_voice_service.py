@@ -29,7 +29,7 @@ SENTENCE = "Now we will open the terminal and run the command to install the pac
 # exactly the case the old code silently truncated.
 LONG_NARRATION = (SENTENCE * 12).strip()
 
-RATE = 48000
+RATE = 22050
 
 # Where voice_service writes generated audio, so tests can clean up after
 # themselves without reaching into the service's internals.
