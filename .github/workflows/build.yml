@@ -64,6 +64,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -88,6 +92,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           TAG: ${{ steps.tag.outputs.value }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           proxy_host:     ${{ secrets.GATEWAY_HOST }}
           proxy_username: ${{ secrets.GATEWAY_USER }}
@@ -95,10 +100,12 @@ jobs:
           host:     ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: TAG
+          envs: TAG,GHCR_TOKEN
           script: |
             set -euo pipefail
             cd ${{ secrets.PROJECT_PATH }}
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             if grep -q '^IMAGE_TAG=' .env; then
               sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$TAG|" .env
