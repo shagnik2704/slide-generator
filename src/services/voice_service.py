@@ -8,6 +8,8 @@ import asyncio
 import zipfile
 import httpx
 import base64
+import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
@@ -836,4 +838,87 @@ async def generate_voice_combined(
         "duration_seconds": duration_seconds,
         "duration_estimate": duration_formatted
     }
+
+
+async def generate_voice_patch(
+    text: str,
+    speaker: Optional[str] = None,
+    pace: Optional[float] = None,
+    language_code: str = "en-IN",
+    patch_id: Optional[str] = None,
+) -> Dict:
+    """
+    Generate audio for a standalone text snippet, word, or sentence patch.
+    Does not require a slide deck or full script structure.
+
+    Args:
+        text: Narration text to synthesize
+        speaker: Voice actor name (defaults to DEFAULT_SPEAKER)
+        pace: Speaking speed (defaults to DEFAULT_PACE)
+        language_code: Target language (e.g. 'en-IN', 'hi-IN')
+        patch_id: Optional unique identifier for file naming
+
+    Returns:
+        {
+            "audio_url": "/output/audio/patches/patch_123_abc.wav",
+            "success": True,
+            "duration_seconds": 3.2,
+            "duration_estimate": "0:03",
+            "word_count": 7,
+            "text": "...",
+            "speaker": "priya",
+            "pace": 0.85
+        }
+    """
+    if not text or not text.strip():
+        raise ValueError("No text provided for audio patch")
+
+    cleaned_text = clean_text_for_tts(text)
+    if not cleaned_text or not cleaned_text.strip():
+        raise ValueError("Text contains no speakable content after cleaning")
+
+    speaker = speaker or DEFAULT_SPEAKER
+    pace = pace if pace is not None else DEFAULT_PACE
+    language_code = resolve_language_code(language_code)
+
+    project_root = Path(__file__).parent.parent.parent
+    patches_dir = project_root / "output" / "audio" / "patches"
+    patches_dir.mkdir(parents=True, exist_ok=True)
+
+    if not patch_id:
+        patch_id = f"{int(time.time())}_{uuid.uuid4().hex[:8]}"
+
+    print(f"🎤 Generating audio patch: {cleaned_text[:60]!r} (speaker={speaker}, pace={pace})...")
+    audio_bytes = await synthesize_narration(
+        text=cleaned_text,
+        language_code=language_code,
+        speaker=speaker,
+        pace=pace,
+        timeout=30.0,
+    )
+
+    wav_path = patches_dir / f"patch_{patch_id}.wav"
+    wav_path.write_bytes(audio_bytes)
+
+    if not (wav_path.exists() and wav_path.stat().st_size > 0):
+        raise RuntimeError("Generated patch audio file is empty")
+
+    relative_path = wav_path.relative_to(project_root / "output")
+    duration_seconds, duration_formatted = get_wav_duration(str(wav_path))
+    word_count = len(cleaned_text.split())
+
+    print(f"✅ Generated audio patch: {wav_path.name} ({wav_path.stat().st_size} bytes, {duration_formatted})")
+
+    return {
+        "audio_url": f"/output/{relative_path}",
+        "patch_id": patch_id,
+        "success": True,
+        "text": cleaned_text,
+        "speaker": speaker,
+        "pace": pace,
+        "word_count": word_count,
+        "duration_seconds": duration_seconds,
+        "duration_estimate": duration_formatted,
+    }
+
 

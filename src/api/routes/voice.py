@@ -140,3 +140,68 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
         traceback.print_exc()
         print(f"ERROR in generate_voice_combined: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate_voice_patch")
+async def generate_voice_patch_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """
+    Generate a standalone audio patch for an arbitrary sentence or word.
+    Does not require a slide deck or full script structure.
+
+    Args:
+        data: {
+            "text": "...",
+            "speaker": "priya",        # optional
+            "pace": 0.85,              # optional
+            "language_code": "en-IN",  # optional
+            "patch_id": "..."          # optional
+        }
+
+    Returns:
+        {
+            "audio_url": "/output/audio/patches/patch_....wav",
+            "success": True,
+            "duration_seconds": 3.2,
+            "duration_estimate": "0:03",
+            "text": "...",
+            "speaker": "priya",
+            "pace": 0.85,
+            "word_count": 7
+        }
+    """
+    print("🎤 Starting voice patch generation...")
+    text = data.get("text")
+    if not text or not str(text).strip():
+        raise HTTPException(status_code=400, detail="text is required and must not be empty")
+
+    speaker = data.get("speaker")
+    pace = data.get("pace")
+    language_code = data.get("language_code") or data.get("language") or "en-IN"
+    patch_id = data.get("patch_id")
+
+    if pace is not None:
+        try:
+            pace = float(pace)
+        except (ValueError, TypeError):
+            pace = None
+
+    try:
+        from src.services.voice_service import generate_voice_patch
+        result = await generate_voice_patch(
+            text=str(text),
+            speaker=speaker,
+            pace=pace,
+            language_code=language_code,
+            patch_id=patch_id,
+        )
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except UnsupportedLanguageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in generate_voice_patch: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

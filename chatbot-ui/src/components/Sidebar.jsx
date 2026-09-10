@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, RefreshCw, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, MessageSquareWarning, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, ClipboardCheck, ShieldCheck, Mic, RefreshCw, FileText, Image, Presentation, ListChecks, Languages, HelpCircle, MessageSquareWarning, Clock, Sparkles } from 'lucide-react';
 import Tooltip from './Tooltip';
 import UserProfile from './UserProfile';
 import HelpModal from './HelpModal';
 import FeedbackModal from './FeedbackModal';
+import AudioPatchModal from './AudioPatchModal';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign }) => {
@@ -18,6 +19,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
     // Modal state
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+    const [isAudioPatchModalOpen, setIsAudioPatchModalOpen] = useState(false);
 
     // Refs for hidden file inputs
     const complianceInputRef = useRef(null);
@@ -406,6 +408,28 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 </button>
             </TooltipWrapper>
 
+            {/* Audio Patch Button */}
+            <TooltipWrapper text="Audio Patch / Single Sentence">
+                <button
+                    onClick={() => setIsAudioPatchModalOpen(true)}
+                    style={{
+                        ...iconButtonStyle,
+                        marginTop: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <Sparkles size={20} />
+                    <span style={textLabelStyle}>Audio Patch</span>
+                </button>
+            </TooltipWrapper>
+
             {/* Image Generator Button */}
             <TooltipWrapper text="Image Generator (Coming Soon)">
                 <button
@@ -693,6 +717,10 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
             <FeedbackModal
                 isOpen={isFeedbackModalOpen}
                 onClose={() => setIsFeedbackModalOpen(false)}
+            />
+            <AudioPatchModal
+                isOpen={isAudioPatchModalOpen}
+                onClose={() => setIsAudioPatchModalOpen(false)}
             />
         </aside>
     );

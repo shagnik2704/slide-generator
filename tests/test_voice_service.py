@@ -17,6 +17,7 @@ from src.services.voice_service import (
     clean_text_for_tts,
     generate_voice_combined,
     generate_voice_for_script,
+    generate_voice_patch,
     resolve_language_code,
     split_text_for_tts,
 )
@@ -485,5 +486,115 @@ class PronunciationDictionaryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(StubSarvamClient.calls[0]["dict_id"], "p_fc28888a")
 
 
+class VoicePatchTests(unittest.IsolatedAsyncioTestCase):
+    """Tests for standalone audio patch generation."""
+
+    def setUp(self):
+        StubSarvamClient.calls = []
+        for patcher in (
+            mock.patch("src.services.voice_service.httpx.AsyncClient", StubSarvamClient),
+            mock.patch.dict("os.environ", {"SARVAM_API_KEY": "test-key"}),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.created_patches = []
+
+    def tearDown(self):
+        for path in self.created_patches:
+            if path.exists():
+                path.unlink(missing_ok=True)
+
+    async def test_generate_voice_patch_success(self):
+        patch_id = "test_unit_patch_1"
+        result = await generate_voice_patch(
+            text="In this tutorial, we will learn about salary.py and variables.",
+            patch_id=patch_id,
+        )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["patch_id"], patch_id)
+        self.assertIn("audio_url", result)
+        self.assertGreater(result["word_count"], 0)
+
+        wav_path = OUTPUT_ROOT / result["audio_url"].removeprefix("/output/")
+        self.created_patches.append(wav_path)
+        self.assertTrue(wav_path.exists())
+        self.assertGreater(wav_path.stat().st_size, 0)
+
+        # Verified Stub call
+        self.assertEqual(len(StubSarvamClient.calls), 1)
+        call = StubSarvamClient.calls[0]
+        self.assertEqual(call["speaker"], "priya")
+        self.assertEqual(call["pace"], 0.9)
+
+    async def test_generate_voice_patch_custom_speaker_and_pace(self):
+        patch_id = "test_unit_patch_custom"
+        result = await generate_voice_patch(
+            text="Testing custom speaker and pace.",
+            speaker="mani",
+            pace=0.85,
+            patch_id=patch_id,
+        )
+
+        self.assertTrue(result["success"])
+        wav_path = OUTPUT_ROOT / result["audio_url"].removeprefix("/output/")
+        self.created_patches.append(wav_path)
+
+        self.assertEqual(len(StubSarvamClient.calls), 1)
+        call = StubSarvamClient.calls[0]
+        self.assertEqual(call["speaker"], "mani")
+        self.assertEqual(call["pace"], 0.85)
+
+    async def test_generate_voice_patch_rejects_empty_text(self):
+        for blank in ("", "   ", "\n\t"):
+            with self.subTest(blank=blank):
+                with self.assertRaises(ValueError):
+                    await generate_voice_patch(text=blank)
+
+    async def test_generate_voice_patch_cleans_markup(self):
+        patch_id = "test_unit_patch_markup"
+        result = await generate_voice_patch(
+            text="Define what '''Cyberspace''' is and call `print()`.",
+            patch_id=patch_id,
+        )
+        self.assertTrue(result["success"])
+        wav_path = OUTPUT_ROOT / result["audio_url"].removeprefix("/output/")
+        self.created_patches.append(wav_path)
+
+        self.assertEqual(len(StubSarvamClient.calls), 1)
+        sent_text = StubSarvamClient.calls[0]["text"]
+        self.assertNotIn("'''", sent_text)
+        self.assertNotIn("`", sent_text)
+        self.assertIn("Cyberspace", sent_text)
+        self.assertIn("print()", sent_text)
+
+    async def test_endpoint_success_and_validation(self):
+        from types import SimpleNamespace
+        from fastapi import HTTPException
+        from src.api.routes.voice import generate_voice_patch_endpoint
+
+        user = SimpleNamespace(email="tester@spoken-tutorial.org")
+
+        # 1. Successful call
+        res = await generate_voice_patch_endpoint(
+            {"text": "Hello world from endpoint", "speaker": "priya", "pace": 0.85},
+            current_user=user,
+        )
+        self.assertTrue(res["success"])
+        self.assertIn("audio_url", res)
+        wav_path = OUTPUT_ROOT / res["audio_url"].removeprefix("/output/")
+        self.created_patches.append(wav_path)
+
+        # 2. Empty text rejected with 400
+        for empty in ({"text": ""}, {"text": "   "}, {}):
+            with self.subTest(empty=empty):
+                with self.assertRaises(HTTPException) as ctx:
+                    await generate_voice_patch_endpoint(empty, current_user=user)
+                self.assertEqual(ctx.exception.status_code, 400)
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
