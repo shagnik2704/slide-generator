@@ -1,9 +1,87 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, Download, Volume2, Clock, Sparkles, Edit3, Check, X, RotateCcw, AlertCircle, FileAudio } from 'lucide-react';
+import {
+    Play,
+    Pause,
+    Download,
+    Volume2,
+    Clock,
+    Sparkles,
+    Edit3,
+    Check,
+    X,
+    RotateCcw,
+    AlertCircle,
+    FileAudio,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
 import AudioPatchModal from './AudioPatchModal';
 import { apiJson } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+
+/**
+ * Strip markdown markers like **Slide 1** or '''Slide 1''' from titles
+ */
+function cleanTitle(title) {
+    if (!title) return '';
+    return String(title)
+        .replace(/^\*{2,3}(.*?)\*{2,3}$/, '$1')
+        .replace(/^'{3}(.*?)'{3}$/, '$1')
+        .replace(/\*{2,3}/g, '')
+        .replace(/'{3}/g, '')
+        .trim();
+}
+
+/**
+ * Render narration text with bold formatting (**word** or '''word''' or ***word***) and line breaks.
+ * Keeps standard DOM text nodes so user selection (highlight-to-patch) continues to work cleanly.
+ */
+function renderFormattedText(text) {
+    if (!text || typeof text !== 'string') return text;
+
+    const regex = /(\*{2,3}[^*]+?\*{2,3}|'{3}[^']+?'{3}|\n)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index));
+        }
+
+        const token = match[0];
+        if (token === '\n') {
+            parts.push(<br key={`br-${match.index}`} />);
+        } else if (token.startsWith('***') && token.endsWith('***')) {
+            parts.push(
+                <strong key={`b-${match.index}`} style={{ fontWeight: 650, color: 'var(--text-primary)' }}>
+                    <em>{token.slice(3, -3)}</em>
+                </strong>
+            );
+        } else if (token.startsWith('**') && token.endsWith('**')) {
+            parts.push(
+                <strong key={`b-${match.index}`} style={{ fontWeight: 650, color: 'var(--text-primary)' }}>
+                    {token.slice(2, -2)}
+                </strong>
+            );
+        } else if (token.startsWith("'''") && token.endsWith("'''")) {
+            parts.push(
+                <strong key={`b-${match.index}`} style={{ fontWeight: 650, color: 'var(--text-primary)' }}>
+                    {token.slice(3, -3)}
+                </strong>
+            );
+        }
+
+        lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+}
 
 /**
  * VoicePreview - Displays script narration text and audio players
@@ -100,6 +178,45 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         }
         return Array.from(numbers).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
     }, [slidesMap, localSlideAudio, voiceData?.total_slides]);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // 5, 10, 25, or 'all'
+    const [jumpInput, setJumpInput] = useState('');
+
+    const totalRows = allSlideNumbers.length;
+    const effectivePageSize = pageSize === 'all' ? totalRows : pageSize;
+    const totalPages = Math.max(1, Math.ceil(totalRows / (effectivePageSize || 1)));
+
+    // Ensure active page is within bounds
+    const activePage = Math.min(Math.max(1, currentPage), totalPages);
+
+    const paginatedSlideNumbers = useMemo(() => {
+        if (pageSize === 'all') return allSlideNumbers;
+        const startIdx = (activePage - 1) * effectivePageSize;
+        return allSlideNumbers.slice(startIdx, startIdx + effectivePageSize);
+    }, [allSlideNumbers, activePage, effectivePageSize, pageSize]);
+
+    const startRowIdx = totalRows === 0 ? 0 : (activePage - 1) * effectivePageSize + 1;
+    const endRowIdx = pageSize === 'all' ? totalRows : Math.min(activePage * effectivePageSize, totalRows);
+
+    const handlePageChange = (newPage) => {
+        const targetPage = Math.min(Math.max(1, newPage), totalPages);
+        setCurrentPage(targetPage);
+    };
+
+    const handleJumpToRow = (e) => {
+        e.preventDefault();
+        const rowNum = parseInt(jumpInput, 10);
+        if (isNaN(rowNum) || rowNum < 1 || rowNum > totalRows) return;
+
+        const targetIdx = allSlideNumbers.findIndex((n) => parseInt(n, 10) === rowNum);
+        if (targetIdx !== -1 && pageSize !== 'all') {
+            const targetPage = Math.floor(targetIdx / effectivePageSize) + 1;
+            setCurrentPage(targetPage);
+        }
+        setJumpInput('');
+    };
 
     if (!voiceData || !isOpen) return null;
 
@@ -387,17 +504,135 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
             {/* Per-Slide / Script Rows Section */}
             {hasRows && (
                 <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Script Rows & In-Place Studio ({allSlideNumbers.length})
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            💡 Tip: Highlight any word to patch it, or click Edit to re-record
-                        </span>
+                    {/* Rows Section Toolbar: Count, Per-page selector & mini-pagination */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '0.85rem',
+                            padding: '0.6rem 0.85rem',
+                            background: 'var(--bg-tertiary)',
+                            borderRadius: '0.6rem',
+                            border: '1px solid var(--border-color)',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem',
+                        }}
+                    >
+                        {/* Left: Row Count & Showing Range */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                Script Rows & Studio ({totalRows})
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: '0.76rem',
+                                    color: 'var(--text-secondary)',
+                                    background: 'var(--bg-secondary)',
+                                    padding: '0.18rem 0.55rem',
+                                    borderRadius: '0.35rem',
+                                    border: '1px solid var(--border-color)',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                Showing {startRowIdx}–{endRowIdx} of {totalRows}
+                            </span>
+                        </div>
+
+                        {/* Right: Page Size Selector & Quick Prev/Next */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            {/* Page Size Pills */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Per page:</span>
+                                {[5, 10, 25, 'all'].map((size) => {
+                                    const isActive = pageSize === size;
+                                    return (
+                                        <button
+                                            key={String(size)}
+                                            onClick={() => {
+                                                setPageSize(size);
+                                                setCurrentPage(1);
+                                            }}
+                                            style={{
+                                                padding: '0.2rem 0.55rem',
+                                                fontSize: '0.75rem',
+                                                fontWeight: isActive ? 600 : 400,
+                                                borderRadius: '0.35rem',
+                                                border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                                background: isActive ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                color: isActive ? 'white' : 'var(--text-secondary)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease',
+                                            }}
+                                        >
+                                            {size === 'all' ? 'All' : size}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Mini Page Switcher (if multiple pages) */}
+                            {pageSize !== 'all' && totalPages > 1 && (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        borderLeft: '1px solid var(--border-color)',
+                                        paddingLeft: '0.6rem',
+                                    }}
+                                >
+                                    <button
+                                        onClick={() => handlePageChange(activePage - 1)}
+                                        disabled={activePage <= 1}
+                                        aria-label="Previous Page"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '0.35rem',
+                                            border: '1px solid var(--border-color)',
+                                            background: 'var(--bg-secondary)',
+                                            color: activePage <= 1 ? 'var(--text-tertiary, #888)' : 'var(--text-primary)',
+                                            opacity: activePage <= 1 ? 0.4 : 1,
+                                            cursor: activePage <= 1 ? 'not-allowed' : 'pointer',
+                                        }}
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)', fontWeight: 500, minWidth: '4.5rem', textAlign: 'center' }}>
+                                        {activePage} / {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => handlePageChange(activePage + 1)}
+                                        disabled={activePage >= totalPages}
+                                        aria-label="Next Page"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '0.35rem',
+                                            border: '1px solid var(--border-color)',
+                                            background: 'var(--bg-secondary)',
+                                            color: activePage >= totalPages ? 'var(--text-tertiary, #888)' : 'var(--text-primary)',
+                                            opacity: activePage >= totalPages ? 0.4 : 1,
+                                            cursor: activePage >= totalPages ? 'not-allowed' : 'pointer',
+                                        }}
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
+                    {/* Paginated Script Rows */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                        {allSlideNumbers.map((slideNum) => {
+                        {paginatedSlideNumbers.map((slideNum) => {
                             const url = localSlideAudio[slideNum];
                             const slideInfo = slidesMap[slideNum] || { title: `Slide ${slideNum}`, narration: '' };
                             const isEditing = editingSlideNum === slideNum;
@@ -434,7 +669,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                                             </span>
                                             {slideInfo.title && (
                                                 <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                                    {slideInfo.title}
+                                                    {cleanTitle(slideInfo.title)}
                                                 </span>
                                             )}
                                         </div>
@@ -504,7 +739,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                                         </div>
                                     </div>
 
-                                    {/* Narration Content: Read-only or Editable */}
+                                    {/* Narration Content: Read-only with bold markdown formatting or Editable textarea */}
                                     {!isEditing ? (
                                         <div
                                             onMouseUp={() => handleMouseUp(slideNum)}
@@ -520,7 +755,13 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                                                 userSelect: 'text',
                                             }}
                                         >
-                                            {slideInfo.narration || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No narration text recorded for this slide</span>}
+                                            {slideInfo.narration ? (
+                                                renderFormattedText(slideInfo.narration)
+                                            ) : (
+                                                <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                                    No narration text recorded for this slide
+                                                </span>
+                                            )}
                                         </div>
                                     ) : (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -662,6 +903,199 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                             );
                         })}
                     </div>
+
+                    {/* Bottom Pagination Bar */}
+                    {totalPages > 1 && pageSize !== 'all' && (
+                        <div
+                            style={{
+                                marginTop: '1.25rem',
+                                padding: '0.75rem 1rem',
+                                background: 'var(--bg-tertiary)',
+                                borderRadius: '0.6rem',
+                                border: '1px solid var(--border-color)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '0.75rem',
+                            }}
+                        >
+                            {/* Jump to row form */}
+                            <form
+                                onSubmit={handleJumpToRow}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            >
+                                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                    Go to row:
+                                </span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max={totalRows}
+                                    value={jumpInput}
+                                    onChange={(e) => setJumpInput(e.target.value)}
+                                    placeholder={`1–${totalRows}`}
+                                    style={{
+                                        width: '64px',
+                                        padding: '0.25rem 0.45rem',
+                                        fontSize: '0.78rem',
+                                        borderRadius: '0.35rem',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-secondary)',
+                                        color: 'var(--text-primary)',
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    style={{
+                                        padding: '0.25rem 0.55rem',
+                                        fontSize: '0.75rem',
+                                        borderRadius: '0.35rem',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-secondary)',
+                                        color: 'var(--text-primary)',
+                                        cursor: 'pointer',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    Go
+                                </button>
+                            </form>
+
+                            {/* Page Buttons (Numbered + Prev/Next) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                <button
+                                    onClick={() => handlePageChange(activePage - 1)}
+                                    disabled={activePage <= 1}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        padding: '0.3rem 0.6rem',
+                                        fontSize: '0.78rem',
+                                        borderRadius: '0.4rem',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-secondary)',
+                                        color: activePage <= 1 ? 'var(--text-tertiary, #888)' : 'var(--text-primary)',
+                                        opacity: activePage <= 1 ? 0.4 : 1,
+                                        cursor: activePage <= 1 ? 'not-allowed' : 'pointer',
+                                    }}
+                                >
+                                    <ChevronLeft size={13} />
+                                    Prev
+                                </button>
+
+                                {/* Page number buttons */}
+                                {(() => {
+                                    const pages = [];
+                                    if (totalPages <= 7) {
+                                        for (let p = 1; p <= totalPages; p++) pages.push(p);
+                                    } else {
+                                        pages.push(1);
+                                        if (activePage > 3) pages.push('...');
+                                        const start = Math.max(2, activePage - 1);
+                                        const end = Math.min(totalPages - 1, activePage + 1);
+                                        for (let p = start; p <= end; p++) {
+                                            if (!pages.includes(p)) pages.push(p);
+                                        }
+                                        if (activePage < totalPages - 2) pages.push('...');
+                                        if (!pages.includes(totalPages)) pages.push(totalPages);
+                                    }
+
+                                    return pages.map((page, idx) => {
+                                        if (page === '...') {
+                                            return (
+                                                <span
+                                                    key={`ellipsis-${idx}`}
+                                                    style={{
+                                                        fontSize: '0.78rem',
+                                                        color: 'var(--text-secondary)',
+                                                        padding: '0 0.2rem',
+                                                    }}
+                                                >
+                                                    ...
+                                                </span>
+                                            );
+                                        }
+                                        const isCurrent = page === activePage;
+                                        return (
+                                            <button
+                                                key={`page-${page}`}
+                                                onClick={() => handlePageChange(page)}
+                                                style={{
+                                                    minWidth: '28px',
+                                                    height: '28px',
+                                                    padding: '0 0.4rem',
+                                                    fontSize: '0.78rem',
+                                                    fontWeight: isCurrent ? 600 : 400,
+                                                    borderRadius: '0.4rem',
+                                                    border: isCurrent ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                                    background: isCurrent ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                    color: isCurrent ? 'white' : 'var(--text-primary)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                }}
+                                            >
+                                                {page}
+                                            </button>
+                                        );
+                                    });
+                                })()}
+
+                                <button
+                                    onClick={() => handlePageChange(activePage + 1)}
+                                    disabled={activePage >= totalPages}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        padding: '0.3rem 0.6rem',
+                                        fontSize: '0.78rem',
+                                        borderRadius: '0.4rem',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-secondary)',
+                                        color: activePage >= totalPages ? 'var(--text-tertiary, #888)' : 'var(--text-primary)',
+                                        opacity: activePage >= totalPages ? 0.4 : 1,
+                                        cursor: activePage >= totalPages ? 'not-allowed' : 'pointer',
+                                    }}
+                                >
+                                    Next
+                                    <ChevronRight size={13} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* All rows view note */}
+                    {pageSize === 'all' && totalRows > 10 && (
+                        <div
+                            style={{
+                                marginTop: '1rem',
+                                textAlign: 'center',
+                                fontSize: '0.78rem',
+                                color: 'var(--text-secondary)',
+                            }}
+                        >
+                            Showing all {totalRows} rows.{' '}
+                            <button
+                                onClick={() => {
+                                    setPageSize(5);
+                                    setCurrentPage(1);
+                                }}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--accent-primary)',
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                    padding: 0,
+                                    fontSize: 'inherit',
+                                }}
+                            >
+                                Switch to 5 per page
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
