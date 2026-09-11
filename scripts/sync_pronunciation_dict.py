@@ -133,12 +133,12 @@ def build_sarvam_json(entries: dict[str, str]) -> dict:
     return {"pronunciations": pronunciations}
 
 
-def upload_to_sarvam(payload: dict, api_key: str, dict_id: str) -> dict:
-    """PUT the pronunciation JSON to Sarvam's API as a multipart file upload."""
-
-    print(f"\n📤 Uploading to Sarvam (dict_id={dict_id}) …")
-
-    # Sarvam expects a multipart file upload with the JSON as a file
+def upload_to_sarvam(payload: dict, api_key: str, dict_id: str = None) -> tuple[dict, str]:
+    """
+    Upload pronunciation JSON to Sarvam's API.
+    Uses PUT if dict_id is provided, falling back to POST (create) if 404.
+    If dict_id is not provided, uses POST to create a new dictionary.
+    """
     json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
 
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
@@ -146,18 +146,38 @@ def upload_to_sarvam(payload: dict, api_key: str, dict_id: str) -> dict:
         tmp_path = tmp.name
 
     try:
+        if dict_id:
+            print(f"\n📤 Uploading update to Sarvam (dict_id={dict_id}) …")
+            with open(tmp_path, "rb") as f:
+                resp = httpx.put(
+                    _SARVAM_DICT_URL,
+                    params={"dict_id": dict_id},
+                    headers={"api-subscription-key": api_key},
+                    files={"file": ("pronunciation_dict.json", f, "application/json")},
+                    timeout=30,
+                )
+            if resp.status_code == 200:
+                print(f"   ✓ Updated dictionary {dict_id} successfully")
+                return resp.json(), dict_id
+            elif resp.status_code == 404:
+                print(f"   ⚠️ Dictionary '{dict_id}' not found on this Sarvam account (HTTP 404). Creating a new one...")
+            else:
+                resp.raise_for_status()
+
+        # Create new dictionary via POST
+        print(f"\n📤 Creating new pronunciation dictionary on Sarvam …")
         with open(tmp_path, "rb") as f:
-            resp = httpx.put(
+            resp = httpx.post(
                 _SARVAM_DICT_URL,
-                params={"dict_id": dict_id},
                 headers={"api-subscription-key": api_key},
                 files={"file": ("pronunciation_dict.json", f, "application/json")},
                 timeout=30,
             )
         resp.raise_for_status()
         result = resp.json()
-        print(f"   ✓ Updated successfully")
-        return result
+        new_dict_id = result.get("dictionary_id")
+        print(f"   ✓ Created new dictionary: {new_dict_id}")
+        return result, new_dict_id
     finally:
         os.unlink(tmp_path)
 
@@ -204,12 +224,11 @@ def main():
     if not api_key:
         print("❌ SARVAM_API_KEY not set")
         sys.exit(1)
-    if not dict_id:
-        print("❌ SARVAM_PRONUNCIATION_DICT_ID not set")
-        sys.exit(1)
 
-    result = upload_to_sarvam(payload, api_key, dict_id)
-    print(f"\n✅ Sarvam dictionary {dict_id} synced with {len(entries)} entries")
+    result, active_dict_id = upload_to_sarvam(payload, api_key, dict_id)
+    print(f"\n✅ Sarvam dictionary {active_dict_id} ready with {len(entries)} entries")
+    if active_dict_id != dict_id:
+        print(f"💡 Remember to set SARVAM_PRONUNCIATION_DICT_ID=\"{active_dict_id}\" in your .env")
 
 
 if __name__ == "__main__":

@@ -486,6 +486,48 @@ class PronunciationDictionaryTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["success"], result)
         self.assertEqual(StubSarvamClient.calls[0]["dict_id"], "p_fc28888a")
 
+    async def test_stale_dict_id_404_retries_without_dict(self):
+        class StubSarvamClientWith404OnDict:
+            calls = []
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return False
+
+            async def post(self, url, json=None, headers=None):
+                StubSarvamClientWith404OnDict.calls.append(dict(json))
+                if "dict_id" in json:
+                    req = httpx.Request("POST", url)
+                    resp = httpx.Response(404, request=req, json={"error": {"message": "dict not found"}})
+                    raise httpx.HTTPStatusError("404 Not Found", request=req, response=resp)
+                audio = make_wav(0.5)
+                return httpx.Response(
+                    200,
+                    json={"audios": [base64.b64encode(audio).decode("ascii")]},
+                    request=httpx.Request("POST", url),
+                )
+
+        with mock.patch("src.services.voice_service.httpx.AsyncClient", StubSarvamClientWith404OnDict):
+            with mock.patch.dict(
+                "os.environ",
+                {"SARVAM_API_KEY": "k", "SARVAM_PRONUNCIATION_DICT_ID": "p_stale_404"},
+            ):
+                result = await generate_voice_combined(
+                    {"target_language": "en",
+                     "slides": [{"slide_number": 1, "narration": "Hello there."}]},
+                    project_id=self.project("fallback"),
+                )
+
+        self.assertTrue(result["success"], result)
+        self.assertEqual(len(StubSarvamClientWith404OnDict.calls), 2)
+        self.assertIn("dict_id", StubSarvamClientWith404OnDict.calls[0])
+        self.assertNotIn("dict_id", StubSarvamClientWith404OnDict.calls[1])
+
 
 class VoicePatchTests(unittest.IsolatedAsyncioTestCase):
     """Tests for standalone audio patch generation."""

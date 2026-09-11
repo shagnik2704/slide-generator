@@ -375,7 +375,22 @@ async def _synthesize_chunk(
 
         except httpx.HTTPStatusError as e:
             status = e.response.status_code
+            # If the pronunciation dictionary was not found (HTTP 404, e.g. API key was rotated or dict deleted),
+            # remove dict_id from payload and retry synthesis without failing the user.
+            if status == 404 and "dict_id" in payload:
+                stale_dict = payload.pop("dict_id")
+                print(f"⚠️ Sarvam pronunciation dictionary '{stale_dict}' not found (HTTP 404). Retrying TTS without dict_id...")
+                continue
+
             if status != 429 and status < 500:
+                err_msg = ""
+                try:
+                    err_data = e.response.json()
+                    err_msg = err_data.get("error", {}).get("message") or str(err_data)
+                except Exception:
+                    err_msg = e.response.text
+                if err_msg:
+                    raise RuntimeError(f"Sarvam TTS error ({status}): {err_msg}") from e
                 raise
             last_error = e
         except (httpx.TimeoutException, httpx.TransportError, RuntimeError) as e:
