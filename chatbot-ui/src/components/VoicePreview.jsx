@@ -14,6 +14,9 @@ import {
     FileAudio,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
+    ChevronUp,
+    List,
 } from 'lucide-react';
 import AudioPatchModal from './AudioPatchModal';
 import { apiJson } from '../services/api';
@@ -218,6 +221,9 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         setJumpInput('');
     };
 
+    // Row-by-row studio visibility state: default collapsed when continuous audio is present
+    const [showRowStudio, setShowRowStudio] = useState(false);
+
     if (!voiceData || !isOpen) return null;
 
     const {
@@ -230,6 +236,8 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
     const hasSlideAudio = Object.keys(localSlideAudio).length > 0;
     const hasFullAudio = Boolean(localFullAudio);
     const hasRows = allSlideNumbers.length > 0;
+    // Keep rows collapsed by default unless explicitly opened, or if there is no full audio to play
+    const isRowStudioOpen = showRowStudio || (!hasFullAudio && hasRows);
 
     const handlePlay = (slideNum, audioRef) => {
         if (playingSlide === slideNum) {
@@ -440,6 +448,30 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {hasRows && (
+                        <button
+                            onClick={() => setShowRowStudio((prev) => !prev)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.45rem 0.85rem',
+                                background: isRowStudioOpen ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                                border: '1px solid var(--border-color)',
+                                color: isRowStudioOpen ? 'white' : 'var(--text-primary)',
+                                borderRadius: '0.5rem',
+                                fontSize: '0.82rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                            }}
+                            title="Toggle row-by-row script and audio review"
+                        >
+                            <List size={14} />
+                            {isRowStudioOpen ? 'Hide Script Rows' : 'Review Script Rows'}
+                        </button>
+                    )}
+
                     <button
                         onClick={() => handleOpenPatch('')}
                         style={{
@@ -488,7 +520,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
 
             {/* Combined Audio - Single Player Card */}
             {hasFullAudio && (
-                <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ marginBottom: hasRows ? '0.85rem' : '0' }}>
                     <AudioPlayer
                         slideNum="full"
                         title="Full Continuous Narration"
@@ -501,8 +533,55 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                 </div>
             )}
 
-            {/* Per-Slide / Script Rows Section */}
+            {/* Accordion Banner to toggle Row-wise Script Lines & Studio */}
             {hasRows && (
+                <div style={{ marginBottom: isRowStudioOpen ? '1rem' : '0' }}>
+                    <button
+                        onClick={() => setShowRowStudio((prev) => !prev)}
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.75rem 1rem',
+                            background: isRowStudioOpen ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '0.65rem',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                            <List size={16} style={{ color: 'var(--accent-primary)' }} />
+                            <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                                {isRowStudioOpen ? 'Hide Row-by-Row Script & Audio' : 'View / Edit Row-by-Row Script & Audio'}
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: '0.75rem',
+                                    color: 'var(--text-secondary)',
+                                    background: isRowStudioOpen ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
+                                    padding: '0.15rem 0.5rem',
+                                    borderRadius: '0.35rem',
+                                    fontWeight: 500,
+                                    border: '1px solid var(--border-color)',
+                                }}
+                            >
+                                {totalRows} Rows
+                            </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: 500 }}>
+                            <span>{isRowStudioOpen ? 'Click to collapse' : 'Click to expand'}</span>
+                            {isRowStudioOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </div>
+                    </button>
+                </div>
+            )}
+
+            {/* Per-Slide / Script Rows Section (Expanded only when toggled) */}
+            {hasRows && isRowStudioOpen && (
                 <div>
                     {/* Rows Section Toolbar: Count, Per-page selector & mini-pagination */}
                     <div
