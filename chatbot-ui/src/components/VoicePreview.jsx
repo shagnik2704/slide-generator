@@ -31,21 +31,23 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         }
     }, [voiceData]);
 
-    // Map slides from jsonScript for quick lookup by slide_number
+    // Map slides from jsonScript or voiceData.slides for quick lookup by slide_number
     const [slidesMap, setSlidesMap] = useState({});
     useEffect(() => {
         const map = {};
-        if (jsonScript && Array.isArray(jsonScript.slides)) {
-            jsonScript.slides.forEach((s, idx) => {
-                const num = s.slide_number || idx + 1;
-                map[num] = {
-                    title: s.title || `Slide ${num}`,
-                    narration: s.narration || '',
-                };
-            });
-        }
+        const slidesList = (jsonScript && Array.isArray(jsonScript.slides) && jsonScript.slides.length > 0)
+            ? jsonScript.slides
+            : (voiceData && Array.isArray(voiceData.slides) ? voiceData.slides : []);
+
+        slidesList.forEach((s, idx) => {
+            const num = String(s.slide_number || idx + 1);
+            map[num] = {
+                title: s.title || `Slide ${num}`,
+                narration: s.narration || '',
+            };
+        });
         setSlidesMap(map);
-    }, [jsonScript]);
+    }, [jsonScript, voiceData]);
 
     // Audio Patch Modal state
     const [isPatchModalOpen, setIsPatchModalOpen] = useState(false);
@@ -61,6 +63,20 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
     const [selectionTooltip, setSelectionTooltip] = useState(null);
     const previewContainerRef = useRef(null);
 
+    // Derive all unique slide/row numbers sorted numerically
+    const allSlideNumbers = useMemo(() => {
+        const numbers = new Set([
+            ...Object.keys(slidesMap),
+            ...Object.keys(localSlideAudio),
+        ]);
+        if (numbers.size === 0 && voiceData?.total_slides) {
+            for (let i = 1; i <= voiceData.total_slides; i++) {
+                numbers.add(String(i));
+            }
+        }
+        return Array.from(numbers).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    }, [slidesMap, localSlideAudio, voiceData?.total_slides]);
+
     if (!voiceData || !isOpen) return null;
 
     const {
@@ -72,6 +88,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
 
     const hasSlideAudio = Object.keys(localSlideAudio).length > 0;
     const hasFullAudio = Boolean(localFullAudio);
+    const hasRows = allSlideNumbers.length > 0;
 
     const handlePlay = (slideNum, audioRef) => {
         if (playingSlide === slideNum) {
@@ -132,14 +149,15 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         setRegenError(null);
     };
 
-    // Save and re-record row
-    const handleSaveAndRegenerate = async (slideNum) => {
-        if (!editingText.trim()) return;
+    // Save and re-record row (or generate row clip on demand)
+    const handleSaveAndRegenerate = async (slideNum, fallbackText = null) => {
+        const textToUse = (editingSlideNum === slideNum ? editingText : (fallbackText || editingText || '')).trim();
+        if (!textToUse) return;
 
         setRegeneratingSlideNum(slideNum);
         setRegenError(null);
 
-        const activeProjectId = projectId || voiceData.project_id;
+        const activeProjectId = projectId || voiceData?.project_id;
 
         try {
             if (activeProjectId) {
@@ -149,7 +167,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                     body: JSON.stringify({
                         project_id: activeProjectId,
                         slide_number: parseInt(slideNum, 10),
-                        text: editingText.trim(),
+                        text: textToUse,
                     }),
                 });
 
@@ -173,7 +191,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                         ...prev,
                         [slideNum]: {
                             ...prev[slideNum],
-                            narration: editingText.trim(),
+                            narration: textToUse,
                         },
                     }));
 
@@ -186,7 +204,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                 const res = await apiJson('/generate_voice_patch', {
                     method: 'POST',
                     body: JSON.stringify({
-                        text: editingText.trim(),
+                        text: textToUse,
                     }),
                 });
 
@@ -199,7 +217,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                         ...prev,
                         [slideNum]: {
                             ...prev[slideNum],
-                            narration: editingText.trim(),
+                            narration: textToUse,
                         },
                     }));
                     setEditingSlideNum(null);
@@ -258,7 +276,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                             borderRadius: '0.4rem',
                         }}
                     >
-                        {generated_slides == null ? `${total_slides || Object.keys(localSlideAudio).length} Rows` : `${generated_slides}/${total_slides} Rows`}
+                        {generated_slides == null ? `${total_slides || allSlideNumbers.length} Rows` : `${generated_slides}/${total_slides || allSlideNumbers.length} Rows`}
                     </span>
                     {duration_estimate && (
                         <span
@@ -342,12 +360,12 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                 </div>
             )}
 
-            {/* Per-Slide Section */}
-            {hasSlideAudio && (
+            {/* Per-Slide / Script Rows Section */}
+            {hasRows && (
                 <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Script Rows & Audio ({Object.keys(localSlideAudio).length})
+                            Script Rows & In-Place Studio ({allSlideNumbers.length})
                         </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             💡 Tip: Highlight any word to patch it, or click Edit to re-record
@@ -355,8 +373,9 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                        {Object.entries(localSlideAudio).map(([slideNum, url]) => {
-                            const slideInfo = slidesMap[slideNum] || {};
+                        {allSlideNumbers.map((slideNum) => {
+                            const url = localSlideAudio[slideNum];
+                            const slideInfo = slidesMap[slideNum] || { title: `Slide ${slideNum}`, narration: '' };
                             const isEditing = editingSlideNum === slideNum;
                             const isRegenerating = regeneratingSlideNum === slideNum;
 
@@ -553,15 +572,68 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                                         </div>
                                     )}
 
-                                    {/* Audio Player for this row */}
-                                    <AudioPlayer
-                                        slideNum={slideNum}
-                                        url={resolveUrl(url)}
-                                        isPlaying={playingSlide === slideNum}
-                                        onPlay={handlePlay}
-                                        onEnded={handleEnded}
-                                        isCombined={false}
-                                    />
+                                    {/* Audio Player for this row or On-Demand Row Audio Trigger */}
+                                    {url ? (
+                                        <AudioPlayer
+                                            slideNum={slideNum}
+                                            url={resolveUrl(url)}
+                                            isPlaying={playingSlide === slideNum}
+                                            onPlay={handlePlay}
+                                            onEnded={handleEnded}
+                                            isCombined={false}
+                                        />
+                                    ) : (
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '0.55rem 0.85rem',
+                                                background: 'var(--bg-secondary)',
+                                                borderRadius: '0.5rem',
+                                                border: '1px dashed var(--border-color)',
+                                                fontSize: '0.8rem',
+                                                color: 'var(--text-secondary)',
+                                                flexWrap: 'wrap',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <FileAudio size={14} style={{ opacity: 0.7 }} />
+                                                <span>Audio included in continuous track above</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleSaveAndRegenerate(slideNum, slideInfo.narration)}
+                                                disabled={isRegenerating || !slideInfo.narration}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.35rem',
+                                                    padding: '0.3rem 0.65rem',
+                                                    background: 'var(--bg-tertiary)',
+                                                    border: '1px solid var(--border-color)',
+                                                    borderRadius: '0.4rem',
+                                                    color: 'var(--text-primary)',
+                                                    fontSize: '0.78rem',
+                                                    fontWeight: 500,
+                                                    cursor: isRegenerating || !slideInfo.narration ? 'not-allowed' : 'pointer',
+                                                }}
+                                                title="Synthesize a separate audio player for this row"
+                                            >
+                                                {isRegenerating ? (
+                                                    <>
+                                                        <RotateCcw size={12} className="animate-spin" />
+                                                        Generating clip...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Volume2 size={12} style={{ color: 'var(--accent-primary)' }} />
+                                                        Generate Row Audio
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

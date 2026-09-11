@@ -189,8 +189,10 @@ def extract_narration(json_script: dict) -> List[Dict]:
         except (ValueError, TypeError):
             slide_number = i + 1
         
+        title = slide.get('title') or f'Slide {slide_number}'
         narrations.append({
             'slide_number': slide_number,
+            'title': title,
             'narration': narration
         })
     
@@ -604,7 +606,8 @@ async def generate_voice_for_script(
         "success": len(errors) == 0,
         "errors": errors,
         "total_slides": len(narrations),
-        "generated_slides": len(audio_map)
+        "generated_slides": len(audio_map),
+        "slides": narrations,
     }
 
 
@@ -836,7 +839,8 @@ async def generate_voice_combined(
         "generated_slides": len(slide_urls) or len(narrations),
         "word_count": word_count,
         "duration_seconds": duration_seconds,
-        "duration_estimate": duration_formatted
+        "duration_estimate": duration_formatted,
+        "slides": narrations,
     }
 
 
@@ -1010,7 +1014,15 @@ async def regenerate_slide_audio(
                 continue
         slide_files.sort(key=lambda x: x[0])
 
-        if slide_files:
+        # Only re-stitch full_narration if all slides from 1 to max are present
+        is_complete_sequence = (
+            len(slide_files) > 1 and
+            slide_files[0][0] == 1 and
+            slide_files[-1][0] == len(slide_files) and
+            all(slide_files[i][0] == i + 1 for i in range(len(slide_files)))
+        )
+
+        if is_complete_sequence:
             try:
                 parts = [f.read_bytes() for _, f in slide_files]
                 stitched_bytes = _join_with_gaps(parts, slide_gap_seconds)
@@ -1021,6 +1033,11 @@ async def regenerate_slide_audio(
                 print(f"🔗 Re-stitched {len(parts)} slides into full_narration.wav ({full_dur_fmt})")
             except Exception as e:
                 print(f"⚠️ Failed to re-stitch full_narration.wav: {e}")
+        else:
+            # Preserve existing full narration without overwriting it with partial slides
+            _, full_dur_fmt = get_wav_duration(str(full_wav_path))
+            full_relative = full_wav_path.relative_to(project_root / "output")
+            full_audio_url = f"/output/{full_relative}"
 
     # Rebuild project ZIP archive
     zip_url = None
