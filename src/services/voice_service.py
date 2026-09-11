@@ -922,3 +922,132 @@ async def generate_voice_patch(
     }
 
 
+async def regenerate_slide_audio(
+    project_id: int,
+    slide_number: int,
+    text: str,
+    speaker: Optional[str] = None,
+    pace: Optional[float] = None,
+    language_code: str = "en-IN",
+    slide_gap_seconds: float = 0.0,
+) -> Dict:
+    """
+    Regenerate audio for a single slide within an existing project.
+    Updates slide_{slide_number}.wav, and if full_narration.wav exists,
+    re-stitches all slide files so the combined audio stays in sync without
+    needing to re-synthesize the other slides. Also updates the project ZIP.
+
+    Args:
+        project_id: Project identifier
+        slide_number: Slide number (1-based index)
+        text: Updated narration text
+        speaker: Optional voice actor name
+        pace: Optional speaking rate
+        language_code: Target language (defaults to 'en-IN')
+        slide_gap_seconds: Pause between slides when re-stitching
+
+    Returns:
+        {
+            "success": True,
+            "project_id": 123,
+            "slide_number": 4,
+            "text": "...",
+            "slide_audio_url": "/output/audio/project_123/slide_4.wav",
+            "full_audio_url": "/output/audio/project_123/full_narration.wav",
+            "zip_url": "/output/audio/project_123/audio_project_123.zip",
+            "duration_seconds": 8.1,
+            "duration_estimate": "0:08",
+            "full_duration_estimate": "3:42"
+        }
+    """
+    if not text or not str(text).strip():
+        raise ValueError("Narration text must not be empty")
+
+    cleaned_text = clean_text_for_tts(str(text))
+    if not cleaned_text or not cleaned_text.strip():
+        raise ValueError("No speakable narration text after cleaning")
+
+    try:
+        slide_number = int(slide_number)
+    except (ValueError, TypeError):
+        raise ValueError(f"Invalid slide_number: {slide_number}")
+
+    language_code = resolve_language_code(language_code)
+
+    project_root = Path(__file__).parent.parent.parent
+    audio_dir = project_root / "output" / "audio" / f"project_{project_id}"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"🎤 Regenerating slide {slide_number} in project {project_id}...")
+    slide_path_str = await generate_voice_for_slide(
+        text=cleaned_text,
+        slide_num=slide_number,
+        output_dir=audio_dir,
+        language_code=language_code,
+        speaker=speaker,
+        pace=pace,
+    )
+
+    if not slide_path_str:
+        raise RuntimeError(f"Failed to generate audio for slide {slide_number}")
+
+    slide_wav_path = Path(slide_path_str)
+    slide_relative = slide_wav_path.relative_to(project_root / "output")
+    slide_dur_s, slide_dur_fmt = get_wav_duration(str(slide_wav_path))
+
+    # Re-stitch full_narration.wav if it previously existed
+    full_audio_url = None
+    full_dur_fmt = None
+    full_wav_path = audio_dir / "full_narration.wav"
+
+    if full_wav_path.exists():
+        slide_files = []
+        for f in audio_dir.glob("slide_*.wav"):
+            try:
+                num = int(f.stem.split("_")[1])
+                slide_files.append((num, f))
+            except (IndexError, ValueError):
+                continue
+        slide_files.sort(key=lambda x: x[0])
+
+        if slide_files:
+            try:
+                parts = [f.read_bytes() for _, f in slide_files]
+                stitched_bytes = _join_with_gaps(parts, slide_gap_seconds)
+                full_wav_path.write_bytes(stitched_bytes)
+                _, full_dur_fmt = get_wav_duration(str(full_wav_path))
+                full_relative = full_wav_path.relative_to(project_root / "output")
+                full_audio_url = f"/output/{full_relative}"
+                print(f"🔗 Re-stitched {len(parts)} slides into full_narration.wav ({full_dur_fmt})")
+            except Exception as e:
+                print(f"⚠️ Failed to re-stitch full_narration.wav: {e}")
+
+    # Rebuild project ZIP archive
+    zip_url = None
+    zip_path = audio_dir / f"audio_project_{project_id}.zip"
+    try:
+        with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zf:
+            for wav_file in audio_dir.glob("*.wav"):
+                zf.write(wav_file, wav_file.name)
+        zip_relative = zip_path.relative_to(project_root / "output")
+        zip_url = f"/output/{zip_relative}"
+    except Exception as e:
+        print(f"⚠️ Failed to update zip archive: {e}")
+
+    print(f"✅ Slide {slide_number} regenerated successfully ({slide_dur_fmt})")
+
+    return {
+        "success": True,
+        "project_id": project_id,
+        "slide_number": slide_number,
+        "text": cleaned_text,
+        "slide_audio_url": f"/output/{slide_relative}",
+        "full_audio_url": full_audio_url,
+        "zip_url": zip_url,
+        "duration_seconds": slide_dur_s,
+        "duration_estimate": slide_dur_fmt,
+        "full_duration_estimate": full_dur_fmt,
+    }
+
+
+

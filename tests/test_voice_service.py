@@ -18,6 +18,7 @@ from src.services.voice_service import (
     generate_voice_combined,
     generate_voice_for_script,
     generate_voice_patch,
+    regenerate_slide_audio,
     resolve_language_code,
     split_text_for_tts,
 )
@@ -594,7 +595,105 @@ class VoicePatchTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(ctx.exception.status_code, 400)
 
 
+class SlideRegenerationTests(unittest.IsolatedAsyncioTestCase):
+    """Tests for in-place single slide regeneration."""
+
+    def setUp(self):
+        StubSarvamClient.calls = []
+        for patcher in (
+            mock.patch("src.services.voice_service.httpx.AsyncClient", StubSarvamClient),
+            mock.patch.dict("os.environ", {"SARVAM_API_KEY": "test-key"}),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.project_ids = []
+
+    def tearDown(self):
+        for pid in self.project_ids:
+            audio_dir = OUTPUT_ROOT / "audio" / f"project_{pid}"
+            if audio_dir.exists():
+                shutil.rmtree(audio_dir, ignore_errors=True)
+
+    async def test_regenerate_slide_updates_audio_and_re_stitches(self):
+        pid = 999123
+        self.project_ids.append(pid)
+
+        # 1. First generate a 3-slide project with per_slide + stitch
+        script = {
+            "target_language": "en",
+            "slides": [
+                {"slide_number": 1, "narration": "First slide introductory sentence."},
+                {"slide_number": 2, "narration": "Second slide with error in word desktop."},
+                {"slide_number": 3, "narration": "Third slide concluding remarks."},
+            ],
+        }
+        await generate_voice_combined(
+            script, project_id=pid, source=PER_SLIDE
+        )
+
+        audio_dir = OUTPUT_ROOT / "audio" / f"project_{pid}"
+        slide2_wav = audio_dir / "slide_2.wav"
+        full_wav = audio_dir / "full_narration.wav"
+        self.assertTrue(slide2_wav.exists())
+        self.assertTrue(full_wav.exists())
+
+        # 2. Regenerate slide 2 with updated text
+        res = await regenerate_slide_audio(
+            project_id=pid,
+            slide_number=2,
+            text="Second slide with corrected word desk top.",
+            speaker="priya",
+            pace=0.85,
+        )
+
+        self.assertTrue(res["success"])
+        self.assertEqual(res["slide_number"], 2)
+        self.assertIn("slide_audio_url", res)
+        self.assertIn("full_audio_url", res)
+        self.assertTrue(slide2_wav.exists())
+        self.assertTrue(full_wav.exists())
+
+    async def test_regenerate_slide_endpoint_validation(self):
+        from types import SimpleNamespace
+        from fastapi import HTTPException
+        from src.api.routes.voice import regenerate_slide_endpoint
+
+        user = SimpleNamespace(email="tester@spoken-tutorial.org")
+        pid = 999124
+        self.project_ids.append(pid)
+
+        # 1. Missing project_id, slide_number, or text
+        with self.assertRaises(HTTPException) as ctx:
+            await regenerate_slide_endpoint({}, current_user=user)
+        self.assertEqual(ctx.exception.status_code, 400)
+
+        with self.assertRaises(HTTPException) as ctx:
+            await regenerate_slide_endpoint({"project_id": pid}, current_user=user)
+        self.assertEqual(ctx.exception.status_code, 400)
+
+        with self.assertRaises(HTTPException) as ctx:
+            await regenerate_slide_endpoint({"project_id": pid, "slide_number": 1, "text": ""}, current_user=user)
+        self.assertEqual(ctx.exception.status_code, 400)
+
+        # 2. Valid call
+        res = await regenerate_slide_endpoint(
+            {
+                "project_id": pid,
+                "slide_number": 1,
+                "text": "Valid narration for single slide.",
+                "speaker": "priya",
+                "pace": 0.85,
+            },
+            current_user=user,
+        )
+        self.assertTrue(res["success"])
+        self.assertEqual(res["slide_number"], 1)
+        self.assertIn("slide_audio_url", res)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 

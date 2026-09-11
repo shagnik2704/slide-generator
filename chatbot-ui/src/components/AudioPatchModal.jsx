@@ -34,13 +34,29 @@ const LANGUAGES = [
     { code: 'od-IN', name: 'Odia' },
 ];
 
-export default function AudioPatchModal({ isOpen, onClose }) {
-    const [text, setText] = useState('');
-    const [speaker, setSpeaker] = useState('priya');
-    const [pace, setPace] = useState(0.85);
+export default function AudioPatchModal({
+    isOpen,
+    onClose,
+    initialText = '',
+    initialSpeaker = 'priya',
+    initialPace = 0.85,
+}) {
+    const [text, setText] = useState(initialText);
+    const [speaker, setSpeaker] = useState(initialSpeaker);
+    const [pace, setPace] = useState(initialPace);
     const [language, setLanguage] = useState('en-IN');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState(null);
+
+    // Sync state when opened with initial props
+    useEffect(() => {
+        if (isOpen) {
+            setText(initialText || '');
+            if (initialSpeaker) setSpeaker(initialSpeaker);
+            if (initialPace) setPace(initialPace);
+            setError(null);
+        }
+    }, [isOpen, initialText, initialSpeaker, initialPace]);
 
     // Current active result
     const [currentResult, setCurrentResult] = useState(null);

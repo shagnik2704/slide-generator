@@ -286,7 +286,11 @@ const WorkflowCard = ({
                                 />
                             )}
                             {tool === 'voice' && (
-                                <VoicePreview voiceData={result.voiceData} />
+                                <VoicePreview
+                                    voiceData={result.voiceData}
+                                    jsonScript={result.jsonScript}
+                                    projectId={result.projectId}
+                                />
                             )}
                             {tool === 'translation' && (
                                 <TranslationResults results={result.translationResults} />

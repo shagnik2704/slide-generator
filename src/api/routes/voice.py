@@ -205,3 +205,72 @@ async def generate_voice_patch_endpoint(data: dict, current_user: TokenData = De
         print(f"ERROR in generate_voice_patch: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.post("/regenerate_slide")
+async def regenerate_slide_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
+    """
+    Regenerate audio for a single slide in an existing project.
+    Updates slide_{N}.wav, and re-stitches full_narration.wav and the project ZIP.
+
+    Args:
+        data: {
+            "project_id": 12345,
+            "slide_number": 4,
+            "text": "Updated narration text...",
+            "speaker": "priya",        # optional
+            "pace": 0.85,              # optional
+            "language_code": "en-IN",  # optional
+            "slide_gap_seconds": 0.0   # optional
+        }
+    """
+    print("🎤 Starting single slide regeneration...")
+    project_id = data.get("project_id")
+    slide_number = data.get("slide_number")
+    text = data.get("text") or data.get("narration")
+
+    if not project_id:
+        raise HTTPException(status_code=400, detail="project_id is required")
+    if slide_number is None:
+        raise HTTPException(status_code=400, detail="slide_number is required")
+    if not text or not str(text).strip():
+        raise HTTPException(status_code=400, detail="text/narration is required and must not be empty")
+
+    speaker = data.get("speaker")
+    pace = data.get("pace")
+    language_code = data.get("language_code") or data.get("language") or "en-IN"
+    slide_gap_seconds = data.get("slide_gap_seconds", 0.0)
+
+    if pace is not None:
+        try:
+            pace = float(pace)
+        except (ValueError, TypeError):
+            pace = None
+
+    try:
+        slide_gap_seconds = max(0.0, float(slide_gap_seconds))
+    except (ValueError, TypeError):
+        slide_gap_seconds = 0.0
+
+    try:
+        from src.services.voice_service import regenerate_slide_audio
+        result = await regenerate_slide_audio(
+            project_id=project_id,
+            slide_number=slide_number,
+            text=str(text),
+            speaker=speaker,
+            pace=pace,
+            language_code=language_code,
+            slide_gap_seconds=slide_gap_seconds,
+        )
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except UnsupportedLanguageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        traceback.print_exc()
+        print(f"ERROR in regenerate_slide: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+

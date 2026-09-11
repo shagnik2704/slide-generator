@@ -994,7 +994,12 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                                         subtitle={`${msg.voiceData?.samples?.length || 0} samples`}
                                         defaultOpen={true}
                                     >
-                                        <VoicePreview voiceData={msg.voiceData} isOpen={true} />
+                                        <VoicePreview
+                                            voiceData={msg.voiceData}
+                                            jsonScript={msg.jsonScript}
+                                            projectId={msg.projectId}
+                                            isOpen={true}
+                                        />
                                     </CollapsibleSection>
                                 )}
 
