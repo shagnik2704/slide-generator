@@ -31,23 +31,47 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         }
     }, [voiceData]);
 
-    // Map slides from jsonScript or voiceData.slides for quick lookup by slide_number
+    // Map slides from jsonScript, voiceData.slides, or static script_{id}.json fallback
     const [slidesMap, setSlidesMap] = useState({});
     useEffect(() => {
         const map = {};
         const slidesList = (jsonScript && Array.isArray(jsonScript.slides) && jsonScript.slides.length > 0)
             ? jsonScript.slides
-            : (voiceData && Array.isArray(voiceData.slides) ? voiceData.slides : []);
+            : (voiceData && Array.isArray(voiceData.slides) && voiceData.slides.length > 0 ? voiceData.slides : []);
 
-        slidesList.forEach((s, idx) => {
-            const num = String(s.slide_number || idx + 1);
-            map[num] = {
-                title: s.title || `Slide ${num}`,
-                narration: s.narration || '',
-            };
-        });
-        setSlidesMap(map);
-    }, [jsonScript, voiceData]);
+        if (slidesList.length > 0) {
+            slidesList.forEach((s, idx) => {
+                const num = String(s.slide_number || idx + 1);
+                map[num] = {
+                    title: s.title || `Slide ${num}`,
+                    narration: s.narration || '',
+                };
+            });
+            setSlidesMap(map);
+        } else {
+            // Fallback: try loading the parsed script from /output/script_{project_id}.json
+            const activeProjectId = projectId || voiceData?.project_id;
+            if (activeProjectId) {
+                const cleanId = String(activeProjectId).replace('project_', '').trim();
+                fetch(resolveUrl(`/output/script_${cleanId}.json`))
+                    .then((res) => (res.ok ? res.json() : null))
+                    .then((data) => {
+                        if (data && Array.isArray(data.slides)) {
+                            const fetchedMap = {};
+                            data.slides.forEach((s, idx) => {
+                                const num = String(s.slide_number || idx + 1);
+                                fetchedMap[num] = {
+                                    title: s.title || `Slide ${num}`,
+                                    narration: s.narration || '',
+                                };
+                            });
+                            setSlidesMap(fetchedMap);
+                        }
+                    })
+                    .catch(() => {});
+            }
+        }
+    }, [jsonScript, voiceData, projectId]);
 
     // Audio Patch Modal state
     const [isPatchModalOpen, setIsPatchModalOpen] = useState(false);
