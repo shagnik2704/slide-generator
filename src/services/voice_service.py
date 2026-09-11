@@ -535,10 +535,11 @@ async def generate_voice_for_script(
     
     if project_id is None:
         project_id = int(time.time())
-    
+    clean_project_id = str(project_id).replace("project_", "").strip()
+
     # Setup output directory
     project_root = Path(__file__).parent.parent.parent
-    audio_dir = project_root / "output" / "audio" / f"project_{project_id}"
+    audio_dir = project_root / "output" / "audio" / f"project_{clean_project_id}"
     audio_dir.mkdir(parents=True, exist_ok=True)
     
     # Extract narrations
@@ -590,7 +591,7 @@ async def generate_voice_for_script(
             errors.append(f"Slide {slide_num}: No audio after {_TTS_MAX_ATTEMPTS} attempts")
 
     # Create ZIP of all audio files
-    zip_path = audio_dir / f"audio_project_{project_id}.zip"
+    zip_path = audio_dir / f"audio_project_{clean_project_id}.zip"
     with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zf:
         for wav_file in audio_dir.glob("*.wav"):
             zf.write(wav_file, wav_file.name)
@@ -719,10 +720,11 @@ async def generate_voice_combined(
     
     if project_id is None:
         project_id = int(time.time())
-    
+    clean_project_id = str(project_id).replace("project_", "").strip()
+
     # Setup output directory
     project_root = Path(__file__).parent.parent.parent
-    audio_dir = project_root / "output" / "audio" / f"project_{project_id}"
+    audio_dir = project_root / "output" / "audio" / f"project_{clean_project_id}"
     audio_dir.mkdir(parents=True, exist_ok=True)
     
     # Extract all narrations
@@ -978,11 +980,12 @@ async def regenerate_slide_audio(
 
     language_code = resolve_language_code(language_code)
 
+    clean_project_id = str(project_id).replace("project_", "").strip()
     project_root = Path(__file__).parent.parent.parent
-    audio_dir = project_root / "output" / "audio" / f"project_{project_id}"
+    audio_dir = project_root / "output" / "audio" / f"project_{clean_project_id}"
     audio_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🎤 Regenerating slide {slide_number} in project {project_id}...")
+    print(f"🎤 Regenerating slide {slide_number} in project {clean_project_id}...")
     slide_path_str = await generate_voice_for_slide(
         text=cleaned_text,
         slide_num=slide_number,
@@ -1041,7 +1044,7 @@ async def regenerate_slide_audio(
 
     # Rebuild project ZIP archive
     zip_url = None
-    zip_path = audio_dir / f"audio_project_{project_id}.zip"
+    zip_path = audio_dir / f"audio_project_{clean_project_id}.zip"
     try:
         with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zf:
             for wav_file in audio_dir.glob("*.wav"):

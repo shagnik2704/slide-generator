@@ -24,7 +24,7 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
     print("🎤 Starting voice generation...")
     
     try:
-        json_script = data.get('json_script')
+        json_script = data.get('json_script') or data.get('script')
         project_id = data.get('project_id')
         speaker = data.get('speaker')
         pace = data.get('pace')
@@ -36,7 +36,7 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
                 pace = None
         
         if not json_script:
-            raise HTTPException(status_code=400, detail="json_script is required")
+            raise HTTPException(status_code=400, detail="json_script (or script) is required")
         
         from src.services.voice_service import generate_voice_for_script
         result = await generate_voice_for_script(
@@ -87,7 +87,7 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
     print("🎤 Starting COMBINED voice generation...")
 
     try:
-        json_script = data.get('json_script')
+        json_script = data.get('json_script') or data.get('script')
         project_id = data.get('project_id')
         speaker = data.get('speaker')
         pace = data.get('pace')
@@ -106,7 +106,7 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
             slide_gap_seconds = 0.0
 
         if not json_script:
-            raise HTTPException(status_code=400, detail="json_script is required")
+            raise HTTPException(status_code=400, detail="json_script (or script) is required")
 
         if source not in COMBINE_SOURCES:
             raise HTTPException(
@@ -224,14 +224,22 @@ async def regenerate_slide_endpoint(data: dict, current_user: TokenData = Depend
         }
     """
     print("🎤 Starting single slide regeneration...")
-    project_id = data.get("project_id")
-    slide_number = data.get("slide_number")
-    text = data.get("text") or data.get("narration")
+    project_id = data.get("project_id") or data.get("projectId") or data.get("id")
+    slide_number = (
+        data.get("slide_number")
+        if data.get("slide_number") is not None
+        else (
+            data.get("slide_num")
+            if data.get("slide_num") is not None
+            else (data.get("row") if data.get("row") is not None else data.get("row_number"))
+        )
+    )
+    text = data.get("text") or data.get("narration") or data.get("content")
 
     if not project_id:
         raise HTTPException(status_code=400, detail="project_id is required")
     if slide_number is None:
-        raise HTTPException(status_code=400, detail="slide_number is required")
+        raise HTTPException(status_code=400, detail="slide_number (or slide_num, row) is required")
     if not text or not str(text).strip():
         raise HTTPException(status_code=400, detail="text/narration is required and must not be empty")
 
