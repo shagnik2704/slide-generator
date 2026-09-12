@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 import traceback
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 from src.services.voice_service import COMBINE_SOURCES, UnsupportedLanguageError
 
 router = APIRouter(tags=["voice"])
@@ -48,6 +49,14 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
         
         print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
 
+        log_activity(
+            user=current_user,
+            activity_type="voice_generation",
+            detail=f"Generated {result.get('generated_slides', 0)}/{result.get('total_slides', 0)} slides voice",
+            status="completed" if result.get("success") else "failed",
+            metadata={"project_id": project_id, "duration": result.get("duration_estimate")},
+        )
+
         return result
 
     except HTTPException:
@@ -73,61 +82,74 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
         json_script: The parsed script JSON
         project_id: Optional project ID (auto-generated if not provided)
         source: 'continuous' (default) synthesizes the script as one stream
-            with as few seams as possible; 'per_slide' synthesizes each slide
-            separately and stitches them, keeping every slide's file so an
-            inconsistent one can be regenerated on its own
-        slide_gap_seconds: Pause inserted between slides ('per_slide' only)
+        speaker: Voice actor (default: priya)
+        pace: Speed multiplier (default: 0.9)
+        language_code: Target language (default: en-IN)
+        slide_gap_seconds: Silence between slides (default: 0.6)
 
     Returns:
-        audio_url: URL to the combined audio file
-        duration_estimate: Approximate duration
-        total_slides: Number of slides combined
-        slide_audio_urls: Per-slide files ('per_slide' only)
+        {
+            "audio_url": "/output/audio/.../full_narration.wav",
+            "zip_url": "/output/audio/.../narration.zip",
+            "slide_audio_urls": {"1": "...", "2": "..."},
+            "duration_seconds": 125.4,
+            "duration_estimate": "2:05",
+            "total_slides": 4,
+            "success": True
+        }
     """
-    print("🎤 Starting COMBINED voice generation...")
+    json_script = data.get("json_script") or data.get("script")
+    if not json_script:
+        raise HTTPException(status_code=400, detail="json_script (or script) is required")
+
+    project_id = data.get("project_id")
+    source = data.get("source", "continuous")
+    speaker = data.get("speaker")
+    pace = data.get("pace")
+    language_code = data.get("language_code") or data.get("language")
+    slide_gap_seconds = data.get("slide_gap_seconds", 0.6)
+
+    if source not in COMBINE_SOURCES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid source: {source!r}. Must be one of: {COMBINE_SOURCES}",
+        )
+
+    if pace is not None:
+        try:
+            pace = float(pace)
+        except (ValueError, TypeError):
+            pace = None
 
     try:
-        json_script = data.get('json_script') or data.get('script')
-        project_id = data.get('project_id')
-        speaker = data.get('speaker')
-        pace = data.get('pace')
-        source = data.get('source', COMBINE_SOURCES[0])
-        slide_gap_seconds = data.get('slide_gap_seconds', 0.0)
+        slide_gap_seconds = max(0.0, float(slide_gap_seconds))
+    except (ValueError, TypeError):
+        slide_gap_seconds = 0.6
 
-        if pace is not None:
-            try:
-                pace = float(pace)
-            except (ValueError, TypeError):
-                pace = None
-
-        try:
-            slide_gap_seconds = max(0.0, float(slide_gap_seconds))
-        except (ValueError, TypeError):
-            slide_gap_seconds = 0.0
-
-        if not json_script:
-            raise HTTPException(status_code=400, detail="json_script (or script) is required")
-
-        if source not in COMBINE_SOURCES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"source must be one of: {', '.join(COMBINE_SOURCES)}"
-            )
-
+    try:
         from src.services.voice_service import generate_voice_combined
         result = await generate_voice_combined(
             json_script=json_script,
             project_id=project_id,
+            source=source,
             speaker=speaker,
             pace=pace,
-            source=source,
-            slide_gap_seconds=slide_gap_seconds
+            language_code=language_code,
+            slide_gap_seconds=slide_gap_seconds,
         )
-        
-        if result.get('success'):
-            print(f"✅ Combined voice generation complete: {result.get('total_slides')} slides → 1 audio file")
+
+        if result.get("success"):
+            print(f"✅ Combined voice generation complete: {result.get('audio_url')}")
         else:
             print(f"⚠️ Combined voice generation failed: {result.get('error')}")
+
+        log_activity(
+            user=current_user,
+            activity_type="voice_generation_combined",
+            detail=f"Combined voice ({result.get('total_slides', 0)} slides)",
+            status="completed" if result.get("success") else "failed",
+            metadata={"project_id": project_id, "duration": result.get("duration_estimate")},
+        )
 
         return result
 
@@ -194,6 +216,15 @@ async def generate_voice_patch_endpoint(data: dict, current_user: TokenData = De
             language_code=language_code,
             patch_id=patch_id,
         )
+
+        log_activity(
+            user=current_user,
+            activity_type="voice_patch",
+            detail=f"Patch: {str(text)[:60]}",
+            status="completed" if result.get("success") else "failed",
+            metadata={"speaker": speaker, "pace": pace, "patch_id": result.get("patch_id")},
+        )
+
         return result
 
     except ValueError as e:
@@ -209,43 +240,55 @@ async def generate_voice_patch_endpoint(data: dict, current_user: TokenData = De
 @router.post("/regenerate_slide")
 async def regenerate_slide_endpoint(data: dict, current_user: TokenData = Depends(get_current_user)):
     """
-    Regenerate audio for a single slide in an existing project.
-    Updates slide_{N}.wav, and re-stitches full_narration.wav and the project ZIP.
+    Regenerate the audio for a SINGLE slide and stitch it back into full_narration.wav.
 
     Args:
         data: {
-            "project_id": 12345,
-            "slide_number": 4,
-            "text": "Updated narration text...",
+            "project_id": "...",
+            "slide_number": 2,          # aliases: slide_num, row, row_number
+            "text": "...",              # aliases: narration
             "speaker": "priya",        # optional
-            "pace": 0.85,              # optional
+            "pace": 0.9,               # optional
             "language_code": "en-IN",  # optional
             "slide_gap_seconds": 0.0   # optional
         }
     """
     print("🎤 Starting single slide regeneration...")
-    project_id = data.get("project_id") or data.get("projectId") or data.get("id")
-    slide_number = (
+    raw_project_id = data.get("project_id") or data.get("projectId")
+    project_id = str(raw_project_id).replace("project_", "").strip() if raw_project_id else None
+
+    raw_slide_num = (
         data.get("slide_number")
         if data.get("slide_number") is not None
         else (
             data.get("slide_num")
             if data.get("slide_num") is not None
-            else (data.get("row") if data.get("row") is not None else data.get("row_number"))
+            else (
+                data.get("row")
+                if data.get("row") is not None
+                else data.get("row_number")
+            )
         )
     )
-    text = data.get("text") or data.get("narration") or data.get("content")
+    try:
+        slide_number = int(raw_slide_num) if raw_slide_num is not None else None
+    except (ValueError, TypeError):
+        slide_number = None
+
+    text = data.get("text") or data.get("narration")
 
     if not project_id:
         raise HTTPException(status_code=400, detail="project_id is required")
+
     if slide_number is None:
-        raise HTTPException(status_code=400, detail="slide_number (or slide_num, row) is required")
-    if not text or not str(text).strip():
-        raise HTTPException(status_code=400, detail="text/narration is required and must not be empty")
+        raise HTTPException(status_code=400, detail="slide_number is required")
+
+    if not text:
+        raise HTTPException(status_code=400, detail="text (or narration) is required")
 
     speaker = data.get("speaker")
     pace = data.get("pace")
-    language_code = data.get("language_code") or data.get("language") or "en-IN"
+    language_code = data.get("language_code") or data.get("language")
     slide_gap_seconds = data.get("slide_gap_seconds", 0.0)
 
     if pace is not None:
@@ -270,6 +313,15 @@ async def regenerate_slide_endpoint(data: dict, current_user: TokenData = Depend
             language_code=language_code,
             slide_gap_seconds=slide_gap_seconds,
         )
+
+        log_activity(
+            user=current_user,
+            activity_type="regenerate_slide",
+            detail=f"Row {slide_number} (project {project_id})",
+            status="completed" if result.get("success") else "failed",
+            metadata={"project_id": project_id, "slide_number": slide_number},
+        )
+
         return result
 
     except ValueError as e:

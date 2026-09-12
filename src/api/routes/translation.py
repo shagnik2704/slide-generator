@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 from src.services.translation_service import (
     translate_script,
     batch_translate,
@@ -72,8 +73,23 @@ async def translate_single(data: TranslateRequest, current_user: TokenData = Dep
     )
     
     if not result.success:
+        log_activity(
+            user=current_user,
+            activity_type="translate_script",
+            detail=f"Translate script to {data.target_language}",
+            status="failed",
+            metadata={"target_language": data.target_language, "error": result.error},
+        )
         raise HTTPException(status_code=400, detail=result.error)
-    
+
+    log_activity(
+        user=current_user,
+        activity_type="translate_script",
+        detail=f"Translate script to {data.target_language}",
+        status="completed",
+        metadata={"target_language": data.target_language},
+    )
+
     return result
 
 
@@ -97,10 +113,19 @@ async def translate_batch(data: BatchTranslateRequest, current_user: TokenData =
         translate_visual_cues=data.translate_visual_cues
     )
     
+    total_success = sum(1 for r in results if r.success)
+    log_activity(
+        user=current_user,
+        activity_type="batch_translate_script",
+        detail=f"Batch translate: {', '.join(data.languages)}",
+        status="completed" if total_success > 0 else "failed",
+        metadata={"languages": data.languages, "total_requested": len(data.languages), "total_success": total_success},
+    )
+
     return BatchTranslateResponse(
         results=results,
         total_requested=len(data.languages),
-        total_success=sum(1 for r in results if r.success),
+        total_success=total_success,
     )
 
 
@@ -164,6 +189,13 @@ async def export_docx(data: ExportDocxRequest, current_user: TokenData = Depends
     
     # Return as downloadable file with explicit CORS headers
     filename = f"script_{lang_code}.docx"
+    log_activity(
+        user=current_user,
+        activity_type="export_docx",
+        detail=f"Export docx ({lang_name})",
+        status="completed",
+        metadata={"language_code": lang_code, "filename": filename},
+    )
     return StreamingResponse(
         buffer,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

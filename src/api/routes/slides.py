@@ -5,6 +5,7 @@ import zipfile
 import traceback
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 
 router = APIRouter(tags=["slides"])
 
@@ -110,7 +111,15 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
         
         auto_filled = json_script is not None
         print(f"✅ Generated Beamer ZIP: {zip_filename}" + (" (LLM-extracted)" if auto_filled else ""))
-        
+
+        log_activity(
+            user=current_user,
+            activity_type="slide_generation",
+            detail=f"Slides: {safe_name[:60]}",
+            status="completed",
+            metadata={"zip_filename": zip_filename, "auto_filled": auto_filled},
+        )
+
         return {
             "tex_content": tex_content,
             "filename": tex_filename,

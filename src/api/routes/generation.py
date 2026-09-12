@@ -8,6 +8,7 @@ import time
 import traceback
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 from src.api.models import GenerateScriptRequest, GenerateVideoRequest, ExportMediaWikiRequest, DownloadScriptDocxRequest
 from src.services.mediawiki_service import export_to_mediawiki
 from src.services.docx_service import export_script_docx, docx_to_json
@@ -51,6 +52,15 @@ async def generate_script(request: GenerateScriptRequest, req: Request, current_
             print(f"✅ Saved script JSON for project #{project_id}")
             print(f"   Slides: {len(json_script.get('slides', []))}")
             
+            title = json_script.get("presentation_title") or json_script.get("title") or "Untitled"
+            log_activity(
+                user=current_user,
+                activity_type="generate_script",
+                detail=f"Script: {title[:60]} ({len(json_script.get('slides', []))} slides)",
+                status="completed",
+                metadata={"project_id": project_id, "slides_count": len(json_script.get("slides", []))},
+            )
+
             return JSONResponse({
                 "json_script": json_script,
                 "outline": request.outline
@@ -91,6 +101,14 @@ async def generate_video(request: GenerateVideoRequest, req: Request, current_us
             video_filename = os.path.basename(video_path)
             print(f"✅ Generated video: {video_filename}")
             
+            log_activity(
+                user=current_user,
+                activity_type="generate_video",
+                detail=f"Video: {video_filename}",
+                status="completed",
+                metadata={"video_url": f"/static/{video_filename}"},
+            )
+
             return JSONResponse({
                 "video_url": f"/static/{video_filename}"
             })
@@ -112,6 +130,13 @@ async def export_mediawiki_endpoint(request: ExportMediaWikiRequest, current_use
         
         print(f"✅ Exported to MediaWiki: {result['file_path']}")
         
+        log_activity(
+            user=current_user,
+            activity_type="export_mediawiki",
+            detail="Export MediaWiki",
+            status="completed",
+        )
+
         return JSONResponse({
             "mediawiki_content": result["content"],
             "mediawiki_file_url": f"/static/{os.path.basename(result['file_path'])}",
@@ -149,6 +174,14 @@ async def docx_to_mediawiki(file: UploadFile = File(...), current_user: TokenDat
         
         print(f"✅ Converted to MediaWiki: {result['file_path']}")
         
+        log_activity(
+            user=current_user,
+            activity_type="docx_to_mediawiki",
+            detail=f"Convert {file.filename} ({slide_count} slides)",
+            status="completed",
+            metadata={"slide_count": slide_count},
+        )
+
         return JSONResponse({
             "mediawiki_content": result["content"],
             "mediawiki_file_url": f"/static/{os.path.basename(result['file_path'])}",
@@ -177,6 +210,13 @@ async def download_script_docx(request: DownloadScriptDocxRequest, current_user:
         
         print(f"✅ Generated script .docx: {result['file_name']}")
         
+        log_activity(
+            user=current_user,
+            activity_type="download_script_docx",
+            detail=f"Download docx: {result['file_name']}",
+            status="completed",
+        )
+
         return FileResponse(
             path=file_path,
             filename=result["file_name"],
@@ -206,11 +246,20 @@ async def upload_edited_script(file: UploadFile = File(...), current_user: Token
         from io import BytesIO
         json_script = docx_to_json(BytesIO(content))
         
-        print(f"✅ Parsed edited script: {len(json_script.get('slides', []))} slides")
+        slide_count = len(json_script.get('slides', []))
+        print(f"✅ Parsed edited script: {slide_count} slides")
         
+        log_activity(
+            user=current_user,
+            activity_type="upload_edited_script",
+            detail=f"Upload docx: {file.filename} ({slide_count} slides)",
+            status="completed",
+            metadata={"slide_count": slide_count},
+        )
+
         return JSONResponse({
             "json_script": json_script,
-            "slide_count": len(json_script.get('slides', [])),
+            "slide_count": slide_count,
             "message": "Script uploaded and parsed successfully"
         })
         

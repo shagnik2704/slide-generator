@@ -7,6 +7,7 @@ import time
 import traceback
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 
 router = APIRouter(tags=["compliance"])
 
@@ -60,7 +61,15 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
         
         summary = compliance_report.get('summary', {})
         print(f"✅ Compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
-        
+
+        log_activity(
+            user=current_user,
+            activity_type="compliance_check",
+            detail=f"Compliance check ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
+            status="completed",
+            metadata={"passed": summary.get("ai_passed", 0), "failed": summary.get("ai_failed", 0)},
+        )
+
         return compliance_report
         
     except Exception as e:
@@ -100,6 +109,14 @@ async def check_admin_compliance_v1_endpoint(data: dict, current_user: TokenData
             f"{summary.get('ai_passed', 0)} passed, "
             f"{summary.get('ai_failed', 0)} failed, "
             f"{summary.get('ai_skipped', 0)} skipped"
+        )
+
+        log_activity(
+            user=current_user,
+            activity_type="admin_compliance_check",
+            detail=f"Admin compliance ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
+            status="completed",
+            metadata={"passed": summary.get("ai_passed", 0), "failed": summary.get("ai_failed", 0), "skipped": summary.get("ai_skipped", 0)},
         )
 
         return compliance_report
@@ -332,7 +349,15 @@ async def batch_check_compliance_endpoint(data: dict, current_user: TokenData = 
             1 for r in results 
             if r.get('summary', {}).get('ai_failed', 1) == 0
         )
-        
+
+        log_activity(
+            user=current_user,
+            activity_type="batch_compliance_check",
+            detail=f"Batch compliance ({len(scripts)} scripts, {total_passed} passed)",
+            status="completed",
+            metadata={"total_scripts": len(scripts), "passed": total_passed},
+        )
+
         return {
             "results": results,
             "batch_summary": {

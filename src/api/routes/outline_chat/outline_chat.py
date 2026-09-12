@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 
 from .outline_chat_field_extraction import extract_json_block
 from .outline_chat_handlers import (
@@ -245,7 +246,15 @@ async def outline_chat(request: OutlineChatRequest, current_user: TokenData = De
         pedagogy_compliance = {}
         if phase in ["review", "approved"]:
             validation_errors, pedagogy_compliance = validate_outline(outline_data)
-        
+
+        log_activity(
+            user=current_user,
+            activity_type="outline_chat",
+            detail=f"Outline: project #{project_id} ({phase})",
+            status="completed",
+            metadata={"project_id": project_id, "phase": phase},
+        )
+
         return JSONResponse({
             "project_id": project_id,
             "assistant_message": assistant_message,
@@ -300,6 +309,14 @@ async def export_outline(project_id: int, format: str = "json", current_user: To
         session_data = json.load(f)
         outline_data = session_data.get("outline_data", {})
     
+    log_activity(
+        user=current_user,
+        activity_type="export_outline",
+        detail=f"Export outline #{project_id} ({format})",
+        status="completed",
+        metadata={"project_id": project_id, "format": format},
+    )
+
     if format == "json":
         # Return machine-readable JSON
         return JSONResponse({
@@ -414,6 +431,14 @@ async def edit_outline_field(project_id: int, request: dict, current_user: Token
         else:
             assistant_message += "All information collected. Reviewing outline..."
         
+        log_activity(
+            user=current_user,
+            activity_type="edit_outline_field",
+            detail=f"Edit {field_name} (project #{project_id})",
+            status="completed",
+            metadata={"project_id": project_id, "field_name": field_name, "phase": new_phase},
+        )
+
         return JSONResponse({
             "project_id": project_id,
             "assistant_message": assistant_message,

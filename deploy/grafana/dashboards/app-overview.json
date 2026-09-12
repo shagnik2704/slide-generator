@@ -623,7 +623,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT count(*) AS value FROM users u\nWHERE NOT EXISTS (SELECT 1 FROM script_chat_threads t WHERE t.user_id = u.id)\n  AND NOT EXISTS (SELECT 1 FROM background_jobs j WHERE j.user_id = u.id)",
+          "rawSql": "SELECT count(*) AS value FROM users u\nWHERE NOT EXISTS (SELECT 1 FROM script_chat_threads t WHERE t.user_id = u.id)\n  AND NOT EXISTS (SELECT 1 FROM background_jobs j WHERE j.user_id = u.id)\n  AND NOT EXISTS (SELECT 1 FROM user_activities a WHERE a.user_id = u.id)",
           "refId": "A"
         }
       ],
@@ -774,7 +774,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT u.email,\n       count(DISTINCT t.thread_id) AS threads,\n       count(DISTINCT j.id)        AS jobs,\n       u.last_login_at,\n       u.created_at                AS joined\nFROM users u\nLEFT JOIN script_chat_threads t ON t.user_id = u.id\nLEFT JOIN background_jobs   j ON j.user_id = u.id\nGROUP BY u.email, u.last_login_at, u.created_at\nORDER BY threads DESC, jobs DESC, u.last_login_at DESC NULLS LAST",
+          "rawSql": "SELECT u.email,\n       count(DISTINCT t.thread_id) AS threads,\n       count(DISTINCT j.id)        AS jobs,\n       count(DISTINCT a.id)        AS activities,\n       u.last_login_at,\n       u.created_at                AS joined\nFROM users u\nLEFT JOIN script_chat_threads t ON t.user_id = u.id\nLEFT JOIN background_jobs   j ON j.user_id = u.id\nLEFT JOIN user_activities   a ON a.user_id = u.id\nGROUP BY u.email, u.last_login_at, u.created_at\nORDER BY (count(DISTINCT t.thread_id) + count(DISTINCT j.id) + count(DISTINCT a.id)) DESC, u.last_login_at DESC NULLS LAST",
           "refId": "A"
         }
       ],
@@ -838,7 +838,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT t.created_at            AS \"time\",\n       u.email,\n       'script chat'             AS activity,\n       coalesce(nullif(t.title, ''), '(untitled)') AS detail,\n       t.current_stage           AS stage,\n       t.status\nFROM script_chat_threads t\nJOIN users u ON u.id = t.user_id\nUNION ALL\nSELECT j.created_at,\n       u.email,\n       'timed script',\n       coalesce(j.original_filename, '(no filename)'),\n       coalesce(j.current_stage, ''),\n       j.status\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nORDER BY 1 DESC\nLIMIT 100",
+          "rawSql": "SELECT a.created_at            AS \"time\",\n       a.email,\n       a.activity_type         AS activity,\n       coalesce(nullif(a.detail, ''), '(no detail)') AS detail,\n       ''                      AS stage,\n       a.status\nFROM user_activities a\nUNION ALL\nSELECT t.created_at            AS \"time\",\n       u.email,\n       'script chat'           AS activity,\n       coalesce(nullif(t.title, ''), '(untitled)') AS detail,\n       t.current_stage         AS stage,\n       t.status\nFROM script_chat_threads t\nJOIN users u ON u.id = t.user_id\nUNION ALL\nSELECT j.created_at,\n       u.email,\n       'timed script',\n       coalesce(j.original_filename, '(no filename)'),\n       coalesce(j.current_stage, ''),\n       j.status\nFROM background_jobs j\nJOIN users u ON u.id = j.user_id\nORDER BY 1 DESC\nLIMIT 100",
           "refId": "A"
         }
       ],

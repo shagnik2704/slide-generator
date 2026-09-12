@@ -9,6 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 from src.services.slides_translation_service import (
     translate_slides,
     get_supported_languages,
@@ -98,7 +99,15 @@ async def translate_slides_endpoint(
             )
         
         logger.info(f"✅ Translation complete: {result.filename}")
-        
+
+        log_activity(
+            user=current_user,
+            activity_type="translate_slides",
+            detail=f"Slides: {file.filename} -> {target_language}",
+            status="completed",
+            metadata={"filename": result.filename, "target_language": target_language},
+        )
+
         return {
             "success": True,
             "filename": result.filename,
