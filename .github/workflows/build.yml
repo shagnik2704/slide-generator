@@ -155,6 +155,22 @@ jobs:
 
             echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # 1. Record current image tag for automated rollback if deploy fails
+            PREVIOUS_TAG=""
+            if grep -q '^IMAGE_TAG=' .env 2>/dev/null; then
+              PREVIOUS_TAG=$(grep '^IMAGE_TAG=' .env | head -n 1 | cut -d '=' -f 2- | tr -d ' "\r')
+            fi
+            echo "Current running version: ${PREVIOUS_TAG:-none}"
+            echo "Deploying target version: $TAG"
+
+            # 2. Take a pre-deployment database backup snapshot before migrations run
+            echo "Taking pre-deploy database snapshot..."
+            mkdir -p backups
+            docker compose exec -T postgres pg_dump -U spoken_tutorial spoken_tutorial 2>/dev/null \
+              | gzip > "backups/pre_deploy_$(date +%Y%m%d_%H%M%S).sql.gz" \
+              || echo "::warning::Pre-deploy database snapshot skipped or failed (Postgres may not be initialized yet)"
+
+            # 3. Update IMAGE_TAG in .env
             if grep -q '^IMAGE_TAG=' .env; then
               sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$TAG|" .env
             else
@@ -199,9 +215,19 @@ jobs:
             if [ "$healthy" != "1" ]; then
               echo "::error::Deploy did not reach a healthy state within the timeout"
               echo "--- backend logs ---"
-              docker compose logs --tail 50 backend
+              docker compose logs --tail 50 backend || true
               echo "--- whisper-worker logs ---"
-              docker compose logs --tail 50 whisper-worker
+              docker compose logs --tail 50 whisper-worker || true
+
+              if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$TAG" ]; then
+                echo "Initiating automatic rollback to previous version: $PREVIOUS_TAG..."
+                sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$PREVIOUS_TAG|" .env
+                docker compose up -d --remove-orphans
+                echo "Rollback completed. Restored containers to $PREVIOUS_TAG."
+              else
+                echo "No previous tag available to roll back to."
+              fi
+
               exit 1
             fi
 
