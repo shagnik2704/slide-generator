@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, ChevronDown } from 'lucide-react';
+import { LogOut, User, ChevronDown, FolderClock } from 'lucide-react';
 
-export default function UserProfile({ compact = false }) {
+export default function UserProfile({ compact = false, onOpenCreations }) {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -36,6 +36,15 @@ export default function UserProfile({ compact = false }) {
   const handleLogout = async () => {
     await logout();
     setIsDropdownOpen(false);
+  };
+
+  const handleOpenCreations = () => {
+    setIsDropdownOpen(false);
+    if (onOpenCreations) {
+      onOpenCreations();
+    } else {
+      window.dispatchEvent(new CustomEvent('open-creations-drawer'));
+    }
   };
 
   return (
@@ -233,6 +242,35 @@ export default function UserProfile({ compact = false }) {
               </div>
             </div>
           </div>
+
+          {/* My Creations & History */}
+          <button
+            onClick={handleOpenCreations}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              width: '100%',
+              padding: '0.75rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--bg-tertiary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <FolderClock size={18} style={{ color: 'var(--accent-primary, #6366f1)' }} />
+            <span style={{ fontWeight: 500 }}>My Creations & History</span>
+          </button>
 
           {/* Logout */}
           <button

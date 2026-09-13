@@ -32,8 +32,12 @@ export function useChatArea(initialMode = 'create') {
     const [uploadMessages, setUploadMessages] = useState(() => {
         const saved = loadFromLocalStorage();
         if (saved?.uploadMessages?.length > 0) {
-            console.log('📂 Restored session from localStorage');
-            return saved.uploadMessages;
+            // Keep active in-flight session messages, but exclude completed workflows so user starts with a clean canvas
+            const filtered = saved.uploadMessages.filter(msg => msg.type !== 'workflow' || msg.status === 'processing');
+            if (filtered.length > 0) {
+                console.log('📂 Restored active session from localStorage');
+                return filtered;
+            }
         }
         return [];
     });

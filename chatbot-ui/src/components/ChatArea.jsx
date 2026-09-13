@@ -23,6 +23,7 @@ import ComplianceReport from './ComplianceReport';
 import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
 import QualityCheckModal from './QualityCheckModal';
+import CreationsDrawer from './CreationsDrawer';
 
 // Message Action Components
 import {
@@ -169,25 +170,28 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
     const [batchQualityFiles, setBatchQualityFiles] = React.useState(null); // For batch sidebar flow
     const [qualityModalMessage, setQualityModalMessage] = React.useState(null);  // For message button flow
 
-    // Restore previously submitted timed-script jobs when the user returns.
-    React.useEffect(() => {
-        let cancelled = false;
-        apiJson('/timed-script/jobs')
-            .then(({ jobs = [] }) => {
-                if (cancelled) return;
-                const restored = jobs.map(timedScriptWorkflowFromJob);
-                setUploadMessages(prev => {
-                    const existingIds = new Set(prev.map(message => message.id));
-                    return [...restored.filter(message => !existingIds.has(message.id)), ...prev];
-                });
-            })
-            .catch(() => {
-                // Job history is supplementary; the rest of ChatArea remains usable.
-            });
+    // Creations & History Drawer State
+    const [isCreationsDrawerOpen, setIsCreationsDrawerOpen] = React.useState(false);
 
-        return () => {
-            cancelled = true;
-        };
+    // Listen for custom event to open creations drawer (e.g. from sidebar or profile)
+    React.useEffect(() => {
+        const handleOpen = () => setIsCreationsDrawerOpen(true);
+        window.addEventListener('open-creations-drawer', handleOpen);
+        return () => window.removeEventListener('open-creations-drawer', handleOpen);
+    }, []);
+
+    // Load a specific creation/job onto the canvas workspace on demand
+    const handleLoadJobIntoCanvas = React.useCallback((job) => {
+        const workflow = timedScriptWorkflowFromJob(job);
+        setUploadMessages(prev => {
+            const existingIdx = prev.findIndex(m => m.id === workflow.id || m.jobId === workflow.id);
+            if (existingIdx >= 0) {
+                const updated = [...prev];
+                updated[existingIdx] = workflow;
+                return updated;
+            }
+            return [workflow, ...prev];
+        });
     }, [setUploadMessages]);
 
     // Auto-open quality modal when a quality file is staged from sidebar
@@ -840,7 +844,10 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     {/* User Profile - Compact version in header (always show on mobile) */}
                     {showSidebarToggle && (
                         <div className="header-user-profile" style={{ marginLeft: '0.5rem' }}>
-                            <UserProfile compact={true} />
+                            <UserProfile
+                                compact={true}
+                                onOpenCreations={() => setIsCreationsDrawerOpen(true)}
+                            />
                         </div>
                     )}
                 </div>
@@ -1172,6 +1179,13 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
 
             {/* Ask AI Chat - only show in outline_chat mode */}
             {mode === 'outline_chat' && <AskAIChat />}
+
+            {/* Creations & History Drawer */}
+            <CreationsDrawer
+                isOpen={isCreationsDrawerOpen}
+                onClose={() => setIsCreationsDrawerOpen(false)}
+                onLoadJob={handleLoadJobIntoCanvas}
+            />
 
             <style>{`
                 @keyframes bounce {

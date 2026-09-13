@@ -96,3 +96,78 @@ def log_activity(
         )
     except Exception as exc:
         logger.debug("Failed to schedule activity task (%s): %s", activity_type, exc)
+
+
+async def get_user_activities(
+    *,
+    user_id: Optional[str] = None,
+    email: Optional[str] = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Retrieve recent activity logs for a user."""
+    try:
+        from src.script_chat.persistence import get_pool
+
+        clean_user_id: Optional[str] = None
+        if user_id:
+            try:
+                clean_user_id = str(UUID(str(user_id)))
+            except (ValueError, TypeError, AttributeError):
+                clean_user_id = None
+
+        pool = get_pool()
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                if clean_user_id and email:
+                    await cur.execute(
+                        """
+                        SELECT id, user_id, email, activity_type, detail, status, metadata, created_at
+                        FROM user_activities
+                        WHERE user_id = %s OR email = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (clean_user_id, email, limit),
+                    )
+                elif clean_user_id:
+                    await cur.execute(
+                        """
+                        SELECT id, user_id, email, activity_type, detail, status, metadata, created_at
+                        FROM user_activities
+                        WHERE user_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (clean_user_id, limit),
+                    )
+                elif email:
+                    await cur.execute(
+                        """
+                        SELECT id, user_id, email, activity_type, detail, status, metadata, created_at
+                        FROM user_activities
+                        WHERE email = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (email, limit),
+                    )
+                else:
+                    return []
+
+                rows = await cur.fetchall()
+                results = []
+                for row in rows:
+                    results.append({
+                        "id": row[0],
+                        "user_id": str(row[1]) if row[1] else None,
+                        "email": row[2],
+                        "activity_type": row[3],
+                        "detail": row[4],
+                        "status": row[5],
+                        "metadata": row[6] or {},
+                        "created_at": row[7].isoformat() if row[7] else None,
+                    })
+                return results
+    except Exception as exc:
+        logger.debug("Failed to get user activities: %s", exc)
+        return []

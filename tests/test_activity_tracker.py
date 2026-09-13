@@ -107,6 +107,32 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             except Exception as exc:
                 self.fail(f"log_activity raised exception when no event loop: {exc}")
 
+    async def test_get_user_activities_failsafe_when_db_down(self):
+        """get_user_activities returns empty list if db pool fails."""
+        from src.activity.tracker import get_user_activities
+        with patch("src.script_chat.persistence.get_pool", side_effect=RuntimeError("DB down")):
+            res = await get_user_activities(email="test@example.com")
+            self.assertEqual(res, [])
+
+    async def test_get_user_activities_returns_empty_when_no_user_or_email(self):
+        """get_user_activities returns empty list if neither user_id nor email is provided."""
+        from src.activity.tracker import get_user_activities
+        res = await get_user_activities(user_id=None, email=None)
+        self.assertEqual(res, [])
+
+    async def test_get_my_activities_route(self):
+        """get_my_activities endpoint calls get_user_activities and returns expected dict."""
+        from types import SimpleNamespace
+        from src.api.routes.activity import get_my_activities
+
+        user = SimpleNamespace(sub=str(uuid4()), email="testuser@example.com")
+        mock_activities = [{"id": 1, "activity_type": "slide_generation", "detail": "Test"}]
+        with patch("src.api.routes.activity.get_user_activities", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = mock_activities
+            resp = await get_my_activities(current_user=user)
+            self.assertEqual(resp, {"activities": mock_activities})
+            mock_get.assert_awaited_once_with(user_id=user.sub, email=user.email, limit=50)
+
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set SCRIPT_CHAT_TEST_DATABASE_URL to run PostgreSQL integration tests")
 class ActivityTrackerPostgresIntegrationTests(unittest.IsolatedAsyncioTestCase):
