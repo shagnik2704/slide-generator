@@ -1,5 +1,6 @@
 """API endpoints for Spoken Tutorial FAQ Chatbot, Voice STT/TTS, and Admin CRUD."""
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -9,9 +10,18 @@ from src.activity.tracker import log_activity
 from src.api.auth import TokenData, get_current_user
 from src.faq.answer_service import AnswerService
 from src.faq.history import HistoryMessage
+from src.faq.pdf_service import extract_faqs_from_text, extract_text_from_pdf
 from src.faq.retriever import FaqRetriever
 from src.faq.sarvam import SarvamError, SarvamService
-from src.faq.store import FaqEntry, load_faqs, save_faqs
+from src.faq.store import (
+    FaqEntry,
+    add_or_replace_document_entries,
+    get_documents_dir,
+    list_documents,
+    load_faqs,
+    remove_document,
+    save_faqs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +106,7 @@ class FaqItemModel(BaseModel):
     question: str
     answer: str
     aliases: List[str] = Field(default_factory=list)
+    source_doc: Optional[str] = None
 
 
 class FaqUpdateRequest(BaseModel):
@@ -105,6 +116,26 @@ class FaqUpdateRequest(BaseModel):
     aliases: List[str] = Field(default_factory=list, max_length=20)
 
 
+class DocumentItemModel(BaseModel):
+    name: str
+    entry_count: int
+    is_default: bool
+    size_bytes: Optional[int] = None
+    modified_at: Optional[float] = None
+
+
+class DocumentUploadResponse(BaseModel):
+    filename: str
+    entries_extracted: int
+    message: str
+
+
+class DocumentDeleteResponse(BaseModel):
+    filename: str
+    entries_removed: int
+    message: str
+
+
 def _to_model(entry: FaqEntry) -> FaqItemModel:
     return FaqItemModel(
         id=entry.id,
@@ -112,7 +143,9 @@ def _to_model(entry: FaqEntry) -> FaqItemModel:
         question=entry.question,
         answer=entry.answer,
         aliases=entry.aliases,
+        source_doc=entry.source_doc,
     )
+
 
 
 # ==========================================
@@ -260,3 +293,103 @@ async def update_admin_faq(
     retriever.reload()
 
     return _to_model(updated)
+
+
+# ==========================================
+# Admin Document (PDF) Management Endpoints
+# ==========================================
+
+@router.get("/documents", response_model=List[DocumentItemModel])
+async def list_documents_endpoint(
+    current_user: TokenData = Depends(get_current_user),
+) -> List[DocumentItemModel]:
+    """List all source documents contributing to the FAQ knowledge base."""
+    docs = list_documents()
+    return [DocumentItemModel(**d) for d in docs]
+
+
+@router.post("/documents/upload", response_model=DocumentUploadResponse)
+async def upload_document_endpoint(
+    file: UploadFile = File(...),
+    current_user: TokenData = Depends(get_current_user),
+) -> DocumentUploadResponse:
+    """Upload a PDF, extract Q&A items via LLM, and update FAQ index."""
+    if not (file.filename and file.filename.lower().endswith(".pdf")):
+        raise HTTPException(status_code=400, detail="Only .pdf files are supported")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    if len(content) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 25 MB)")
+
+    safe_filename = Path(file.filename).name
+    docs_dir = get_documents_dir()
+    save_path = docs_dir / safe_filename
+    with open(save_path, "wb") as f:
+        f.write(content)
+
+    try:
+        raw_text = extract_text_from_pdf(content)
+        extracted = extract_faqs_from_text(raw_text, filename=safe_filename)
+    except Exception as exc:
+        logger.error("Failed to extract FAQs from PDF: %s", exc)
+        raise HTTPException(status_code=422, detail=f"Failed to extract FAQs from PDF: {str(exc)}") from exc
+
+    if not extracted:
+        raise HTTPException(status_code=422, detail="No structured FAQ items could be extracted from this PDF.")
+
+    add_or_replace_document_entries(safe_filename, extracted)
+
+    # Reload retriever in-memory index
+    retriever = get_faq_retriever()
+    retriever.reload()
+
+    # Log to PostgreSQL user_activities
+    user_id = getattr(current_user, "sub", None) if current_user else None
+    email = getattr(current_user, "email", None) if current_user else None
+    log_activity(
+        user_id=user_id,
+        email=email,
+        activity_type="faq_document_upload",
+        detail=f"Uploaded {safe_filename} ({len(extracted)} FAQs)",
+        status="success",
+        metadata={"filename": safe_filename, "entries_count": len(extracted)},
+    )
+
+    return DocumentUploadResponse(
+        filename=safe_filename,
+        entries_extracted=len(extracted),
+        message=f"Successfully extracted and indexed {len(extracted)} FAQs from {safe_filename}",
+    )
+
+
+@router.delete("/documents/{filename}", response_model=DocumentDeleteResponse)
+async def delete_document_endpoint(
+    filename: str,
+    current_user: TokenData = Depends(get_current_user),
+) -> DocumentDeleteResponse:
+    """Remove an uploaded source document and its FAQ entries."""
+    removed = remove_document(filename)
+
+    # Reload retriever in-memory index
+    retriever = get_faq_retriever()
+    retriever.reload()
+
+    user_id = getattr(current_user, "sub", None) if current_user else None
+    email = getattr(current_user, "email", None) if current_user else None
+    log_activity(
+        user_id=user_id,
+        email=email,
+        activity_type="faq_document_delete",
+        detail=f"Removed {filename} ({removed} FAQs)",
+        status="success",
+        metadata={"filename": filename, "entries_removed": removed},
+    )
+
+    return DocumentDeleteResponse(
+        filename=filename,
+        entries_removed=removed,
+        message=f"Successfully removed {filename} and deleted {removed} FAQ entries",
+    )
+
