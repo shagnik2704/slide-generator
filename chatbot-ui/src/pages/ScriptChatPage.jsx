@@ -80,12 +80,16 @@ export default function ScriptChatPage() {
       <div className="script-shell">
         <AssistantPanel
           chatLog={workflow.chatLog}
+          currentStage={workflow.currentStage}
           editInput={workflow.editInput}
           errorMessage={workflow.errorMessage}
           interruptType={workflow.interruptType}
           isLoading={workflow.isLoading}
           onApprove={workflow.approve}
+          onDownloadDocx={workflow.downloadDocx}
+          onDownloadWiki={workflow.downloadWiki}
           onEditChange={workflow.setEditInput}
+          onNewThread={workflow.newThread}
           onStart={workflow.start}
           onSubmitEdit={workflow.submitEditInstruction}
           outline={workflow.outline}

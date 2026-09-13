@@ -48,6 +48,7 @@ def generate_node(state: ScriptChatState):
     return {
         "script": dump_models(result.script),
         "script_version": state.get("script_version", 0) + 1,
+        "current_stage": "review",
         "messages": [{"role": "ai", "content": result.message}]
     }
 

@@ -143,9 +143,15 @@ export function useScriptChatWorkflow() {
 
       addChat('agent', summarizeInterrupt(data.type, data, scriptVersion));
     },
-    onDone: () => {
+    onDone: (data) => {
       setIsLoading(false);
       setProgressMessage('');
+      if (data?.stage === 'error') {
+        setCurrentStage('error');
+        setErrorMessage('Workflow failed at compliance stage.');
+        addChat('agent', 'Error: Workflow failed at compliance stage.');
+        return;
+      }
       setCurrentStage('done');
       setInterruptData(null);
       setInterruptType(null);
@@ -240,7 +246,10 @@ export function useScriptChatWorkflow() {
       setFossName(history.foss_name || null);
       setGroundingReport(history.grounding_report || null);
       setComplianceResults(history.compliance_results || null);
-      setActiveTab(tabFromInterrupt(interrupt?.type));
+      const defaultTab = restoredStage === 'done'
+        ? (history.compliance_results ? 'compliance' : (history.script?.length ? 'script' : 'validation'))
+        : tabFromInterrupt(interrupt?.type);
+      setActiveTab(defaultTab);
       setCheckpoints([]);
       setChatLog([
         ...(history.raw_outline ? [makeMessage('user', history.raw_outline)] : []),

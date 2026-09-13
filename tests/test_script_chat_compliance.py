@@ -162,6 +162,42 @@ class ScriptChatComplianceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Split sentence", context_str)
         self.assertIn("Too long text", context_str)
 
+    async def test_run_admin_script_compliance_handles_fractional_duration_evidence(self):
+        from src.compliance.workflow import run_admin_script_compliance
+        script_payload = {
+            "presentation_title": "Python Basics",
+            "title": "Python Basics",
+            "domain": "Python",
+            "tutorial": "Python Basics",
+            "learning_objectives": ["Understand syntax"],
+            "prerequisites": "None",
+            "system_requirements": "Python 3.11",
+            "outline": ["Syntax"],
+            "keywords": ["python"],
+            "meta_tags": ["python"],
+            "slides": [
+                {
+                    "slide_number": 1,
+                    "slide_type": "Title Slide",
+                    "visual_cue": "Show title",
+                    "narration": "Welcome to Python Basics Spoken Tutorial.",
+                },
+                {
+                    "slide_number": 2,
+                    "slide_type": "Learning Objectives",
+                    "visual_cue": "Show objectives",
+                    "narration": "In this tutorial we will learn basic Python syntax.",
+                },
+            ],
+        }
+        report = await run_admin_script_compliance(script_payload, tutorial_type="demo")
+        self.assertIn("checks", report)
+        self.assertIn("summary", report)
+        self.assertEqual(report["summary"]["total"], 25)
+        # Ensure duration_compliance check ran without throwing ValidationError
+        duration_check = next((c for c in report["checks"] if c["id"] == "duration_compliance"), None)
+        self.assertIsNotNone(duration_check)
+
 
 if __name__ == "__main__":
     unittest.main()

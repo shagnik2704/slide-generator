@@ -166,7 +166,13 @@ async def _stream_graph(config: dict, input_data=None):
             status=status,
             title=title,
         )
-        if interrupt_payload:
+        if current_stage == "error":
+            compliance_err = None
+            if isinstance(state.values.get("compliance_results"), dict):
+                compliance_err = state.values.get("compliance_results", {}).get("error")
+            error_message = compliance_err or f"Workflow failed at stage: {current_stage}"
+            yield _sse_event("error", {"message": error_message})
+        elif interrupt_payload:
             yield _sse_event("interrupt", interrupt_payload)
         else:
             yield _sse_event("done", {

@@ -121,5 +121,7 @@ def edit_node(state: ScriptChatState):
         "script": dump_models(result.script),
         "script_version": state.get("script_version", 0) + 1,
         "edit_instruction": None,
-        "messages": [{"role": "ai", "content": result.message}]
+        "compliance_results": None,
+        "current_stage": "review",
+        "messages": [{"role": "ai", "content": result.message}],
     }

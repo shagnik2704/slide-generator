@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Check, Loader2, MessageSquareText, Send, Sparkles, WandSparkles } from 'lucide-react';
+import { Check, Download, FileCode, Loader2, MessageSquareText, Send, Sparkles, WandSparkles } from 'lucide-react';
 import {
   Conversation,
   ConversationContent,
@@ -102,14 +102,45 @@ function Composer({
   );
 }
 
+function CompletedActions({ onDownloadDocx, onDownloadWiki, onNewThread }) {
+  return (
+    <div className="script-composer" style={{ padding: '16px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#18875f', fontWeight: 600 }}>
+        <Check size={18} />
+        <span>Workflow Complete: Script Finalized</span>
+      </div>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.4' }}>
+        Your tutorial script is ready. Download your production files:
+      </p>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+        <Button onClick={onDownloadDocx} style={{ flex: 1, gap: '6px' }} type="button">
+          <Download size={15} /> Download DOCX
+        </Button>
+        <Button onClick={onDownloadWiki} variant="outline" style={{ flex: 1, gap: '6px' }} type="button">
+          <FileCode size={15} /> Download Wiki
+        </Button>
+      </div>
+      {onNewThread && (
+        <Button onClick={onNewThread} variant="ghost" style={{ width: '100%', fontSize: '0.82rem' }} type="button">
+          + Start Another Tutorial
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function AssistantPanel({
   chatLog,
+  currentStage,
   editInput,
   errorMessage,
   interruptType,
   isLoading,
   onApprove,
+  onDownloadDocx,
+  onDownloadWiki,
   onEditChange,
+  onNewThread,
   onStart,
   onSubmitEdit,
   outline,
@@ -207,6 +238,12 @@ export function AssistantPanel({
             </PromptInputFooter>
           </PromptInput>
         </div>
+      ) : currentStage === 'done' ? (
+        <CompletedActions
+          onDownloadDocx={onDownloadDocx}
+          onDownloadWiki={onDownloadWiki}
+          onNewThread={onNewThread}
+        />
       ) : (
         <Composer
           disabled={isLoading}
