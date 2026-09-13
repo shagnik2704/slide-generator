@@ -385,33 +385,152 @@ function ScriptPanel({
 }
 
 function CompliancePanel({ complianceResults }) {
+  const [filter, setFilter] = useState('all');
+
   if (!complianceResults?.checks) return <EmptyWorkspace />;
 
   const summary = complianceResults.summary || {};
+  const checks = complianceResults.checks || [];
+  const issues = complianceResults.issues || [];
+
+  // Group issues by criteria_id
+  const issuesByCriteria = issues.reduce((acc, issue) => {
+    const key = issue.criteria_id;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(issue);
+    return acc;
+  }, {});
+
+  const filteredChecks = checks.filter((check) => {
+    if (filter === 'failed') return check.ai_review === false;
+    if (filter === 'passed') return check.ai_review === true;
+    return true;
+  });
 
   return (
     <Card className="script-artifact">
       <div className="script-artifact-header">
         <div>
           <span className="script-eyebrow">Compliance</span>
-          <h2>Pedagogy checks</h2>
+          <h2>Pedagogy & Structure Checks</h2>
         </div>
-        <div className="script-score-row">
+        <div className="script-score-row" style={{ flexWrap: 'wrap', gap: '6px' }}>
           <Badge className="script-badge success" variant="success">{summary.ai_passed || 0} passed</Badge>
           <Badge className="script-badge danger" variant="danger">{summary.ai_failed || 0} failed</Badge>
+          {summary.blockers > 0 && (
+            <Badge className="script-badge danger" variant="danger">{summary.blockers} blocker{summary.blockers > 1 ? 's' : ''}</Badge>
+          )}
+          {summary.major > 0 && (
+            <Badge className="script-badge warning" variant="warning">{summary.major} major</Badge>
+          )}
+          {summary.minor > 0 && (
+            <Badge className="script-badge outline" variant="outline">{summary.minor} minor</Badge>
+          )}
         </div>
       </div>
 
+      <div style={{ display: 'flex', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
+        <button
+          type="button"
+          onClick={() => setFilter('all')}
+          style={{
+            padding: '4px 12px',
+            borderRadius: '16px',
+            fontSize: '0.8rem',
+            border: '1px solid var(--border-color)',
+            background: filter === 'all' ? 'var(--accent-primary)' : 'transparent',
+            color: filter === 'all' ? '#fff' : 'inherit',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          All ({checks.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter('failed')}
+          style={{
+            padding: '4px 12px',
+            borderRadius: '16px',
+            fontSize: '0.8rem',
+            border: '1px solid var(--border-color)',
+            background: filter === 'failed' ? '#d23f3f' : 'transparent',
+            color: filter === 'failed' ? '#fff' : 'inherit',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          Failed ({summary.ai_failed || 0})
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter('passed')}
+          style={{
+            padding: '4px 12px',
+            borderRadius: '16px',
+            fontSize: '0.8rem',
+            border: '1px solid var(--border-color)',
+            background: filter === 'passed' ? '#18875f' : 'transparent',
+            color: filter === 'passed' ? '#fff' : 'inherit',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          Passed ({summary.ai_passed || 0})
+        </button>
+      </div>
+
       <div className="script-check-list">
-        {complianceResults.checks.map((check) => (
-          <article
-            className={check.ai_review ? 'script-check-row success' : 'script-check-row danger'}
-            key={check.id}
-          >
-            <strong>{check.criteria}</strong>
-            {check.ai_notes && <p>{check.ai_notes}</p>}
-          </article>
-        ))}
+        {filteredChecks.map((check) => {
+          const isPassed = check.ai_review === true;
+          const matchingIssues = issuesByCriteria[check.id] || [];
+          const severityVariant = check.severity === 'blocker' ? 'danger' : check.severity === 'major' ? 'warning' : 'outline';
+
+          return (
+            <article
+              className={isPassed ? 'script-check-row success' : 'script-check-row danger'}
+              key={check.id}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+                <strong style={{ fontSize: '0.92rem' }}>{check.criteria}</strong>
+                {check.severity && (
+                  <Badge variant={severityVariant} style={{ textTransform: 'capitalize', fontSize: '0.72rem' }}>
+                    {check.severity}
+                  </Badge>
+                )}
+              </div>
+              {check.ai_notes && <p style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>{check.ai_notes}</p>}
+
+              {matchingIssues.length > 0 && (
+                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed rgba(128,128,128,0.2)' }}>
+                  {matchingIssues.map((issue) => (
+                    <div key={issue.id} style={{ fontSize: '0.82rem', marginBottom: '6px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {issue.message}
+                      </div>
+                      {issue.suggested_action && (
+                        <div style={{ color: 'var(--accent-primary)', marginTop: '2px', fontStyle: 'italic' }}>
+                          💡 Fix: {issue.suggested_action}
+                        </div>
+                      )}
+                      {issue.evidence && issue.evidence.length > 0 && (
+                        <ul style={{ margin: '4px 0 0 16px', padding: 0, color: 'var(--text-secondary)' }}>
+                          {issue.evidence.map((ev, idx) => (
+                            <li key={idx}>
+                              {ev.row_number ? `Row ${ev.row_number}: ` : ''}
+                              {ev.text ? `"${ev.text}" ` : ''}
+                              {ev.reason ? `(${ev.reason})` : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          );
+        })}
       </div>
     </Card>
   );

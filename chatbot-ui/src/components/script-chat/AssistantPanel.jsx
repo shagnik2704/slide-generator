@@ -30,7 +30,7 @@ function Composer({
   onEditChange,
   onSubmitEdit,
 }) {
-  const canEdit = ['validation_review', 'metadata_review', 'script_review'].includes(interruptType);
+  const canEdit = ['validation_review', 'metadata_review', 'script_review', 'compliance_review'].includes(interruptType);
 
   if (!interruptType) return null;
 
@@ -38,7 +38,9 @@ function Composer({
     ? 'Describe the metadata change...'
     : interruptType === 'validation_review'
       ? 'Describe the outline change...'
-      : 'Describe the script change...';
+      : interruptType === 'compliance_review'
+        ? 'Describe how to resolve compliance issues (e.g. shorten row 4, bold terms)...'
+        : 'Describe the script change...';
 
   return (
     <div className="script-composer">
@@ -76,9 +78,13 @@ function Composer({
 
       <ReviewActions>
         <ReviewActionsContent>
-          <ReviewActionsTitle>Review gate</ReviewActionsTitle>
+          <ReviewActionsTitle>
+            {interruptType === 'compliance_review' ? 'Compliance review gate' : 'Review gate'}
+          </ReviewActionsTitle>
           <ReviewActionsDescription>
-            Request a change, or approve this artifact to continue.
+            {interruptType === 'compliance_review'
+              ? 'Submit an edit instruction to fix compliance issues, or approve to finalize.'
+              : 'Request a change, or approve this artifact to continue.'}
           </ReviewActionsDescription>
         </ReviewActionsContent>
         <Button
