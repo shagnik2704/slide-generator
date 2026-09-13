@@ -16,7 +16,7 @@ def escape_latex(text):
     # Extract bold text and replace with placeholders
     text = re.sub(r'\*\*(.+?)\*\*', save_bold, text)
     
-    # Now escape special LaTeX characters
+    # Now escape special LaTeX characters in a single pass to prevent double-escaping
     replacements = {
         '\\': r'\textbackslash{}',
         '&': r'\&',
@@ -30,12 +30,13 @@ def escape_latex(text):
         '^': r'\textasciicircum{}',
     }
     
-    for char, replacement in replacements.items():
-        text = text.replace(char, replacement)
+    pattern = re.compile(r'([\\&%$#_{}~^])')
+    text = pattern.sub(lambda m: replacements[m.group(1)], text)
     
-    # Restore bold text with LaTeX formatting
+    # Restore bold text with LaTeX formatting, also escaping characters inside bold
     for i, bold_text in enumerate(bold_parts):
-        text = text.replace(f'XBOLDMARKER{i}X', r'\textbf{' + bold_text + '}')
+        escaped_bold = pattern.sub(lambda m: replacements[m.group(1)], bold_text)
+        text = text.replace(f'XBOLDMARKER{i}X', r'\textbf{' + escaped_bold + '}')
     
     return text
 

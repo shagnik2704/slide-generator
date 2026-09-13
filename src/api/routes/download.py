@@ -25,6 +25,8 @@ async def download_outline(filename: str, current_user: TokenData = Depends(get_
             media_type="text/markdown" if filename.endswith('.md') else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             filename=filename
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -60,6 +62,8 @@ async def download_image(project_id: str, filename: str):
             media_type=media_type,
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -84,6 +88,8 @@ async def download_zip(project_id: str, filename: str):
             media_type='application/zip',
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -107,5 +113,7 @@ async def download_redesign_file(filename: str):
             media_type=media_type,
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
