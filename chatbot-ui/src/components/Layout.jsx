@@ -49,6 +49,12 @@ const Layout = ({ mode = 'create' }) => {
     }
   };
 
+  const handleSwitchToChatbot = () => {
+    if (chatAreaRef.current?.setMode) {
+      chatAreaRef.current.setMode('chatbot');
+    }
+  };
+
   const showSidebar = true;
 
   return (
@@ -78,6 +84,7 @@ const Layout = ({ mode = 'create' }) => {
               onOpenBatchModal={handleOpenBatchModal}
               onOpenBatchQualityModal={handleOpenBatchQualityModal}
               onSwitchToRedesign={handleSwitchToRedesign}
+              onSwitchToChatbot={handleSwitchToChatbot}
             />
           )
         )}

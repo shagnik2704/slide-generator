@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw, Image, Mic, Languages, Presentation } from 'lucide-react';
+import { Menu, UploadCloud, MessageSquare, Trash2, RefreshCw, Image, Mic, Languages, Presentation, Bot } from 'lucide-react';
 
 // Components
 import MessageBubble from './MessageBubble';
@@ -24,6 +24,7 @@ import CollapsibleSection from './CollapsibleSection';
 import WorkflowCard from './WorkflowCard';
 import QualityCheckModal from './QualityCheckModal';
 import CreationsDrawer from './CreationsDrawer';
+import ChatbotView from './chatbot/ChatbotView';
 
 // Message Action Components
 import {
@@ -804,6 +805,31 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                             <RefreshCw size={16} />
                             Redesign
                         </Link>
+                        <Link
+                            to="/create"
+                            onClick={(e) => { e.preventDefault(); setMode('chatbot'); }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                padding: '0.3rem 0.6rem',
+                                borderRadius: '0.6rem',
+                                border: 'none',
+                                background: mode === 'chatbot'
+                                    ? 'var(--accent-primary)'
+                                    : 'transparent',
+                                color: mode === 'chatbot' ? 'white' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                boxShadow: mode === 'chatbot' ? 'var(--shadow-sm)' : 'none',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Bot size={16} />
+                            Chatbot
+                        </Link>
                     </div>
 
                     {/* Clear Session button */}
@@ -853,8 +879,8 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 </div>
             </header>
 
-            {/* Messages Area - always shown except for create mode welcome screen */}
-            {!(mode === 'create' && uploadMessages.length === 0) && (
+            {/* Messages Area - always shown except for create mode welcome screen and chatbot mode */}
+            {!(mode === 'create' && uploadMessages.length === 0) && mode !== 'chatbot' && (
                 <div style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -1127,8 +1153,15 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                 </div>
             )}
 
-            {/* Input Area - hidden in redesign mode */}
-            {mode !== 'redesign' && (
+            {/* Chatbot View */}
+            {mode === 'chatbot' && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', paddingTop: '4.8rem', overflow: 'hidden' }}>
+                    <ChatbotView />
+                </div>
+            )}
+
+            {/* Input Area - hidden in redesign and chatbot mode */}
+            {mode !== 'redesign' && mode !== 'chatbot' && (
                 <InputArea
                     mode={mode}
                     onSendMessage={handleSendMessage}

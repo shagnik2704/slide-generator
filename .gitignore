@@ -23,7 +23,8 @@ coverage.xml
 htmlcov/
 
 # Keep the lockfile tracked for reproducible builds
-data/
+data/*
+!data/spoken_tutorial_faqs.json
 .uv-cache/
 .uvcache/
 

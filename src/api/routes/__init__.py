@@ -17,6 +17,7 @@ from src.api.routes.redesign import router as redesign_router
 from src.api.routes.timed_script import router as timed_script_router
 from src.api.routes.slides_translation import router as slides_translation_router
 from src.api.routes.activity import router as activity_router
+from src.api.routes.faq import router as faq_router
 
 __all__ = [
     "upload_router",
@@ -33,4 +34,5 @@ __all__ = [
     "timed_script_router",
     "slides_translation_router",
     "activity_router",
+    "faq_router",
 ]

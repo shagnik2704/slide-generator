@@ -100,6 +100,7 @@ from src.api.routes import (
     timed_script_router,
     slides_translation_router,
     activity_router,
+    faq_router,
 )
 from src.api.routes.auth import router as auth_router
 from src.script_chat.routes import router as script_chat_router
@@ -121,6 +122,7 @@ app.include_router(timed_script_router)
 app.include_router(slides_translation_router)
 app.include_router(script_chat_router)
 app.include_router(activity_router)
+app.include_router(faq_router)
 
 # Global exception handler for API exceptions
 @app.exception_handler(APIException)
