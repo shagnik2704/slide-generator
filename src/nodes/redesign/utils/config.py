@@ -40,9 +40,10 @@ def get_llm_openai():
     """Lazily initialize OpenAI LLM."""
     global _llm_openai
     if _llm_openai is None:
+        api_key = os.getenv("OPENAI_API_KEY") or "mock-key-for-initialization"
         _llm_openai = ChatOpenAI(
             model="gpt-4o-mini-2024-07-18",
-            api_key=os.getenv("OPENAI_API_KEY")
+            api_key=api_key
         )
     return _llm_openai
 
@@ -51,9 +52,10 @@ def get_llm_gemini():
     """Lazily initialize Google Gemini LLM."""
     global _llm_gemini
     if _llm_gemini is None:
+        api_key = os.getenv("GOOGLE_API_KEY") or "mock-key-for-initialization"
         _llm_gemini = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash", 
-            google_api_key=os.getenv("GOOGLE_API_KEY")  # Fixed: use google_api_key
+            google_api_key=api_key
         )
     return _llm_gemini
 
@@ -62,7 +64,8 @@ def get_search_client():
     """Lazily initialize Tavily search client."""
     global _search_client
     if _search_client is None:
-        _search_client = TavilyClient(api_key=os.getenv("TAVILY_KEY"))
+        api_key = os.getenv("TAVILY_KEY") or "mock-key-for-initialization"
+        _search_client = TavilyClient(api_key=api_key)
     return _search_client
 
 
@@ -74,7 +77,7 @@ class _LazyLLM:
     @property
     def __class__(self):
         if _LazyLLM._instance is None:
-            _LazyLLM._instance = get_llm_openai()
+            return ChatOpenAI
         return _LazyLLM._instance.__class__
     
     def __getattr__(self, name):

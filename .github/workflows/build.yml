@@ -30,6 +30,11 @@ jobs:
           uv sync --extra whisper-worker
 
       - name: Run Python backend tests
+        env:
+          OPENAI_API_KEY: "mock-openai-key-for-ci"
+          GOOGLE_API_KEY: "mock-google-key-for-ci"
+          SARVAM_API_KEY: "mock-sarvam-key-for-ci"
+          TAVILY_KEY: "mock-tavily-key-for-ci"
         run: |
           uv run python -m unittest discover tests
 
