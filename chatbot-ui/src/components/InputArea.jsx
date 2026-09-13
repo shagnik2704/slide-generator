@@ -394,10 +394,7 @@ const FilePreviewCard = ({ file, uploadType, onConfirm, onCancel, disabled }) =>
 
 const InputArea = ({
     mode = 'create',
-    onSendMessage,
-    onUploadScript,
     onSendText,
-    onScriptToWiki,
     disabled,
     isWelcome = false,
     // Shared staging props (from useChatArea)

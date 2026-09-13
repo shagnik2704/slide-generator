@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { User, Bot, Check, X, Edit2, Save, XCircle, Eye, Share2, Plus, Trash2, Download } from 'lucide-react';
-import { apiJson, API_URL } from '../services/api';
+import { User, Bot, Check, X, Edit2, Save, XCircle, Download } from 'lucide-react';
+import { API_URL } from '../services/api';
 
-const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareComplete }) => {
+const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareComplete: _onShareComplete }) => {
     const isUser = message.role === 'user';
     const needsConfirmation = message.needsConfirmation && !isUser;
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(message.content);
     const [isSaving, setIsSaving] = useState(false);
-    
-    // Share form state
-    const [showShareForm, setShowShareForm] = useState(false);
-    const [recipients, setRecipients] = useState([{ email: '', role: 'writer' }]);
-    const [isSharing, setIsSharing] = useState(false);
-    const [shareMessage, setShareMessage] = useState(null);
     
     // Show edit button only for user messages in outline_chat mode that have a fieldName
     const canEdit = isUser && mode === 'outline_chat' && message.fieldName && !isEditing;
@@ -27,63 +21,6 @@ const MessageBubble = ({ message, onConfirmation, onEditAnswer, mode, onShareCom
     const handleCancel = () => {
         setIsEditing(false);
         setEditValue(message.content);
-    };
-    
-    const handleAddRecipient = () => {
-        setRecipients([...recipients, { email: '', role: 'writer' }]);
-    };
-
-    const handleRemoveRecipient = (index) => {
-        if (recipients.length > 1) {
-            setRecipients(recipients.filter((_, i) => i !== index));
-        }
-    };
-
-    const handleRecipientChange = (index, field, value) => {
-        const newRecipients = [...recipients];
-        newRecipients[index][field] = value;
-        setRecipients(newRecipients);
-    };
-
-    const handleShareSubmit = async () => {
-        const validRecipients = recipients.filter(r => r.email.trim());
-        if (validRecipients.length === 0) {
-            setShareMessage({ type: 'error', text: 'Please enter at least one email address' });
-            return;
-        }
-
-        setIsSharing(true);
-        setShareMessage(null);
-
-        try {
-            const data = await apiJson('/redesign/share', {
-                method: 'POST',
-                body: JSON.stringify({
-                    url: message.previewButton.url,
-                    recipients: validRecipients
-                }),
-            });
-
-            setShareMessage({ type: 'success', text: data.message });
-            
-            // Call the callback to add a message showing share details
-            if (onShareComplete) {
-                console.log('Calling onShareComplete with recipients:', validRecipients);
-                onShareComplete(validRecipients);
-            } else {
-                console.log('onShareComplete callback not available');
-            }
-            
-            setTimeout(() => {
-                setRecipients([{ email: '', role: 'writer' }]);
-                setShowShareForm(false);
-            }, 1500);
-        } catch (error) {
-            console.error('Error sharing:', error);
-            setShareMessage({ type: 'error', text: error.message || 'Failed to share the sheet' });
-        } finally {
-            setIsSharing(false);
-        }
     };
     
     const handleSave = async () => {

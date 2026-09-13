@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import { apiFormData, apiJson } from '../services/api';
+import { apiFormData } from '../services/api';
 
 /**
  * Hook for upload-related handlers.

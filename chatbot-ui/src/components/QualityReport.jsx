@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Download, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
@@ -14,9 +14,7 @@ const QualityReport = ({ report, isOpen, onClose }) => {
 
     const {
         checks = [],
-        summary = {},
         translated_script: translatedScript,
-        language_code: languageCode = 'hi',
         language_name: languageName = 'Hindi',
         language_native: languageNative = 'हिंदी'
     } = report;

@@ -8,7 +8,7 @@ import QualityReport from './QualityReport';
  * with expandable rows to view individual reports.
  * @param {string} type - 'compliance' or 'quality' to determine which report to render
  */
-const BatchResultsList = ({ batchResults, batchSummary, type = 'compliance' }) => {
+const BatchResultsList = ({ batchResults, type = 'compliance' }) => {
     // Use a Set to allow multiple reports open at the same time
     const [expandedIndices, setExpandedIndices] = useState(new Set());
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Send, Loader2 } from 'lucide-react';
 import { useVoiceRecorder } from './useVoiceRecorder';
 
@@ -7,7 +7,10 @@ export function ChatbotComposer({ onSend, disabled, voiceEnabled }) {
     const [voiceError, setVoiceError] = useState(null);
     const textareaRef = useRef(null);
     const inputRef = useRef(input);
-    inputRef.current = input;
+
+    useEffect(() => {
+        inputRef.current = input;
+    }, [input]);
 
     const resize = useCallback(() => {
         const el = textareaRef.current;

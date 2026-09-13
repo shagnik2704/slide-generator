@@ -10,10 +10,8 @@ export default function RedesignForm({ onSubmit, onCancel }) {
     const navigate = useNavigate();
     const [step, setStep] = useState('generate'); // 'generate' | 'progress' | 'preview'
     const [generatedUrl, setGeneratedUrl] = useState('');
-    const [hasShared, setHasShared] = useState(false);
     const [fossName, setFossName] = useState('');
     const [language, setLanguage] = useState('English');
-    const [recipients, setRecipients] = useState([{ email: '', role: 'writer' }]);
     const [errors, setErrors] = useState({});
     
     // Progress States
@@ -32,28 +30,6 @@ export default function RedesignForm({ onSubmit, onCancel }) {
         if (currentStage === 'failed') return false;
         if (currentStage === 'completed') return true;
         return keyIdx < currentIdx;
-    };
-
-    const handleAddRecipient = () => {
-        setRecipients([...recipients, { email: '', role: 'writer' }]);
-    };
-
-    const handleRemoveRecipient = (index) => {
-        if (recipients.length > 1) {
-            setRecipients(recipients.filter((_, i) => i !== index));
-        }
-    };
-
-    const handleRecipientChange = (index, field, value) => {
-        const newRecipients = [...recipients];
-        newRecipients[index][field] = value;
-        setRecipients(newRecipients);
-    };
-
-    const validateEmail = (email) => {
-        if (!email) return true; // Empty emails are allowed (will be filtered out)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
     };
 
     const handleGenerate = async (e) => {
@@ -101,36 +77,6 @@ export default function RedesignForm({ onSubmit, onCancel }) {
             setFailureReason(err.message || 'An unknown error occurred during tutorial redesign.');
             setStep('failed');
         }
-    };
-
-    const handleShare = async (e) => {
-        e.preventDefault();
-        
-        // Validation
-        const newErrors = {};
-        const invalidRecipients = recipients.filter(recipient => recipient.email && !validateEmail(recipient.email));
-        if (invalidRecipients.length > 0) {
-            newErrors.emails = 'Please enter valid email addresses';
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
-        // Filter out empty emails
-        const validRecipients = recipients.filter(recipient => recipient.email.trim() !== '');
-
-        // Submit share request
-        await onSubmit({
-            type: 'share',
-            url: generatedUrl,
-            recipients: validRecipients
-        });
-
-        setHasShared(true);
-
-        // Keep the form open for further actions
     };
 
     const inputStyle = {

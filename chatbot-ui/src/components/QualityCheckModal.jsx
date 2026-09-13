@@ -18,22 +18,25 @@ export default function QualityCheckModal({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch supported languages on mount
-    useEffect(() => {
-        if (isOpen) {
-            fetchLanguages();
-        }
-    }, [isOpen]);
-
     const fetchLanguages = async () => {
+        setIsLoading(true);
         try {
             const data = await apiJson('/translation/languages');
             setLanguages(data);
         } catch (err) {
             console.error('Failed to fetch languages:', err);
             setError('Failed to load languages');
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    // Fetch supported languages on mount
+    useEffect(() => {
+        if (isOpen) {
+            fetchLanguages();
+        }
+    }, [isOpen]);
 
     const handleSubmit = async () => {
         if (!selectedLanguage) return;
