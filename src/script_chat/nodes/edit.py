@@ -34,9 +34,18 @@ def _compliance_edit_context(compliance_results: dict | None) -> str:
     issues = [
         {
             "criteria_id": issue.get("criteria_id"),
+            "severity": issue.get("severity"),
             "message": issue.get("message"),
             "suggested_action": issue.get("suggested_action"),
-            "evidence": issue.get("evidence", [])[:3],
+            "evidence": [
+                {
+                    "row_number": ev.get("row_number") if isinstance(ev, dict) else getattr(ev, "row_number", None),
+                    "field": ev.get("field") if isinstance(ev, dict) else getattr(ev, "field", None),
+                    "text": (ev.get("text") if isinstance(ev, dict) else getattr(ev, "text", ""))[:120],
+                    "reason": ev.get("reason") if isinstance(ev, dict) else getattr(ev, "reason", None),
+                }
+                for ev in (issue.get("evidence", []) or [])[:3]
+            ],
         }
         for issue in compliance_results.get("issues", [])[:10]
     ]

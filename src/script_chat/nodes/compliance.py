@@ -1,14 +1,16 @@
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
-from src.services.compliance_service import check_compliance
+from src.compliance.workflow import run_admin_script_compliance
 from src.script_chat.schemas import dump_models, parse_script
 
 async def compliance_node(state: ScriptChatState):
-    """Runs the existing compliance checks on the approved script."""
+    """Runs the 25-criteria evidence-based compliance checks on the approved script."""
     writer = get_stream_writer()
     script = state.get("script", [])
     metadata = state.get("metadata", {})
+    raw_outline = state.get("raw_outline", "")
+    foss_name = state.get("foss_name")
     
     if not script:
         writer({"status": "Error: No script to check", "progress": 100})
@@ -22,17 +24,29 @@ async def compliance_node(state: ScriptChatState):
     
     writer({"status": "Preparing script for compliance checks...", "progress": 10})
     
-    # The existing check_compliance expects a dict with a "slides" key
-    # and optionally other metadata fields
+    metadata_dict = metadata.model_dump() if hasattr(metadata, "model_dump") else (metadata or {})
+    title = metadata_dict.get("title", "Untitled")
+    outline_topics = metadata_dict.get("outline_topics", [])
+    
+    # Full metadata payload expected by run_admin_script_compliance
     json_script = {
-        "presentation_title": metadata.get("title", "Untitled"),
+        "presentation_title": title,
+        "title": title,
+        "domain": foss_name or title,
+        "tutorial": title,
+        "learning_objectives": metadata_dict.get("learning_objectives", []),
+        "prerequisites": metadata_dict.get("prerequisites", ""),
+        "system_requirements": metadata_dict.get("system_requirements", ""),
+        "outline": outline_topics if outline_topics else ([raw_outline] if raw_outline else []),
+        "keywords": metadata_dict.get("meta_tags", []),
+        "meta_tags": metadata_dict.get("meta_tags", []),
         "slides": script_payload
     }
     
-    writer({"status": "Running admin compliance checks (16 criteria)...", "progress": 30})
+    writer({"status": "Running admin compliance checks (25 criteria)...", "progress": 30})
     
     try:
-        results = await check_compliance(json_script, tutorial_type="demo")
+        results = await run_admin_script_compliance(json_script, tutorial_type="demo")
     except Exception as e:
         writer({"status": f"Compliance check failed: {str(e)}", "progress": 100})
         return {
@@ -40,12 +54,15 @@ async def compliance_node(state: ScriptChatState):
             "compliance_results": {"error": str(e)}
         }
     
-    # Calculate pass rate for the progress message
+    # Calculate pass rate and severities for the progress message
     summary = results.get("summary", {})
     passed = summary.get("ai_passed", 0)
-    total = summary.get("total", 0)
+    total = summary.get("total", len(results.get("checks", [])))
+    blockers = summary.get("blockers", 0)
+    major = summary.get("major", 0)
     
-    writer({"status": f"Compliance complete: {passed}/{total} checks passed", "progress": 100})
+    status_suffix = f" ({blockers} blockers, {major} major)" if (blockers or major) else ""
+    writer({"status": f"Compliance complete: {passed}/{total} checks passed{status_suffix}", "progress": 100})
     
     return {
         "compliance_results": results
@@ -55,12 +72,14 @@ def compliance_review_node(state: ScriptChatState):
     """Surfaces compliance results for HITL review."""
     compliance_results = state.get("compliance_results", {})
     summary = compliance_results.get("summary", {})
+    issues = compliance_results.get("issues", [])
     
     user_decision = interrupt({
         "type": "compliance_review",
         "results": compliance_results,
         "summary": summary,
-        "message": "Review the compliance results. Approve to finalize, or go back to edit the script."
+        "issues": issues,
+        "message": "Review the compliance results. Approve to finalize, or request edits to resolve issues."
     })
     
     if not user_decision or not isinstance(user_decision, dict):
@@ -72,9 +91,11 @@ def compliance_review_node(state: ScriptChatState):
         return {"current_stage": "done"}
     elif action == "edit":
         # User wants to go back and fix issues found by compliance
+        user_msg = user_decision.get("instruction") or "Fix the compliance issues found above."
         return {
             "current_stage": "edit",
-            "edit_instruction": user_decision.get("instruction", "Fix the compliance issues found above.")
+            "edit_instruction": user_msg,
+            "messages": [{"role": "user", "content": user_msg}]
         }
 
     return {"current_stage": "error"}
