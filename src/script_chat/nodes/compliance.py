@@ -1,8 +1,11 @@
+import logging
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 from src.compliance.workflow import run_admin_script_compliance
 from src.script_chat.schemas import dump_models, parse_script
+
+logger = logging.getLogger(__name__)
 
 async def compliance_node(state: ScriptChatState):
     """Runs the 25-criteria evidence-based compliance checks on the approved script."""
@@ -48,6 +51,7 @@ async def compliance_node(state: ScriptChatState):
     try:
         results = await run_admin_script_compliance(json_script, tutorial_type="demo")
     except Exception as e:
+        logger.exception("Compliance check failed with error: %s", e)
         writer({"status": f"Compliance check failed: {str(e)}", "progress": 100})
         return {
             "current_stage": "error",

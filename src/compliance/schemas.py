@@ -54,7 +54,7 @@ class Evidence(BaseModel):
     start_offset: Optional[int] = None
     end_offset: Optional[int] = None
     reason: Optional[str] = None
-    length: Optional[int] = None
+    length: Optional[float] = None
 
 
 class ComplianceIssue(BaseModel):
