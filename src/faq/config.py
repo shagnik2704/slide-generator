@@ -2,6 +2,29 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from dotenv import load_dotenv
+
+project_root = Path(__file__).resolve().parents[2]
+load_dotenv(dotenv_path=project_root / ".env")
+
+
+def resolve_faqs_path() -> Path:
+    """Find the spoken_tutorial_faqs.json file, preferring project data/ or bundled src/faq/data/."""
+    env_path = os.getenv("FAQS_PATH")
+    if env_path:
+        p = Path(env_path)
+        if p.exists():
+            return p
+
+    root_data = Path(__file__).resolve().parents[2] / "data" / "spoken_tutorial_faqs.json"
+    if root_data.exists():
+        return root_data
+
+    bundled = Path(__file__).resolve().parent / "data" / "spoken_tutorial_faqs.json"
+    if bundled.exists():
+        return bundled
+
+    return root_data
 
 
 @dataclass(frozen=True)
@@ -30,7 +53,7 @@ class FaqSettings:
 
     max_history_messages: int = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))
 
-    faqs_path: Path = Path(__file__).resolve().parents[2] / "data" / "spoken_tutorial_faqs.json"
+    faqs_path: Path = resolve_faqs_path()
 
 
 def get_faq_settings() -> FaqSettings:
@@ -38,7 +61,9 @@ def get_faq_settings() -> FaqSettings:
     return FaqSettings(
         openai_api_key=os.getenv("OPENAI_API_KEY", ""),
         sarvam_api_key=os.getenv("SARVAM_API_KEY", ""),
+        faqs_path=resolve_faqs_path(),
     )
 
 
 settings = get_faq_settings()
+

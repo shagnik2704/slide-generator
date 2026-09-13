@@ -25,7 +25,8 @@ output/
 
 uploads/
 
-data/
+data/*
+!data/spoken_tutorial_faqs.json
 
 static/
 

@@ -90,6 +90,7 @@ export default function ChatbotView() {
             });
         } catch (err) {
             console.error('FAQ Chat error:', err);
+            const errorMessage = err?.message || 'Sorry, I encountered an error connecting to the FAQ assistant. Please try again.';
             setMessages((prev) => {
                 const filtered = prev.filter((m) => m.id !== loadingMsg.id);
                 return [
@@ -97,7 +98,7 @@ export default function ChatbotView() {
                     {
                         id: String(Date.now() + 2),
                         role: 'assistant',
-                        content: 'Sorry, I encountered an error connecting to the FAQ assistant. Please try again.',
+                        content: errorMessage,
                         error: true,
                     },
                 ];

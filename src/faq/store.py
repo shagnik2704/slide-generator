@@ -23,6 +23,11 @@ class FaqEntry:
 def load_faqs(path: Optional[Path] = None) -> List[FaqEntry]:
     """Load FAQ entries from JSON storage."""
     faq_path = path or settings.faqs_path
+    if not faq_path.exists():
+        bundled = Path(__file__).resolve().parent / "data" / "spoken_tutorial_faqs.json"
+        if bundled.exists():
+            faq_path = bundled
+
     with open(faq_path, encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -41,6 +46,9 @@ def load_faqs(path: Optional[Path] = None) -> List[FaqEntry]:
 def save_faqs(entries: List[FaqEntry], path: Optional[Path] = None) -> None:
     """Save FAQ entries to JSON storage."""
     faq_path = path or settings.faqs_path
+    if not faq_path.parent.exists():
+        faq_path.parent.mkdir(parents=True, exist_ok=True)
+
     payload = [
         {
             "id": entry.id,
@@ -54,3 +62,4 @@ def save_faqs(entries: List[FaqEntry], path: Optional[Path] = None) -> None:
     with open(faq_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
         f.write("\n")
+
