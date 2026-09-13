@@ -45,10 +45,11 @@ jobs:
           cache: npm
           cache-dependency-path: chatbot-ui/package-lock.json
 
-      - name: Build frontend
+      - name: Lint and Build frontend
         working-directory: ./chatbot-ui
         run: |
           npm ci
+          npm run lint
           npm run build
 
   build:

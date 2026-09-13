@@ -16,7 +16,6 @@ export default function MediaWikiExportActions({
 
     // Support both snake_case and camelCase from backend
     const content = msg.mediawikiContent || msg.mediawiki_content;
-    const downloadUrl = msg.mediawikiFileUrl || msg.mediawiki_file_url;
 
     return (
         <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>

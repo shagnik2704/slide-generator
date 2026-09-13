@@ -125,7 +125,6 @@ const ShareRedesignModal = ({ isOpen, onClose, url }) => {
         padding: '0.75rem 1.5rem',
         borderRadius: '10px',
         fontWeight: 600,
-        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',

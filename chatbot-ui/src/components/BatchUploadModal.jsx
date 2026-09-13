@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Upload, FileText, Folder, Check, Trash2, AlertCircle } from 'lucide-react';
 
 const BatchUploadModal = ({ isOpen, onClose, onUpload }) => {

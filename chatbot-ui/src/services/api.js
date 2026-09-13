@@ -20,7 +20,7 @@ function getToken() {
  * @param {string} endpoint - API endpoint to check if it's public
  * @throws {Error} - If authentication/authorization error occurs
  */
-function handleAuthError(response, endpoint = '') {
+function handleAuthError(response, _endpoint = '') {
     if (response.status === 401) {
         // Unauthorized - clear token and redirect to login
         localStorage.removeItem(TOKEN_KEY);

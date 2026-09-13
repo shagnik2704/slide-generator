@@ -16,7 +16,7 @@ const stripMarkdown = (text) => {
  * ImageWorkflow - Sentence-based image generation workflow.
  * Each row's narration is split into sentences, with one image per sentence.
  */
-const ImageWorkflow = ({ enhancedPrompts, projectId, onClose }) => {
+const ImageWorkflow = ({ enhancedPrompts, projectId }) => {
     const STORAGE_KEY = `image_workflow_v2_${projectId}`;
 
     // Flatten sentences into displayable rows

@@ -25,22 +25,25 @@ export default function TranslationModal({
     const isSlideMode = mode === 'slides';
     const allowMultiple = !isSlideMode;  // Slides mode = single language only
 
-    // Fetch supported languages on mount
-    useEffect(() => {
-        if (isOpen) {
-            fetchLanguages();
-        }
-    }, [isOpen]);
-
     const fetchLanguages = async () => {
+        setIsLoading(true);
         try {
             const data = await apiJson('/translation/languages');
             setLanguages(data);
         } catch (err) {
             console.error('Failed to fetch languages:', err);
             setError('Failed to load languages');
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    // Fetch supported languages on mount
+    useEffect(() => {
+        if (isOpen) {
+            fetchLanguages();
+        }
+    }, [isOpen]);
 
     const toggleLanguage = (code) => {
         if (allowMultiple) {

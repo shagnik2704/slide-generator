@@ -7,7 +7,16 @@ import FeedbackModal from './FeedbackModal';
 import AudioPatchModal from './AudioPatchModal';
 import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign, onSwitchToChatbot }) => {
+const SidebarContext = React.createContext(false);
+
+// Wrapper component for conditional tooltip declared outside render
+function TooltipWrapper({ children, text }) {
+    const isOpen = React.useContext(SidebarContext);
+    if (isOpen) return children;
+    return <Tooltip text={text} position="right">{children}</Tooltip>;
+}
+
+const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides: _onCreateSlides, onOpenBatchModal, onOpenBatchQualityModal, onSwitchToRedesign, onSwitchToChatbot }) => {
     const navigate = useNavigate();
     const collapsedWidth = '60px';
     const expandedWidth = '280px';
@@ -149,14 +158,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
         fontSize: '0.8rem'
     };
 
-    // Wrapper component for conditional tooltip
-    const TooltipWrapper = ({ children, text }) => {
-        // Only show tooltip when sidebar is collapsed
-        if (isOpen) return children;
-        return <Tooltip text={text} position="right">{children}</Tooltip>;
-    };
-
     return (
+        <SidebarContext.Provider value={isOpen}>
         <aside
             className={`sidebar-container ${isOpen ? 'sidebar-open' : ''}`}
             style={{
@@ -745,6 +748,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides, onOpenBat
                 onClose={() => setIsAudioPatchModalOpen(false)}
             />
         </aside>
+        </SidebarContext.Provider>
     );
 };
 

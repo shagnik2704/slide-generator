@@ -12,7 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
  * - projectId: Project ID for reference
  * - onClose: Close the gallery
  */
-const ImageGallery = ({ imageData, projectId, onClose }) => {
+const ImageGallery = ({ imageData, projectId: _projectId, onClose }) => {
     const [selectedImage, setSelectedImage] = useState(null);
 
     const { images = [], zip_url, generated = 0, failed = 0 } = imageData || {};
@@ -118,70 +118,6 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
         background: 'var(--bg-tertiary)',
         color: 'var(--text-primary)'
     };
-
-    // Modal for enlarged image
-    const Modal = ({ image, onClose }) => (
-        <div
-            onClick={onClose}
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.85)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-                padding: '2rem'
-            }}
-        >
-            <div
-                onClick={e => e.stopPropagation()}
-                style={{
-                    background: 'var(--bg-secondary)',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    maxWidth: '90vw',
-                    maxHeight: '90vh'
-                }}
-            >
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '1rem',
-                    borderBottom: '1px solid var(--border-color)'
-                }}>
-                    <span style={{ fontWeight: 600 }}>
-                        Row {image.slide_number}
-                    </span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <a
-                            href={getDownloadUrl(image.url)}
-                            style={{ ...secondaryButtonStyle, textDecoration: 'none' }}
-                        >
-                            <Download size={16} /> Download
-                        </a>
-                        <button onClick={onClose} style={secondaryButtonStyle}>
-                            <X size={16} />
-                        </button>
-                    </div>
-                </div>
-                <img
-                    src={getImageUrl(image.url)}
-                    alt={`Slide ${image.slide_number}`}
-                    style={{
-                        display: 'block',
-                        maxWidth: '100%',
-                        maxHeight: 'calc(90vh - 80px)',
-                        objectFit: 'contain'
-                    }}
-                />
-            </div>
-        </div>
-    );
 
     return (
         <div style={containerStyle}>
@@ -334,7 +270,66 @@ const ImageGallery = ({ imageData, projectId, onClose }) => {
 
             {/* Modal */}
             {selectedImage && (
-                <Modal image={selectedImage} onClose={() => setSelectedImage(null)} />
+                <div
+                    onClick={() => setSelectedImage(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '2rem'
+                    }}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: 'var(--bg-secondary)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            maxWidth: '90vw',
+                            maxHeight: '90vh'
+                        }}
+                    >
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                        }}>
+                            <span style={{ fontWeight: 600 }}>
+                                Row {selectedImage.slide_number}
+                            </span>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <a
+                                    href={getDownloadUrl(selectedImage.url)}
+                                    style={{ ...secondaryButtonStyle, textDecoration: 'none' }}
+                                >
+                                    <Download size={16} /> Download
+                                </a>
+                                <button onClick={() => setSelectedImage(null)} style={secondaryButtonStyle}>
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        <img
+                            src={getImageUrl(selectedImage.url)}
+                            alt={`Slide ${selectedImage.slide_number}`}
+                            style={{
+                                display: 'block',
+                                maxWidth: '100%',
+                                maxHeight: 'calc(90vh - 80px)',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

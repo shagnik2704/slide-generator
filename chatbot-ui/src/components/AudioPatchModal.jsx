@@ -89,6 +89,7 @@ export default function AudioPatchModal({
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, text, isGenerating, speaker, pace, language]);
 
     // Clean up audio when modal closes

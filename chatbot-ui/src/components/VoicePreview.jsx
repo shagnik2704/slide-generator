@@ -233,7 +233,6 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
         duration_estimate,
     } = voiceData;
 
-    const hasSlideAudio = Object.keys(localSlideAudio).length > 0;
     const hasFullAudio = Boolean(localFullAudio);
     const hasRows = allSlideNumbers.length > 0;
     // Keep rows collapsed by default unless explicitly opened, or if there is no full audio to play
@@ -269,7 +268,7 @@ export default function VoicePreview({ voiceData, jsonScript, projectId, isOpen 
                     x: rect.left + rect.width / 2,
                     y: rect.top - 10,
                 });
-            } catch (e) {
+            } catch {
                 setSelectionTooltip(null);
             }
         } else {
