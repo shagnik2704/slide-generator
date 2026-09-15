@@ -258,14 +258,22 @@ export function useScriptChatWorkflow() {
 
       if (!interrupt && ['created', 'running'].includes(history.status)) {
         connectToThread(nextThreadId);
-      } else {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message);
     }
   }, [connectToThread, stopStream]);
+
+  // Support deep-linking via ?thread_id=... from Creations Drawer or external links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetThreadId = params.get('thread_id');
+    if (targetThreadId) {
+      void openThread(targetThreadId);
+    }
+  }, [openThread]);
 
   const archiveSavedThread = useCallback(async (targetThreadId) => {
     if (!targetThreadId) return;

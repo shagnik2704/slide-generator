@@ -133,6 +133,44 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(resp, {"activities": mock_activities})
             mock_get.assert_awaited_once_with(user_id=user.sub, email=user.email, limit=50)
 
+    async def test_get_user_creations_failsafe_when_db_down(self):
+        """get_user_creations returns empty dict structure if db pool fails."""
+        from src.activity.tracker import get_user_creations
+        with patch("src.script_chat.persistence.get_pool", side_effect=RuntimeError("DB down")):
+            res = await get_user_creations(email="test@example.com")
+            self.assertIn("timed_scripts", res)
+            self.assertIn("scripts", res)
+            self.assertIn("slides", res)
+            self.assertIn("audio", res)
+            self.assertIn("videos", res)
+            self.assertEqual(res["total_count"], 0)
+
+    async def test_get_user_creations_returns_empty_when_no_user_or_email(self):
+        """get_user_creations returns empty dict structure if neither user_id nor email is provided."""
+        from src.activity.tracker import get_user_creations
+        res = await get_user_creations(user_id=None, email=None)
+        self.assertEqual(res["total_count"], 0)
+
+    async def test_get_my_creations_route(self):
+        """get_my_creations endpoint calls get_user_creations and returns expected dict."""
+        from types import SimpleNamespace
+        from src.api.routes.activity import get_my_creations
+
+        user = SimpleNamespace(sub=str(uuid4()), email="testuser@example.com")
+        mock_creations = {
+            "timed_scripts": [{"id": "1", "original_filename": "audio.wav"}],
+            "scripts": [],
+            "slides": [],
+            "audio": [],
+            "videos": [],
+            "total_count": 1,
+        }
+        with patch("src.api.routes.activity.get_user_creations", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = mock_creations
+            resp = await get_my_creations(current_user=user)
+            self.assertEqual(resp, {"creations": mock_creations})
+            mock_get.assert_awaited_once_with(user_id=user.sub, email=user.email, limit=100)
+
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set SCRIPT_CHAT_TEST_DATABASE_URL to run PostgreSQL integration tests")
 class ActivityTrackerPostgresIntegrationTests(unittest.IsolatedAsyncioTestCase):

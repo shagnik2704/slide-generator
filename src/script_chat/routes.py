@@ -32,6 +32,7 @@ from src.script_chat.schemas import (
     dump_models,
     parse_script,
 )
+from src.activity.tracker import log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +219,14 @@ async def start_session(req: StartRequest, current_user: TokenData = Depends(get
         await delete_thread(thread_id, current_user.sub)
         raise
     
+    log_activity(
+        user=current_user,
+        activity_type="script_chat",
+        detail=f"Script Chat: {req.foss_name}",
+        status="completed",
+        metadata={"thread_id": thread_id, "foss_name": req.foss_name, "outline_preview": outline_preview},
+    )
+
     return StartResponse(
         thread_id=thread_id,
         message="Session created. Connect to /script-chat/stream/{thread_id} to begin."
@@ -535,6 +544,14 @@ async def export_docx_file(
         title_slug = "".join([c for c in title_slug if c.isalnum() or c == "_"])[:40]
         filename = f"{title_slug}_script.docx"
         
+        log_activity(
+            user=current_user,
+            activity_type="export_docx",
+            detail=f"Export DOCX: {series_name}",
+            status="completed",
+            metadata={"thread_id": thread_id, "filename": filename},
+        )
+
         return StreamingResponse(
             buffer,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -585,6 +602,14 @@ async def export_wiki_file(
         title_slug = metadata.get("title", "script").lower().replace(" ", "_")
         title_slug = "".join([c for c in title_slug if c.isalnum() or c == "_"])[:40]
         filename = f"{title_slug}_script.wiki"
+
+        log_activity(
+            user=current_user,
+            activity_type="export_wiki",
+            detail=f"Export Wiki: {series_name}",
+            status="completed",
+            metadata={"thread_id": thread_id, "filename": filename},
+        )
 
         return StreamingResponse(
             io.BytesIO(content.encode("utf-8")),

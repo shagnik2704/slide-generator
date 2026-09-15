@@ -14,6 +14,7 @@ from src.jobs.persistence import (
     list_jobs,
 )
 from src.workers.celery_app import celery_app
+from src.activity.tracker import log_activity
 
 router = APIRouter(prefix="/timed-script", tags=["timed-script"])
 
@@ -81,6 +82,13 @@ async def generate_timed_script_endpoint(
             job_type="timed_script",
             input_path=str(target_path),
             original_filename=audio.filename,
+        )
+        log_activity(
+            user=current_user,
+            activity_type="timed_script",
+            detail=f"Timed script: {audio.filename}",
+            status="queued",
+            metadata={"job_id": str(job["id"]), "filename": audio.filename},
         )
         try:
             celery_task = celery_app.send_task(

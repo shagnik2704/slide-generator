@@ -104,19 +104,32 @@ async def get_user_activities(
     email: Optional[str] = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    """Retrieve recent activity logs for a user."""
+    """
+    Retrieve recent activity logs for a user.
+
+    Synthesizes activity events across user_activities, background_jobs (e.g. timed scripts),
+    and script_chat_threads so any past creations (even prior to user_activities migration)
+    seamlessly appear in the user's chronological activity history.
+    """
+    if not user_id and not email:
+        return []
+
+    clean_user_id: Optional[str] = None
+    if user_id:
+        try:
+            clean_user_id = str(UUID(str(user_id)))
+        except (ValueError, TypeError, AttributeError):
+            clean_user_id = None
+
     try:
         from src.script_chat.persistence import get_pool
-
-        clean_user_id: Optional[str] = None
-        if user_id:
-            try:
-                clean_user_id = str(UUID(str(user_id)))
-            except (ValueError, TypeError, AttributeError):
-                clean_user_id = None
-
         pool = get_pool()
+        results: list[dict[str, Any]] = []
+        logged_job_ids: set[str] = set()
+        logged_thread_ids: set[str] = set()
+
         async with pool.connection() as conn:
+            # 1. Fetch recorded entries from user_activities
             async with conn.cursor() as cur:
                 if clean_user_id and email:
                     await cur.execute(
@@ -140,7 +153,7 @@ async def get_user_activities(
                         """,
                         (clean_user_id, limit),
                     )
-                elif email:
+                else:
                     await cur.execute(
                         """
                         SELECT id, user_id, email, activity_type, detail, status, metadata, created_at
@@ -151,12 +164,15 @@ async def get_user_activities(
                         """,
                         (email, limit),
                     )
-                else:
-                    return []
 
                 rows = await cur.fetchall()
-                results = []
                 for row in rows:
+                    meta = row[6] or {}
+                    if isinstance(meta, dict):
+                        if "job_id" in meta:
+                            logged_job_ids.add(str(meta["job_id"]))
+                        if "thread_id" in meta:
+                            logged_thread_ids.add(str(meta["thread_id"]))
                     results.append({
                         "id": row[0],
                         "user_id": str(row[1]) if row[1] else None,
@@ -164,10 +180,232 @@ async def get_user_activities(
                         "activity_type": row[3],
                         "detail": row[4],
                         "status": row[5],
-                        "metadata": row[6] or {},
+                        "metadata": meta,
                         "created_at": row[7].isoformat() if row[7] else None,
                     })
-                return results
+
+            # 2. Synthesize historical background jobs if not already logged
+            if clean_user_id:
+                try:
+                    async with conn.cursor() as cur:
+                        await cur.execute(
+                            """
+                            SELECT id, user_id, original_filename, status, result, created_at
+                            FROM background_jobs
+                            WHERE user_id = %s
+                            ORDER BY created_at DESC
+                            LIMIT %s
+                            """,
+                            (clean_user_id, limit),
+                        )
+                        job_rows = await cur.fetchall()
+                        for jr in job_rows:
+                            jid = str(jr[0])
+                            if jid not in logged_job_ids:
+                                results.append({
+                                    "id": f"job_{jid}",
+                                    "user_id": str(jr[1]),
+                                    "email": email or "",
+                                    "activity_type": "timed_script",
+                                    "detail": f"Timed script: {jr[2] or 'Audio'}",
+                                    "status": jr[3] or "completed",
+                                    "metadata": {"job_id": jid, "original_filename": jr[2], "result": jr[4]},
+                                    "created_at": jr[5].isoformat() if jr[5] else None,
+                                })
+                except Exception as e:
+                    logger.debug("Failed to synthesize background_jobs in activities: %s", e)
+
+            # 3. Synthesize historical script chat threads if not already logged
+            if clean_user_id:
+                try:
+                    async with conn.cursor() as cur:
+                        await cur.execute(
+                            """
+                            SELECT thread_id, user_id, title, foss_name, outline_preview, current_stage, status, created_at
+                            FROM script_chat_threads
+                            WHERE user_id = %s AND archived_at IS NULL
+                            ORDER BY created_at DESC
+                            LIMIT %s
+                            """,
+                            (clean_user_id, limit),
+                        )
+                        t_rows = await cur.fetchall()
+                        for tr in t_rows:
+                            tid = str(tr[0])
+                            if tid not in logged_thread_ids:
+                                label = tr[2] or tr[3] or tr[4] or "Tutorial Script"
+                                results.append({
+                                    "id": f"thread_{tid}",
+                                    "user_id": str(tr[1]),
+                                    "email": email or "",
+                                    "activity_type": "script_chat",
+                                    "detail": f"Script Chat: {label[:60]}",
+                                    "status": tr[6] or "completed",
+                                    "metadata": {"thread_id": tid, "foss_name": tr[3], "current_stage": tr[5]},
+                                    "created_at": tr[7].isoformat() if tr[7] else None,
+                                })
+                except Exception as e:
+                    logger.debug("Failed to synthesize script_chat_threads in activities: %s", e)
+
+        # Sort combined results descending by created_at
+        results.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+        return results[:limit]
     except Exception as exc:
         logger.debug("Failed to get user activities: %s", exc)
         return []
+
+
+async def get_user_creations(
+    *,
+    user_id: Optional[str] = None,
+    email: Optional[str] = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Retrieve all platform creations grouped by category for a user."""
+    empty_result = {
+        "timed_scripts": [],
+        "scripts": [],
+        "slides": [],
+        "audio": [],
+        "videos": [],
+        "total_count": 0,
+    }
+    if not user_id and not email:
+        return empty_result
+
+    clean_user_id: Optional[str] = None
+    if user_id:
+        try:
+            clean_user_id = str(UUID(str(user_id)))
+        except (ValueError, TypeError, AttributeError):
+            clean_user_id = None
+
+    try:
+        from src.script_chat.persistence import get_pool
+        pool = get_pool()
+
+        timed_scripts: list[dict[str, Any]] = []
+        scripts: list[dict[str, Any]] = []
+        slides: list[dict[str, Any]] = []
+        audio: list[dict[str, Any]] = []
+        videos: list[dict[str, Any]] = []
+
+        async with pool.connection() as conn:
+            # 1. Fetch timed scripts from background_jobs
+            if clean_user_id:
+                try:
+                    async with conn.cursor() as cur:
+                        await cur.execute(
+                            """
+                            SELECT id, original_filename, status, progress, current_stage,
+                                   result, error_message, created_at, started_at, completed_at
+                            FROM background_jobs
+                            WHERE user_id = %s AND job_type = 'timed_script'
+                            ORDER BY created_at DESC
+                            LIMIT %s
+                            """,
+                            (clean_user_id, limit),
+                        )
+                        rows = await cur.fetchall()
+                        for r in rows:
+                            timed_scripts.append({
+                                "id": str(r[0]),
+                                "job_id": str(r[0]),
+                                "original_filename": r[1],
+                                "status": r[2],
+                                "progress": r[3] or 0,
+                                "current_stage": r[4],
+                                "result": r[5],
+                                "error_message": r[6],
+                                "created_at": r[7].isoformat() if r[7] else None,
+                                "completed_at": r[9].isoformat() if r[9] else None,
+                            })
+                except Exception as e:
+                    logger.debug("Failed to query background_jobs in get_user_creations: %s", e)
+
+            # 2. Fetch script chat threads
+            if clean_user_id:
+                try:
+                    async with conn.cursor() as cur:
+                        await cur.execute(
+                            """
+                            SELECT thread_id, title, outline_preview, foss_name, current_stage,
+                                   status, created_at, updated_at
+                            FROM script_chat_threads
+                            WHERE user_id = %s AND archived_at IS NULL
+                            ORDER BY updated_at DESC
+                            LIMIT %s
+                            """,
+                            (clean_user_id, limit),
+                        )
+                        rows = await cur.fetchall()
+                        for r in rows:
+                            scripts.append({
+                                "id": str(r[0]),
+                                "thread_id": str(r[0]),
+                                "title": r[1],
+                                "outline_preview": r[2],
+                                "foss_name": r[3],
+                                "current_stage": r[4],
+                                "status": r[5],
+                                "created_at": r[6].isoformat() if r[6] else None,
+                                "updated_at": r[7].isoformat() if r[7] else None,
+                            })
+                except Exception as e:
+                    logger.debug("Failed to query script_chat_threads in get_user_creations: %s", e)
+
+            # 3. Fetch creation activities (slides, audio, video) from user_activities
+            try:
+                async with conn.cursor() as cur:
+                    where_clause = "WHERE user_id = %s OR email = %s" if (clean_user_id and email) else ("WHERE user_id = %s" if clean_user_id else "WHERE email = %s")
+                    params = (clean_user_id, email, limit * 2) if (clean_user_id and email) else ((clean_user_id, limit * 2) if clean_user_id else (email, limit * 2))
+                    await cur.execute(
+                        f"""
+                        SELECT id, activity_type, detail, status, metadata, created_at
+                        FROM user_activities
+                        {where_clause}
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        params,
+                    )
+                    rows = await cur.fetchall()
+                    for r in rows:
+                        act_type = r[1]
+                        meta = r[4] or {}
+                        item = {
+                            "id": r[0],
+                            "activity_type": act_type,
+                            "detail": r[2],
+                            "status": r[3],
+                            "metadata": meta,
+                            "created_at": r[5].isoformat() if r[5] else None,
+                        }
+                        if act_type in ("slide_generation", "slides_generation"):
+                            zip_fn = meta.get("zip_filename")
+                            if zip_fn and not meta.get("zip_url"):
+                                item["zip_url"] = f"/output/slides/{zip_fn}"
+                            else:
+                                item["zip_url"] = meta.get("zip_url")
+                            slides.append(item)
+                        elif act_type in ("voice_generation", "voice_generation_combined", "voice_patch", "regenerate_slide"):
+                            item["audio_url"] = meta.get("audio_url")
+                            audio.append(item)
+                        elif act_type == "generate_video":
+                            item["video_url"] = meta.get("video_url")
+                            videos.append(item)
+            except Exception as e:
+                logger.debug("Failed to query user_activities in get_user_creations: %s", e)
+
+        total_count = len(timed_scripts) + len(scripts) + len(slides) + len(audio) + len(videos)
+        return {
+            "timed_scripts": timed_scripts,
+            "scripts": scripts,
+            "slides": slides,
+            "audio": audio,
+            "videos": videos,
+            "total_count": total_count,
+        }
+    except Exception as exc:
+        logger.debug("Failed to get user creations: %s", exc)
+        return empty_result

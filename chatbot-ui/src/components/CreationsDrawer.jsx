@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     X,
     FolderClock,
-    Clock,
     CheckCircle2,
     AlertCircle,
     Loader2,
@@ -15,37 +14,119 @@ import {
     FileAudio,
     FileText,
     Calendar,
-    ChevronRight,
+    Presentation,
+    Mic,
+    Video,
+    Play,
 } from 'lucide-react';
 import { apiJson, API_URL } from '../services/api';
 
+function formatDuration(val, secondsVal) {
+    if (typeof val === 'string' && val.trim().length > 0) {
+        if (val.includes(':')) {
+            const parts = val.split(':');
+            if (parts.length === 2) {
+                const mins = parseInt(parts[0], 10);
+                const secs = parseInt(parts[1], 10);
+                return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            }
+            return val;
+        }
+        const num = parseFloat(val);
+        if (!isNaN(num)) return `${Math.round(num)}s`;
+        return val;
+    }
+    if (typeof val === 'number' && !isNaN(val)) {
+        return `${Math.round(val)}s`;
+    }
+    if (typeof secondsVal === 'number' && !isNaN(secondsVal)) {
+        const m = Math.floor(secondsVal / 60);
+        const s = Math.round(secondsVal % 60);
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+    return null;
+}
+
+function formatDate(isoString) {
+    if (!isoString) return '';
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    } catch {
+        return isoString;
+    }
+}
+
+function getActivityIcon(type) {
+    switch (type) {
+        case 'timed_script':
+            return <FileAudio size={14} />;
+        case 'script_chat':
+        case 'generate_script':
+        case 'export_docx':
+        case 'export_wiki':
+            return <FileText size={14} />;
+        case 'slide_generation':
+        case 'slides_generation':
+            return <Presentation size={14} />;
+        case 'voice_generation':
+        case 'voice_generation_combined':
+        case 'voice_patch':
+        case 'regenerate_slide':
+            return <Mic size={14} />;
+        case 'generate_video':
+            return <Video size={14} />;
+        default:
+            return <Activity size={14} />;
+    }
+}
+
 export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
-    const [jobs, setJobs] = useState([]);
+    const [timedScripts, setTimedScripts] = useState([]);
+    const [scripts, setScripts] = useState([]);
+    const [slides, setSlides] = useState([]);
+    const [audio, setAudio] = useState([]);
+    const [videos, setVideos] = useState([]);
     const [activities, setActivities] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('all'); // 'all' | 'timed_scripts' | 'activities'
-    const [downloadingJobId, setDownloadingJobId] = useState(null);
+    const [activeTab, setActiveTab] = useState('all');
+    const [downloadingDocxId, setDownloadingDocxId] = useState(null);
 
-    // Fetch jobs and activities whenever the drawer opens
+    // Fetch creations and activities whenever the drawer opens
     const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const [jobsRes, actRes] = await Promise.allSettled([
-                apiJson('/timed-script/jobs'),
+            const [creationsRes, actRes] = await Promise.allSettled([
+                apiJson('/activity/creations'),
                 apiJson('/activity/me'),
             ]);
 
-            if (jobsRes.status === 'fulfilled' && jobsRes.value?.jobs) {
-                setJobs(jobsRes.value.jobs);
+            if (creationsRes.status === 'fulfilled' && creationsRes.value?.creations) {
+                const c = creationsRes.value.creations;
+                setTimedScripts(c.timed_scripts || []);
+                setScripts(c.scripts || []);
+                setSlides(c.slides || []);
+                setAudio(c.audio || []);
+                setVideos(c.videos || []);
+            } else {
+                // Fallback to /timed-script/jobs if /activity/creations is not supported
+                const fallbackJobs = await apiJson('/timed-script/jobs').catch(() => ({ jobs: [] }));
+                if (fallbackJobs?.jobs) setTimedScripts(fallbackJobs.jobs);
             }
+
             if (actRes.status === 'fulfilled' && actRes.value?.activities) {
                 setActivities(actRes.value.activities);
             }
         } catch (err) {
-            console.error('Failed to load past creations:', err);
+            console.error('Failed to load creations and activities:', err);
             setError('Could not load creations. Please try again.');
         } finally {
             setIsLoading(false);
@@ -70,12 +151,13 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     }, [isOpen, onClose]);
 
     // Download DOCX handler for completed timed script
-    const handleDownloadDocx = async (e, job) => {
+    const handleDownloadTimedDocx = async (e, job) => {
         e.stopPropagation();
         if (!job.result) return;
-        setDownloadingJobId(job.job_id);
+        const targetId = job.job_id || job.id;
+        setDownloadingDocxId(targetId);
         try {
-            const token = localStorage.getItem('access_token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`${API_URL}/timed-script/download-docx`, {
                 method: 'POST',
                 headers: {
@@ -99,7 +181,34 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
         } catch (err) {
             console.error('Download error:', err);
         } finally {
-            setDownloadingJobId(null);
+            setDownloadingDocxId(null);
+        }
+    };
+
+    // Download DOCX for script chat thread
+    const handleDownloadScriptDocx = async (e, script) => {
+        e.stopPropagation();
+        const threadId = script.thread_id || script.id;
+        setDownloadingDocxId(threadId);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/script-chat/export-docx/${threadId}`, {
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+            if (!response.ok) throw new Error('Failed to export DOCX');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${script.foss_name || script.title || 'tutorial'}_script.docx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Script DOCX download error:', err);
+        } finally {
+            setDownloadingDocxId(null);
         }
     };
 
@@ -110,43 +219,85 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
         onClose();
     };
 
-    const formatDate = (isoString) => {
-        if (!isoString) return '';
-        try {
-            const date = new Date(isoString);
-            return date.toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        } catch {
-            return isoString;
-        }
+    const handleOpenScriptChat = (script) => {
+        const threadId = script.thread_id || script.id;
+        window.location.href = `/script-chat?thread_id=${threadId}`;
     };
 
-    // Filter items based on activeTab and searchQuery
-    const filteredJobs = useMemo(() => {
-        return jobs.filter((job) => {
-            const query = searchQuery.toLowerCase();
-            const matchName = (job.original_filename || '').toLowerCase().includes(query);
-            const matchStatus = (job.status || '').toLowerCase().includes(query);
-            return matchName || matchStatus;
-        });
-    }, [jobs, searchQuery]);
+    const handleOpenUrl = (e, targetUrl) => {
+        e.stopPropagation();
+        if (!targetUrl) return;
+        const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${API_URL}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
+        window.open(fullUrl, '_blank');
+    };
+
+    // Search filters
+    const query = searchQuery.toLowerCase().trim();
+
+    const filteredTimedScripts = useMemo(() => {
+        if (!query) return timedScripts;
+        return timedScripts.filter((job) =>
+            (job.original_filename || '').toLowerCase().includes(query) ||
+            (job.status || '').toLowerCase().includes(query)
+        );
+    }, [timedScripts, query]);
+
+    const filteredScripts = useMemo(() => {
+        if (!query) return scripts;
+        return scripts.filter((s) =>
+            (s.title || '').toLowerCase().includes(query) ||
+            (s.foss_name || '').toLowerCase().includes(query) ||
+            (s.current_stage || '').toLowerCase().includes(query) ||
+            (s.status || '').toLowerCase().includes(query)
+        );
+    }, [scripts, query]);
+
+    const filteredSlides = useMemo(() => {
+        if (!query) return slides;
+        return slides.filter((s) =>
+            (s.detail || '').toLowerCase().includes(query) ||
+            (s.status || '').toLowerCase().includes(query)
+        );
+    }, [slides, query]);
+
+    const filteredAudio = useMemo(() => {
+        if (!query) return audio;
+        return audio.filter((a) =>
+            (a.detail || '').toLowerCase().includes(query) ||
+            (a.status || '').toLowerCase().includes(query)
+        );
+    }, [audio, query]);
+
+    const filteredVideos = useMemo(() => {
+        if (!query) return videos;
+        return videos.filter((v) =>
+            (v.detail || '').toLowerCase().includes(query) ||
+            (v.status || '').toLowerCase().includes(query)
+        );
+    }, [videos, query]);
 
     const filteredActivities = useMemo(() => {
-        return activities.filter((act) => {
-            const query = searchQuery.toLowerCase();
-            const matchType = (act.activity_type || '').toLowerCase().includes(query);
-            const matchDetail = (act.detail || '').toLowerCase().includes(query);
-            return matchType || matchDetail;
-        });
-    }, [activities, searchQuery]);
+        if (!query) return activities;
+        return activities.filter((act) =>
+            (act.activity_type || '').toLowerCase().includes(query) ||
+            (act.detail || '').toLowerCase().includes(query) ||
+            (act.status || '').toLowerCase().includes(query)
+        );
+    }, [activities, query]);
 
     if (!isOpen) return null;
 
-    const totalCount = jobs.length + activities.length;
+    const totalCreationsCount = timedScripts.length + scripts.length + slides.length + audio.length + videos.length;
+    const totalCount = totalCreationsCount + activities.length;
+
+    const tabs = [
+        { id: 'all', label: 'All', count: totalCount },
+        { id: 'timed_scripts', label: 'Timed Scripts', count: timedScripts.length },
+        { id: 'scripts', label: 'Tutorial Scripts', count: scripts.length },
+        { id: 'slides', label: 'Slide Decks', count: slides.length },
+        { id: 'audio', label: 'Voice & Audio', count: audio.length },
+        { id: 'activities', label: 'Activity Logs', count: activities.length },
+    ];
 
     return (
         <div
@@ -338,12 +489,16 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                     </div>
 
                     {/* Filter Tabs */}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {[
-                            { id: 'all', label: 'All', count: totalCount },
-                            { id: 'timed_scripts', label: 'Timed Scripts', count: jobs.length },
-                            { id: 'activities', label: 'Activity Logs', count: activities.length },
-                        ].map((tab) => {
+                    <div
+                        style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            overflowX: 'auto',
+                            paddingBottom: '4px',
+                            scrollbarWidth: 'none',
+                        }}
+                    >
+                        {tabs.map((tab) => {
                             const active = activeTab === tab.id;
                             return (
                                 <button
@@ -362,6 +517,8 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                         color: active ? 'var(--accent-primary, #818cf8)' : 'var(--text-secondary, #9ca3af)',
                                         cursor: 'pointer',
                                         transition: 'all 0.15s',
+                                        whiteSpace: 'nowrap',
+                                        flexShrink: 0,
                                     }}
                                 >
                                     <span>{tab.label}</span>
@@ -430,7 +587,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                             {/* Section: Timed Scripts */}
                             {(activeTab === 'all' || activeTab === 'timed_scripts') && (
                                 <>
-                                    {activeTab === 'all' && filteredJobs.length > 0 && (
+                                    {activeTab === 'all' && filteredTimedScripts.length > 0 && (
                                         <div
                                             style={{
                                                 fontSize: '0.75rem',
@@ -446,20 +603,21 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             }}
                                         >
                                             <FileAudio size={14} />
-                                            <span>Timed Scripts ({filteredJobs.length})</span>
+                                            <span>Timed Scripts ({filteredTimedScripts.length})</span>
                                         </div>
                                     )}
 
-                                    {filteredJobs.map((job) => {
+                                    {filteredTimedScripts.map((job) => {
                                         const isComplete = job.status === 'completed';
                                         const isProcessing = job.status === 'running' || job.status === 'queued';
                                         const isFailed = job.status === 'failed';
                                         const sentencesCount = job.result?.sentences?.length;
-                                        const duration = job.result?.total_duration ? Math.round(job.result.total_duration) : null;
+                                        const durationText = formatDuration(job.result?.total_duration);
+                                        const jobId = job.job_id || job.id;
 
                                         return (
                                             <div
-                                                key={job.job_id}
+                                                key={jobId}
                                                 style={{
                                                     borderRadius: '10px',
                                                     border: '1px solid var(--border-color, #2d2d38)',
@@ -487,7 +645,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                                 }}
                                                                 title={job.original_filename}
                                                             >
-                                                                {job.original_filename || 'Timed Script Job'}
+                                                                {job.original_filename || 'Timed Script'}
                                                             </div>
                                                             <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
                                                                 <Calendar size={11} />
@@ -520,16 +678,16 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 </div>
 
                                                 {/* Stats / Info */}
-                                                {isComplete && (sentencesCount || duration) && (
+                                                {isComplete && (sentencesCount || durationText) && (
                                                     <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary, #9ca3af)' }}>
                                                         {sentencesCount !== undefined && (
                                                             <span style={{ background: 'var(--bg-tertiary, #252530)', padding: '2px 6px', borderRadius: '4px' }}>
                                                                 {sentencesCount} sentences
                                                             </span>
                                                         )}
-                                                        {duration !== null && (
+                                                        {durationText && (
                                                             <span style={{ background: 'var(--bg-tertiary, #252530)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                                {duration}s duration
+                                                                {durationText} duration
                                                             </span>
                                                         )}
                                                     </div>
@@ -548,8 +706,8 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 >
                                                     {isComplete && job.result && (
                                                         <button
-                                                            onClick={(e) => handleDownloadDocx(e, job)}
-                                                            disabled={downloadingJobId === job.job_id}
+                                                            onClick={(e) => handleDownloadTimedDocx(e, job)}
+                                                            disabled={downloadingDocxId === jobId}
                                                             style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
@@ -570,7 +728,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                                 e.currentTarget.style.borderColor = 'var(--border-color, #2d2d38)';
                                                             }}
                                                         >
-                                                            {downloadingJobId === job.job_id ? (
+                                                            {downloadingDocxId === jobId ? (
                                                                 <Loader2 size={13} className="spin" />
                                                             ) : (
                                                                 <Download size={13} />
@@ -609,6 +767,490 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             </div>
                                         );
                                     })}
+                                </>
+                            )}
+
+                            {/* Section: Tutorial Scripts (Script Chat) */}
+                            {(activeTab === 'all' || activeTab === 'scripts') && (
+                                <>
+                                    {activeTab === 'all' && filteredScripts.length > 0 && (
+                                        <div
+                                            style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-secondary, #9ca3af)',
+                                                marginTop: '0.5rem',
+                                                marginBottom: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <FileText size={14} />
+                                            <span>Tutorial Scripts ({filteredScripts.length})</span>
+                                        </div>
+                                    )}
+
+                                    {filteredScripts.map((script) => {
+                                        const scriptId = script.thread_id || script.id;
+                                        return (
+                                            <div
+                                                key={scriptId}
+                                                style={{
+                                                    borderRadius: '10px',
+                                                    border: '1px solid var(--border-color, #2d2d38)',
+                                                    background: 'var(--bg-primary, #141418)',
+                                                    padding: '1rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.75rem',
+                                                    transition: 'border-color 0.2s',
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                        <FileText size={18} style={{ color: '#10b981', flexShrink: 0 }} />
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '0.9rem',
+                                                                    fontWeight: '600',
+                                                                    color: 'var(--text-primary, #ffffff)',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                                title={script.title || script.foss_name}
+                                                            >
+                                                                {script.title || script.foss_name || 'Tutorial Script'}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+                                                                <Calendar size={11} />
+                                                                <span>{formatDate(script.created_at || script.updated_at)}</span>
+                                                                {script.foss_name && (
+                                                                    <span style={{ marginLeft: '4px', color: '#818cf8' }}>• {script.foss_name}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {script.current_stage && (
+                                                        <span
+                                                            style={{
+                                                                fontSize: '0.7rem',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '999px',
+                                                                background: 'rgba(16, 185, 129, 0.15)',
+                                                                color: '#34d399',
+                                                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                                                textTransform: 'capitalize',
+                                                                flexShrink: 0,
+                                                            }}
+                                                        >
+                                                            {script.current_stage.replace(/_/g, ' ')}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        gap: '0.5rem',
+                                                        paddingTop: '0.25rem',
+                                                        borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                    }}
+                                                >
+                                                    <button
+                                                        onClick={(e) => handleDownloadScriptDocx(e, script)}
+                                                        disabled={downloadingDocxId === scriptId}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            padding: '0.4rem 0.75rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            background: 'var(--bg-tertiary, #252530)',
+                                                            border: '1px solid var(--border-color, #2d2d38)',
+                                                            color: 'var(--text-primary, #ffffff)',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.borderColor = '#10b981';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.borderColor = 'var(--border-color, #2d2d38)';
+                                                        }}
+                                                    >
+                                                        {downloadingDocxId === scriptId ? (
+                                                            <Loader2 size={13} className="spin" />
+                                                        ) : (
+                                                            <Download size={13} />
+                                                        )}
+                                                        <span>DOCX</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleOpenScriptChat(script)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            padding: '0.4rem 0.85rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '500',
+                                                            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                                                            border: 'none',
+                                                            color: '#ffffff',
+                                                            cursor: 'pointer',
+                                                            transition: 'opacity 0.15s',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.opacity = '0.9';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.opacity = '1';
+                                                        }}
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                        <span>Open in Script Chat</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </>
+                            )}
+
+                            {/* Section: Slide Decks */}
+                            {(activeTab === 'all' || activeTab === 'slides') && (
+                                <>
+                                    {activeTab === 'all' && filteredSlides.length > 0 && (
+                                        <div
+                                            style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-secondary, #9ca3af)',
+                                                marginTop: '0.5rem',
+                                                marginBottom: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <Presentation size={14} />
+                                            <span>Slide Decks ({filteredSlides.length})</span>
+                                        </div>
+                                    )}
+
+                                    {filteredSlides.map((slide) => (
+                                        <div
+                                            key={slide.id}
+                                            style={{
+                                                borderRadius: '10px',
+                                                border: '1px solid var(--border-color, #2d2d38)',
+                                                background: 'var(--bg-primary, #141418)',
+                                                padding: '1rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.75rem',
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                    <Presentation size={18} style={{ color: '#a855f7', flexShrink: 0 }} />
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div
+                                                            style={{
+                                                                fontSize: '0.9rem',
+                                                                fontWeight: '600',
+                                                                color: 'var(--text-primary, #ffffff)',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                            title={slide.title || slide.detail}
+                                                        >
+                                                            {slide.title || slide.detail || 'Slide Presentation'}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+                                                            <Calendar size={11} />
+                                                            <span>{formatDate(slide.created_at)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {slide.slide_count && (
+                                                    <span
+                                                        style={{
+                                                            fontSize: '0.7rem',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '999px',
+                                                            background: 'rgba(168, 85, 247, 0.15)',
+                                                            color: '#c084fc',
+                                                            border: '1px solid rgba(168, 85, 247, 0.3)',
+                                                            flexShrink: 0,
+                                                        }}
+                                                    >
+                                                        {slide.slide_count} slides
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {(slide.download_url || slide.url) && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        paddingTop: '0.25rem',
+                                                        borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                    }}
+                                                >
+                                                    <button
+                                                        onClick={(e) => handleOpenUrl(e, slide.download_url || slide.url)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            padding: '0.4rem 0.85rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '500',
+                                                            background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                                                            border: 'none',
+                                                            color: '#ffffff',
+                                                            cursor: 'pointer',
+                                                        }}
+                                                    >
+                                                        <Download size={13} />
+                                                        <span>Download Slides</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+
+                            {/* Section: Voice & Audio */}
+                            {(activeTab === 'all' || activeTab === 'audio') && (
+                                <>
+                                    {activeTab === 'all' && filteredAudio.length > 0 && (
+                                        <div
+                                            style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-secondary, #9ca3af)',
+                                                marginTop: '0.5rem',
+                                                marginBottom: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <Mic size={14} />
+                                            <span>Voice & Audio ({filteredAudio.length})</span>
+                                        </div>
+                                    )}
+
+                                    {filteredAudio.map((aud) => {
+                                        const dur = formatDuration(aud.duration);
+                                        return (
+                                            <div
+                                                key={aud.id}
+                                                style={{
+                                                    borderRadius: '10px',
+                                                    border: '1px solid var(--border-color, #2d2d38)',
+                                                    background: 'var(--bg-primary, #141418)',
+                                                    padding: '1rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.75rem',
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                        <Mic size={18} style={{ color: '#ec4899', flexShrink: 0 }} />
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '0.9rem',
+                                                                    fontWeight: '600',
+                                                                    color: 'var(--text-primary, #ffffff)',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                                title={aud.title || aud.detail}
+                                                            >
+                                                                {aud.title || aud.detail || 'Voice Narration'}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+                                                                <Calendar size={11} />
+                                                                <span>{formatDate(aud.created_at)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {dur && (
+                                                        <span
+                                                            style={{
+                                                                fontSize: '0.7rem',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '999px',
+                                                                background: 'rgba(236, 72, 153, 0.15)',
+                                                                color: '#f472b6',
+                                                                border: '1px solid rgba(236, 72, 153, 0.3)',
+                                                                flexShrink: 0,
+                                                            }}
+                                                        >
+                                                            {dur}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {(aud.audio_url || aud.url) && (
+                                                    <div
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'flex-end',
+                                                            paddingTop: '0.25rem',
+                                                            borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                        }}
+                                                    >
+                                                        <button
+                                                            onClick={(e) => handleOpenUrl(e, aud.audio_url || aud.url)}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.35rem',
+                                                                padding: '0.4rem 0.85rem',
+                                                                borderRadius: '6px',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: '500',
+                                                                background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)',
+                                                                border: 'none',
+                                                                color: '#ffffff',
+                                                                cursor: 'pointer',
+                                                            }}
+                                                        >
+                                                            <Play size={13} />
+                                                            <span>Play / Audio</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </>
+                            )}
+
+                            {/* Section: Videos */}
+                            {(activeTab === 'all' || activeTab === 'videos') && (
+                                <>
+                                    {activeTab === 'all' && filteredVideos.length > 0 && (
+                                        <div
+                                            style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-secondary, #9ca3af)',
+                                                marginTop: '0.5rem',
+                                                marginBottom: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <Video size={14} />
+                                            <span>Videos ({filteredVideos.length})</span>
+                                        </div>
+                                    )}
+
+                                    {filteredVideos.map((vid) => (
+                                        <div
+                                            key={vid.id}
+                                            style={{
+                                                borderRadius: '10px',
+                                                border: '1px solid var(--border-color, #2d2d38)',
+                                                background: 'var(--bg-primary, #141418)',
+                                                padding: '1rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.75rem',
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                    <Video size={18} style={{ color: '#3b82f6', flexShrink: 0 }} />
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div
+                                                            style={{
+                                                                fontSize: '0.9rem',
+                                                                fontWeight: '600',
+                                                                color: 'var(--text-primary, #ffffff)',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                            title={vid.title || vid.detail}
+                                                        >
+                                                            {vid.title || vid.detail || 'Generated Video'}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+                                                            <Calendar size={11} />
+                                                            <span>{formatDate(vid.created_at)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {(vid.video_url || vid.url) && (
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        paddingTop: '0.25rem',
+                                                        borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                    }}
+                                                >
+                                                    <button
+                                                        onClick={(e) => handleOpenUrl(e, vid.video_url || vid.url)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            padding: '0.4rem 0.85rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '500',
+                                                            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+                                                            border: 'none',
+                                                            color: '#ffffff',
+                                                            cursor: 'pointer',
+                                                        }}
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                        <span>Watch Video</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </>
                             )}
 
@@ -663,7 +1305,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                         flexShrink: 0,
                                                     }}
                                                 >
-                                                    <Activity size={14} />
+                                                    {getActivityIcon(act.activity_type)}
                                                 </div>
                                                 <div style={{ minWidth: 0 }}>
                                                     <div
@@ -705,7 +1347,12 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                             )}
 
                             {/* Empty State */}
-                            {filteredJobs.length === 0 && filteredActivities.length === 0 && (
+                            {(filteredTimedScripts.length === 0 &&
+                                filteredScripts.length === 0 &&
+                                filteredSlides.length === 0 &&
+                                filteredAudio.length === 0 &&
+                                filteredVideos.length === 0 &&
+                                filteredActivities.length === 0) && (
                                 <div
                                     style={{
                                         display: 'flex',
@@ -725,7 +1372,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                     <div style={{ fontSize: '0.8rem', maxWidth: '280px' }}>
                                         {searchQuery
                                             ? 'Try searching with a different keyword.'
-                                            : 'Generate timed scripts or tutorials to see your history and creations here.'}
+                                            : 'Generate scripts, timed recordings, or slide decks to see your creations here.'}
                                     </div>
                                 </div>
                             )}

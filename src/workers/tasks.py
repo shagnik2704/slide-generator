@@ -76,19 +76,59 @@ async def _process_timed_script(
         input_path = Path(job["input_path"])
         result = generate_timed_script(input_path, language=language)
         if not result.get("success"):
-            await fail_job(job_id, result.get("error", "Timed script generation failed"))
+            err_msg = result.get("error", "Timed script generation failed")
+            await fail_job(job_id, err_msg)
             reached_terminal = True
+            try:
+                from src.activity.tracker import record_activity
+                await record_activity(
+                    user_id=str(job["user_id"]),
+                    activity_type="timed_script",
+                    detail=f"Timed script failed: {job.get('original_filename') or 'Audio'}",
+                    status="failed",
+                    metadata={"job_id": job_id, "error": str(err_msg)[:255]},
+                )
+            except Exception:
+                pass
             return {"job_id": job_id, "status": "failed"}
 
         result["audio_file"] = job["original_filename"] or input_path.name
         await complete_job(job_id, result)
         reached_terminal = True
+        try:
+            from src.activity.tracker import record_activity
+            await record_activity(
+                user_id=str(job["user_id"]),
+                activity_type="timed_script",
+                detail=f"Timed script: {job.get('original_filename') or 'Audio'}",
+                status="completed",
+                metadata={
+                    "job_id": job_id,
+                    "filename": job.get("original_filename"),
+                    "sentences_count": len(result.get("sentences", [])),
+                    "duration": result.get("total_duration") or result.get("total_duration_seconds"),
+                },
+            )
+        except Exception:
+            pass
         return {"job_id": job_id, "status": "completed"}
     except Exception as exc:
         logger.exception("Timed script job %s failed", job_id)
         try:
             await fail_job(job_id, str(exc))
             reached_terminal = True
+            try:
+                from src.activity.tracker import record_activity
+                if job and job.get("user_id"):
+                    await record_activity(
+                        user_id=str(job["user_id"]),
+                        activity_type="timed_script",
+                        detail=f"Timed script failed: {job.get('original_filename') or 'Audio'}",
+                        status="failed",
+                        metadata={"job_id": job_id, "error": str(exc)[:255]},
+                    )
+            except Exception:
+                pass
         except Exception:
             logger.exception("Could not persist failure for timed script job %s", job_id)
         raise
