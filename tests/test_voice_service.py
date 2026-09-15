@@ -414,6 +414,43 @@ class VoiceGenerationTests(unittest.IsolatedAsyncioTestCase):
                     StubSarvamClient.calls, [], "no audio should have been requested"
                 )
 
+    async def test_explicit_language_code_overrides_script_language(self):
+        for label, generate in (
+            ("combined", generate_voice_combined),
+            ("per-slide", generate_voice_for_script),
+        ):
+            with self.subTest(mode=label):
+                StubSarvamClient.calls = []
+                script = {"target_language": "en", "slides": [{"slide_number": 1, "narration": "Hello."}]}
+                result = await generate(
+                    script,
+                    project_id=self.project(f"lang_{label}"),
+                    language_code="hi-IN",
+                )
+                self.assertTrue(result["success"], result)
+                self.assertGreater(len(StubSarvamClient.calls), 0)
+                self.assertEqual(StubSarvamClient.calls[0]["target_language_code"], "hi-IN")
+
+    async def test_generate_voice_combined_endpoint_accepts_language_code(self):
+        from types import SimpleNamespace
+        from src.api.routes.voice import generate_voice_combined_endpoint
+
+        user = SimpleNamespace(email="tester@spoken-tutorial.org")
+        pid = self.project("endpoint_lang")
+        script = {"target_language": "en", "slides": [{"slide_number": 1, "narration": "Hello."}]}
+
+        result = await generate_voice_combined_endpoint(
+            {
+                "json_script": script,
+                "project_id": pid,
+                "language_code": "ta-IN",
+            },
+            current_user=user,
+        )
+        self.assertTrue(result["success"])
+        self.assertGreater(len(StubSarvamClient.calls), 0)
+        self.assertEqual(StubSarvamClient.calls[-1]["target_language_code"], "ta-IN")
+
 
 class PronunciationDictionaryTests(unittest.IsolatedAsyncioTestCase):
     """SARVAM_PRONUNCIATION_DICT_ID is optional and read per-call, so a
