@@ -151,6 +151,110 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
         res = await get_user_creations(user_id=None, email=None)
         self.assertEqual(res["total_count"], 0)
 
+    async def test_val_helper(self):
+        """_val safely extracts from dicts, tuples, and objects."""
+        from src.activity.tracker import _val
+        d = {"id": "abc", "status": "completed"}
+        t = ("abc", "completed")
+        self.assertEqual(_val(d, "id", 0), "abc")
+        self.assertEqual(_val(d, "status", 1), "completed")
+        self.assertEqual(_val(d, "nonexistent", 99, default="def"), "def")
+        self.assertEqual(_val(t, "id", 0), "abc")
+        self.assertEqual(_val(t, "status", 1), "completed")
+        self.assertEqual(_val(t, "nonexistent", 99, default="def"), "def")
+
+    async def test_get_user_creations_handles_dict_row_from_psycopg(self):
+        """get_user_creations extracts background_jobs and script_chat_threads when rows are dicts."""
+        from datetime import datetime, timezone
+        from src.activity.tracker import get_user_creations
+
+        now = datetime.now(timezone.utc)
+        mock_job_row = {
+            "id": uuid4(),
+            "original_filename": "lecture.wav",
+            "status": "completed",
+            "progress": 100,
+            "current_stage": "done",
+            "result": {"sentences": [1, 2]},
+            "error_message": None,
+            "created_at": now,
+            "started_at": now,
+            "completed_at": now,
+        }
+        mock_thread_row = {
+            "thread_id": uuid4(),
+            "title": "Python Basics",
+            "outline_preview": "Intro to Python",
+            "foss_name": "Python",
+            "current_stage": "completed",
+            "status": "completed",
+            "created_at": now,
+            "updated_at": now,
+        }
+        mock_cur = AsyncMock()
+        mock_cur.fetchall.side_effect = [
+            [mock_job_row],     # background_jobs
+            [mock_thread_row],  # script_chat_threads
+            [],                 # user_activities
+        ]
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            creations = await get_user_creations(user_id=str(uuid4()))
+            self.assertEqual(len(creations["timed_scripts"]), 1)
+            self.assertEqual(creations["timed_scripts"][0]["original_filename"], "lecture.wav")
+            self.assertEqual(len(creations["scripts"]), 1)
+            self.assertEqual(creations["scripts"][0]["title"], "Python Basics")
+            self.assertEqual(creations["total_count"], 2)
+
+    async def test_get_user_activities_handles_dict_row_from_psycopg(self):
+        """get_user_activities correctly parses dict rows for user_activities and synthesized jobs."""
+        from datetime import datetime, timezone
+        from src.activity.tracker import get_user_activities
+
+        now = datetime.now(timezone.utc)
+        mock_activity_row = {
+            "id": 123,
+            "user_id": str(uuid4()),
+            "email": "user@example.com",
+            "activity_type": "slide_generation",
+            "detail": "Generated 5 slides",
+            "status": "completed",
+            "metadata": {"slide_count": 5},
+            "created_at": now,
+        }
+        mock_cur = AsyncMock()
+        mock_cur.fetchall.side_effect = [
+            [mock_activity_row], # user_activities
+            [],                  # background_jobs
+            [],                  # script_chat_threads
+        ]
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            acts = await get_user_activities(user_id=str(uuid4()), email="user@example.com")
+            self.assertEqual(len(acts), 1)
+            self.assertEqual(acts[0]["detail"], "Generated 5 slides")
+            self.assertEqual(acts[0]["activity_type"], "slide_generation")
+
     async def test_get_my_creations_route(self):
         """get_my_creations endpoint calls get_user_creations and returns expected dict."""
         from types import SimpleNamespace
