@@ -98,6 +98,17 @@ def log_activity(
         logger.debug("Failed to schedule activity task (%s): %s", activity_type, exc)
 
 
+def _val(row: Any, key: str, index: int, default: Any = None) -> Any:
+    """Safely extract a value from a row whether it is a dict (psycopg dict_row) or a tuple/list."""
+    if isinstance(row, dict):
+        return row.get(key, default)
+    if isinstance(row, (tuple, list)):
+        return row[index] if 0 <= index < len(row) else default
+    if hasattr(row, key):
+        return getattr(row, key, default)
+    return default
+
+
 async def get_user_activities(
     *,
     user_id: Optional[str] = None,
@@ -167,21 +178,23 @@ async def get_user_activities(
 
                 rows = await cur.fetchall()
                 for row in rows:
-                    meta = row[6] or {}
+                    meta = _val(row, "metadata", 6) or {}
                     if isinstance(meta, dict):
                         if "job_id" in meta:
                             logged_job_ids.add(str(meta["job_id"]))
                         if "thread_id" in meta:
                             logged_thread_ids.add(str(meta["thread_id"]))
+                    c_at = _val(row, "created_at", 7)
+                    uid = _val(row, "user_id", 1)
                     results.append({
-                        "id": row[0],
-                        "user_id": str(row[1]) if row[1] else None,
-                        "email": row[2],
-                        "activity_type": row[3],
-                        "detail": row[4],
-                        "status": row[5],
+                        "id": _val(row, "id", 0),
+                        "user_id": str(uid) if uid else None,
+                        "email": _val(row, "email", 2),
+                        "activity_type": _val(row, "activity_type", 3),
+                        "detail": _val(row, "detail", 4),
+                        "status": _val(row, "status", 5),
                         "metadata": meta,
-                        "created_at": row[7].isoformat() if row[7] else None,
+                        "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
                     })
 
             # 2. Synthesize historical background jobs if not already logged
@@ -200,17 +213,23 @@ async def get_user_activities(
                         )
                         job_rows = await cur.fetchall()
                         for jr in job_rows:
-                            jid = str(jr[0])
+                            jid = str(_val(jr, "id", 0))
                             if jid not in logged_job_ids:
+                                orig_fn = _val(jr, "original_filename", 2)
+                                c_at = _val(jr, "created_at", 5)
                                 results.append({
                                     "id": f"job_{jid}",
-                                    "user_id": str(jr[1]),
+                                    "user_id": str(_val(jr, "user_id", 1)),
                                     "email": email or "",
                                     "activity_type": "timed_script",
-                                    "detail": f"Timed script: {jr[2] or 'Audio'}",
-                                    "status": jr[3] or "completed",
-                                    "metadata": {"job_id": jid, "original_filename": jr[2], "result": jr[4]},
-                                    "created_at": jr[5].isoformat() if jr[5] else None,
+                                    "detail": f"Timed script: {orig_fn or 'Audio'}",
+                                    "status": _val(jr, "status", 3) or "completed",
+                                    "metadata": {
+                                        "job_id": jid,
+                                        "original_filename": orig_fn,
+                                        "result": _val(jr, "result", 4),
+                                    },
+                                    "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
                                 })
                 except Exception as e:
                     logger.debug("Failed to synthesize background_jobs in activities: %s", e)
@@ -231,18 +250,26 @@ async def get_user_activities(
                         )
                         t_rows = await cur.fetchall()
                         for tr in t_rows:
-                            tid = str(tr[0])
+                            tid = str(_val(tr, "thread_id", 0))
                             if tid not in logged_thread_ids:
-                                label = tr[2] or tr[3] or tr[4] or "Tutorial Script"
+                                title = _val(tr, "title", 2)
+                                foss = _val(tr, "foss_name", 3)
+                                preview = _val(tr, "outline_preview", 4)
+                                label = title or foss or preview or "Tutorial Script"
+                                c_at = _val(tr, "created_at", 7)
                                 results.append({
                                     "id": f"thread_{tid}",
-                                    "user_id": str(tr[1]),
+                                    "user_id": str(_val(tr, "user_id", 1)),
                                     "email": email or "",
                                     "activity_type": "script_chat",
                                     "detail": f"Script Chat: {label[:60]}",
-                                    "status": tr[6] or "completed",
-                                    "metadata": {"thread_id": tid, "foss_name": tr[3], "current_stage": tr[5]},
-                                    "created_at": tr[7].isoformat() if tr[7] else None,
+                                    "status": _val(tr, "status", 6) or "completed",
+                                    "metadata": {
+                                        "thread_id": tid,
+                                        "foss_name": foss,
+                                        "current_stage": _val(tr, "current_stage", 5),
+                                    },
+                                    "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
                                 })
                 except Exception as e:
                     logger.debug("Failed to synthesize script_chat_threads in activities: %s", e)
@@ -308,17 +335,20 @@ async def get_user_creations(
                         )
                         rows = await cur.fetchall()
                         for r in rows:
+                            c_at = _val(r, "created_at", 7)
+                            comp_at = _val(r, "completed_at", 9)
+                            jid = str(_val(r, "id", 0))
                             timed_scripts.append({
-                                "id": str(r[0]),
-                                "job_id": str(r[0]),
-                                "original_filename": r[1],
-                                "status": r[2],
-                                "progress": r[3] or 0,
-                                "current_stage": r[4],
-                                "result": r[5],
-                                "error_message": r[6],
-                                "created_at": r[7].isoformat() if r[7] else None,
-                                "completed_at": r[9].isoformat() if r[9] else None,
+                                "id": jid,
+                                "job_id": jid,
+                                "original_filename": _val(r, "original_filename", 1),
+                                "status": _val(r, "status", 2),
+                                "progress": _val(r, "progress", 3) or 0,
+                                "current_stage": _val(r, "current_stage", 4),
+                                "result": _val(r, "result", 5),
+                                "error_message": _val(r, "error_message", 6),
+                                "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
+                                "completed_at": comp_at.isoformat() if hasattr(comp_at, "isoformat") else (str(comp_at) if comp_at else None),
                             })
                 except Exception as e:
                     logger.debug("Failed to query background_jobs in get_user_creations: %s", e)
@@ -340,16 +370,19 @@ async def get_user_creations(
                         )
                         rows = await cur.fetchall()
                         for r in rows:
+                            c_at = _val(r, "created_at", 6)
+                            u_at = _val(r, "updated_at", 7)
+                            tid = str(_val(r, "thread_id", 0))
                             scripts.append({
-                                "id": str(r[0]),
-                                "thread_id": str(r[0]),
-                                "title": r[1],
-                                "outline_preview": r[2],
-                                "foss_name": r[3],
-                                "current_stage": r[4],
-                                "status": r[5],
-                                "created_at": r[6].isoformat() if r[6] else None,
-                                "updated_at": r[7].isoformat() if r[7] else None,
+                                "id": tid,
+                                "thread_id": tid,
+                                "title": _val(r, "title", 1),
+                                "outline_preview": _val(r, "outline_preview", 2),
+                                "foss_name": _val(r, "foss_name", 3),
+                                "current_stage": _val(r, "current_stage", 4),
+                                "status": _val(r, "status", 5),
+                                "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
+                                "updated_at": u_at.isoformat() if hasattr(u_at, "isoformat") else (str(u_at) if u_at else None),
                             })
                 except Exception as e:
                     logger.debug("Failed to query script_chat_threads in get_user_creations: %s", e)
@@ -371,15 +404,16 @@ async def get_user_creations(
                     )
                     rows = await cur.fetchall()
                     for r in rows:
-                        act_type = r[1]
-                        meta = r[4] or {}
+                        act_type = _val(r, "activity_type", 1)
+                        meta = _val(r, "metadata", 4) or {}
+                        c_at = _val(r, "created_at", 5)
                         item = {
-                            "id": r[0],
+                            "id": _val(r, "id", 0),
                             "activity_type": act_type,
-                            "detail": r[2],
-                            "status": r[3],
+                            "detail": _val(r, "detail", 2),
+                            "status": _val(r, "status", 3),
                             "metadata": meta,
-                            "created_at": r[5].isoformat() if r[5] else None,
+                            "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
                         }
                         if act_type in ("slide_generation", "slides_generation"):
                             zip_fn = meta.get("zip_filename")

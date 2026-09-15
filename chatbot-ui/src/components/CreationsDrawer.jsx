@@ -111,7 +111,19 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
             if (creationsRes.status === 'fulfilled' && creationsRes.value?.creations) {
                 const c = creationsRes.value.creations;
-                setTimedScripts(c.timed_scripts || []);
+                let userTimedScripts = c.timed_scripts || [];
+                // If timed_scripts in creations is empty, check fallback /timed-script/jobs
+                if (userTimedScripts.length === 0) {
+                    try {
+                        const fallbackJobs = await apiJson('/timed-script/jobs');
+                        if (fallbackJobs?.jobs?.length) {
+                            userTimedScripts = fallbackJobs.jobs;
+                        }
+                    } catch (fallbackErr) {
+                        console.debug('Fallback jobs check:', fallbackErr);
+                    }
+                }
+                setTimedScripts(userTimedScripts);
                 setScripts(c.scripts || []);
                 setSlides(c.slides || []);
                 setAudio(c.audio || []);
