@@ -528,6 +528,7 @@ async def generate_voice_for_script(
     project_id: Optional[int] = None,
     speaker: Optional[str] = None,
     pace: Optional[float] = None,
+    language_code: Optional[str] = None,
 ) -> Dict:
     """
     Generate audio narration for all slides in a script.
@@ -537,6 +538,7 @@ async def generate_voice_for_script(
         project_id: Optional project ID for file naming
         speaker: Optional voice actor name
         pace: Optional speaking speed
+        language_code: Optional target language code (e.g. 'en-IN', 'hi-IN')
     
     Returns:
         {
@@ -566,7 +568,8 @@ async def generate_voice_for_script(
 
     # Resolve the script language once, before any work — an unsupported
     # language fails the whole request instead of producing wrong-voice audio.
-    language_code = resolve_language_code(json_script.get("target_language"))
+    target_lang = language_code or json_script.get("target_language")
+    language_code = resolve_language_code(target_lang)
 
     if not os.getenv("SARVAM_API_KEY"):
         raise ValueError("SARVAM_API_KEY not set in environment variables")
@@ -698,6 +701,7 @@ async def generate_voice_combined(
     project_id: Optional[int] = None,
     speaker: Optional[str] = None,
     pace: Optional[float] = None,
+    language_code: Optional[str] = None,
     source: str = CONTINUOUS,
     slide_gap_seconds: float = 0.0,
 ) -> Dict:
@@ -719,6 +723,7 @@ async def generate_voice_combined(
         project_id: Optional project ID for file naming
         speaker: Optional voice actor name
         pace: Optional speaking speed
+        language_code: Optional target language code (e.g. 'en-IN', 'hi-IN')
         source: CONTINUOUS or PER_SLIDE
         slide_gap_seconds: Pause inserted between slides (PER_SLIDE only)
 
@@ -769,7 +774,8 @@ async def generate_voice_combined(
 
     # Resolved before any work — an unsupported language fails the whole
     # request rather than producing audio in the wrong voice.
-    language_code = resolve_language_code(json_script.get("target_language"))
+    target_lang = language_code or json_script.get("target_language")
+    language_code = resolve_language_code(target_lang)
 
     slide_urls = {}
 

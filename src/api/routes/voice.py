@@ -29,6 +29,7 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
         project_id = data.get('project_id')
         speaker = data.get('speaker')
         pace = data.get('pace')
+        language_code = data.get('language_code') or data.get('language')
         
         if pace is not None:
             try:
@@ -44,7 +45,8 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
             json_script=json_script,
             project_id=project_id,
             speaker=speaker,
-            pace=pace
+            pace=pace,
+            language_code=language_code,
         )
         
         print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
