@@ -275,6 +275,110 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(resp, {"creations": mock_creations})
             mock_get.assert_awaited_once_with(user_id=user.sub, email=user.email, limit=100)
 
+    async def test_get_user_creations_resolves_audio_and_slide_urls(self):
+        """get_user_creations retroactively resolves audio_url and zip_url for voice and slides activities."""
+        from datetime import datetime, timezone
+        from src.activity.tracker import get_user_creations
+
+        now = datetime.now(timezone.utc)
+        mock_activities = [
+            # 1. Slide generation with zip_filename
+            {
+                "id": 1,
+                "activity_type": "slide_generation",
+                "detail": "Generated 5 slides",
+                "status": "completed",
+                "metadata": {"zip_filename": "presentation_123.zip", "slide_count": 5},
+                "created_at": now,
+            },
+            # 2. Combined voice without explicit audio_url (legacy)
+            {
+                "id": 2,
+                "activity_type": "voice_generation_combined",
+                "detail": "Combined voice (5 slides)",
+                "status": "completed",
+                "metadata": {"project_id": "proj-abc", "duration": "01:25"},
+                "created_at": now,
+            },
+            # 3. Voice patch with patch_id
+            {
+                "id": 3,
+                "activity_type": "voice_patch",
+                "detail": "Patch: hello world",
+                "status": "completed",
+                "metadata": {"patch_id": "patch_456"},
+                "created_at": now,
+            },
+            # 4. Regenerate slide with project_id and slide_number
+            {
+                "id": 4,
+                "activity_type": "regenerate_slide",
+                "detail": "Row 3 (project proj-abc)",
+                "status": "completed",
+                "metadata": {"project_id": "proj-abc", "slide_number": 3},
+                "created_at": now,
+            },
+            # 5. Voice generation with explicit audio_url and zip_url
+            {
+                "id": 5,
+                "activity_type": "voice_generation",
+                "detail": "Generated 3 slides voice",
+                "status": "completed",
+                "metadata": {
+                    "project_id": "proj-explicit",
+                    "audio_url": "/output/audio/project_proj_explicit/slide_1.wav",
+                    "zip_url": "/output/audio/project_proj_explicit/audio_project_proj_explicit.zip",
+                },
+                "created_at": now,
+            },
+        ]
+
+        mock_cur = AsyncMock()
+        mock_cur.fetchall.side_effect = [
+            [],                 # background_jobs
+            [],                 # script_chat_threads
+            mock_activities,    # user_activities
+        ]
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            creations = await get_user_creations(user_id=str(uuid4()))
+            self.assertEqual(len(creations["slides"]), 1)
+            slide = creations["slides"][0]
+            self.assertEqual(slide["zip_url"], "/output/slides/presentation_123.zip")
+            self.assertEqual(slide["download_url"], "/output/slides/presentation_123.zip")
+            self.assertEqual(slide["url"], "/output/slides/presentation_123.zip")
+
+            self.assertEqual(len(creations["audio"]), 4)
+            # Combined voice
+            comb_aud = creations["audio"][0]
+            self.assertEqual(comb_aud["audio_url"], "/output/audio/project_proj-abc/full_narration.wav")
+            self.assertEqual(comb_aud["zip_url"], "/output/audio/project_proj-abc/audio_project_proj-abc.zip")
+            self.assertEqual(comb_aud["duration"], "01:25")
+
+            # Patch
+            patch_aud = creations["audio"][1]
+            self.assertEqual(patch_aud["audio_url"], "/output/audio/patches/patch_patch_456.wav")
+
+            # Slide regen
+            regen_aud = creations["audio"][2]
+            self.assertEqual(regen_aud["audio_url"], "/output/audio/project_proj-abc/slide_3.wav")
+            self.assertEqual(regen_aud["zip_url"], "/output/audio/project_proj-abc/audio_project_proj-abc.zip")
+
+            # Explicit voice
+            exp_aud = creations["audio"][3]
+            self.assertEqual(exp_aud["audio_url"], "/output/audio/project_proj_explicit/slide_1.wav")
+            self.assertEqual(exp_aud["zip_url"], "/output/audio/project_proj_explicit/audio_project_proj_explicit.zip")
+
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set SCRIPT_CHAT_TEST_DATABASE_URL to run PostgreSQL integration tests")
 class ActivityTrackerPostgresIntegrationTests(unittest.IsolatedAsyncioTestCase):

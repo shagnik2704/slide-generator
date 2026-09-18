@@ -852,8 +852,22 @@ async def generate_voice_combined(
     duration_seconds, duration_formatted = get_wav_duration(str(wav_path))
     print(f"✅ Generated combined audio ({wav_path.stat().st_size} bytes, {duration_formatted})")
 
+    zip_url = None
+    try:
+        wav_files = list(audio_dir.glob("*.wav"))
+        if wav_files:
+            zip_path = audio_dir / f"audio_project_{clean_project_id}.zip"
+            with zipfile.ZipFile(str(zip_path), 'w', zipfile.ZIP_DEFLATED) as zf:
+                for wf in wav_files:
+                    zf.write(wf, wf.name)
+            zip_relative = zip_path.relative_to(project_root / "output")
+            zip_url = f"/output/{zip_relative}"
+    except Exception as e:
+        print(f"⚠️ Failed to create audio project zip: {e}")
+
     return {
         "audio_url": f"/output/{relative_path}",
+        "zip_url": zip_url,
         "project_id": project_id,
         "success": True,
         "source": source,

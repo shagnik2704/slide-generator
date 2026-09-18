@@ -18,6 +18,7 @@ import {
     Mic,
     Video,
     Play,
+    Pause,
 } from 'lucide-react';
 import { apiJson, API_URL } from '../services/api';
 
@@ -98,6 +99,8 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
     const [downloadingDocxId, setDownloadingDocxId] = useState(null);
+    const [playingAudioId, setPlayingAudioId] = useState(null);
+    const audioRef = React.useRef(null);
 
     // Fetch creations and activities whenever the drawer opens
     const fetchData = async () => {
@@ -148,13 +151,31 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     useEffect(() => {
         if (isOpen) {
             fetchData();
+        } else {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            setPlayingAudioId(null);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        const el = audioRef.current;
+        return () => {
+            if (el) {
+                el.pause();
+            }
+        };
+    }, []);
 
     // Close on Escape key
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape' && isOpen) {
+                if (audioRef.current) {
+                    audioRef.current.pause();
+                }
+                setPlayingAudioId(null);
                 onClose();
             }
         };
@@ -224,7 +245,19 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
         }
     };
 
+    const handleClose = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+        setPlayingAudioId(null);
+        onClose();
+    };
+
     const handleOpenInWorkspace = (job) => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+        setPlayingAudioId(null);
         if (onLoadJob) {
             onLoadJob(job);
         }
@@ -232,15 +265,71 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     };
 
     const handleOpenScriptChat = (script) => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+        setPlayingAudioId(null);
         const threadId = script.thread_id || script.id;
         window.location.href = `/script-chat?thread_id=${threadId}`;
+    };
+
+    const resolveAssetUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        if (url.startsWith('/output/')) {
+            if (API_URL && (API_URL.startsWith('http://') || API_URL.startsWith('https://'))) {
+                const baseHost = API_URL.replace(/\/api\/?$/, '');
+                return `${baseHost}${url}`;
+            }
+            return url;
+        }
+        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
     const handleOpenUrl = (e, targetUrl) => {
         e.stopPropagation();
         if (!targetUrl) return;
-        const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${API_URL}${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
+        const fullUrl = resolveAssetUrl(targetUrl);
         window.open(fullUrl, '_blank');
+    };
+
+    const handleDownloadFile = (e, targetUrl, filename) => {
+        e.stopPropagation();
+        if (!targetUrl) return;
+        const fullUrl = resolveAssetUrl(targetUrl);
+        const a = document.createElement('a');
+        a.href = fullUrl;
+        if (filename) {
+            a.download = filename;
+        }
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    const handleToggleAudioPlay = (e, aud) => {
+        e.stopPropagation();
+        const audioSrc = aud.audio_url || aud.url;
+        if (!audioSrc) return;
+
+        if (playingAudioId === aud.id) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            setPlayingAudioId(null);
+        } else {
+            if (audioRef.current) {
+                const fullUrl = resolveAssetUrl(audioSrc);
+                audioRef.current.src = fullUrl;
+                audioRef.current.play().then(() => {
+                    setPlayingAudioId(aud.id);
+                }).catch((err) => {
+                    console.warn('Audio playback error:', err);
+                    setPlayingAudioId(null);
+                });
+            }
+        }
     };
 
     // Search filters
@@ -323,7 +412,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
         >
             {/* Backdrop */}
             <div
-                onClick={onClose}
+                onClick={handleClose}
                 style={{
                     position: 'absolute',
                     inset: 0,
@@ -417,7 +506,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                             <RefreshCw size={15} className={isLoading ? 'spin' : ''} />
                         </button>
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             title="Close (Esc)"
                             style={{
                                 display: 'flex',
@@ -1017,7 +1106,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 )}
                                             </div>
 
-                                            {(slide.download_url || slide.url) && (
+                                            {(slide.download_url || slide.url || slide.zip_url) && (
                                                 <div
                                                     style={{
                                                         display: 'flex',
@@ -1028,7 +1117,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                     }}
                                                 >
                                                     <button
-                                                        onClick={(e) => handleOpenUrl(e, slide.download_url || slide.url)}
+                                                        onClick={(e) => handleDownloadFile(e, slide.download_url || slide.url || slide.zip_url, `slides_${slide.id || 'deck'}.zip`)}
                                                         style={{
                                                             display: 'flex',
                                                             alignItems: 'center',
@@ -1077,23 +1166,33 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                     )}
 
                                     {filteredAudio.map((aud) => {
-                                        const dur = formatDuration(aud.duration);
+                                        const dur = formatDuration(aud.duration || aud.metadata?.duration);
+                                        const audioSrc = aud.audio_url || aud.url;
+                                        const isPlaying = playingAudioId === aud.id;
+                                        const speaker = aud.metadata?.speaker;
+                                        const pace = aud.metadata?.pace;
+                                        const slideNumber = aud.metadata?.slide_number;
+                                        const projectId = aud.metadata?.project_id;
+                                        const patchId = aud.metadata?.patch_id;
+
                                         return (
                                             <div
                                                 key={aud.id}
                                                 style={{
                                                     borderRadius: '10px',
-                                                    border: '1px solid var(--border-color, #2d2d38)',
+                                                    border: isPlaying ? '1px solid #ec4899' : '1px solid var(--border-color, #2d2d38)',
                                                     background: 'var(--bg-primary, #141418)',
                                                     padding: '1rem',
                                                     display: 'flex',
                                                     flexDirection: 'column',
                                                     gap: '0.75rem',
+                                                    boxShadow: isPlaying ? '0 0 16px rgba(236, 72, 153, 0.2)' : 'none',
+                                                    transition: 'all 0.2s ease',
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                                        <Mic size={18} style={{ color: '#ec4899', flexShrink: 0 }} />
+                                                        <Mic size={18} style={{ color: isPlaying ? '#f472b6' : '#ec4899', flexShrink: 0 }} />
                                                         <div style={{ minWidth: 0 }}>
                                                             <div
                                                                 style={{
@@ -1132,37 +1231,138 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                     )}
                                                 </div>
 
-                                                {(aud.audio_url || aud.url) && (
-                                                    <div
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'flex-end',
-                                                            paddingTop: '0.25rem',
-                                                            borderTop: '1px solid var(--border-color, #2d2d38)',
-                                                        }}
-                                                    >
-                                                        <button
-                                                            onClick={(e) => handleOpenUrl(e, aud.audio_url || aud.url)}
-                                                            style={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.35rem',
-                                                                padding: '0.4rem 0.85rem',
-                                                                borderRadius: '6px',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: '500',
-                                                                background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)',
-                                                                border: 'none',
-                                                                color: '#ffffff',
-                                                                cursor: 'pointer',
-                                                            }}
-                                                        >
-                                                            <Play size={13} />
-                                                            <span>Play / Audio</span>
-                                                        </button>
+                                                {(speaker || pace || slideNumber || projectId || patchId) && (
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', fontSize: '0.7rem' }}>
+                                                        {projectId && (
+                                                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary, #9ca3af)' }}>
+                                                                Project: {projectId}
+                                                            </span>
+                                                        )}
+                                                        {slideNumber && (
+                                                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary, #9ca3af)' }}>
+                                                                Slide #{slideNumber}
+                                                            </span>
+                                                        )}
+                                                        {speaker && (
+                                                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary, #9ca3af)' }}>
+                                                                Voice: {speaker}
+                                                            </span>
+                                                        )}
+                                                        {pace && (
+                                                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary, #9ca3af)' }}>
+                                                                Pace: {pace}x
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 )}
+
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        paddingTop: '0.35rem',
+                                                        borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                        gap: '0.5rem',
+                                                    }}
+                                                >
+                                                    {audioSrc ? (
+                                                        <>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                                <button
+                                                                    onClick={(e) => handleToggleAudioPlay(e, aud)}
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '0.35rem',
+                                                                        padding: '0.4rem 0.85rem',
+                                                                        borderRadius: '6px',
+                                                                        fontSize: '0.75rem',
+                                                                        fontWeight: '600',
+                                                                        background: isPlaying
+                                                                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                                                            : 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)',
+                                                                        border: 'none',
+                                                                        color: '#ffffff',
+                                                                        cursor: 'pointer',
+                                                                        boxShadow: isPlaying ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
+                                                                        transition: 'all 0.15s ease',
+                                                                    }}
+                                                                >
+                                                                    {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+                                                                    <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                                                                </button>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                                <button
+                                                                    onClick={(e) => handleDownloadFile(e, audioSrc, `${(aud.title || aud.detail || 'narration').replace(/[^a-zA-Z0-9_-]/g, '_')}.wav`)}
+                                                                    title="Download WAV audio file"
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '0.3rem',
+                                                                        padding: '0.35rem 0.65rem',
+                                                                        borderRadius: '6px',
+                                                                        fontSize: '0.72rem',
+                                                                        fontWeight: '500',
+                                                                        background: 'var(--bg-secondary, #1f1f28)',
+                                                                        border: '1px solid var(--border-color, #2d2d38)',
+                                                                        color: 'var(--text-primary, #ffffff)',
+                                                                        cursor: 'pointer',
+                                                                    }}
+                                                                >
+                                                                    <Download size={12} />
+                                                                    <span>WAV</span>
+                                                                </button>
+
+                                                                {aud.zip_url && (
+                                                                    <button
+                                                                        onClick={(e) => handleDownloadFile(e, aud.zip_url, `audio_${projectId || 'archive'}.zip`)}
+                                                                        title="Download all slide audios as ZIP"
+                                                                        style={{
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '0.3rem',
+                                                                            padding: '0.35rem 0.65rem',
+                                                                            borderRadius: '6px',
+                                                                            fontSize: '0.72rem',
+                                                                            fontWeight: '500',
+                                                                            background: 'var(--bg-secondary, #1f1f28)',
+                                                                            border: '1px solid var(--border-color, #2d2d38)',
+                                                                            color: 'var(--text-primary, #ffffff)',
+                                                                            cursor: 'pointer',
+                                                                        }}
+                                                                    >
+                                                                        <Download size={12} />
+                                                                        <span>ZIP</span>
+                                                                    </button>
+                                                                )}
+
+                                                                <button
+                                                                    onClick={(e) => handleOpenUrl(e, audioSrc)}
+                                                                    title="Open audio in new tab"
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        padding: '0.35rem 0.45rem',
+                                                                        borderRadius: '6px',
+                                                                        background: 'transparent',
+                                                                        border: '1px solid var(--border-color, #2d2d38)',
+                                                                        color: 'var(--text-secondary, #9ca3af)',
+                                                                        cursor: 'pointer',
+                                                                    }}
+                                                                >
+                                                                    <ExternalLink size={12} />
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6b7280)', fontStyle: 'italic' }}>
+                                                            Audio file not generated or archived
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -1391,6 +1591,12 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                         </>
                     )}
                 </div>
+                <audio
+                    ref={audioRef}
+                    onEnded={() => setPlayingAudioId(null)}
+                    onError={() => setPlayingAudioId(null)}
+                    style={{ display: 'none' }}
+                />
             </div>
         </div>
     );
