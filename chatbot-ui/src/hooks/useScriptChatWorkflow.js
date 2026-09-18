@@ -367,18 +367,23 @@ export function useScriptChatWorkflow() {
     }
   }, [connectToThread, threadId]);
 
-  const jumpToMetadata = useCallback(async () => {
+  const jumpToStageHandler = useCallback(async (targetStage) => {
     if (!threadId) return;
     setIsLoading(true);
     setErrorMessage('');
     try {
-      await jumpStage(threadId, 'metadata_review');
+      await jumpStage(threadId, targetStage);
       connectToThread(threadId);
     } catch (err) {
       setErrorMessage(err.message);
       setIsLoading(false);
     }
   }, [connectToThread, threadId]);
+
+  const jumpToMetadata = useCallback(() => jumpToStageHandler('metadata_review'), [jumpToStageHandler]);
+  const jumpToScriptReview = useCallback(() => jumpToStageHandler('script_review'), [jumpToStageHandler]);
+  const runCompliance = useCallback(() => jumpToStageHandler('compliance'), [jumpToStageHandler]);
+  const jumpToValidation = useCallback(() => jumpToStageHandler('validation_review'), [jumpToStageHandler]);
 
   const runExport = useCallback(async (exporter, extension) => {
     if (!threadId) return;
@@ -421,6 +426,9 @@ export function useScriptChatWorkflow() {
     isLoadingThreads,
     isReverting,
     jumpToMetadata,
+    jumpToScriptReview,
+    runCompliance,
+    jumpToValidation,
     loadCheckpoints,
     metadata,
     newThread,
