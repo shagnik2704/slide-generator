@@ -51,12 +51,21 @@ async def generate_voice_endpoint(data: dict, current_user: TokenData = Depends(
         
         print(f"✅ Voice generation complete: {result.get('generated_slides')}/{result.get('total_slides')} slides")
 
+        audio_urls = result.get("audio_urls") or {}
+        first_audio_url = audio_urls.get(1) or audio_urls.get("1") or (next(iter(audio_urls.values()), None) if audio_urls else None)
+
         log_activity(
             user=current_user,
             activity_type="voice_generation",
             detail=f"Generated {result.get('generated_slides', 0)}/{result.get('total_slides', 0)} slides voice",
             status="completed" if result.get("success") else "failed",
-            metadata={"project_id": project_id, "duration": result.get("duration_estimate")},
+            metadata={
+                "project_id": project_id,
+                "duration": result.get("duration_estimate"),
+                "audio_url": first_audio_url,
+                "audio_urls": audio_urls,
+                "zip_url": result.get("zip_url"),
+            },
         )
 
         return result
@@ -150,7 +159,12 @@ async def generate_voice_combined_endpoint(data: dict, current_user: TokenData =
             activity_type="voice_generation_combined",
             detail=f"Combined voice ({result.get('total_slides', 0)} slides)",
             status="completed" if result.get("success") else "failed",
-            metadata={"project_id": project_id, "duration": result.get("duration_estimate")},
+            metadata={
+                "project_id": project_id,
+                "duration": result.get("duration_estimate"),
+                "audio_url": result.get("audio_url"),
+                "zip_url": result.get("zip_url"),
+            },
         )
 
         return result
@@ -224,7 +238,13 @@ async def generate_voice_patch_endpoint(data: dict, current_user: TokenData = De
             activity_type="voice_patch",
             detail=f"Patch: {str(text)[:60]}",
             status="completed" if result.get("success") else "failed",
-            metadata={"speaker": speaker, "pace": pace, "patch_id": result.get("patch_id")},
+            metadata={
+                "speaker": speaker,
+                "pace": pace,
+                "patch_id": result.get("patch_id"),
+                "audio_url": result.get("audio_url"),
+                "duration": result.get("duration_estimate"),
+            },
         )
 
         return result
@@ -321,7 +341,15 @@ async def regenerate_slide_endpoint(data: dict, current_user: TokenData = Depend
             activity_type="regenerate_slide",
             detail=f"Row {slide_number} (project {project_id})",
             status="completed" if result.get("success") else "failed",
-            metadata={"project_id": project_id, "slide_number": slide_number},
+            metadata={
+                "project_id": project_id,
+                "slide_number": slide_number,
+                "audio_url": result.get("slide_audio_url") or result.get("full_audio_url"),
+                "slide_audio_url": result.get("slide_audio_url"),
+                "full_audio_url": result.get("full_audio_url"),
+                "zip_url": result.get("zip_url"),
+                "duration": result.get("duration_estimate"),
+            },
         )
 
         return result

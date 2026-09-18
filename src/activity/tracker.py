@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any, Optional
 from uuid import UUID
 
@@ -421,12 +422,40 @@ async def get_user_creations(
                                 item["zip_url"] = f"/output/slides/{zip_fn}"
                             else:
                                 item["zip_url"] = meta.get("zip_url")
+                            item["download_url"] = item["zip_url"]
+                            item["url"] = item["zip_url"]
                             slides.append(item)
                         elif act_type in ("voice_generation", "voice_generation_combined", "voice_patch", "regenerate_slide"):
-                            item["audio_url"] = meta.get("audio_url")
+                            audio_url = meta.get("audio_url")
+                            zip_url = meta.get("zip_url")
+                            proj_id = meta.get("project_id")
+                            clean_proj = re.sub(r'[^a-zA-Z0-9_-]', '_', re.sub(r'^project_', '', str(proj_id).strip())) if proj_id is not None else None
+                            patch_id = meta.get("patch_id")
+                            slide_num = meta.get("slide_number")
+
+                            # Retroactive URL resolution if audio_url was not explicitly stored in metadata
+                            if not audio_url:
+                                if act_type == "voice_patch" and patch_id:
+                                    audio_url = f"/output/audio/patches/patch_{patch_id}.wav"
+                                elif act_type == "regenerate_slide" and clean_proj and slide_num is not None:
+                                    audio_url = f"/output/audio/project_{clean_proj}/slide_{slide_num}.wav"
+                                elif act_type == "voice_generation_combined" and clean_proj:
+                                    audio_url = f"/output/audio/project_{clean_proj}/full_narration.wav"
+                                elif act_type == "voice_generation" and clean_proj:
+                                    audio_url = f"/output/audio/project_{clean_proj}/slide_1.wav"
+
+                            # Retroactive ZIP URL resolution
+                            if not zip_url and clean_proj and act_type in ("voice_generation", "voice_generation_combined", "regenerate_slide"):
+                                zip_url = f"/output/audio/project_{clean_proj}/audio_project_{clean_proj}.zip"
+
+                            item["audio_url"] = audio_url
+                            item["url"] = audio_url
+                            item["zip_url"] = zip_url
+                            item["duration"] = meta.get("duration")
                             audio.append(item)
                         elif act_type == "generate_video":
                             item["video_url"] = meta.get("video_url")
+                            item["url"] = meta.get("video_url")
                             videos.append(item)
             except Exception as e:
                 logger.debug("Failed to query user_activities in get_user_creations: %s", e)
