@@ -5,7 +5,9 @@ import {
   FileCode,
   History,
   Pencil,
+  Play,
   Save,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import {
@@ -243,6 +245,7 @@ function MetadataPanel({ fossName, metadata }) {
 
 function ScriptPanel({
   checkpoints,
+  hasCompliance,
   isLoading,
   isReviewing,
   isReverting,
@@ -252,6 +255,7 @@ function ScriptPanel({
   onJumpToMetadata,
   onLoadCheckpoints,
   onRevert,
+  onRunCompliance,
   script,
   scriptVersion,
 }) {
@@ -269,6 +273,19 @@ function ScriptPanel({
         </div>
         <div className="script-toolbar">
           <Badge className="script-badge" variant="secondary">{script.length} slides</Badge>
+          {onRunCompliance && !hasCompliance && (
+            <Button
+              className="script-icon-button"
+              disabled={isLoading}
+              onClick={onRunCompliance}
+              size="icon"
+              title="Run 25 compliance checks"
+              type="button"
+              variant="outline"
+            >
+              <Play size={16} aria-hidden="true" />
+            </Button>
+          )}
           <Button
             className="script-icon-button"
             disabled={isLoading}
@@ -384,10 +401,39 @@ function ScriptPanel({
   );
 }
 
-function CompliancePanel({ complianceResults }) {
+function CompliancePanel({ complianceResults, isLoading, onRunCompliance }) {
   const [filter, setFilter] = useState('all');
 
-  if (!complianceResults?.checks) return <EmptyWorkspace />;
+  if (!complianceResults?.checks) {
+    return (
+      <Card className="script-artifact" style={{ padding: '36px 24px', textAlign: 'center' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+            <ShieldCheck size={26} aria-hidden="true" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: '0 0 6px' }}>Compliance checks pending</h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+              Verify this script against all 25 Spoken Tutorial pedagogical and structural criteria, including visual cue formatting, time budgets, and forbidden terminology.
+            </p>
+          </div>
+          {onRunCompliance && (
+            <Button
+              className="script-approve-button"
+              disabled={isLoading}
+              onClick={onRunCompliance}
+              style={{ marginTop: '8px', gap: '8px', padding: '10px 24px' }}
+              type="button"
+              variant="success"
+            >
+              <Play size={16} aria-hidden="true" />
+              Run 25 Compliance Checks
+            </Button>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   const summary = complianceResults.summary || {};
   const checks = complianceResults.checks || [];
@@ -552,6 +598,7 @@ export function ReviewWorkspace({
   onJumpToMetadata,
   onLoadCheckpoints,
   onRevert,
+  onRunCompliance,
   onSaveOutline,
   onTabChange,
   script,
@@ -562,7 +609,7 @@ export function ReviewWorkspace({
     groundingReport ? 'validation' : null,
     metadata ? 'metadata' : null,
     script.length ? 'script' : null,
-    complianceResults ? 'compliance' : null,
+    (complianceResults || script.length) ? 'compliance' : null,
   ].filter(Boolean);
 
   const visibleTab = availableTabs.includes(activeTab) ? activeTab : availableTabs[0];
@@ -588,6 +635,7 @@ export function ReviewWorkspace({
       {visibleTab === 'script' && (
         <ScriptPanel
           checkpoints={checkpoints}
+          hasCompliance={Boolean(complianceResults)}
           isLoading={isLoading}
           isReviewing={interruptType === 'script_review'}
           isReverting={isReverting}
@@ -597,11 +645,18 @@ export function ReviewWorkspace({
           onJumpToMetadata={onJumpToMetadata}
           onLoadCheckpoints={onLoadCheckpoints}
           onRevert={onRevert}
+          onRunCompliance={onRunCompliance}
           script={script}
           scriptVersion={scriptVersion}
         />
       )}
-      {visibleTab === 'compliance' && <CompliancePanel complianceResults={complianceResults} />}
+      {visibleTab === 'compliance' && (
+        <CompliancePanel
+          complianceResults={complianceResults}
+          isLoading={isLoading}
+          onRunCompliance={onRunCompliance}
+        />
+      )}
     </main>
   );
 }

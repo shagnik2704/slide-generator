@@ -85,15 +85,21 @@ export default function ScriptChatPage() {
           errorMessage={workflow.errorMessage}
           interruptType={workflow.interruptType}
           isLoading={workflow.isLoading}
+          metadata={workflow.metadata}
           onApprove={workflow.approve}
           onDownloadDocx={workflow.downloadDocx}
           onDownloadWiki={workflow.downloadWiki}
           onEditChange={workflow.setEditInput}
+          onJumpToMetadata={workflow.jumpToMetadata}
+          onJumpToScriptReview={workflow.jumpToScriptReview}
+          onJumpToValidation={workflow.jumpToValidation}
           onNewThread={workflow.newThread}
+          onRunCompliance={workflow.runCompliance}
           onStart={workflow.start}
           onSubmitEdit={workflow.submitEditInstruction}
           outline={workflow.outline}
           progressMessage={workflow.progressMessage}
+          script={workflow.script}
           setOutline={workflow.setOutline}
           threadId={workflow.threadId}
         />
@@ -114,6 +120,7 @@ export default function ScriptChatPage() {
           onJumpToMetadata={workflow.jumpToMetadata}
           onLoadCheckpoints={workflow.loadCheckpoints}
           onRevert={workflow.revertToCheckpoint}
+          onRunCompliance={workflow.runCompliance}
           onSaveOutline={workflow.saveValidatedOutline}
           onTabChange={workflow.setActiveTab}
           script={workflow.script}

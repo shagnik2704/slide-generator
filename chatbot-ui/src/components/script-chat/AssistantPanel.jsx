@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Check, Download, FileCode, Loader2, MessageSquareText, Send, Sparkles, WandSparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, Download, FileCode, Loader2, MessageSquareText, Pencil, Play, Send, Sparkles, WandSparkles } from 'lucide-react';
 import {
   Conversation,
   ConversationContent,
@@ -129,6 +129,87 @@ function CompletedActions({ onDownloadDocx, onDownloadWiki, onNewThread }) {
   );
 }
 
+function PausedOrErrorActions({
+  currentStage,
+  disabled,
+  hasMetadata,
+  hasOutline,
+  hasScript,
+  onJumpToMetadata,
+  onJumpToScriptReview,
+  onJumpToValidation,
+  onRunCompliance,
+}) {
+  const isError = currentStage === 'error';
+
+  return (
+    <div className="script-composer" style={{ padding: '16px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', color: isError ? 'var(--danger, #d23f3f)' : 'var(--text-primary)', fontWeight: 600 }}>
+        <AlertCircle size={18} />
+        <span>{isError ? 'Workflow Paused / Action Required' : 'Workflow Ready'}</span>
+      </div>
+      <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.4' }}>
+        {hasScript
+          ? 'Your script draft is ready. You can run compliance checks, resume script review, or return to earlier stages.'
+          : hasMetadata
+            ? 'Metadata is ready. You can return to metadata review or restart outline validation.'
+            : 'You can resume or restart this workflow from an earlier step below.'}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {hasScript && (
+          <>
+            <Button
+              className="script-approve-button"
+              disabled={disabled}
+              onClick={onRunCompliance}
+              style={{ width: '100%', gap: '6px' }}
+              type="button"
+              variant="success"
+            >
+              <Play size={16} aria-hidden="true" />
+              Run Compliance Checks
+            </Button>
+            <Button
+              disabled={disabled}
+              onClick={onJumpToScriptReview}
+              style={{ width: '100%', gap: '6px' }}
+              type="button"
+              variant="outline"
+            >
+              <Pencil size={15} aria-hidden="true" />
+              Resume Script Review
+            </Button>
+          </>
+        )}
+        {hasMetadata && (
+          <Button
+            disabled={disabled}
+            onClick={onJumpToMetadata}
+            style={{ width: '100%', gap: '6px' }}
+            type="button"
+            variant="outline"
+          >
+            <ArrowLeft size={15} aria-hidden="true" />
+            Back to Metadata Review
+          </Button>
+        )}
+        {hasOutline && (
+          <Button
+            disabled={disabled}
+            onClick={onJumpToValidation}
+            style={{ width: '100%', gap: '6px' }}
+            type="button"
+            variant="ghost"
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Back to Outline Validation
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AssistantPanel({
   chatLog,
   currentStage,
@@ -136,15 +217,21 @@ export function AssistantPanel({
   errorMessage,
   interruptType,
   isLoading,
+  metadata,
   onApprove,
   onDownloadDocx,
   onDownloadWiki,
   onEditChange,
+  onJumpToMetadata,
+  onJumpToScriptReview,
+  onJumpToValidation,
   onNewThread,
+  onRunCompliance,
   onStart,
   onSubmitEdit,
   outline,
   progressMessage,
+  script,
   setOutline,
   threadId,
 }) {
@@ -244,7 +331,7 @@ export function AssistantPanel({
           onDownloadWiki={onDownloadWiki}
           onNewThread={onNewThread}
         />
-      ) : (
+      ) : interruptType ? (
         <Composer
           disabled={isLoading}
           editInput={editInput}
@@ -252,6 +339,18 @@ export function AssistantPanel({
           onApprove={onApprove}
           onEditChange={onEditChange}
           onSubmitEdit={onSubmitEdit}
+        />
+      ) : (
+        <PausedOrErrorActions
+          currentStage={currentStage}
+          disabled={isLoading}
+          hasMetadata={Boolean(metadata)}
+          hasOutline={Boolean(outline)}
+          hasScript={Boolean(script?.length)}
+          onJumpToMetadata={onJumpToMetadata}
+          onJumpToScriptReview={onJumpToScriptReview}
+          onJumpToValidation={onJumpToValidation}
+          onRunCompliance={onRunCompliance}
         />
       )}
     </aside>

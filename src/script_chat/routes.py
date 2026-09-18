@@ -112,7 +112,14 @@ class RevertRequest(BaseModel):
     checkpoint_id: str
 
 class JumpRequest(BaseModel):
-    target_stage: Literal["metadata_review", "generate", "edit", "compliance"]
+    target_stage: Literal[
+        "validation_review",
+        "metadata_review",
+        "script_review",
+        "generate",
+        "edit",
+        "compliance",
+    ]
 def _sse_event(event_type: str, data: dict) -> str:
     """Format a single SSE event."""
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
@@ -490,12 +497,34 @@ async def jump_stage(
     graph = get_graph()
     
     state = await _get_owned_state_or_404(thread_id, current_user)
+    
+    if req.target_stage == "validation_review":
+        if not state.values.get("raw_outline"):
+            raise HTTPException(status_code=400, detail="Cannot jump to validation review without raw outline")
+        await graph.aupdate_state(config, {"current_stage": "grounding"}, as_node="ground")
+        await update_thread(thread_id, current_stage="grounding", status="awaiting_review")
+        return {"success": True, "message": "Successfully jumped to validation_review"}
+
     if req.target_stage == "metadata_review":
         if not state.values.get("metadata"):
             raise HTTPException(status_code=400, detail="Cannot jump to metadata review without metadata")
         await graph.aupdate_state(config, {"current_stage": "metadata"}, as_node="metadata")
         await update_thread(thread_id, current_stage="metadata", status="awaiting_review")
         return {"success": True, "message": "Successfully jumped to metadata_review"}
+
+    if req.target_stage == "script_review":
+        if not state.values.get("script"):
+            raise HTTPException(status_code=400, detail="Cannot jump to script review without script")
+        await graph.aupdate_state(config, {"current_stage": "generate"}, as_node="generate")
+        await update_thread(thread_id, current_stage="review", status="awaiting_review")
+        return {"success": True, "message": "Successfully jumped to script_review"}
+
+    if req.target_stage == "compliance":
+        if not state.values.get("script"):
+            raise HTTPException(status_code=400, detail="Cannot run compliance without script")
+        await graph.aupdate_state(config, {"current_stage": "compliance"}, as_node="script_review")
+        await update_thread(thread_id, current_stage="compliance", status="running")
+        return {"success": True, "message": "Successfully jumped to compliance"}
 
     as_node = "metadata_review" if req.target_stage == "generate" else "script_review"
     await graph.aupdate_state(
