@@ -9,6 +9,7 @@ import CreatePage from './pages/CreatePage';
 import OutlineChatPage from './pages/OutlineChatPage';
 import ScriptChatPage from './pages/ScriptChatPage';
 import AdminComplianceReviewPage from './pages/AdminComplianceReviewPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Component to handle login route - redirects if already authenticated
 function LoginRoute() {
@@ -57,52 +58,54 @@ function LoginRoute() {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <Routes>
-          <Route path="/" element={<LoginRoute />} />
-          <Route path="/login" element={<LoginRoute />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route
-            path="/create"
-            element={
-              <ProtectedRoute>
-                <CreatePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/outline-chat"
-            element={
-              <ProtectedRoute>
-                <OutlineChatPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/script-chat"
-            element={
-              <ProtectedRoute>
-                <ScriptChatPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-compliance-review"
-            element={
-              <ProtectedRoute>
-                <AdminComplianceReviewPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<LoginRoute />} />
+            <Route path="/login" element={<LoginRoute />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route
+              path="/create"
+              element={
+                <ProtectedRoute>
+                  <CreatePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/outline-chat"
+              element={
+                <ProtectedRoute>
+                  <OutlineChatPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/script-chat"
+              element={
+                <ProtectedRoute>
+                  <ScriptChatPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-compliance-review"
+              element={
+                <ProtectedRoute>
+                  <AdminComplianceReviewPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
