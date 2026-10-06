@@ -123,7 +123,7 @@ def generate_beamer_template(
 \addtobeamertemplate{{background}}{{%
   \begin{{tikzpicture}}[remember picture,overlay]
     \node[anchor=south west, xshift=110mm, yshift=7mm]
-      at (current page.south west) {{\includegraphics[height=1cm]{{logo.png}}}};
+      at (current page.south west) {{\IfFileExists{{logo.png}}{{\includegraphics[height=1cm]{{logo.png}}}}{{}}}};
   \end{{tikzpicture}}%
 }}{{}}
 

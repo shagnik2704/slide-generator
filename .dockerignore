@@ -28,8 +28,6 @@ uploads/
 data/*
 !data/spoken_tutorial_faqs.json
 
-static/
-
 archive/
 
 logs

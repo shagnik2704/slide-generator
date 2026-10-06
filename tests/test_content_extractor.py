@@ -177,6 +177,21 @@ class SlidesRouteEndpointTests(unittest.TestCase):
         self.assertEqual(data["num_content_slides"], 5)
         self.assertEqual(data["total_slides"], 13)
         self.assertFalse(data["auto_filled"])
+        self.assertIn(r"\IfFileExists{logo.png}{\includegraphics[height=1cm]{logo.png}}{}", data["tex_content"])
+
+        # Verify zip archive and unzipped deck folder contents
+        from pathlib import Path
+        import zipfile
+        root = Path(__file__).parent.parent
+        zip_path = root / "output" / "slides" / data["zip_filename"]
+        self.assertTrue(zip_path.exists())
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            self.assertIn("logo.png", zf.namelist())
+
+        deck_dir = root / "output" / "slides" / "Test_Tutorial"
+        self.assertTrue(deck_dir.exists())
+        self.assertTrue((deck_dir / "logo.png").exists())
+        self.assertTrue((deck_dir / data["filename"]).exists())
 
     def test_generate_slides_endpoint_with_script(self):
         script = {

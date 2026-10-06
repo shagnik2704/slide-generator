@@ -98,6 +98,17 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
         output_dir = project_root / "output" / "slides"
         output_dir.mkdir(parents=True, exist_ok=True)
         
+        # Also create unzipped deck directory containing .tex and logo for direct inspection / compilation
+        deck_dir = output_dir / safe_name
+        deck_dir.mkdir(parents=True, exist_ok=True)
+        (deck_dir / tex_filename).write_text(tex_content, encoding="utf-8")
+        if logo_path.exists():
+            import shutil
+            shutil.copy(logo_path, deck_dir / "logo.png")
+            shutil.copy(logo_path, output_dir / "logo.png")
+        else:
+            print(f"⚠️ Logo not found at {logo_path}")
+
         zip_path = output_dir / zip_filename
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
