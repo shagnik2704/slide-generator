@@ -2,10 +2,10 @@
 LLM-powered content extraction for Beamer slide templates.
 Intelligently extracts and cleans content from JSON scripts with context-aware intro phrasing.
 """
+import os
 import json
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 from pydantic import BaseModel, Field
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
 
@@ -63,6 +63,101 @@ class ExtractedSlideContent(BaseModel):
     )
 
 
+def get_candidate_extractors() -> List[Tuple[str, Any]]:
+    """
+    Returns prioritized list of LLM candidates for slide extraction:
+    1. Sarvam AI (glm5.3) - High performance, fast structured outputs (~2-5s)
+    2. OpenAI (gpt-4o-mini / gpt-5.2) - Fast secondary fallback
+    3. Google Gemini (gemini-2.5-flash) - Tertiary fallback
+    """
+    candidates = []
+
+    # 1. Sarvam AI (GLM-5.3)
+    sarvam_key = (os.getenv("SARVAM_API_KEY") or "").strip()
+    if sarvam_key and not sarvam_key.startswith("mock-"):
+        try:
+            from langchain_openai import ChatOpenAI
+            llm_sarvam = ChatOpenAI(
+                model=os.getenv("SARVAM_SLIDES_MODEL", "glm5.3"),
+                api_key=sarvam_key,
+                base_url="https://api.sarvam.ai/v2",
+                default_headers={"api-subscription-key": sarvam_key},
+                temperature=0.0,
+                timeout=15.0,
+                max_retries=1,
+            )
+            candidates.append(("Sarvam GLM-5.3", llm_sarvam))
+        except Exception as e:
+            print(f"⚠️ Failed initializing Sarvam LLM: {e}")
+
+    # 2. OpenAI
+    openai_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+    if openai_key and not openai_key.startswith("mock-"):
+        try:
+            from langchain_openai import ChatOpenAI
+            model_name = os.getenv("OPENAI_SLIDES_MODEL", "gpt-4o-mini")
+            llm_openai = ChatOpenAI(
+                model=model_name,
+                api_key=openai_key,
+                temperature=0.0,
+                timeout=15.0,
+                max_retries=1,
+            )
+            candidates.append((f"OpenAI ({model_name})", llm_openai))
+        except Exception as e:
+            print(f"⚠️ Failed initializing OpenAI LLM: {e}")
+
+    # 3. Google Gemini
+    google_key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
+    if google_key and not google_key.startswith("mock-"):
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm_gemini = ChatGoogleGenerativeAI(
+                model=os.getenv("GEMINI_SLIDES_MODEL", "gemini-2.5-flash"),
+                google_api_key=google_key,
+                temperature=0.0,
+                timeout=15.0,
+                max_retries=1,
+            )
+            candidates.append(("Google Gemini", llm_gemini))
+        except Exception as e:
+            print(f"⚠️ Failed initializing Gemini LLM: {e}")
+
+    return candidates
+
+
+def _rule_based_slide_content(json_script: dict) -> ExtractedSlideContent:
+    """Rule-based construction of ExtractedSlideContent when LLM is unavailable or fails."""
+    fb = _fallback_extraction(json_script)
+    return ExtractedSlideContent(
+        tutorial_name=fb.get("tutorial_name") or json_script.get("title", "Tutorial"),
+        learning_objectives=SectionContent(
+            intro=fb.get("learning_objectives_intro") or "In this tutorial, you will learn to",
+            items=fb.get("learning_objectives") or ["Sample learning objective"]
+        ),
+        prerequisites=SectionContent(
+            intro=fb.get("prerequisites_intro") or "To follow this tutorial, you should be",
+            items=fb.get("prerequisites") or ["familiar with basic concepts"]
+        ),
+        prerequisites_footer=fb.get("prerequisites_footer"),
+        system_requirements=SectionContent(
+            intro=fb.get("system_requirements_intro") or "For this tutorial, you will need",
+            items=fb.get("system_requirements") or ["A computer with internet connection"]
+        ),
+        summary=SectionContent(
+            intro=fb.get("summary_intro") or "In this tutorial, you learned about",
+            items=fb.get("summary_points") or ["Key concepts covered"]
+        ),
+        assignment=SectionContent(
+            intro=fb.get("assignment_intro") or "As an assignment",
+            items=fb.get("assignment_items") or ["Practice exercise"]
+        ),
+        domain_expert=fb.get("domain_expert"),
+        domain_expert_org=fb.get("domain_expert_org"),
+        code_file_info=fb.get("code_file_info")
+    )
+
+
 def extract_slide_content(json_script: dict) -> ExtractedSlideContent:
     """
     Use LLM to intelligently extract and clean content from a script
@@ -74,12 +169,6 @@ def extract_slide_content(json_script: dict) -> ExtractedSlideContent:
     Returns:
         ExtractedSlideContent with context-aware intro phrases and clean items
     """
-    
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        temperature=0  # Deterministic for extraction
-    )
-    
     # Convert script to readable format
     script_text = json.dumps(json_script, indent=2)
     
@@ -180,46 +269,25 @@ Also extract:
 - domain_expert and domain_expert_org (if mentioned)
 - code_file_info (if there's a code file slide)"""
 
-    # Use structured output
-    structured_llm = llm.with_structured_output(ExtractedSlideContent)
-    
-    try:
-        result = structured_llm.invoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=human_prompt)
-        ])
-        
-        if result is None:
-            raise ValueError("LLM returned no result")
-            
-        return result
-        
-    except Exception as e:
-        print(f"⚠️ Content extraction error: {e}")
-        # Return defaults on error
-        return ExtractedSlideContent(
-            tutorial_name=json_script.get('title', 'Tutorial'),
-            learning_objectives=SectionContent(
-                intro="In this tutorial, you will learn to",
-                items=["Sample learning objective"]
-            ),
-            prerequisites=SectionContent(
-                intro="To follow this tutorial, you should be",
-                items=["familiar with basic concepts"]
-            ),
-            system_requirements=SectionContent(
-                intro="For this tutorial, you will need",
-                items=["A computer with internet connection"]
-            ),
-            summary=SectionContent(
-                intro="In this tutorial, you learned about",
-                items=["Key concepts covered"]
-            ),
-            assignment=SectionContent(
-                intro="As an assignment",
-                items=["Practice exercise"]
-            )
-        )
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=human_prompt)
+    ]
+
+    candidates = get_candidate_extractors()
+    for provider_name, llm in candidates:
+        try:
+            print(f"🤖 Attempting slide content extraction with {provider_name}...")
+            structured_llm = llm.with_structured_output(ExtractedSlideContent)
+            result = structured_llm.invoke(messages)
+            if result is not None:
+                print(f"✅ Slide content extracted successfully with {provider_name}")
+                return result
+        except Exception as e:
+            print(f"⚠️ Content extraction with {provider_name} failed: {e}. Trying next provider...")
+
+    print("ℹ️ Falling back to rule-based slide content extraction")
+    return _rule_based_slide_content(json_script)
 
 
 def extract_slide_content_with_fallback(json_script: dict) -> dict:
@@ -312,26 +380,26 @@ def _fallback_extraction(json_script: dict) -> dict:
             
             # Try to find domain expert name
             expert_patterns = [
-                r'[Dd]omain [Ee]xpert[:\s]+([A-Z][a-zA-Z\s\.]+)',
-                r'[Cc]reated by[:\s]+([A-Z][a-zA-Z\s\.]+)',
-                r'[Pp]repared by[:\s]+([A-Z][a-zA-Z\s\.]+)',
-                r'[Aa]uthor[:\s]+([A-Z][a-zA-Z\s\.]+)',
+                r'[Dd]omain [Ee]xpert[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+from|\n|$)',
+                r'[Cc]reated by[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+from|\n|$)',
+                r'[Pp]repared by[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+from|\n|$)',
+                r'[Aa]uthor[:\s]+([A-Z][a-zA-Z\s\.]+?)(?:\s+from|\n|$)',
             ]
             for pattern in expert_patterns:
                 match = re.search(pattern, narration)
                 if match:
-                    result['domain_expert'] = match.group(1).strip()
+                    result['domain_expert'] = match.group(1).rstrip('.').strip()
                     break
             
             # Try to find organization
             org_patterns = [
-                r'from\s+([A-Z][a-zA-Z\s,]+(?:University|Institute|College|IIT|IIIT|NIT))',
-                r'([A-Z][a-zA-Z\s]+(?:University|Institute|College|IIT|IIIT|NIT)[a-zA-Z\s,]*)',
+                r'from\s+([A-Z0-9][a-zA-Z0-9\s,]+?)(?:\.|\n|$)',
+                r'([A-Z][a-zA-Z\s]*(?:University|Institute|College|IIT|IIIT|NIT)[a-zA-Z0-9\s,]*)',
             ]
             for pattern in org_patterns:
                 match = re.search(pattern, narration)
                 if match:
-                    result['domain_expert_org'] = match.group(1).strip()
+                    result['domain_expert_org'] = match.group(1).rstrip('.').strip()
                     break
     
     return result
