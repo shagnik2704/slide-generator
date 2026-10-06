@@ -3,6 +3,8 @@
  * Handles SSE streaming, API calls, and event parsing.
  */
 
+import { sanitizeErrorMessage } from '../utils/errorSanitizer';
+
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'auth_token';
 
@@ -20,7 +22,15 @@ function getHeaders() {
 
 async function getErrorMessage(resp, fallback) {
   const body = await resp.json().catch(() => null);
-  return body?.detail || body?.message || fallback;
+  return sanitizeErrorMessage(
+    {
+      status: resp.status,
+      detail: body?.detail,
+      message: body?.message,
+      rawData: body,
+    },
+    fallback
+  );
 }
 
 function dispatchSseEvent(eventType, rawData, handlers) {
@@ -33,7 +43,14 @@ function dispatchSseEvent(eventType, rawData, handlers) {
       case 'interrupt': handlers.onInterrupt?.(parsed); break;
       case 'state': handlers.onState?.(parsed); break;
       case 'done': handlers.onDone?.(parsed); break;
-      case 'error': handlers.onError?.(parsed); break;
+      case 'error': {
+        const safeMsg = sanitizeErrorMessage(
+          parsed?.message || parsed?.error || parsed?.detail,
+          'Workflow processing encountered an unexpected error.'
+        );
+        handlers.onError?.({ ...parsed, message: safeMsg });
+        break;
+      }
     }
   } catch {
     handlers.onError?.({ message: `Failed to parse ${eventType} event` });

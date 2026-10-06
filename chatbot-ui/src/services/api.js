@@ -3,6 +3,8 @@
  * Eliminates duplicated fetch + error handling code across handlers.
  */
 
+import { createSanitizedError } from '../utils/errorSanitizer';
+
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'auth_token';
 
@@ -65,18 +67,14 @@ export async function apiRequest(endpoint, options = {}) {
     handleAuthError(response, endpoint);
 
     if (!response.ok) {
-        let errorData;
+        let errorData = null;
         try {
             errorData = await response.json();
         } catch {
-            errorData = { detail: `Request failed: ${endpoint}` };
+            errorData = { detail: `Request failed with status ${response.status}` };
         }
 
-        const error = new Error(errorData.detail || errorData.message || `Request failed: ${endpoint}`);
-        error.status = response.status;
-        error.code = errorData.error_code;
-        error.name = errorData.error_code || 'APIError';
-        throw error;
+        throw createSanitizedError(errorData, response.status, endpoint);
     }
 
     return response;
@@ -118,18 +116,14 @@ export async function apiFormData(endpoint, formData) {
     handleAuthError(response, endpoint);
 
     if (!response.ok) {
-        let errorData;
+        let errorData = null;
         try {
             errorData = await response.json();
         } catch {
-            errorData = { detail: `Upload failed: ${endpoint}` };
+            errorData = { detail: `Upload failed with status ${response.status}` };
         }
 
-        const error = new Error(errorData.detail || errorData.message || `Upload failed: ${endpoint}`);
-        error.status = response.status;
-        error.code = errorData.error_code;
-        error.name = errorData.error_code || 'APIError';
-        throw error;
+        throw createSanitizedError(errorData, response.status, endpoint);
     }
 
     return response.json();
