@@ -1,4 +1,5 @@
 """Beamer slides generation route handler."""
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 from pathlib import Path
 import zipfile
@@ -53,7 +54,7 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
             print("🤖 Using LLM for intelligent content extraction...")
             
             from src.services.content_extractor import extract_slide_content_with_fallback
-            extracted = extract_slide_content_with_fallback(json_script)
+            extracted = await asyncio.to_thread(extract_slide_content_with_fallback, json_script)
             
             # Update template params with extracted content
             template_params.update({
@@ -112,6 +113,21 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
         auto_filled = json_script is not None
         print(f"✅ Generated Beamer ZIP: {zip_filename}" + (" (LLM-extracted)" if auto_filled else ""))
 
+        # Calculate slide count metadata
+        num_content_slides_raw = data.get('num_content_slides')
+        if num_content_slides_raw is not None:
+            try:
+                num_content_slides = int(num_content_slides_raw)
+            except (ValueError, TypeError):
+                num_content_slides = 10
+        elif json_script and isinstance(json_script.get('slides'), list):
+            num_content_slides = max(1, len(json_script['slides']) - 8)
+        else:
+            num_content_slides = 10
+
+        num_boilerplate_slides = 8
+        total_slides = num_boilerplate_slides + num_content_slides
+
         log_activity(
             user=current_user,
             activity_type="slide_generation",
@@ -125,7 +141,9 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
             "filename": tex_filename,
             "zip_filename": zip_filename,
             "zip_url": f"/output/slides/{zip_filename}",
-            "num_boilerplate_slides": 8,  # Title, LO, SysReq, Prereq, Code, Summary, Assignment, Thanks
+            "num_boilerplate_slides": num_boilerplate_slides,  # Title, LO, SysReq, Prereq, Code, Summary, Assignment, Thanks
+            "num_content_slides": num_content_slides,
+            "total_slides": total_slides,
             "auto_filled": auto_filled
         }
         

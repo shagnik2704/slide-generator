@@ -89,17 +89,31 @@ export function useGenerationHandlers(setUploadMessages, setIsTyping, currentPro
                 }),
             });
 
-            const newBotMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: "Slides PDF generated! Please review the slides below.",
-                pdfUrl: data.slides_pdf_url,
-                pdfPath: data.pdf_path,
-                jsonScript: data.json_script,
-                projectId: data.project_id,
-                type: 'slides_review'
-            };
-            setUploadMessages(prev => [...prev, newBotMessage]);
+            if (data.slides_pdf_url) {
+                const newBotMessage = {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: "Slides PDF generated! Please review the slides below.",
+                    pdfUrl: data.slides_pdf_url,
+                    pdfPath: data.pdf_path,
+                    jsonScript: data.json_script,
+                    projectId: data.project_id,
+                    type: 'slides_review'
+                };
+                setUploadMessages(prev => [...prev, newBotMessage]);
+            } else {
+                const resultMessage = {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: `✅ Beamer template generated!\n\n` +
+                        `📄 ${data.filename}\n` +
+                        `📊 ${data.total_slides} total slides (${data.num_boilerplate_slides} boilerplate + ${data.num_content_slides} content)` +
+                        (jsonScript ? `\n✨ Auto-filled from script!` : ''),
+                    type: 'slides_result',
+                    slidesData: data
+                };
+                setUploadMessages(prev => [...prev, resultMessage]);
+            }
 
         } catch (error) {
             console.error("Error:", error);
