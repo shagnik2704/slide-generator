@@ -341,6 +341,12 @@ async def translate_slides(
         # Write with UTF-8 encoding
         output_path.write_text(translated_content, encoding='utf-8')
         logger.info(f"💾 Saved translated file: {output_path}")
+
+        # Ensure logo exists in translated folder for local compilation
+        logo_path = Path(__file__).parent.parent.parent / "static" / "logo.png"
+        if logo_path.exists():
+            import shutil
+            shutil.copy(logo_path, output_dir / "logo.png")
         
         # Generate download URL (relative to output directory)
         download_url = f"/output/slides/translated/{output_filename}"
