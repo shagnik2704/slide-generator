@@ -8,11 +8,14 @@ Probes:
 """
 
 import asyncio
+import logging
 import os
 import shutil
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+logger = logging.getLogger(__name__)
 
 from src.api.config import settings
 from src.core.metrics import (
@@ -152,16 +155,22 @@ async def check_all_services(update_metrics: bool = True) -> Dict[str, Any]:
 
 
     if update_metrics:
-        try:
-            SERVICE_AVAILABILITY.labels(service="postgres").set(1.0 if pg_ok else 0.0)
-            SERVICE_AVAILABILITY.labels(service="redis").set(1.0 if redis_ok else 0.0)
-            SERVICE_AVAILABILITY.labels(service="celery_worker").set(1.0 if celery_ok else 0.0)
-            SERVICE_AVAILABILITY.labels(service="storage").set(1.0 if storage_ok else 0.0)
+        for srv, is_up in (
+            ("postgres", pg_ok),
+            ("redis", redis_ok),
+            ("celery_worker", celery_ok),
+            ("storage", storage_ok),
+        ):
+            try:
+                SERVICE_AVAILABILITY.labels(service=srv).set(1.0 if is_up else 0.0)
+            except Exception as exc:
+                logger.warning("Failed to record availability gauge for %s: %s", srv, exc)
 
-            SERVICE_CHECK_LATENCY_SECONDS.labels(service="postgres").set(pg_lat)
-            SERVICE_CHECK_LATENCY_SECONDS.labels(service="redis").set(redis_lat)
-        except Exception:
-            pass
+        for srv, lat in (("postgres", pg_lat), ("redis", redis_lat)):
+            try:
+                SERVICE_CHECK_LATENCY_SECONDS.labels(service=srv).set(lat)
+            except Exception as exc:
+                logger.warning("Failed to record check latency for %s: %s", srv, exc)
 
     # Overall service status calculation
     if not pg_ok or not storage_ok:
