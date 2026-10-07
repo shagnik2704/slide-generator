@@ -54,11 +54,26 @@
             "uid": "slide-generator-prometheus"
           },
           "expr": "up{job=\"backend\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Backend",
-      "type": "stat"
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
     },
     {
       "datasource": {
@@ -194,11 +209,26 @@
             "uid": "slide-generator-prometheus"
           },
           "expr": "service_availability{service=\"postgres\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "PostgreSQL",
-      "type": "stat"
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
     },
     {
       "datasource": {
@@ -240,11 +270,26 @@
             "uid": "slide-generator-prometheus"
           },
           "expr": "service_availability{service=\"redis\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Redis",
-      "type": "stat"
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
     },
     {
       "datasource": {
@@ -286,11 +331,26 @@
             "uid": "slide-generator-prometheus"
           },
           "expr": "service_availability{service=\"celery_worker\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Whisper Worker",
-      "type": "stat"
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
     },
     {
       "datasource": {
@@ -332,11 +392,26 @@
             "uid": "slide-generator-prometheus"
           },
           "expr": "service_availability{service=\"storage\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Storage",
-      "type": "stat"
+      "type": "stat",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
     },
     {
       "collapsed": false,
@@ -358,7 +433,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -375,7 +451,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(tts_requests_total[5m])) by (status)",
+          "expr": "(sum(rate(tts_requests_total[5m])) by (status)) or vector(0)",
           "legendFormat": "TTS {{status}}",
           "refId": "A"
         }
@@ -390,7 +466,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -407,7 +484,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(tts_upstream_duration_seconds_bucket[5m])) by (le))",
+          "expr": "(histogram_quantile(0.95, sum(rate(tts_upstream_duration_seconds_bucket[5m])) by (le))) or vector(0)",
           "legendFormat": "Sarvam p95 Latency",
           "refId": "A"
         },
@@ -416,7 +493,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(tts_upstream_requests_total[5m])) by (http_status)",
+          "expr": "(sum(rate(tts_upstream_requests_total[5m])) by (http_status)) or vector(0)",
           "legendFormat": "HTTP {{http_status}}",
           "refId": "B"
         }
@@ -431,7 +508,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -448,7 +526,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(slide_generation_requests_total[5m])) by (status)",
+          "expr": "(sum(rate(slide_generation_requests_total[5m])) by (status)) or vector(0)",
           "legendFormat": "Gen {{status}}",
           "refId": "A"
         },
@@ -457,7 +535,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(slide_generation_duration_seconds_bucket[5m])) by (le))",
+          "expr": "(histogram_quantile(0.95, sum(rate(slide_generation_duration_seconds_bucket[5m])) by (le))) or vector(0)",
           "legendFormat": "p95 Gen Latency (s)",
           "refId": "B"
         }
@@ -472,7 +550,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -489,7 +568,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(slide_extraction_duration_seconds_bucket[5m])) by (le, provider))",
+          "expr": "(histogram_quantile(0.95, sum(rate(slide_extraction_duration_seconds_bucket[5m])) by (le, provider))) or vector(0)",
           "legendFormat": "{{provider}} extraction (s)",
           "refId": "A"
         },
@@ -498,7 +577,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(slide_extraction_fallback_total[5m])) by (from_provider, to_provider)",
+          "expr": "(sum(rate(slide_extraction_fallback_total[5m])) by (from_provider, to_provider)) or vector(0)",
           "legendFormat": "Fallback {{from_provider}}->{{to_provider}}",
           "refId": "B"
         }
@@ -513,7 +592,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -530,7 +610,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(script_chat_llm_requests_total[5m])) by (model, status)",
+          "expr": "(sum(rate(script_chat_llm_requests_total[5m])) by (model, status)) or vector(0)",
           "legendFormat": "{{model}} {{status}}",
           "refId": "A"
         },
@@ -539,7 +619,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(script_chat_llm_duration_seconds_bucket[5m])) by (le, model))",
+          "expr": "(histogram_quantile(0.95, sum(rate(script_chat_llm_duration_seconds_bucket[5m])) by (le, model))) or vector(0)",
           "legendFormat": "{{model}} p95 latency (s)",
           "refId": "B"
         }
@@ -554,7 +634,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -571,7 +652,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(script_chat_llm_tokens_total[5m])) by (token_type)",
+          "expr": "(sum(rate(script_chat_llm_tokens_total[5m])) by (token_type)) or vector(0)",
           "legendFormat": "{{token_type}} tokens/s",
           "refId": "A"
         }
@@ -586,7 +667,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -603,7 +685,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(transcription_jobs_total[5m])) by (status)",
+          "expr": "(sum(rate(transcription_jobs_total[5m])) by (status)) or vector(0)",
           "legendFormat": "Transcription {{status}}",
           "refId": "A"
         },
@@ -612,7 +694,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(translation_requests_total[5m])) by (target_language, status)",
+          "expr": "(sum(rate(translation_requests_total[5m])) by (target_language, status)) or vector(0)",
           "legendFormat": "Trans {{target_language}} ({{status}})",
           "refId": "B"
         },
@@ -621,7 +703,7 @@
             "type": "prometheus",
             "uid": "slide-generator-prometheus"
           },
-          "expr": "sum(rate(document_exports_total[5m])) by (format, status)",
+          "expr": "(sum(rate(document_exports_total[5m])) by (format, status)) or vector(0)",
           "legendFormat": "Export {{format}} ({{status}})",
           "refId": "C"
         }
@@ -1393,7 +1475,7 @@
     "slide-generator"
   ],
   "time": {
-    "from": "now-90d",
+    "from": "now-6h",
     "to": "now"
   },
   "timezone": "browser",

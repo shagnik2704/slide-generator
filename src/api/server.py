@@ -40,15 +40,15 @@ async def lifespan(app: FastAPI):
 
     async def _periodic_health_prober():
         from src.services.health_service import check_all_services
-        await asyncio.sleep(2)
         while True:
             try:
                 await check_all_services(update_metrics=True)
-            except Exception:
-                logger.debug("Periodic health probe encountered error", exc_info=True)
+            except Exception as exc:
+                logger.warning(f"Periodic health probe failed: {exc}")
             await asyncio.sleep(15)
 
     health_task = asyncio.create_task(_periodic_health_prober())
+    app.state.health_task = health_task
     try:
         yield
     finally:
