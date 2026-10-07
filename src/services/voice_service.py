@@ -10,11 +10,21 @@ import httpx
 import base64
 import time
 import uuid
+import io
+import wave
 from pathlib import Path
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 from src.utils.audio_utils import concat_wav_bytes, get_wav_duration, silence_wav_like
+from src.core.metrics import (
+    TTS_REQUESTS_TOTAL,
+    TTS_UPSTREAM_REQUESTS_TOTAL,
+    TTS_UPSTREAM_DURATION_SECONDS,
+    TTS_RETRIES_TOTAL,
+    TTS_AUDIO_DURATION_SECONDS_TOTAL,
+    TTS_CHARACTERS_TOTAL,
+)
 
 load_dotenv()
 
@@ -363,8 +373,12 @@ async def _synthesize_chunk(
     last_error = None
 
     for attempt in range(_TTS_MAX_ATTEMPTS):
+        t0 = time.perf_counter()
         try:
             response = await client.post(_TTS_URL, json=payload, headers=headers)
+            elapsed = time.perf_counter() - t0
+            TTS_UPSTREAM_REQUESTS_TOTAL.labels(provider="sarvam", http_status=str(response.status_code)).inc()
+            TTS_UPSTREAM_DURATION_SECONDS.labels(provider="sarvam", language=language_code).observe(elapsed)
             response.raise_for_status()
 
             audios = response.json().get("audios", [])
@@ -375,6 +389,7 @@ async def _synthesize_chunk(
 
         except httpx.HTTPStatusError as e:
             status = e.response.status_code
+            TTS_UPSTREAM_REQUESTS_TOTAL.labels(provider="sarvam", http_status=str(status)).inc()
             # If the pronunciation dictionary was not found (HTTP 404, e.g. API key was rotated or dict deleted),
             # remove dict_id from payload and retry synthesis without failing the user.
             if status == 404 and "dict_id" in payload:
@@ -394,10 +409,13 @@ async def _synthesize_chunk(
                 raise
             last_error = e
         except (httpx.TimeoutException, httpx.TransportError, RuntimeError) as e:
+            err_type = "timeout" if isinstance(e, httpx.TimeoutException) else "transport_error"
+            TTS_UPSTREAM_REQUESTS_TOTAL.labels(provider="sarvam", http_status=err_type).inc()
             last_error = e
 
         if attempt < _TTS_MAX_ATTEMPTS - 1:
             retry_delay = 2 ** attempt
+            TTS_RETRIES_TOTAL.labels(reason=last_error.__class__.__name__).inc()
             print(f"🔄 TTS chunk failed ({last_error}), retrying in {retry_delay}s...")
             await asyncio.sleep(retry_delay)
 
@@ -440,21 +458,36 @@ async def synthesize_narration(
     if not chunks:
         raise ValueError("No narration text to synthesize")
 
-    speaker = speaker or DEFAULT_SPEAKER
+    TTS_CHARACTERS_TOTAL.labels(language=language_code).inc(len(text))
+
+    speaker_val = speaker or DEFAULT_SPEAKER
     pace = pace if pace is not None else DEFAULT_PACE
 
     audio_chunks = []
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        for i, chunk in enumerate(chunks, start=1):
-            if len(chunks) > 1:
-                print(f"   … TTS chunk {i}/{len(chunks)} ({len(chunk)} chars)")
-            audio_chunks.append(
-                await _synthesize_chunk(
-                    client, chunk, language_code, speaker, pace, api_key, dict_id
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            for i, chunk in enumerate(chunks, start=1):
+                if len(chunks) > 1:
+                    print(f"   … TTS chunk {i}/{len(chunks)} ({len(chunk)} chars)")
+                audio_chunks.append(
+                    await _synthesize_chunk(
+                        client, chunk, language_code, speaker_val, pace, api_key, dict_id
+                    )
                 )
-            )
 
-    return concat_wav_bytes(audio_chunks)
+        combined_audio = concat_wav_bytes(audio_chunks)
+        try:
+            with wave.open(io.BytesIO(combined_audio), "rb") as wf:
+                audio_dur = wf.getnframes() / float(wf.getframerate())
+                if audio_dur > 0:
+                    TTS_AUDIO_DURATION_SECONDS_TOTAL.labels(language=language_code).inc(audio_dur)
+        except Exception:
+            pass
+        TTS_REQUESTS_TOTAL.labels(language=language_code, speaker=speaker_val, status="success").inc()
+        return combined_audio
+    except Exception:
+        TTS_REQUESTS_TOTAL.labels(language=language_code, speaker=speaker_val, status="error").inc()
+        raise
 
 
 async def generate_voice_for_slide(

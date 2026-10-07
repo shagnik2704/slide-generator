@@ -1,5 +1,5 @@
-"""Beamer slides generation route handler."""
 import asyncio
+import time
 from fastapi import APIRouter, HTTPException, Depends
 from pathlib import Path
 import zipfile
@@ -7,6 +7,10 @@ import traceback
 
 from src.api.auth import get_current_user, TokenData
 from src.activity.tracker import log_activity
+from src.core.metrics import (
+    SLIDE_GEN_REQUESTS_TOTAL,
+    SLIDE_GEN_DURATION_SECONDS,
+)
 
 router = APIRouter(tags=["slides"])
 
@@ -39,6 +43,7 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    t0 = time.perf_counter()
     try:
         json_script = data.get('json_script')
         tutorial_name = data.get('tutorial_name', 'Tutorial Name')
@@ -147,6 +152,10 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
             metadata={"zip_filename": zip_filename, "auto_filled": auto_filled},
         )
 
+        elapsed = time.perf_counter() - t0
+        SLIDE_GEN_DURATION_SECONDS.observe(elapsed)
+        SLIDE_GEN_REQUESTS_TOTAL.labels(status="success", theme=theme_color or "default").inc()
+
         return {
             "tex_content": tex_content,
             "filename": tex_filename,
@@ -159,6 +168,7 @@ async def generate_slides_endpoint(data: dict, current_user: TokenData = Depends
         }
         
     except Exception as e:
+        SLIDE_GEN_REQUESTS_TOTAL.labels(status="error", theme=theme_color or "default").inc()
         traceback.print_exc()
         print(f"ERROR in generate_slides: {e}")
         raise HTTPException(status_code=500, detail=str(e))

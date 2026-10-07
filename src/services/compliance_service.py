@@ -2,13 +2,19 @@
 AI-powered compliance checking service for Spoken Tutorial scripts.
 Uses Gemini LLM to evaluate scripts against the official checklist.
 """
-from langchain_openai import ChatOpenAI
 import json
 import re
+import time
 from typing import Dict, List, Tuple
 from pydantic import BaseModel, Field
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 import httpx
+
+from src.core.metrics import (
+    COMPLIANCE_EVALUATIONS_TOTAL,
+    COMPLIANCE_DURATION_SECONDS,
+)
 
 
 class CheckResult(BaseModel):
@@ -182,6 +188,7 @@ async def check_compliance(json_script: dict, tutorial_type: str = "conceptual")
     Returns:
         Dictionary with checklist results for 3-column display
     """
+    t0 = time.perf_counter()
     # Initialize LLM with structured output
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
@@ -292,6 +299,10 @@ For each check, provide:
         ai_passed = sum(1 for c in all_checks if c["ai_review"] is True)
         ai_failed = sum(1 for c in all_checks if c["ai_review"] is False)
         
+        elapsed = time.perf_counter() - t0
+        COMPLIANCE_DURATION_SECONDS.observe(elapsed)
+        COMPLIANCE_EVALUATIONS_TOTAL.labels(status="success").inc()
+
         return {
             "checks": all_checks,
             "summary": {
@@ -303,6 +314,7 @@ For each check, provide:
         }
         
     except Exception as e:
+        COMPLIANCE_EVALUATIONS_TOTAL.labels(status="error").inc()
         print(f"⚠️ Compliance check error: {e}")
         return _get_error_response(str(e))
 

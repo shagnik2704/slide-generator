@@ -8,11 +8,18 @@ import os
 import zipfile
 from pathlib import Path
 from typing import List, Dict, Optional
+import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable
+
+from src.core.metrics import (
+    IMAGE_GEN_REQUESTS_TOTAL,
+    IMAGE_GEN_DURATION_SECONDS,
+    IMAGE_GEN_QUOTA_ERRORS_TOTAL,
+)
 
 load_dotenv()
 
@@ -54,6 +61,7 @@ def generate_single_image(
     
     client = genai.Client(api_key=api_key)
     
+    t0 = time.perf_counter()
     try:
         # Import shared style prefix for consistent image generation
         from src.services.image_styles import IMAGE_STYLE_PREFIX, CHARACTER_PROMPT
@@ -95,12 +103,19 @@ def generate_single_image(
                     generated_image = part.as_image()
                     generated_image.save(str(output_path))
                     print(f"  ✓ Saved: {output_path.name}")
+                    elapsed = time.perf_counter() - t0
+                    IMAGE_GEN_DURATION_SECONDS.observe(elapsed)
+                    IMAGE_GEN_REQUESTS_TOTAL.labels(status="success").inc()
                     return True
         
         print(f"  ⚠️ No image returned for prompt")
+        IMAGE_GEN_REQUESTS_TOTAL.labels(status="error").inc()
         return False
         
     except Exception as e:
+        IMAGE_GEN_REQUESTS_TOTAL.labels(status="error").inc()
+        if isinstance(e, ResourceExhausted):
+            IMAGE_GEN_QUOTA_ERRORS_TOTAL.inc()
         print(f"  ❌ Error generating image: {e}")
         raise
 
