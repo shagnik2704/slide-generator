@@ -36,6 +36,14 @@ class TestMetrics(unittest.TestCase):
         DOCUMENT_EXPORTS_TOTAL.labels(format="docx", status="success").inc()
         REDESIGN_PIPELINE_TOTAL.labels(status="success").inc()
 
+    def test_gauge_availability(self):
+        """Verify service availability and latency gauges work."""
+        from src.core.metrics import SERVICE_AVAILABILITY, SERVICE_CHECK_LATENCY_SECONDS
+        SERVICE_AVAILABILITY.labels(service="postgres").set(1.0)
+        SERVICE_AVAILABILITY.labels(service="redis").set(1.0)
+        SERVICE_CHECK_LATENCY_SECONDS.labels(service="postgres").set(0.005)
+        SERVICE_CHECK_LATENCY_SECONDS.labels(service="redis").set(0.002)
+
 
 if __name__ == "__main__":
     unittest.main()

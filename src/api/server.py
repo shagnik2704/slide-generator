@@ -1,4 +1,5 @@
 """FastAPI application server."""
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -36,9 +37,28 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing Script Chat graph...")
     from src.script_chat.routes import init_script_chat_graph, close_script_chat_graph
     await init_script_chat_graph()
-    yield
-    logger.info("🔒 Server shutting down")
-    await close_script_chat_graph()
+
+    async def _periodic_health_prober():
+        from src.services.health_service import check_all_services
+        await asyncio.sleep(2)
+        while True:
+            try:
+                await check_all_services(update_metrics=True)
+            except Exception:
+                logger.debug("Periodic health probe encountered error", exc_info=True)
+            await asyncio.sleep(15)
+
+    health_task = asyncio.create_task(_periodic_health_prober())
+    try:
+        yield
+    finally:
+        health_task.cancel()
+        try:
+            await health_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("🔒 Server shutting down")
+        await close_script_chat_graph()
 
 
 
@@ -186,6 +206,16 @@ async def health():
         "environment": settings.environment,
         "service": "Spoken Tutorial Generator API",
     }
+
+
+@app.get("/health/status")
+async def health_status():
+    """Detailed health, readiness, and dependency diagnostic check across all core services."""
+    from src.services.health_service import check_all_services
+    report = await check_all_services(update_metrics=True)
+    status_code = 200 if report["status"] in ("healthy", "degraded") else 503
+    return JSONResponse(status_code=status_code, content=report)
+
 
 if __name__ == "__main__":
     import uvicorn
