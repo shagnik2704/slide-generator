@@ -18,7 +18,26 @@ import time
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Optional
 
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, Gauge
+
+# ==============================================================================
+# 0. SERVICE & DEPENDENCY AVAILABILITY METRICS
+# ==============================================================================
+
+SERVICE_AVAILABILITY = Gauge(
+    "service_availability",
+    "Availability status of core service dependency (1 = healthy/up, 0 = unhealthy/down)",
+    ["service"],
+    multiprocess_mode="min",
+)
+
+SERVICE_CHECK_LATENCY_SECONDS = Gauge(
+    "service_check_latency_seconds",
+    "Response latency of service health check probe in seconds",
+    ["service"],
+    multiprocess_mode="max",
+)
+
 
 # ==============================================================================
 # 1. TTS / VOICE SYNTHESIS METRICS

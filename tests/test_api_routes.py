@@ -34,6 +34,17 @@ class ApiRouteSmokeTests(unittest.TestCase):
         self.assertIn("status", data)
         self.assertEqual(data.get("service"), "Spoken Tutorial Generator API")
 
+    def test_health_status_endpoint_returns_json_contract(self):
+        response = self.client.get("/health/status")
+        self.assertIn(response.status_code, (200, 503))
+        data = response.json()
+        self.assertIn("status", data)
+        self.assertIn("dependencies", data)
+        self.assertIn("postgres", data["dependencies"])
+        self.assertIn("redis", data["dependencies"])
+        self.assertIn("celery_worker", data["dependencies"])
+        self.assertIn("storage", data["dependencies"])
+
     def test_upload_outline_requires_authentication(self):
         file_data = io.BytesIO(b"# Sample Outline")
         response = self.client.post(
