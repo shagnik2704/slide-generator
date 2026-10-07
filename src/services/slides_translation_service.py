@@ -10,10 +10,16 @@ This service:
 
 import re
 import logging
+import time
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
 from langchain_google_genai import ChatGoogleGenerativeAI
+
+from src.core.metrics import (
+    SLIDES_TRANSLATION_REQUESTS_TOTAL,
+    SLIDES_TRANSLATION_DURATION_SECONDS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -313,6 +319,7 @@ async def translate_slides(
             error=f"Unsupported language: {target_language}"
         )
     
+    t0 = time.perf_counter()
     try:
         # Step 1: Translate content with LLM
         logger.info(f"📝 Step 1: Translating content to {config['name']}...")
@@ -351,6 +358,10 @@ async def translate_slides(
         # Generate download URL (relative to output directory)
         download_url = f"/output/slides/translated/{output_filename}"
         
+        elapsed = time.perf_counter() - t0
+        SLIDES_TRANSLATION_DURATION_SECONDS.labels(target_language=target_language).observe(elapsed)
+        SLIDES_TRANSLATION_REQUESTS_TOTAL.labels(target_language=target_language, status="success").inc()
+
         return SlidesTranslationResult(
             success=True,
             filename=output_filename,
@@ -362,6 +373,7 @@ async def translate_slides(
         )
         
     except Exception as e:
+        SLIDES_TRANSLATION_REQUESTS_TOTAL.labels(target_language=target_language, status="error").inc()
         logger.error(f"❌ Translation failed: {str(e)}", exc_info=True)
         return SlidesTranslationResult(
             success=False,

@@ -4,9 +4,15 @@ Intelligently extracts and cleans content from JSON scripts with context-aware i
 """
 import os
 import json
+import time
 from typing import List, Optional, Tuple, Any
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
+
+from src.core.metrics import (
+    SLIDE_EXTRACTION_DURATION_SECONDS,
+    SLIDE_EXTRACTION_FALLBACK_TOTAL,
+)
 
 
 class SectionContent(BaseModel):
@@ -276,17 +282,22 @@ Also extract:
 
     candidates = get_candidate_extractors()
     for provider_name, llm in candidates:
+        t0 = time.perf_counter()
         try:
             print(f"🤖 Attempting slide content extraction with {provider_name}...")
             structured_llm = llm.with_structured_output(ExtractedSlideContent)
             result = structured_llm.invoke(messages)
+            elapsed = time.perf_counter() - t0
+            SLIDE_EXTRACTION_DURATION_SECONDS.labels(provider=provider_name).observe(elapsed)
             if result is not None:
                 print(f"✅ Slide content extracted successfully with {provider_name}")
                 return result
         except Exception as e:
+            SLIDE_EXTRACTION_FALLBACK_TOTAL.labels(from_provider=provider_name, to_provider="next").inc()
             print(f"⚠️ Content extraction with {provider_name} failed: {e}. Trying next provider...")
 
     print("ℹ️ Falling back to rule-based slide content extraction")
+    SLIDE_EXTRACTION_FALLBACK_TOTAL.labels(from_provider="llm_candidates", to_provider="rule_based").inc()
     return _rule_based_slide_content(json_script)
 
 

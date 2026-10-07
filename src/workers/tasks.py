@@ -4,8 +4,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from pathlib import Path
 
+from src.core.metrics import (
+    TRANSCRIPTION_JOBS_TOTAL,
+    TRANSCRIPTION_DURATION_SECONDS,
+    TRANSCRIPTION_AUDIO_SECONDS_TOTAL,
+)
 from src.jobs.persistence import (
     claim_job,
     complete_job,
@@ -74,8 +80,13 @@ async def _process_timed_script(
             }
 
         input_path = Path(job["input_path"])
+        t0 = time.perf_counter()
         result = generate_timed_script(input_path, language=language)
+        elapsed = time.perf_counter() - t0
+        TRANSCRIPTION_DURATION_SECONDS.observe(elapsed)
+
         if not result.get("success"):
+            TRANSCRIPTION_JOBS_TOTAL.labels(status="failed").inc()
             err_msg = result.get("error", "Timed script generation failed")
             await fail_job(job_id, err_msg)
             reached_terminal = True
@@ -91,6 +102,11 @@ async def _process_timed_script(
             except Exception:
                 pass
             return {"job_id": job_id, "status": "failed"}
+
+        TRANSCRIPTION_JOBS_TOTAL.labels(status="completed").inc()
+        audio_dur = result.get("total_duration") or result.get("total_duration_seconds")
+        if isinstance(audio_dur, (int, float)) and audio_dur > 0:
+            TRANSCRIPTION_AUDIO_SECONDS_TOTAL.inc(float(audio_dur))
 
         result["audio_file"] = job["original_filename"] or input_path.name
         await complete_job(job_id, result)
@@ -113,6 +129,7 @@ async def _process_timed_script(
             pass
         return {"job_id": job_id, "status": "completed"}
     except Exception as exc:
+        TRANSCRIPTION_JOBS_TOTAL.labels(status="failed").inc()
         logger.exception("Timed script job %s failed", job_id)
         try:
             await fail_job(job_id, str(exc))

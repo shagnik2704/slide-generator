@@ -10,8 +10,14 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Inches, Pt, RGBColor, Twips
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import time
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+
+from src.core.metrics import (
+    DOCUMENT_EXPORTS_TOTAL,
+    DOCUMENT_EXPORT_DURATION_SECONDS,
+)
 
 
 def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
@@ -77,15 +83,25 @@ def json_to_docx(json_data: dict, output_path: str = None) -> BytesIO:
         for cell in row.cells:
             _set_cell_padding(cell, top=100, bottom=100, left=100, right=100)
     
-    # Save or return buffer
-    if output_path:
-        doc.save(output_path)
-        return output_path
-    else:
-        buffer = BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
-        return buffer
+    t0 = time.perf_counter()
+    try:
+        # Save or return buffer
+        if output_path:
+            doc.save(output_path)
+            res = output_path
+        else:
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+            res = buffer
+
+        elapsed = time.perf_counter() - t0
+        DOCUMENT_EXPORT_DURATION_SECONDS.labels(format="docx").observe(elapsed)
+        DOCUMENT_EXPORTS_TOTAL.labels(format="docx", status="success").inc()
+        return res
+    except Exception:
+        DOCUMENT_EXPORTS_TOTAL.labels(format="docx", status="error").inc()
+        raise
 
 
 def _set_cell_padding(cell, top=0, bottom=0, left=0, right=0):

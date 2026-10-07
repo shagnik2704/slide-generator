@@ -6,7 +6,13 @@ from src.nodes.tabulate import form_final_table
 from src.nodes.gsheet import export_to_sheets
 import json
 import asyncio
+import time
 from typing import List
+
+from src.core.metrics import (
+    REDESIGN_PIPELINE_TOTAL,
+    REDESIGN_PIPELINE_DURATION_SECONDS,
+)
 
 
 def _log(data, filename):
@@ -41,34 +47,43 @@ async def run_pipeline(foss_name: str, language: str, export: bool, reciept_emai
         "final_table": []
     }
 
-    # Extract tutorials concurrently (up to 8 at a time - I/O bound)
-    state = await extract_tutorials_async(state, foss_name, language)
-    
-    # Check if any tutorials were found
-    tutorials_found = len(state.get("structured_legacy", []))
-    if tutorials_found == 0:
-        raise ValueError(
-            f"No tutorials found for '{foss_name}' in '{language}'. "
-            f"This FOSS might not be available in the selected language."
-        )
-    
-    # _log(state, "extraction_output.json")
+    t0 = time.perf_counter()
+    try:
+        # Extract tutorials concurrently (up to 8 at a time - I/O bound)
+        state = await extract_tutorials_async(state, foss_name, language)
+        
+        # Check if any tutorials were found
+        tutorials_found = len(state.get("structured_legacy", []))
+        if tutorials_found == 0:
+            raise ValueError(
+                f"No tutorials found for '{foss_name}' in '{language}'. "
+                f"This FOSS might not be available in the selected language."
+            )
+        
+        # _log(state, "extraction_output.json")
 
-    # Update tutorials concurrently (up to 2 at a time - rate-limited)
-    state = await tech_intelligence_agent_async(state)
-    # _log(state, "updation_output.json")
+        # Update tutorials concurrently (up to 2 at a time - rate-limited)
+        state = await tech_intelligence_agent_async(state)
+        # _log(state, "updation_output.json")
 
-    # Split tutorials concurrently (up to 4 at a time - moderate LLM)
-    state = await duration_split_async(state)
-    # _log(state, "split_output.json")
+        # Split tutorials concurrently (up to 4 at a time - moderate LLM)
+        state = await duration_split_async(state)
+        # _log(state, "split_output.json")
 
-    # Form final table (sequential operation)
-    state = form_final_table(state)
-    # _log(state, "final_output.json")
+        # Form final table (sequential operation)
+        state = form_final_table(state)
+        # _log(state, "final_output.json")
 
-    export_url = "Export flag disabled."
+        export_url = "Export flag disabled."
 
-    if export:
-        export_url = export_to_sheets(state, foss_name, language, reciept_emails, reciept_role)
+        if export:
+            export_url = export_to_sheets(state, foss_name, language, reciept_emails, reciept_role)
 
-    return state, export_url
+        elapsed = time.perf_counter() - t0
+        REDESIGN_PIPELINE_DURATION_SECONDS.observe(elapsed)
+        REDESIGN_PIPELINE_TOTAL.labels(status="success").inc()
+
+        return state, export_url
+    except Exception:
+        REDESIGN_PIPELINE_TOTAL.labels(status="error").inc()
+        raise

@@ -4,9 +4,15 @@ Supports batch translation to multiple Indian languages.
 """
 import asyncio
 import json
+import time
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
+
+from src.core.metrics import (
+    TRANSLATION_REQUESTS_TOTAL,
+    TRANSLATION_DURATION_SECONDS,
+)
 
 
 
@@ -138,10 +144,12 @@ async def translate_script(
 Return the {lang_name} translation for each slide. Include both narration and visual_cue if present."""
 
         # Call LLM with structured output
+        t0 = time.perf_counter()
         translation_llm = llm.with_structured_output(TranslationBatch)
         result = await translation_llm.ainvoke(prompt)
         
         if not result or not result.slides:
+            TRANSLATION_REQUESTS_TOTAL.labels(target_language=target_language, status="error").inc()
             return TranslationResult(
                 language=lang_name,
                 language_code=target_language,
@@ -177,6 +185,10 @@ Return the {lang_name} translation for each slide. Include both narration and vi
         
         print(f"   ✓ Translated {len(result.slides)} slides to {lang_name}")
         
+        elapsed = time.perf_counter() - t0
+        TRANSLATION_DURATION_SECONDS.labels(target_language=target_language).observe(elapsed)
+        TRANSLATION_REQUESTS_TOTAL.labels(target_language=target_language, status="success").inc()
+
         return TranslationResult(
             language=lang_name,
             language_code=target_language,
@@ -186,6 +198,7 @@ Return the {lang_name} translation for each slide. Include both narration and vi
         )
         
     except Exception as e:
+        TRANSLATION_REQUESTS_TOTAL.labels(target_language=target_language, status="error").inc()
         print(f"   ❌ Translation failed: {e}")
         return TranslationResult(
             language=lang_name,
