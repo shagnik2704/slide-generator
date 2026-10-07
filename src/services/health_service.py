@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -92,13 +93,18 @@ def check_storage() -> Tuple[bool, Dict[str, Any], str]:
     output_dir.mkdir(parents=True, exist_ok=True)
     uploads_dir.mkdir(parents=True, exist_ok=True)
 
-    test_file = output_dir / f".probe_{int(time.time())}"
+    test_file = output_dir / f".probe_{os.getpid()}_{uuid.uuid4().hex[:8]}"
     try:
         test_file.write_text("probe")
-        test_file.unlink()
         writable = True
     except Exception:
         writable = False
+    finally:
+        try:
+            if test_file.exists():
+                test_file.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     usage = shutil.disk_usage(output_dir)
     total_gb = round(usage.total / (1024**3), 2)
