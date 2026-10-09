@@ -78,9 +78,9 @@ Instrumentator().instrument(app).expose(app)
 # Add security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Add logging middleware (only in development or if debug is enabled)
-if settings.debug or settings.is_development:
-    app.add_middleware(LoggingMiddleware)
+# Add logging middleware (suppresses routine heartbeat/scraping on 200 OK)
+app.add_middleware(LoggingMiddleware)
+
 
 # CORS middleware - more restrictive in production
 app.add_middleware(

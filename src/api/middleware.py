@@ -67,36 +67,68 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     - Response logging (status code, processing time)
     - Error logging with full tracebacks
     - Performance metrics (X-Process-Time header)
+    - Automatic suppression of routine scraping (/metrics) and health checks (/health)
+      to eliminate log noise, while immediately surfacing any failure (>=400).
     """
-    
+
+    @staticmethod
+    def _get_client_ip(request: Request) -> str:
+        """Extract real client IP taking reverse proxy headers into account."""
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            return real_ip.strip()
+        if request.client:
+            return request.client.host
+        return "unknown"
+
+    @staticmethod
+    def _is_silent_path(path: str) -> bool:
+        """Check if request is a routine scraping or health probe endpoint."""
+        norm = path.rstrip("/") or "/"
+        return (
+            norm in {"/metrics", "/health", "/health/status", "/favicon.ico"}
+            or norm.startswith("/metrics")
+            or norm.startswith("/health")
+        )
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Log request and response with timing information."""
         start_time = time.time()
-        client_ip = request.client.host if request.client else "unknown"
-        
-        # Log request
-        logger.info(
-            f"→ {request.method} {request.url.path}",
-            extra={
-                "method": request.method,
-                "path": request.url.path,
-                "client_ip": client_ip,
-                "query_params": str(request.query_params),
-            }
-        )
-        
+        client_ip = self._get_client_ip(request)
+        is_silent = self._is_silent_path(request.url.path)
+
+        # Log incoming request only if it is not a routine scraping/health check
+        if not is_silent:
+            logger.info(
+                f"→ {request.method} {request.url.path}",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "client_ip": client_ip,
+                    "query_params": str(request.query_params),
+                }
+            )
+
         try:
             response = await call_next(request)
             process_time = time.time() - start_time
-            
+            response.headers["X-Process-Time"] = f"{process_time:.3f}"
+
+            # If it's a routine scraping or health probe and succeeded, suppress log output
+            if is_silent and response.status_code < 400:
+                return response
+
             # Determine log level based on status code
             log_level = logging.INFO
             if response.status_code >= 500:
                 log_level = logging.ERROR
             elif response.status_code >= 400:
                 log_level = logging.WARNING
-            
-            # Log response
+
+            # Log response (including failing health checks/metrics)
             logger.log(
                 log_level,
                 f"← {request.method} {request.url.path} {response.status_code} "
@@ -109,11 +141,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     "client_ip": client_ip,
                 }
             )
-            
-            # Add performance header
-            response.headers["X-Process-Time"] = f"{process_time:.3f}"
             return response
-            
+
         except Exception as e:
             process_time = time.time() - start_time
             logger.error(
