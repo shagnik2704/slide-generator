@@ -20,6 +20,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class UvicornAccessFilter(logging.Filter):
+    """Filter out high-frequency routine heartbeats and scrapes on 200 OK from Uvicorn's access log."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        is_routine_probe = any(
+            target in msg
+            for target in (
+                "/metrics",
+                "/health",
+                '"GET / HTTP',
+                '"HEAD / HTTP',
+                "/favicon.ico",
+            )
+        )
+        if not is_routine_probe:
+            return True
+        # If it's a routine probe that failed (status 4xx or 5xx), do not filter it!
+        if any(ok_code in msg for ok_code in (" 200 ", " 204 ", " 304 ", " 200 OK")):
+            return False
+        return True
+
+
+def apply_uvicorn_access_filter() -> None:
+    access_logger = logging.getLogger("uvicorn.access")
+    uv_filter = UvicornAccessFilter()
+    access_logger.addFilter(uv_filter)
+    for h in access_logger.handlers:
+        h.addFilter(uv_filter)
+
+
+apply_uvicorn_access_filter()
+
 # Get project root
 project_root = Path(__file__).parent.parent.parent
 
@@ -27,6 +61,8 @@ project_root = Path(__file__).parent.parent.parent
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize application workflows and their PostgreSQL persistence."""
+    apply_uvicorn_access_filter()
+
     
     from src.core.agent import build_graph
     logger.info("Initializing LangGraph agent...")

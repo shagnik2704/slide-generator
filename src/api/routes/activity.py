@@ -85,7 +85,7 @@ async def get_user_activity_journey(
 
 @router.get("/admin/export")
 async def export_activity_logs(
-    format: str = Query("csv", regex="^(csv|json)$", description="Export format: csv or json"),
+    format: str = Query("csv", pattern="^(csv|json)$", description="Export format: csv or json"),
     user_id: Optional[str] = Query(None),
     email: Optional[str] = Query(None),
     activity_type: Optional[str] = Query(None),

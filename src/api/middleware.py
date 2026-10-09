@@ -89,7 +89,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         """Check if request is a routine scraping or health probe endpoint."""
         norm = path.rstrip("/") or "/"
         return (
-            norm in {"/metrics", "/health", "/health/status", "/favicon.ico"}
+            norm in {"/", "/metrics", "/health", "/health/status", "/favicon.ico"}
             or norm.startswith("/metrics")
             or norm.startswith("/health")
         )
