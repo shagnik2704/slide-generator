@@ -26,3 +26,14 @@ datasources:
       postgresVersion: 1600
     isDefault: false
     editable: false
+
+  - name: Loki
+    uid: slide-generator-loki
+    type: loki
+    url: http://loki:3100
+    access: proxy
+    isDefault: false
+    editable: false
+    jsonData:
+      maxLines: 1000
+

@@ -1467,6 +1467,82 @@
         "defaults": {},
         "overrides": []
       }
+    },
+    {
+      "id": 31,
+      "type": "row",
+      "title": "Audit & Logs",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 113
+      },
+      "panels": []
+    },
+    {
+      "id": 32,
+      "type": "table",
+      "title": "User Activities Audit Trail",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 114
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "slide-generator-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "slide-generator-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT created_at AS \"time\",\n       email,\n       activity_type AS \"action\",\n       left(coalesce(detail, ''), 100) AS detail,\n       status\nFROM user_activities\nORDER BY created_at DESC\nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 33,
+      "type": "logs",
+      "title": "Live Container Logs (Backend & Workers)",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 114
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "slide-generator-loki"
+      },
+      "options": {
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "slide-generator-loki"
+          },
+          "expr": "{compose_service=~\"backend|whisper-worker\"}",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "refresh": "1m",

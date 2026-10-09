@@ -379,6 +379,221 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(exp_aud["audio_url"], "/output/audio/project_proj_explicit/slide_1.wav")
             self.assertEqual(exp_aud["zip_url"], "/output/audio/project_proj_explicit/audio_project_proj_explicit.zip")
 
+    def test_extract_client_context(self):
+        """extract_client_context accurately extracts IP and user agent headers."""
+        from types import SimpleNamespace
+        from src.activity.tracker import extract_client_context
+
+        # Request with X-Forwarded-For
+        req1 = SimpleNamespace(
+            headers={"x-forwarded-for": "203.0.113.195, 70.41.3.18", "user-agent": "Mozilla/5.0"},
+            client=SimpleNamespace(host="10.0.0.1"),
+        )
+        ctx1 = extract_client_context(req1)
+        self.assertEqual(ctx1["ip_address"], "203.0.113.195")
+        self.assertEqual(ctx1["user_agent"], "Mozilla/5.0")
+
+        # Request with X-Real-IP
+        req2 = SimpleNamespace(
+            headers={"x-real-ip": "198.51.100.22", "user-agent": "Curl/8.0"},
+            client=SimpleNamespace(host="10.0.0.1"),
+        )
+        ctx2 = extract_client_context(req2)
+        self.assertEqual(ctx2["ip_address"], "198.51.100.22")
+        self.assertEqual(ctx2["user_agent"], "Curl/8.0")
+
+        # Fallback to client.host
+        req3 = SimpleNamespace(
+            headers={},
+            client=SimpleNamespace(host="192.168.1.50"),
+        )
+        ctx3 = extract_client_context(req3)
+        self.assertEqual(ctx3["ip_address"], "192.168.1.50")
+
+        # None request
+        self.assertEqual(extract_client_context(None), {})
+
+    async def test_record_activity_stores_client_context_in_metadata(self):
+        """record_activity automatically adds IP and user agent to metadata."""
+        from types import SimpleNamespace
+        mock_conn = AsyncMock()
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value.__aenter__.return_value = mock_conn
+
+        req = SimpleNamespace(
+            headers={"x-real-ip": "203.0.113.5", "user-agent": "Chrome/120"},
+            client=SimpleNamespace(host="10.0.0.1"),
+        )
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            await record_activity(
+                email="user@test.org",
+                activity_type="auth_login",
+                detail="User login",
+                request=req,
+                metadata={"provider": "google"},
+            )
+
+            self.assertTrue(mock_conn.execute.called)
+            args = mock_conn.execute.call_args[0][1]
+            jsonb_meta = args[5].obj  # Access underlying dictionary
+            self.assertEqual(jsonb_meta.get("provider"), "google")
+            self.assertEqual(jsonb_meta.get("ip_address"), "203.0.113.5")
+            self.assertEqual(jsonb_meta.get("user_agent"), "Chrome/120")
+
+    async def test_query_all_activities_failsafe_when_db_down(self):
+        """query_all_activities returns safe empty structure when DB is unreachable."""
+        from src.activity.tracker import query_all_activities
+        with patch("src.script_chat.persistence.get_pool", side_effect=RuntimeError("DB down")):
+            res = await query_all_activities()
+            self.assertEqual(res["total"], 0)
+            self.assertEqual(res["activities"], [])
+            self.assertEqual(res["page"], 1)
+
+    async def test_query_all_activities_pagination_and_mapping(self):
+        """query_all_activities calculates total_pages and maps columns accurately."""
+        from datetime import datetime, timezone
+        from src.activity.tracker import query_all_activities
+
+        now = datetime.now(timezone.utc)
+        test_uid = uuid4()
+        fake_rows = [
+            (1, test_uid, "admin@test.org", "slide_generation", "5 slides", "completed", {"ip_address": "1.2.3.4"}, now),
+        ]
+
+        mock_cur = AsyncMock()
+        mock_cur.fetchone.return_value = (25,)  # 25 total records
+        mock_cur.fetchall.return_value = fake_rows
+
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            res = await query_all_activities(limit=10, offset=0, activity_type="slide_generation")
+            self.assertEqual(res["total"], 25)
+            self.assertEqual(res["total_pages"], 3)
+            self.assertEqual(res["page"], 1)
+            self.assertEqual(len(res["activities"]), 1)
+            act = res["activities"][0]
+            self.assertEqual(act["id"], 1)
+            self.assertEqual(act["user_id"], str(test_uid))
+            self.assertEqual(act["email"], "admin@test.org")
+            self.assertEqual(act["metadata"]["ip_address"], "1.2.3.4")
+
+    async def test_get_distinct_activity_types(self):
+        """get_distinct_activity_types extracts list of unique strings."""
+        from src.activity.tracker import get_distinct_activity_types
+
+        mock_cur = AsyncMock()
+        mock_cur.fetchall.return_value = [("auth_login",), ("slide_generation",), ("voice_generation",)]
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            types = await get_distinct_activity_types()
+            self.assertEqual(types, ["auth_login", "slide_generation", "voice_generation"])
+
+    async def test_get_user_journey(self):
+        """get_user_journey queries timeline for a user."""
+        from src.activity.tracker import get_user_journey
+
+        with patch("src.activity.tracker.query_all_activities", new_callable=AsyncMock) as mock_q:
+            mock_q.return_value = {
+                "total": 2,
+                "activities": [{"id": 1, "activity_type": "login"}, {"id": 2, "activity_type": "slides"}],
+            }
+            journey = await get_user_journey("user@test.org", limit=100)
+            self.assertEqual(journey["user_identifier"], "user@test.org")
+            self.assertEqual(journey["total_actions"], 2)
+            self.assertEqual(len(journey["timeline"]), 2)
+
+    async def test_export_activities_csv_and_json(self):
+        """export_activities generates well-formatted CSV and JSON streams."""
+        import json
+        from src.activity.tracker import export_activities
+
+        sample_data = {
+            "activities": [
+                {
+                    "id": 101,
+                    "created_at": "2026-10-09T12:00:00Z",
+                    "user_id": str(uuid4()),
+                    "email": "audit@test.org",
+                    "activity_type": "voice_generation",
+                    "status": "completed",
+                    "detail": "Generated 4 slides",
+                    "metadata": {"ip_address": "127.0.0.1", "user_agent": "TestRunner"},
+                }
+            ]
+        }
+
+        with patch("src.activity.tracker.query_all_activities", new_callable=AsyncMock) as mock_q:
+            mock_q.return_value = sample_data
+
+            # Test JSON export
+            json_str, content_type = await export_activities(export_format="json")
+            self.assertEqual(content_type, "application/json")
+            parsed = json.loads(json_str)
+            self.assertEqual(len(parsed), 1)
+            self.assertEqual(parsed[0]["id"], 101)
+
+            # Test CSV export
+            csv_str, content_type = await export_activities(export_format="csv")
+            self.assertEqual(content_type, "text/csv")
+            self.assertIn("Timestamp,User ID,Email,Activity Type", csv_str)
+            self.assertIn("audit@test.org", csv_str)
+            self.assertIn("127.0.0.1", csv_str)
+
+    async def test_admin_api_routes(self):
+        """Admin endpoints return correct payloads."""
+        from types import SimpleNamespace
+        from src.api.routes.activity import (
+            export_activity_logs,
+            get_activity_types_endpoint,
+            get_all_activities,
+            get_user_activity_journey,
+        )
+
+        user = SimpleNamespace(sub=str(uuid4()), email="admin@test.org")
+
+        with patch("src.api.routes.activity.query_all_activities", new_callable=AsyncMock) as mock_q:
+            mock_q.return_value = {"total": 1, "activities": []}
+            resp = await get_all_activities(limit=50, offset=0, current_user=user)
+            self.assertEqual(resp["total"], 1)
+
+        with patch("src.api.routes.activity.get_distinct_activity_types", new_callable=AsyncMock) as mock_types:
+            mock_types.return_value = ["auth_login", "slide_generation"]
+            resp = await get_activity_types_endpoint(current_user=user)
+            self.assertEqual(resp, {"activity_types": ["auth_login", "slide_generation"]})
+
+        with patch("src.api.routes.activity.get_user_journey", new_callable=AsyncMock) as mock_j:
+            mock_j.return_value = {"user_identifier": "u1", "timeline": []}
+            resp = await get_user_activity_journey(user_identifier="u1", current_user=user)
+            self.assertEqual(resp["user_identifier"], "u1")
+
+        with patch("src.api.routes.activity.export_activities", new_callable=AsyncMock) as mock_exp:
+            mock_exp.return_value = ("col1,col2\nval1,val2", "text/csv")
+            resp = await export_activity_logs(format="csv", current_user=user)
+            self.assertEqual(resp.media_type, "text/csv")
+            self.assertIn("attachment; filename=", resp.headers["content-disposition"])
+
+
 
 @unittest.skipUnless(TEST_DATABASE_URL, "Set SCRIPT_CHAT_TEST_DATABASE_URL to run PostgreSQL integration tests")
 class ActivityTrackerPostgresIntegrationTests(unittest.IsolatedAsyncioTestCase):

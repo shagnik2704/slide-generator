@@ -2,14 +2,41 @@
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
+import json
 import logging
 import re
+from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
 from psycopg.types.json import Jsonb
 
 logger = logging.getLogger(__name__)
+
+
+def extract_client_context(request: Any = None) -> dict[str, str]:
+    """Safely extract client IP and user agent from FastAPI Request if available."""
+    if not request:
+        return {}
+    context: dict[str, str] = {}
+    try:
+        # Check X-Forwarded-For (comma-separated, first entry is client IP)
+        forwarded = getattr(request, "headers", {}).get("x-forwarded-for")
+        if forwarded:
+            context["ip_address"] = str(forwarded).split(",")[0].strip()
+        elif getattr(request, "headers", {}).get("x-real-ip"):
+            context["ip_address"] = str(request.headers.get("x-real-ip")).strip()
+        elif getattr(request, "client", None) and getattr(request.client, "host", None):
+            context["ip_address"] = str(request.client.host).strip()
+
+        ua = getattr(request, "headers", {}).get("user-agent")
+        if ua:
+            context["user_agent"] = str(ua)[:255]
+    except Exception:
+        pass
+    return context
 
 
 async def record_activity(
@@ -21,6 +48,9 @@ async def record_activity(
     detail: Optional[str] = None,
     status: str = "completed",
     metadata: Optional[dict[str, Any]] = None,
+    request: Any = None,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None,
 ) -> None:
     """
     Persist an activity event to PostgreSQL.
@@ -48,7 +78,21 @@ async def record_activity(
         clean_email = (effective_email or "anonymous@edupyramids.org").strip()
         clean_detail = str(detail)[:255] if detail else None
         clean_status = str(status)[:32] if status else "completed"
-        clean_metadata = Jsonb(metadata or {})
+
+        # Merge client context (IP, user agent) into metadata
+        meta_dict = dict(metadata or {})
+        client_ctx = extract_client_context(request)
+        if ip_address:
+            meta_dict["ip_address"] = str(ip_address)
+        elif "ip_address" in client_ctx:
+            meta_dict["ip_address"] = client_ctx["ip_address"]
+
+        if user_agent:
+            meta_dict["user_agent"] = str(user_agent)[:255]
+        elif "user_agent" in client_ctx:
+            meta_dict["user_agent"] = client_ctx["user_agent"]
+
+        clean_metadata = Jsonb(meta_dict)
 
         pool = get_pool()
         async with pool.connection() as connection:
@@ -73,6 +117,9 @@ def log_activity(
     detail: Optional[str] = None,
     status: str = "completed",
     metadata: Optional[dict[str, Any]] = None,
+    request: Any = None,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None,
 ) -> None:
     """
     Fire-and-forget background task scheduler for record_activity.
@@ -84,6 +131,19 @@ def log_activity(
         effective_user_id = user_id or (getattr(user, "sub", None) or getattr(user, "id", None) if user else None)
         effective_email = email or (getattr(user, "email", None) if user else None)
 
+        # Pre-extract client context on the request thread before passing to async task
+        client_ctx = extract_client_context(request)
+        meta_dict = dict(metadata or {})
+        if ip_address:
+            meta_dict["ip_address"] = str(ip_address)
+        elif "ip_address" in client_ctx:
+            meta_dict["ip_address"] = client_ctx["ip_address"]
+
+        if user_agent:
+            meta_dict["user_agent"] = str(user_agent)[:255]
+        elif "user_agent" in client_ctx:
+            meta_dict["user_agent"] = client_ctx["user_agent"]
+
         loop = asyncio.get_running_loop()
         loop.create_task(
             record_activity(
@@ -92,7 +152,7 @@ def log_activity(
                 activity_type=activity_type,
                 detail=detail,
                 status=status,
-                metadata=metadata,
+                metadata=meta_dict,
             )
         )
     except Exception as exc:
@@ -472,3 +532,243 @@ async def get_user_creations(
     except Exception as exc:
         logger.debug("Failed to get user creations: %s", exc)
         return empty_result
+
+
+async def query_all_activities(
+    *,
+    user_id: Optional[str] = None,
+    email: Optional[str] = None,
+    activity_type: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """
+    Search and filter across all user activities with pagination.
+    Designed for administrative audit, compliance, and clean log extraction.
+    """
+    limit = max(1, min(limit, 500))
+    offset = max(0, offset)
+
+    try:
+        from src.script_chat.persistence import get_pool
+        pool = get_pool()
+        conditions: list[str] = []
+        params: list[Any] = []
+
+        if user_id:
+            try:
+                clean_uid = str(UUID(str(user_id)))
+                conditions.append("user_id = %s")
+                params.append(clean_uid)
+            except (ValueError, TypeError, AttributeError):
+                return {
+                    "total": 0,
+                    "limit": limit,
+                    "offset": offset,
+                    "page": (offset // limit) + 1,
+                    "total_pages": 1,
+                    "activities": [],
+                }
+
+        if email:
+            conditions.append("email ILIKE %s")
+            params.append(f"%{email.strip()}%")
+
+        if activity_type:
+            conditions.append("activity_type = %s")
+            params.append(activity_type.strip())
+
+        if status:
+            conditions.append("status = %s")
+            params.append(status.strip())
+
+        if search:
+            search_param = f"%{search.strip()}%"
+            conditions.append("(detail ILIKE %s OR email ILIKE %s OR activity_type ILIKE %s)")
+            params.extend([search_param, search_param, search_param])
+
+        if start_date:
+            conditions.append("created_at >= %s")
+            params.append(start_date)
+
+        if end_date:
+            conditions.append("created_at <= %s")
+            params.append(end_date)
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+        async with pool.connection() as conn:
+            # 1. Total count
+            count_query = f"SELECT COUNT(*) FROM user_activities {where_clause}"
+            total = 0
+            async with conn.cursor() as cur:
+                await cur.execute(count_query, params)
+                total_row = await cur.fetchone()
+                if total_row:
+                    total = total_row[0]
+
+            # 2. Page of activities
+            data_query = f"""
+                SELECT id, user_id, email, activity_type, detail, status, metadata, created_at
+                FROM user_activities
+                {where_clause}
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """
+            data_params = list(params) + [limit, offset]
+            activities: list[dict[str, Any]] = []
+            async with conn.cursor() as cur:
+                await cur.execute(data_query, data_params)
+                rows = await cur.fetchall()
+                for r in rows:
+                    c_at = _val(r, "created_at", 7)
+                    uid = _val(r, "user_id", 1)
+                    meta = _val(r, "metadata", 6) or {}
+                    activities.append({
+                        "id": _val(r, "id", 0),
+                        "user_id": str(uid) if uid else None,
+                        "email": _val(r, "email", 2),
+                        "activity_type": _val(r, "activity_type", 3),
+                        "detail": _val(r, "detail", 4),
+                        "status": _val(r, "status", 5),
+                        "metadata": meta,
+                        "created_at": c_at.isoformat() if hasattr(c_at, "isoformat") else (str(c_at) if c_at else None),
+                    })
+
+            total_pages = ((total + limit - 1) // limit) if total > 0 else 1
+            return {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "page": (offset // limit) + 1,
+                "total_pages": total_pages,
+                "activities": activities,
+            }
+    except Exception as exc:
+        logger.debug("Failed to query all activities: %s", exc)
+        return {
+            "total": 0,
+            "limit": limit,
+            "offset": offset,
+            "page": 1,
+            "total_pages": 1,
+            "activities": [],
+        }
+
+
+async def get_distinct_activity_types() -> list[str]:
+    """Retrieve list of unique activity types recorded in the user_activities table."""
+    try:
+        from src.script_chat.persistence import get_pool
+        pool = get_pool()
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """
+                    SELECT DISTINCT activity_type
+                    FROM user_activities
+                    ORDER BY activity_type ASC
+                    """
+                )
+                rows = await cur.fetchall()
+                types: list[str] = []
+                for r in rows:
+                    val = _val(r, "activity_type", 0)
+                    if val:
+                        types.append(str(val))
+                return types
+    except Exception as exc:
+        logger.debug("Failed to get distinct activity types: %s", exc)
+        return []
+
+
+async def get_user_journey(user_identifier: str, limit: int = 200) -> dict[str, Any]:
+    """
+    Build a comprehensive chronological audit trail of all actions performed by a user.
+    Accepts user UUID or email address.
+    """
+    clean_uid: Optional[str] = None
+    email: Optional[str] = None
+    try:
+        clean_uid = str(UUID(str(user_identifier)))
+    except (ValueError, TypeError, AttributeError):
+        email = str(user_identifier).strip()
+
+    res = await query_all_activities(
+        user_id=clean_uid,
+        email=email if not clean_uid else None,
+        limit=limit,
+    )
+    return {
+        "user_identifier": user_identifier,
+        "total_actions": res["total"],
+        "timeline": res["activities"],
+    }
+
+
+async def export_activities(
+    *,
+    user_id: Optional[str] = None,
+    email: Optional[str] = None,
+    activity_type: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    export_format: str = "csv",
+    max_records: int = 5000,
+) -> tuple[str, str]:
+    """
+    Export filtered activities in CSV or JSON format.
+    Returns (content_string, media_type).
+    """
+    res = await query_all_activities(
+        user_id=user_id,
+        email=email,
+        activity_type=activity_type,
+        status=status,
+        search=search,
+        start_date=start_date,
+        end_date=end_date,
+        limit=max_records,
+        offset=0,
+    )
+    items = res.get("activities", [])
+
+    if export_format.lower() == "json":
+        return json.dumps(items, indent=2, default=str), "application/json"
+
+    # Default CSV export
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "ID",
+        "Timestamp",
+        "User ID",
+        "Email",
+        "Activity Type",
+        "Status",
+        "Detail",
+        "IP Address",
+        "User Agent",
+        "Metadata",
+    ])
+    for item in items:
+        meta = item.get("metadata") or {}
+        writer.writerow([
+            item.get("id"),
+            item.get("created_at"),
+            item.get("user_id") or "",
+            item.get("email") or "",
+            item.get("activity_type") or "",
+            item.get("status") or "",
+            item.get("detail") or "",
+            meta.get("ip_address", ""),
+            meta.get("user_agent", ""),
+            json.dumps(meta, default=str),
+        ])
+    return output.getvalue(), "text/csv"
