@@ -72,6 +72,8 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
 
         return compliance_report
         
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in check_compliance: {e}")
@@ -156,6 +158,8 @@ async def check_outline_compliance_endpoint(data: dict):
         
         return compliance_report
         
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         print(f"ERROR in check_outline_compliance: {e}")
