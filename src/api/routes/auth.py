@@ -2,11 +2,12 @@
 import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 import httpx
 
+from src.activity.tracker import log_activity
 from src.api.config import settings
 from src.api.auth import create_access_token, validate_email_domain, verify_token
 from src.api.exceptions import (
@@ -55,7 +56,7 @@ async def google_auth():
 
 
 @router.get("/google/callback")
-async def google_callback(code: str):
+async def google_callback(code: str, request: Request):
     """Handle Google OAuth callback and issue JWT token."""
     if not code:
         raise ValidationError("Authorization code not provided")
@@ -101,6 +102,13 @@ async def google_callback(code: str):
             # Validate email domain
             if not validate_email_domain(email):
                 logger.warning(f"OAuth access denied for email: {email}")
+                log_activity(
+                    email=email,
+                    activity_type="auth_login",
+                    detail=f"OAuth access denied: unauthorized domain for {email}",
+                    status="failed",
+                    request=request,
+                )
                 raise AuthorizationError(
                     f"Email domain must be {settings.allowed_email_domain}"
                 )
@@ -111,6 +119,17 @@ async def google_callback(code: str):
                 email=email,
                 name=name,
                 picture=picture,
+            )
+
+            # Record successful login event
+            log_activity(
+                user_id=str(user["id"]),
+                email=user["email"],
+                activity_type="auth_login",
+                detail="User logged in via Google OAuth",
+                status="completed",
+                metadata={"provider": "google", "name": user.get("name")},
+                request=request,
             )
 
             # The JWT subject is our stable user UUID. Google identity details
