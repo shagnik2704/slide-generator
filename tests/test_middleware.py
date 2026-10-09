@@ -1,4 +1,5 @@
 """Unit tests for LoggingMiddleware and silent path filtering."""
+import logging
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from starlette.requests import Request
@@ -93,9 +94,65 @@ class LoggingMiddlewareUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(LoggingMiddleware._is_silent_path("/metrics/"))
         self.assertTrue(LoggingMiddleware._is_silent_path("/health"))
         self.assertTrue(LoggingMiddleware._is_silent_path("/health/status"))
+        self.assertTrue(LoggingMiddleware._is_silent_path("/"))
         self.assertTrue(LoggingMiddleware._is_silent_path("/favicon.ico"))
 
         # Real endpoints are not silent
         self.assertFalse(LoggingMiddleware._is_silent_path("/api/slides/generate"))
         self.assertFalse(LoggingMiddleware._is_silent_path("/auth/callback"))
         self.assertFalse(LoggingMiddleware._is_silent_path("/api/voice/synthesize"))
+
+
+class UvicornAccessFilterUnitTests(unittest.TestCase):
+    """Test UvicornAccessFilter logging filter."""
+
+    def setUp(self):
+        from src.api.server import UvicornAccessFilter
+        self.filter = UvicornAccessFilter()
+
+    def _make_record(self, msg: str) -> logging.LogRecord:
+        import logging
+        return logging.LogRecord(
+            name="uvicorn.access",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg=msg,
+            args=(),
+            exc_info=None,
+        )
+
+    def test_routine_scrapes_and_probes_200_suppressed(self):
+        """Routine scrapes and health checks returning 200/204/304 are suppressed."""
+        # /metrics
+        rec = self._make_record('172.30.0.2:45094 - "GET /metrics HTTP/1.1" 200 OK')
+        self.assertFalse(self.filter.filter(rec))
+
+        # /health
+        rec = self._make_record('127.0.0.1:38290 - "GET /health HTTP/1.1" 200 OK')
+        self.assertFalse(self.filter.filter(rec))
+
+        # root GET
+        rec = self._make_record('127.0.0.1:38290 - "GET / HTTP/1.1" 200 OK')
+        self.assertFalse(self.filter.filter(rec))
+
+        # root HEAD
+        rec = self._make_record('127.0.0.1:38290 - "HEAD / HTTP/1.1" 200 OK')
+        self.assertFalse(self.filter.filter(rec))
+
+    def test_failed_probe_is_not_suppressed(self):
+        """Failed health check or probe (e.g. 500 or 503) must not be suppressed."""
+        rec = self._make_record('127.0.0.1:38290 - "GET /health HTTP/1.1" 503 Service Unavailable')
+        self.assertTrue(self.filter.filter(rec))
+
+        rec = self._make_record('127.0.0.1:38290 - "GET /metrics HTTP/1.1" 500 Internal Server Error')
+        self.assertTrue(self.filter.filter(rec))
+
+    def test_regular_traffic_is_not_suppressed(self):
+        """Standard application requests are always kept."""
+        rec = self._make_record('127.0.0.1:38290 - "POST /api/slides/generate HTTP/1.1" 200 OK')
+        self.assertTrue(self.filter.filter(rec))
+
+        rec = self._make_record('127.0.0.1:38290 - "GET /api/projects HTTP/1.1" 200 OK')
+        self.assertTrue(self.filter.filter(rec))
+

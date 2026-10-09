@@ -1539,7 +1539,7 @@
             "type": "loki",
             "uid": "slide-generator-loki"
           },
-          "expr": "{compose_service=~\"backend|whisper-worker\"}",
+          "expr": "{compose_service=~\"backend|whisper-worker\"} !~ \"(GET /metrics|GET /health|GET / HTTP)\"",
           "refId": "A"
         }
       ]
