@@ -43,6 +43,10 @@ Before opening or auto-merging any PR, verify that all CI gates pass locally:
   cd chatbot-ui && npm run lint
   ```
   *(Note: ESLint ignores unused variables/parameters matching `^[A-Z_]`. Never declare inner React components inside renders).*
+- **Unit Tests**: Run Vitest suite:
+  ```bash
+  cd chatbot-ui && npm test
+  ```
 - **Build**: Must compile and bundle successfully:
   ```bash
   cd chatbot-ui && npm run build
