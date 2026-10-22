@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from typing import TypeVar
@@ -12,6 +13,9 @@ from src.core.metrics import (
     SCRIPT_CHAT_LLM_DURATION_SECONDS,
     SCRIPT_CHAT_LLM_TOKENS_TOTAL,
 )
+
+logger = logging.getLogger(__name__)
+
 
 
 StructuredModel = TypeVar("StructuredModel", bound=BaseModel)
@@ -120,8 +124,18 @@ def invoke_structured_with_responses_tools(
             raise ScriptChatLLMError("LLM returned no structured result")
 
         if hasattr(response, "usage") and response.usage:
-            SCRIPT_CHAT_LLM_TOKENS_TOTAL.labels(model=model, token_type="prompt").inc(response.usage.prompt_tokens or 0)
-            SCRIPT_CHAT_LLM_TOKENS_TOTAL.labels(model=model, token_type="completion").inc(response.usage.completion_tokens or 0)
+            try:
+                input_tokens = getattr(response.usage, "input_tokens", None)
+                if input_tokens is None:
+                    input_tokens = getattr(response.usage, "prompt_tokens", 0)
+                output_tokens = getattr(response.usage, "output_tokens", None)
+                if output_tokens is None:
+                    output_tokens = getattr(response.usage, "completion_tokens", 0)
+
+                SCRIPT_CHAT_LLM_TOKENS_TOTAL.labels(model=model, token_type="prompt").inc(input_tokens or 0)
+                SCRIPT_CHAT_LLM_TOKENS_TOTAL.labels(model=model, token_type="completion").inc(output_tokens or 0)
+            except Exception as usage_err:
+                logger.warning(f"Failed to record token usage metrics: {usage_err}")
 
         return response.output_parsed
     except Exception:

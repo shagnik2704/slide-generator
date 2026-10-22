@@ -1,10 +1,13 @@
 import json
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from src.script_chat.llm import invoke_structured
 from src.script_chat.prompts.metadata_edit import METADATA_EDITING_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptMetadata, dump_model, parse_metadata
+
+logger = logging.getLogger(__name__)
 
 def metadata_edit_node(state: ScriptChatState):
     """Applies user's edit instruction to the metadata."""
@@ -21,8 +24,10 @@ def metadata_edit_node(state: ScriptChatState):
     try:
         current_metadata = parse_metadata(metadata)
     except Exception as e:
-        writer({"status": f"Invalid metadata state: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Invalid metadata state: {str(e)}"
+        logger.error(err_msg, exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
 
     prompt = f"""
 === CURRENT METADATA ===
@@ -49,8 +54,10 @@ Apply this edit and return the full updated JSON metadata object.
             temperature=0.3,
         )
     except Exception as e:
-        writer({"status": f"Metadata edit failed: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Metadata edit failed: {str(e)}"
+        logger.error(err_msg, exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     writer({"status": "Metadata edit applied successfully", "progress": 100})
     
@@ -58,3 +65,4 @@ Apply this edit and return the full updated JSON metadata object.
         "metadata": dump_model(updated_metadata),
         "edit_instruction": None
     }
+

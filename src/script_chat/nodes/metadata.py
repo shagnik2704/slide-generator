@@ -1,3 +1,4 @@
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
@@ -5,6 +6,8 @@ from langgraph.types import interrupt
 from src.script_chat.llm import invoke_structured
 from src.script_chat.prompts.metadata import METADATA_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptMetadata, dump_model, parse_metadata
+
+logger = logging.getLogger(__name__)
 
 def metadata_node(state: ScriptChatState):
     """Extracts structured metadata from the validated outline."""
@@ -24,8 +27,10 @@ def metadata_node(state: ScriptChatState):
             temperature=0.2,
         )
     except Exception as e:
-        writer({"status": f"Metadata extraction failed: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Metadata extraction failed: {str(e)}"
+        logger.error(err_msg, exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     writer({"status": "Metadata extraction complete", "progress": 100})
     
@@ -45,15 +50,19 @@ def metadata_review_node(state: ScriptChatState):
     })
     
     if not user_decision or not isinstance(user_decision, dict):
-        return {"current_stage": "error"}
+        err_msg = "Invalid metadata review decision format"
+        logger.error(err_msg)
+        return {"current_stage": "error", "error_message": err_msg}
 
     action = user_decision.get("action")
     if action == "approve":
         edited_metadata = user_decision.get("edited_metadata", metadata_dict)
         try:
             metadata = parse_metadata(edited_metadata)
-        except Exception:
-            return {"current_stage": "error"}
+        except Exception as e:
+            err_msg = f"Approved metadata validation failed: {str(e)}"
+            logger.error(err_msg, exc_info=True)
+            return {"current_stage": "error", "error_message": err_msg}
         return {
             "current_stage": "generate",
             "metadata": dump_model(metadata)
@@ -64,4 +73,7 @@ def metadata_review_node(state: ScriptChatState):
             "edit_instruction": user_decision.get("instruction", "")
         }
 
-    return {"current_stage": "error"}
+    err_msg = f"Unsupported metadata review action: {action}"
+    logger.error(err_msg)
+    return {"current_stage": "error", "error_message": err_msg}
+

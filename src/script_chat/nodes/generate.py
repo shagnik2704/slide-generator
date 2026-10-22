@@ -1,4 +1,5 @@
 import json
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
@@ -6,6 +7,8 @@ from langgraph.types import interrupt
 from src.script_chat.llm import invoke_structured_with_responses_tools
 from src.script_chat.prompts.generation import GENERATION_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptResult, dump_models, parse_metadata, parse_script
+
+logger = logging.getLogger(__name__)
 
 def generate_node(state: ScriptChatState):
     """Generates the pedagogical script based on metadata and outline."""
@@ -18,8 +21,10 @@ def generate_node(state: ScriptChatState):
     try:
         metadata_model = parse_metadata(metadata)
     except Exception as e:
-        writer({"status": f"Invalid metadata state: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Invalid metadata state: {str(e)}"
+        logger.error(f"generate_node metadata validation failed: {e}", exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     metadata_json = json.dumps(metadata_model.model_dump(), indent=2)
     
@@ -40,8 +45,10 @@ def generate_node(state: ScriptChatState):
             tools=[{"type": "web_search_preview"}],
         )
     except Exception as e:
-        writer({"status": f"Script generation failed: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Script generation failed: {str(e)}"
+        logger.error(f"generate_node LLM execution failed: {e}", exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     writer({"status": "Script generation complete", "progress": 100})
     
@@ -57,8 +64,10 @@ def script_review_node(state: ScriptChatState):
     script = state.get("script")
     try:
         script_payload = dump_models(parse_script(script or []))
-    except Exception:
-        return {"current_stage": "error"}
+    except Exception as e:
+        err_msg = f"Invalid script state for review: {str(e)}"
+        logger.error(err_msg, exc_info=True)
+        return {"current_stage": "error", "error_message": err_msg}
     
     # We retrieve the last AI message from the state to display in the UI interrupt
     agent_message = "Review the generated script. Approve to continue, or request edits."
@@ -85,4 +94,7 @@ def script_review_node(state: ScriptChatState):
             "messages": [{"role": "user", "content": user_msg}] if user_msg else []
         }
 
-    return {"current_stage": "error"}
+    err_msg = f"Unsupported script review action: {action}"
+    logger.error(err_msg)
+    return {"current_stage": "error", "error_message": err_msg}
+

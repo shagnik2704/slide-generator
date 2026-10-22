@@ -178,7 +178,11 @@ async def _stream_graph(config: dict, input_data=None):
             compliance_err = None
             if isinstance(state.values.get("compliance_results"), dict):
                 compliance_err = state.values.get("compliance_results", {}).get("error")
-            error_message = compliance_err or f"Workflow failed at stage: {current_stage}"
+            error_message = (
+                state.values.get("error_message")
+                or compliance_err
+                or "Workflow execution failed."
+            )
             yield _sse_event("error", {"message": error_message})
         elif interrupt_payload:
             yield _sse_event("interrupt", interrupt_payload)
@@ -400,6 +404,7 @@ async def get_history(thread_id: str, current_user: TokenData = Depends(get_curr
         "metadata": values.get("metadata"),
         "grounding_report": values.get("grounding_report"),
         "compliance_results": values.get("compliance_results"),
+        "error_message": values.get("error_message"),
         "is_interrupted": is_interrupted,
         "interrupt_payload": interrupt_payload,
         "status": thread["status"],

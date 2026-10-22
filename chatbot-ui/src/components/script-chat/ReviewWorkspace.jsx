@@ -236,6 +236,9 @@ function MetadataPanel({ fossName, metadata }) {
             <MetadataTableRow label="Pre-requisite Tutorial">
               {metadata.prerequisites || 'None listed'}
             </MetadataTableRow>
+            <MetadataTableRow label="System Requirements">
+              {metadata.system_requirements || 'None listed'}
+            </MetadataTableRow>
           </tbody>
         </table>
       </div>

@@ -2,6 +2,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from langchain_core.messages import HumanMessage
+from src.script_chat.llm import invoke_structured_with_responses_tools
 from src.script_chat.nodes.generate import generate_node, script_review_node
 from src.script_chat.nodes.edit import edit_node, _compliance_edit_context, _recent_edit_context
 from src.script_chat.nodes.metadata_edit import metadata_edit_node
@@ -64,7 +66,7 @@ class ScriptChatNodesTests(unittest.TestCase):
 
     @patch("src.script_chat.nodes.generate.get_stream_writer")
     def test_generate_node_invalid_metadata_returns_error(self, mock_writer):
-        """generate_node with corrupt metadata structure returns error stage."""
+        """generate_node with corrupt metadata structure returns error stage and message."""
         mock_writer.return_value = MagicMock()
         state = {
             "metadata": "not a dictionary or invalid metadata",
@@ -72,11 +74,12 @@ class ScriptChatNodesTests(unittest.TestCase):
         }
         result = generate_node(state)
         self.assertEqual(result.get("current_stage"), "error")
+        self.assertIn("Invalid metadata state", result.get("error_message", ""))
 
     @patch("src.script_chat.nodes.generate.get_stream_writer")
     @patch("src.script_chat.nodes.generate.invoke_structured_with_responses_tools")
     def test_generate_node_llm_failure_returns_error(self, mock_llm, mock_writer):
-        """generate_node handles LLM exception gracefully."""
+        """generate_node handles LLM exception gracefully with error_message."""
         mock_writer.return_value = MagicMock()
         mock_llm.side_effect = RuntimeError("OpenAI rate limit exceeded")
 
@@ -86,6 +89,7 @@ class ScriptChatNodesTests(unittest.TestCase):
         }
         result = generate_node(state)
         self.assertEqual(result.get("current_stage"), "error")
+        self.assertIn("Script generation failed", result.get("error_message", ""))
 
     # --- Script Review Node Tests ---
 
@@ -263,6 +267,78 @@ class ScriptChatNodesTests(unittest.TestCase):
         }
         result = metadata_edit_node(state)
         self.assertEqual(result.get("current_stage"), "error")
+
+    # --- Responses API LLM Invocation & Metrics Tests ---
+
+    @patch("src.script_chat.llm.OpenAI")
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"})
+    def test_invoke_structured_with_responses_tools_response_usage(self, mock_openai_cls):
+        """invoke_structured_with_responses_tools extracts input_tokens and output_tokens from ResponseUsage."""
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+
+        expected_result = ScriptResult(
+            script=[ScriptSlide(slide_number=1, slide_type="title", visual_cue="Cue", narration="Text")],
+            message="Done",
+        )
+        mock_response = MagicMock()
+        mock_response.output_parsed = expected_result
+        mock_usage = MagicMock()
+        mock_usage.input_tokens = 450
+        mock_usage.output_tokens = 120
+        # Ensure it does NOT have prompt_tokens / completion_tokens to test Pydantic model behaviour
+        del mock_usage.prompt_tokens
+        del mock_usage.completion_tokens
+        mock_response.usage = mock_usage
+        mock_client.responses.parse.return_value = mock_response
+
+        res = invoke_structured_with_responses_tools([HumanMessage(content="test")], ScriptResult)
+        self.assertEqual(res, expected_result)
+
+    @patch("src.script_chat.llm.OpenAI")
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"})
+    def test_invoke_structured_with_responses_tools_fallback_tokens(self, mock_openai_cls):
+        """invoke_structured_with_responses_tools falls back to prompt_tokens and completion_tokens if input_tokens absent."""
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+
+        expected_result = ScriptResult(
+            script=[ScriptSlide(slide_number=1, slide_type="title", visual_cue="Cue", narration="Text")],
+            message="Done",
+        )
+        mock_response = MagicMock()
+        mock_response.output_parsed = expected_result
+        mock_usage = MagicMock()
+        mock_usage.input_tokens = None
+        mock_usage.output_tokens = None
+        mock_usage.prompt_tokens = 300
+        mock_usage.completion_tokens = 80
+        mock_response.usage = mock_usage
+        mock_client.responses.parse.return_value = mock_response
+
+        res = invoke_structured_with_responses_tools([HumanMessage(content="test")], ScriptResult)
+        self.assertEqual(res, expected_result)
+
+    @patch("src.script_chat.llm.OpenAI")
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"})
+    def test_invoke_structured_with_responses_tools_resilient_to_telemetry_failure(self, mock_openai_cls):
+        """Telemetry recording failure does not crash invoke_structured_with_responses_tools."""
+        mock_client = MagicMock()
+        mock_openai_cls.return_value = mock_client
+
+        expected_result = ScriptResult(
+            script=[ScriptSlide(slide_number=1, slide_type="title", visual_cue="Cue", narration="Text")],
+            message="Done",
+        )
+        mock_response = MagicMock()
+        mock_response.output_parsed = expected_result
+        mock_usage = MagicMock()
+        type(mock_usage).input_tokens = property(lambda self: (_ for _ in ()).throw(RuntimeError("Telemetry error")))
+        mock_response.usage = mock_usage
+        mock_client.responses.parse.return_value = mock_response
+
+        res = invoke_structured_with_responses_tools([HumanMessage(content="test")], ScriptResult)
+        self.assertEqual(res, expected_result)
 
 
 if __name__ == "__main__":

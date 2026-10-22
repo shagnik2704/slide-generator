@@ -23,7 +23,7 @@ def ingest_node(state: ScriptChatState):
     raw_outline = state.get("raw_outline", "")
     if not raw_outline:
         writer({"status": "Error: No outline provided", "progress": 100})
-        return {"current_stage": "error"}
+        return {"current_stage": "error", "error_message": "No outline provided"}
         
     writer({"status": "Parsing your outline...", "progress": 50})
     
