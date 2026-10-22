@@ -1,10 +1,13 @@
 import json
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.script_chat.state import ScriptChatState
 from langgraph.config import get_stream_writer
 from src.script_chat.llm import invoke_structured_with_responses_tools
 from src.script_chat.prompts.editing import EDITING_SYSTEM_PROMPT
 from src.script_chat.schemas import ScriptResult, dump_models, parse_script
+
+logger = logging.getLogger(__name__)
 
 
 def _recent_edit_context(messages: list) -> str:
@@ -67,8 +70,10 @@ def edit_node(state: ScriptChatState):
     try:
         script_model = parse_script(current_script)
     except Exception as e:
-        writer({"status": f"Invalid script state: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Invalid script state: {str(e)}"
+        logger.error(f"edit_node script validation failed: {e}", exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     conversation_history = _recent_edit_context(state.get("messages", []))
     script_json = json.dumps(dump_models(script_model), indent=2)
@@ -112,8 +117,10 @@ def edit_node(state: ScriptChatState):
             tools=[{"type": "web_search_preview"}],
         )
     except Exception as e:
-        writer({"status": f"Edit failed: {str(e)}", "progress": 100})
-        return {"current_stage": "error"}
+        err_msg = f"Edit failed: {str(e)}"
+        logger.error(f"edit_node LLM execution failed: {e}", exc_info=True)
+        writer({"status": err_msg, "progress": 100})
+        return {"current_stage": "error", "error_message": err_msg}
     
     writer({"status": "Edit applied successfully", "progress": 100})
     

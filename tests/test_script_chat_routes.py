@@ -1,4 +1,4 @@
-"""Unit tests for Script Chat FastAPI routes and endpoints."""
+import asyncio
 import io
 import unittest
 import uuid
@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 
 from src.api.server import app
 from src.api.auth import create_access_token
-from src.script_chat.routes import _sse_event, _interrupt_payload
+from src.script_chat.routes import _sse_event, _interrupt_payload, _stream_graph
 
 
 class ScriptChatRoutesTests(unittest.TestCase):
@@ -129,6 +129,59 @@ class ScriptChatRoutesTests(unittest.TestCase):
         self.assertEqual(data["thread_id"], self.thread_id)
         self.assertEqual(data["current_stage"], "script_review")
         self.assertEqual(len(data["script"]), 2)
+        self.assertIsNone(data.get("error_message"))
+
+    @patch("src.script_chat.routes.get_thread", new_callable=AsyncMock)
+    @patch("src.script_chat.routes.get_graph")
+    def test_get_history_includes_error_message(self, mock_get_graph, mock_get_thread):
+        mock_get_thread.return_value = {
+            "thread_id": self.thread_id,
+            "status": "failed",
+            "created_at": "2026-10-10T00:00:00Z",
+            "updated_at": "2026-10-10T00:05:00Z",
+        }
+        mock_state = MagicMock()
+        mock_state.values = {
+            "raw_outline": "1. Intro",
+            "current_stage": "error",
+            "error_message": "Script generation failed: rate limit",
+        }
+        mock_state.tasks = []
+        mock_get_graph.return_value.aget_state = AsyncMock(return_value=mock_state)
+
+        res = self.client.get(f"/script-chat/history/{self.thread_id}", headers=self.auth_headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["current_stage"], "error")
+        self.assertEqual(data["error_message"], "Script generation failed: rate limit")
+
+    @patch("src.script_chat.routes.update_thread", new_callable=AsyncMock)
+    @patch("src.script_chat.routes.get_graph")
+    def test_stream_graph_yields_state_error_message(self, mock_get_graph, mock_update_thread):
+        mock_graph = MagicMock()
+        async def mock_astream(*args, **kwargs):
+            if False:
+                yield None
+        mock_graph.astream = mock_astream
+
+        mock_state = MagicMock()
+        mock_state.values = {
+            "current_stage": "error",
+            "error_message": "Invalid metadata state: missing field",
+        }
+        mock_state.tasks = []
+        mock_graph.aget_state = AsyncMock(return_value=mock_state)
+        mock_get_graph.return_value = mock_graph
+
+        async def _run():
+            config = {"configurable": {"thread_id": self.thread_id}}
+            return [chunk async for chunk in _stream_graph(config)]
+
+        events = asyncio.run(_run())
+        error_event = "".join(events)
+        self.assertIn("event: error", error_event)
+        self.assertIn("Invalid metadata state: missing field", error_event)
+        self.assertNotIn("Workflow failed at stage: error", error_event)
 
     # --- Manual Edit (Zero Tokens) ---
 

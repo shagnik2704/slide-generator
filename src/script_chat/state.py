@@ -22,4 +22,5 @@ class ScriptChatState(TypedDict):
     script_version: int
     compliance_results: Optional[dict]
     quality_results: Optional[dict]
+    error_message: Optional[str]
     current_stage: Stage

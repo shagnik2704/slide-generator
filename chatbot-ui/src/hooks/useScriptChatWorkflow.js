@@ -258,13 +258,17 @@ export function useScriptChatWorkflow() {
 
       if (!interrupt && ['created', 'running'].includes(history.status)) {
         connectToThread(nextThreadId);
+      } else if (restoredStage === 'error' || history.status === 'failed') {
+        const failureMessage = history.error_message || 'Workflow execution failed.';
+        setErrorMessage(failureMessage);
+        addChat('agent', `Error: ${failureMessage}`);
       }
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message);
     }
-  }, [connectToThread, stopStream]);
+  }, [addChat, connectToThread, stopStream]);
 
   // Support deep-linking via ?thread_id=... from Creations Drawer or external links
   useEffect(() => {
