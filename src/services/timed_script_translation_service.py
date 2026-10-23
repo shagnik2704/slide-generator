@@ -179,7 +179,11 @@ async def _translate_timed_script_gemini(
     class TimedBatchTranslation(PydanticBaseModel):
         translations: List[TimedRowTranslation]
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.3,
+        api_key=os.getenv("GEMINI_API_KEY"),
+    )
     structured_llm = llm.with_structured_output(TimedBatchTranslation)
 
     prompt = f"""You are an expert English-to-{lang_name} ({lang_native}) translator for educational Spoken Tutorial timed scripts.
@@ -341,9 +345,19 @@ async def batch_translate_timed_script(
     """
     Translate a timed script to multiple languages in parallel.
     """
-    valid_languages = [lang for lang in languages if resolve_language_info(lang) is not None]
+    # Resolve languages to canonical codes (e.g. 'hi', 'ta', 'te')
+    valid_languages: List[str] = []
+    seen = set()
+    for lang in languages:
+        info = resolve_language_info(lang)
+        if info:
+            code = info[0]
+            if code not in seen:
+                seen.add(code)
+                valid_languages.append(code)
 
     if not valid_languages:
+        logger.warning("No valid languages provided to batch_translate_timed_script. Received: %s", languages)
         return [TimedScriptTranslationResult(
             language="Unknown",
             language_code="",

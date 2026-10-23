@@ -3,8 +3,11 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body, Form
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
+import logging
 from pathlib import Path
 from uuid import UUID, uuid4
+
+logger = logging.getLogger(__name__)
 
 from src.api.auth import get_current_user, TokenData
 from src.jobs.persistence import (
@@ -225,7 +228,7 @@ async def download_timed_script_docx(
 # ============================================
 
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, List, Optional
 from src.services.timed_script_parser import parse_timed_script_file
 from src.services.timed_script_translation_service import (
     batch_translate_timed_script,
@@ -268,14 +271,22 @@ async def translate_timed_script_file_endpoint(
 
     # Parse requested languages (accepts JSON array string e.g. '["hi", "ta"]' or comma-separated 'hi,ta')
     target_languages: List[str] = []
-    try:
-        parsed_lang = json.loads(languages)
-        if isinstance(parsed_lang, list):
-            target_languages = [str(l).strip() for l in parsed_lang if str(l).strip()]
-        elif isinstance(parsed_lang, str):
-            target_languages = [parsed_lang.strip()]
-    except Exception:
-        target_languages = [l.strip() for l in languages.split(",") if l.strip()]
+    raw_lang: Any = languages
+    if isinstance(raw_lang, str):
+        raw_lang = raw_lang.strip()
+        for _ in range(2):
+            try:
+                decoded = json.loads(raw_lang)
+                raw_lang = decoded
+            except Exception:
+                break
+
+    if isinstance(raw_lang, list):
+        target_languages = [str(l).strip('[]"\' \t\r\n') for l in raw_lang if str(l).strip('[]"\' \t\r\n')]
+    elif isinstance(raw_lang, str):
+        target_languages = [l.strip('[]"\' \t\r\n') for l in raw_lang.split(",") if l.strip('[]"\' \t\r\n')]
+
+    logger.info("Parsed timed script translation languages for %s: %s (raw was: %r)", file.filename, target_languages, languages)
 
     if not target_languages:
         raise HTTPException(status_code=400, detail="No valid target languages provided")

@@ -39,9 +39,10 @@ export default function TranslationModal({
         }
     };
 
-    // Fetch supported languages on mount
+    // Fetch supported languages and reset selection on open
     useEffect(() => {
         if (isOpen) {
+            setSelectedLanguages([]);
             fetchLanguages();
         }
     }, [isOpen]);
@@ -63,7 +64,11 @@ export default function TranslationModal({
     };
 
     const handleTranslate = async () => {
-        if (selectedLanguages.length === 0) return;
+        const cleanedLanguages = selectedLanguages
+            .map(l => (typeof l === 'string' ? l.trim() : String(l || '').trim()))
+            .filter(Boolean);
+
+        if (cleanedLanguages.length === 0) return;
 
         // Close modal immediately
         onClose();
@@ -71,7 +76,7 @@ export default function TranslationModal({
         // Start translation in background (don't await here)
         onTranslate({
             file,
-            languages: selectedLanguages,
+            languages: cleanedLanguages,
             translateVisualCues,
             mode  // Pass mode to handler
         }).catch(err => {
