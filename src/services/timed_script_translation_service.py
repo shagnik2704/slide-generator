@@ -29,8 +29,9 @@ from src.services.translation_service import (
 logger = logging.getLogger(__name__)
 
 # Max batch character budget (safely under Sarvam's 2,000 char limit)
-BATCH_CHAR_LIMIT = 1400
+BATCH_CHAR_LIMIT = 1200
 BATCH_CONCURRENCY = 10
+PIPE_TAG_PATTERN = re.compile(r'(?:^|\n)\s*(\d+)\s*\|\|\|\s*(.*?)(?=\n\s*\d+\s*\|\|\||$)', re.DOTALL)
 ROW_TAG_PATTERN = re.compile(r'\[#?(\d+)\]\s*(.*?)(?=\[#?\d+\]|$)', re.DOTALL)
 
 
@@ -66,7 +67,7 @@ def _pack_rows_into_batches(rows: List[Dict[str, Any]], max_chars: int = BATCH_C
     for row in rows:
         row_num = row.get("row_number", len(current_batch) + 1)
         narration = row.get("narration", "")
-        line_len = len(f"[#{row_num}] {narration}\n")
+        line_len = len(f"{row_num} ||| {narration}\n")
 
         if current_batch and (current_len + line_len > max_chars):
             batches.append(current_batch)
@@ -91,11 +92,11 @@ async def _translate_batch_sarvam(
     source_code: str = "en-IN",
 ) -> Dict[int, str]:
     """
-    Translate a single multi-row batch formatted with [#N] row tags.
+    Translate a single multi-row batch formatted with 'N ||| narration' tags.
     Returns a dict mapping row_number -> translated_text.
     """
-    # Build tagged input
-    lines = [f"[#{r.get('row_number')}] {r.get('narration', '')}" for r in batch]
+    # Build tagged input using pipe delimiter (leaves tags intact in Sarvam)
+    lines = [f"{r.get('row_number')} ||| {r.get('narration', '')}" for r in batch]
     input_text = "\n".join(lines)
 
     payload = {
@@ -120,18 +121,50 @@ async def _translate_batch_sarvam(
             if response.status_code == 200:
                 translated_text = response.json().get("translated_text", "")
                 results: Dict[int, str] = {}
-                matches = ROW_TAG_PATTERN.findall(translated_text)
+
+                # 1. Primary: match 'N ||| translated_text'
+                matches = PIPE_TAG_PATTERN.findall(translated_text)
                 for num_str, content in matches:
                     try:
                         results[int(num_str)] = " ".join(content.strip().split())
                     except ValueError:
                         continue
 
-                # Fallback if any row was dropped by tag parsing
+                # 2. Secondary fallback: check legacy '[#N]' or '[N]'
+                if not results:
+                    legacy_matches = ROW_TAG_PATTERN.findall(translated_text)
+                    for num_str, content in legacy_matches:
+                        try:
+                            results[int(num_str)] = " ".join(content.strip().split())
+                        except ValueError:
+                            continue
+
+                # 3. For any row that was dropped by delimiter parsing, translate individually
                 for r in batch:
                     rn = r.get("row_number")
-                    if rn not in results:
-                        results[rn] = r.get("narration", "")
+                    if rn not in results or not results[rn]:
+                        narration = r.get("narration", "")
+                        if not narration:
+                            results[rn] = ""
+                            continue
+                        try:
+                            single_resp = await client.post(
+                                SARVAM_TRANSLATE_URL,
+                                json={
+                                    "input": narration,
+                                    "source_language_code": source_code,
+                                    "target_language_code": target_bcp47,
+                                    "model": model,
+                                },
+                                headers=headers,
+                            )
+                            if single_resp.status_code == 200:
+                                results[rn] = single_resp.json().get("translated_text", "").strip()
+                            else:
+                                results[rn] = narration
+                        except Exception:
+                            results[rn] = narration
+
                 return results
 
             status = response.status_code
