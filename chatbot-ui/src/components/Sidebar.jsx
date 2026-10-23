@@ -39,6 +39,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides: _onCreate
     const slidesInputRef = useRef(null);
     const translationInputRef = useRef(null);
     const slidesTranslationInputRef = useRef(null);
+    const timedScriptTranslationInputRef = useRef(null);
     const timedScriptInputRef = useRef(null);
 
     // Handle compliance file selection - stage for preview
@@ -100,6 +101,15 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides: _onCreate
         const file = e.target.files[0];
         if (file && onStageFile) {
             onStageFile({ file, type: 'slides_translation' });
+            e.target.value = '';
+        }
+    };
+
+    // Handle timed script translation file selection (.docx, .pdf, .odt, .txt, .json) - stage for preview
+    const handleTimedScriptTranslationFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && onStageFile) {
+            onStageFile({ file, type: 'timed_script_translation' });
             e.target.value = '';
         }
     };
@@ -233,6 +243,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides: _onCreate
                 type="file"
                 accept=".tex"
                 onChange={handleSlidesTranslationFileSelect}
+                style={{ display: 'none' }}
+            />
+            <input
+                ref={timedScriptTranslationInputRef}
+                type="file"
+                accept=".docx,.pdf,.odt,.txt,.json"
+                onChange={handleTimedScriptTranslationFileSelect}
                 style={{ display: 'none' }}
             />
             <input
@@ -548,6 +565,25 @@ const Sidebar = ({ isOpen, toggleSidebar, onStageFile, onCreateSlides: _onCreate
                         >
                             <Presentation size={18} />
                             <span style={textLabelStyle}>Translate Slides</span>
+                        </button>
+                    </TooltipWrapper>
+
+                    {/* Translate Timed Script */}
+                    <TooltipWrapper text="Translate Timed Script">
+                        <button
+                            onClick={() => timedScriptTranslationInputRef.current?.click()}
+                            style={dropdownItemStyle}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--accent-primary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <Clock size={18} />
+                            <span style={textLabelStyle}>Translate Timed Script</span>
                         </button>
                     </TooltipWrapper>
                 </div>

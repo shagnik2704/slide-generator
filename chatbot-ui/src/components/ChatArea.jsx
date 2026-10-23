@@ -162,8 +162,26 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
             setTranslationMode('slides');
             setIsTranslationModalOpen(true);
             setStagedFile(null);  // Clear staging since modal takes over
+        } else if (stagedFile?.type === 'timed_script_translation') {
+            setTranslationFile(stagedFile.file);
+            setTranslationMode('timed_script');
+            setIsTranslationModalOpen(true);
+            setStagedFile(null);  // Clear staging since modal takes over
         }
     }, [stagedFile, setStagedFile]);
+
+    // Listen for custom event to stage translation file (e.g. from TimedScriptResults Translate button)
+    React.useEffect(() => {
+        const handleStageTranslation = (e) => {
+            if (e.detail?.file) {
+                setTranslationFile(e.detail.file);
+                setTranslationMode(e.detail.type === 'timed_script_translation' ? 'timed_script' : 'script');
+                setIsTranslationModalOpen(true);
+            }
+        };
+        window.addEventListener('stage-translation-file', handleStageTranslation);
+        return () => window.removeEventListener('stage-translation-file', handleStageTranslation);
+    }, []);
 
     // Quality Check Modal State
     const [isQualityModalOpen, setIsQualityModalOpen] = React.useState(false);
@@ -418,11 +436,14 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
         setIsBatchModalOpen(false);
     };
 
-    // Translation handler - handles both script and slides translation
+    // Translation handler - handles script, slides, and timed script translation
     const handleTranslation = async ({ file, languages, translateVisualCues, mode: translationModeParam }) => {
         // Route to appropriate handler based on mode
         if (translationModeParam === 'slides') {
             return handleSlidesTranslation({ file, languages });
+        }
+        if (translationModeParam === 'timed_script') {
+            return handleTimedScriptTranslation({ file, languages });
         }
         return handleScriptTranslation({ file, languages, translateVisualCues });
     };
@@ -590,6 +611,76 @@ const ChatArea = forwardRef(({ toggleSidebar, isSidebarOpen, initialMode = 'crea
                     ...msg,
                     status: 'error',
                     error: error.message || 'Failed to translate slides'
+                } : msg
+            ));
+            throw error;
+        }
+    };
+
+    // Timed script translation handler (.docx, .pdf, .odt, .txt, .json)
+    const handleTimedScriptTranslation = async ({ file, languages }) => {
+        const workflowId = Date.now();
+        const initialWorkflow = {
+            id: workflowId,
+            type: 'workflow',
+            tool: 'timed_script_translation',
+            filename: file.name,
+            status: 'processing',
+            currentStep: 0,
+            steps: [
+                { label: `Parsing ${file.name}`, status: 'processing' },
+                { label: `Translating to ${languages.length} language(s)`, status: 'pending' },
+                { label: 'Translation ready', status: 'pending' }
+            ],
+            role: 'assistant'
+        };
+
+        setUploadMessages(prev => [...prev, initialWorkflow]);
+
+        try {
+            // Update to Step 2
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    currentStep: 1,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'processing' },
+                        { label: 'Translation ready', status: 'pending' }
+                    ]
+                } : msg
+            ));
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('languages', JSON.stringify(languages));
+
+            const translationResults = await apiFormData('/timed-script/translate-file', formData);
+
+            // Update to Complete
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'complete',
+                    currentStep: 3,
+                    steps: [
+                        { label: `Parsing ${file.name}`, status: 'complete' },
+                        { label: `Translating to ${languages.length} language(s)`, status: 'complete' },
+                        { label: 'Translation ready', status: 'complete' }
+                    ],
+                    result: {
+                        timedScriptTranslationResults: translationResults
+                    }
+                } : msg
+            ));
+
+        } catch (error) {
+            console.error('Timed script translation error:', error);
+            setUploadMessages(prev => prev.map(msg =>
+                msg.id === workflowId ? {
+                    ...msg,
+                    status: 'error',
+                    error: error.message || 'Failed to translate timed script'
                 } : msg
             ));
             throw error;

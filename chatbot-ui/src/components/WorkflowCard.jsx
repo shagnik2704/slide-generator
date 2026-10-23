@@ -25,6 +25,7 @@ import SlideThemePicker from './SlideThemePicker';
 import BatchResultsList from './BatchResultsList';
 import QualityReport from './QualityReport';
 import TimedScriptResults from './TimedScriptResults';
+import TimedScriptTranslationResults from './TimedScriptTranslationResults';
 import {
     ScriptUploadedActions,
     ScriptReviewActions,
@@ -73,6 +74,7 @@ const WorkflowCard = ({
         batch_quality: <ListChecks size={18} />,
         script: <FileText size={18} />,
         timed_script: <Clock size={18} />,
+        timed_script_translation: <Clock size={18} />,
         mediawiki_export: <Globe size={18} />,
         default: <FileText size={18} />
     };
@@ -82,6 +84,7 @@ const WorkflowCard = ({
         voice: 'Voice Generation',
         translation: 'Script Translation',
         slides_translation: 'Slides Translation',
+        timed_script_translation: 'Timed Script Translation',
         slides: 'Slides Generation',
         compliance: 'Admin Compliance Check',
         quality: 'Quality Compliance Review',
@@ -294,6 +297,9 @@ const WorkflowCard = ({
                             )}
                             {tool === 'translation' && (
                                 <TranslationResults results={result.translationResults} />
+                            )}
+                            {tool === 'timed_script_translation' && result.timedScriptTranslationResults && (
+                                <TimedScriptTranslationResults results={result.timedScriptTranslationResults} />
                             )}
                             {tool === 'slides' && (
                                 <SlidesPreview slidesData={result.slidesData} />

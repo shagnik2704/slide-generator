@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Languages, Check, Loader2, FileText, Download, Presentation } from 'lucide-react';
+import { X, Languages, Check, Loader2, FileText, Download, Presentation, Clock } from 'lucide-react';
 import { apiJson } from '../services/api';
 
 /**
@@ -23,7 +23,8 @@ export default function TranslationModal({
 
     // Mode-specific settings
     const isSlideMode = mode === 'slides';
-    const allowMultiple = !isSlideMode;  // Slides mode = single language only
+    const isTimedScriptMode = mode === 'timed_script';
+    const allowMultiple = !isSlideMode;  // Slides mode = single language only, timed_script & script = multi-select
 
     const fetchLanguages = async () => {
         setIsLoading(true);
@@ -186,11 +187,13 @@ export default function TranslationModal({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {isSlideMode ? (
                             <Presentation size={24} style={{ color: 'var(--accent-primary)' }} />
+                        ) : isTimedScriptMode ? (
+                            <Clock size={24} style={{ color: 'var(--accent-primary)' }} />
                         ) : (
                             <Languages size={24} style={{ color: 'var(--accent-primary)' }} />
                         )}
                         <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
-                            {isSlideMode ? 'Translate Slides' : 'Translate Script'}
+                            {isSlideMode ? 'Translate Slides' : isTimedScriptMode ? 'Translate Timed Script' : 'Translate Script'}
                         </h2>
                     </div>
                     <button
@@ -281,7 +284,7 @@ export default function TranslationModal({
                     </div>
 
                     {/* Options - Only show for script mode */}
-                    {!isSlideMode && (
+                    {!isSlideMode && !isTimedScriptMode && (
                         <div
                             style={{
                                 display: 'flex',

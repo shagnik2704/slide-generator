@@ -1,7 +1,8 @@
 """Timed Script route - Generate sentence-level timestamps from audio."""
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body, Form
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import StreamingResponse
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -217,3 +218,183 @@ async def download_timed_script_docx(
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+# ============================================
+# TIMED SCRIPT TRANSLATION ENDPOINTS
+# ============================================
+
+from pydantic import BaseModel
+from typing import List, Optional
+from src.services.timed_script_parser import parse_timed_script_file
+from src.services.timed_script_translation_service import (
+    batch_translate_timed_script,
+    export_translated_timed_script_docx,
+    BatchTimedScriptTranslationResponse,
+)
+
+
+class BatchTranslateTimedScriptRequest(BaseModel):
+    """Request model for batch translating timed script rows."""
+    rows: List[dict]
+    languages: List[str]
+    title: Optional[str] = "Timed Script"
+    total_duration: Optional[str] = "00:00"
+
+
+class ExportTranslatedTimedScriptRequest(BaseModel):
+    """Request model for exporting translated timed script to DOCX."""
+    rows: List[dict]
+    language_code: str
+    language_name: str
+    language_native: Optional[str] = ""
+    title: Optional[str] = "Timed Script"
+    total_duration: Optional[str] = "00:00"
+
+
+@router.post("/translate-file")
+async def translate_timed_script_file_endpoint(
+    file: UploadFile = File(...),
+    languages: str = Form(...),
+    current_user: TokenData = Depends(get_current_user)
+) -> BatchTimedScriptTranslationResponse:
+    """
+    Upload a timed script document (.docx, .pdf, .odt, .txt, .json) and translate it
+    to one or more Indian languages using Sarvam AI multi-row batching.
+    """
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    # Parse requested languages (accepts JSON array string e.g. '["hi", "ta"]' or comma-separated 'hi,ta')
+    target_languages: List[str] = []
+    try:
+        parsed_lang = json.loads(languages)
+        if isinstance(parsed_lang, list):
+            target_languages = [str(l).strip() for l in parsed_lang if str(l).strip()]
+        elif isinstance(parsed_lang, str):
+            target_languages = [parsed_lang.strip()]
+    except Exception:
+        target_languages = [l.strip() for l in languages.split(",") if l.strip()]
+
+    if not target_languages:
+        raise HTTPException(status_code=400, detail="No valid target languages provided")
+
+    # Parse file into rows
+    try:
+        parsed_data = parse_timed_script_file(file_bytes, file.filename or "timed_script.docx")
+    except Exception as e:
+        logger.exception("Failed to parse timed script file: %s", e)
+        raise HTTPException(status_code=400, detail=f"Could not parse timed script: {e}")
+
+    rows = parsed_data.get("rows", [])
+    if not rows:
+        raise HTTPException(status_code=400, detail="No timed rows found in uploaded file")
+
+    title = parsed_data.get("title", "Timed Script")
+    total_duration = parsed_data.get("total_duration", "00:00")
+
+    # Perform translation
+    results = await batch_translate_timed_script(
+        rows=rows,
+        languages=target_languages,
+        title=title,
+        total_duration=total_duration,
+    )
+
+    total_success = sum(1 for r in results if r.success)
+
+    log_activity(
+        user=current_user,
+        activity_type="translate_timed_script",
+        detail=f"Timed script translation: {file.filename} to {', '.join(target_languages)}",
+        status="completed" if total_success > 0 else "failed",
+        metadata={
+            "filename": file.filename,
+            "languages": target_languages,
+            "total_rows": len(rows),
+            "total_success": total_success,
+        },
+    )
+
+    return BatchTimedScriptTranslationResponse(
+        results=results,
+        total_requested=len(target_languages),
+        total_success=total_success,
+    )
+
+
+@router.post("/batch-translate")
+async def batch_translate_timed_script_endpoint(
+    data: BatchTranslateTimedScriptRequest,
+    current_user: TokenData = Depends(get_current_user)
+) -> BatchTimedScriptTranslationResponse:
+    """
+    Translate pre-parsed or Whisper-generated timed script rows into multiple languages.
+    """
+    if not data.rows:
+        raise HTTPException(status_code=400, detail="No rows provided for translation")
+    if not data.languages:
+        raise HTTPException(status_code=400, detail="No target languages provided")
+
+    results = await batch_translate_timed_script(
+        rows=data.rows,
+        languages=data.languages,
+        title=data.title,
+        total_duration=data.total_duration,
+    )
+
+    total_success = sum(1 for r in results if r.success)
+
+    log_activity(
+        user=current_user,
+        activity_type="batch_translate_timed_script",
+        detail=f"Batch translate timed script: {', '.join(data.languages)}",
+        status="completed" if total_success > 0 else "failed",
+        metadata={
+            "languages": data.languages,
+            "total_rows": len(data.rows),
+            "total_success": total_success,
+        },
+    )
+
+    return BatchTimedScriptTranslationResponse(
+        results=results,
+        total_requested=len(data.languages),
+        total_success=total_success,
+    )
+
+
+@router.post("/export-translated-docx")
+async def export_translated_docx_endpoint(
+    data: ExportTranslatedTimedScriptRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    Export translated timed script to a Word document matching the Spoken Tutorial table layout.
+    """
+    if not data.rows:
+        raise HTTPException(status_code=400, detail="No rows provided to export")
+
+    buffer = export_translated_timed_script_docx(
+        rows=data.rows,
+        language_code=data.language_code,
+        language_name=data.language_name,
+        language_native=data.language_native or "",
+        title=data.title or "Timed Script",
+        total_duration=data.total_duration or "00:00",
+    )
+
+    safe_title = "".join(c for c in data.title if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+    filename = f"{safe_title}_{data.language_code}_timed_script.docx"
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        }
+    )
+
