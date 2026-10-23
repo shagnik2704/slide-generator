@@ -100,8 +100,33 @@ class TimedScriptTranslationUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(batches_single[0]), 3)
 
     @patch("src.services.timed_script_translation_service.httpx.AsyncClient.post")
-    async def test_translate_batch_sarvam_success(self, mock_post):
-        """Test multi-row batch translation with Sarvam."""
+    async def test_translate_batch_sarvam_pipe_delimiter(self, mock_post):
+        """Test multi-row batch translation with Sarvam using pipe delimiter."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "translated_text": "1 ||| अनुवाद १\n2 ||| अनुवाद २"
+        }
+        mock_post.return_value = mock_response
+
+        batch = [
+            {"row_number": 1, "time": "00:00", "narration": "English 1"},
+            {"row_number": 2, "time": "00:05", "narration": "English 2"},
+        ]
+
+        async with httpx.AsyncClient() as client:
+            res = await _translate_batch_sarvam(
+                client=client,
+                batch=batch,
+                target_bcp47="hi-IN",
+                api_key="test-key",
+            )
+            self.assertEqual(res[1], "अनुवाद १")
+            self.assertEqual(res[2], "अनुवाद २")
+
+    @patch("src.services.timed_script_translation_service.httpx.AsyncClient.post")
+    async def test_translate_batch_sarvam_legacy_tag_fallback(self, mock_post):
+        """Test fallback when response contains legacy [#N] tags."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
