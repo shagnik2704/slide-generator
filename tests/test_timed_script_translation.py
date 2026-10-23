@@ -267,6 +267,54 @@ class TimedScriptTranslationUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.media_type, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         self.assertIn("Calcium_Tutorial_hi_timed_script.docx", response.headers["Content-Disposition"])
 
+    @patch("src.api.routes.timed_script.batch_translate_timed_script", new_callable=AsyncMock)
+    @patch("src.api.routes.timed_script.parse_timed_script_file")
+    async def test_translate_file_endpoint_language_parsing(self, mock_parse, mock_batch_translate):
+        """translate_timed_script_file_endpoint correctly parses JSON array, names, and strings."""
+        from src.api.routes.timed_script import translate_timed_script_file_endpoint
+
+        mock_parse.return_value = {
+            "title": "Tutorial",
+            "total_duration": "01:00",
+            "rows": [{"row_number": 1, "time": "00:00", "narration": "Hello"}]
+        }
+        mock_batch_translate.return_value = [
+            TimedScriptTranslationResult(
+                language="Hindi",
+                language_code="hi",
+                language_native="हिंदी",
+                title="Tutorial",
+                total_duration="01:00",
+                total_rows=1,
+                rows=[{"row_number": 1, "time": "00:00", "narration": "Hello", "narration_translated": "नमस्ते"}],
+                success=True
+            )
+        ]
+
+        class DummyUploadFile:
+            def __init__(self, filename, content):
+                self.filename = filename
+                self.content = content
+            async def read(self):
+                return self.content
+
+        user = SimpleNamespace(sub="user-123", email="user@edupyramids.org")
+
+        # Test case 1: JSON array string '["hi"]'
+        f1 = DummyUploadFile("timed.docx", b"dummy")
+        res1 = await translate_timed_script_file_endpoint(file=f1, languages='["hi"]', current_user=user)
+        self.assertEqual(res1.total_success, 1)
+
+        # Test case 2: Language name "Hindi"
+        f2 = DummyUploadFile("timed.docx", b"dummy")
+        res2 = await translate_timed_script_file_endpoint(file=f2, languages='Hindi', current_user=user)
+        self.assertEqual(res2.total_success, 1)
+
+        # Test case 3: Double JSON encoded string '"[\"hi\"]"'
+        f3 = DummyUploadFile("timed.docx", b"dummy")
+        res3 = await translate_timed_script_file_endpoint(file=f3, languages='"[\"hi\"]"', current_user=user)
+        self.assertEqual(res3.total_success, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

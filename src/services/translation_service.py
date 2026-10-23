@@ -92,20 +92,24 @@ def resolve_language_info(target_language: str) -> Optional[Tuple[str, str, str,
     Resolve target language string to:
     (normalized_code, name, native, sarvam_bcp47)
     
-    Accepts 2-letter ISO codes ('hi', 'or') or BCP-47 codes ('hi-IN', 'od-IN').
+    Accepts 2-letter ISO codes ('hi', 'or'), BCP-47 codes ('hi-IN', 'od-IN'),
+    full English language names ('Hindi', 'Tamil'), aliases ('Oriya'),
+    and native script names ('हिंदी', 'தமிழ்').
     """
     if not target_language:
         return None
 
-    code = target_language.strip().lower()
+    code = str(target_language).strip('[]"\' \t\r\n').lower()
+    if not code:
+        return None
 
-    # Exact match in 2-letter supported languages
+    # 1. Exact match in 2-letter supported languages
     if code in SUPPORTED_LANGUAGES:
         info = SUPPORTED_LANGUAGES[code]
         bcp47 = SARVAM_TRANSLATE_LANG_MAP.get(code, f"{code}-IN")
         return code, info["name"], info["native"], bcp47
 
-    # Check prefix or special cases
+    # 2. Check prefix (e.g. 'hi-in' -> 'hi')
     prefix = code.split("-")[0]
     if prefix in SUPPORTED_LANGUAGES:
         info = SUPPORTED_LANGUAGES[prefix]
@@ -113,6 +117,17 @@ def resolve_language_info(target_language: str) -> Optional[Tuple[str, str, str,
         return prefix, info["name"], info["native"], bcp47
 
     if prefix == "od" or code == "od-in":
+        info = SUPPORTED_LANGUAGES["or"]
+        return "or", info["name"], info["native"], "od-IN"
+
+    # 3. Match by English language name or native name (case-insensitive)
+    for lang_code, lang_info in SUPPORTED_LANGUAGES.items():
+        if code == lang_info["name"].strip().lower() or code == lang_info["native"].strip().lower():
+            bcp47 = SARVAM_TRANSLATE_LANG_MAP.get(lang_code, f"{lang_code}-IN")
+            return lang_code, lang_info["name"], lang_info["native"], bcp47
+
+    # 4. Handle common aliases (e.g. 'oriya' -> Odia)
+    if code in ("oriya", "oriya-in"):
         info = SUPPORTED_LANGUAGES["or"]
         return "or", info["name"], info["native"], "od-IN"
 
@@ -326,6 +341,7 @@ async def _translate_script_gemini(
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.3,
+        api_key=os.getenv("GEMINI_API_KEY"),
     )
 
     content_to_translate = []

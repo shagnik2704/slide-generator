@@ -51,6 +51,23 @@ class TranslationServiceTests(unittest.IsolatedAsyncioTestCase):
         as_info = resolve_language_info("as")
         self.assertEqual(as_info, ("as", "Assamese", "অসমীয়া", "as-IN"))
 
+        # English language names & case-insensitivity
+        self.assertEqual(resolve_language_info("Hindi"), ("hi", "Hindi", "हिंदी", "hi-IN"))
+        self.assertEqual(resolve_language_info("hindi"), ("hi", "Hindi", "हिंदी", "hi-IN"))
+        self.assertEqual(resolve_language_info("Tamil"), ("ta", "Tamil", "தமிழ்", "ta-IN"))
+        self.assertEqual(resolve_language_info("Telugu"), ("te", "Telugu", "తెలుగు", "te-IN"))
+        self.assertEqual(resolve_language_info("Assamese"), ("as", "Assamese", "অসমীয়া", "as-IN"))
+        self.assertEqual(resolve_language_info("Odia"), ("or", "Odia", "ଓଡ଼ିଆ", "od-IN"))
+        self.assertEqual(resolve_language_info("oriya"), ("or", "Odia", "ଓଡ଼ିଆ", "od-IN"))
+
+        # Native script
+        self.assertEqual(resolve_language_info("हिंदी"), ("hi", "Hindi", "हिंदी", "hi-IN"))
+        self.assertEqual(resolve_language_info("தமிழ்"), ("ta", "Tamil", "தமிழ்", "ta-IN"))
+
+        # Punctuation/quotes/brackets wrapped
+        self.assertEqual(resolve_language_info('"hi"'), ("hi", "Hindi", "हिंदी", "hi-IN"))
+        self.assertEqual(resolve_language_info('["hi"]'), ("hi", "Hindi", "हिंदी", "hi-IN"))
+
         # Invalid
         self.assertIsNone(resolve_language_info("unsupported_lang"))
         self.assertIsNone(resolve_language_info(""))
