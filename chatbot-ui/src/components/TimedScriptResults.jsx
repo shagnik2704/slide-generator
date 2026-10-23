@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Download, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Download, Loader2, ChevronDown, ChevronUp, Languages } from 'lucide-react';
 
 /**
  * TimedScriptResults - Display timed script generation results
@@ -50,6 +50,19 @@ export default function TimedScriptResults({ timedScriptData, filename }) {
         }
     };
 
+    const handleTranslateClick = () => {
+        try {
+            const blob = new Blob([JSON.stringify(timedScriptData)], { type: 'application/json' });
+            const baseName = filename?.replace(/\.[^/.]+$/, '') || 'timed_script';
+            const virtualFile = new File([blob], `${baseName}.json`, { type: 'application/json' });
+            window.dispatchEvent(new CustomEvent('stage-translation-file', {
+                detail: { file: virtualFile, type: 'timed_script_translation' }
+            }));
+        } catch (err) {
+            console.error('Failed to trigger translation:', err);
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Summary Header */}
@@ -61,6 +74,8 @@ export default function TimedScriptResults({ timedScriptData, filename }) {
                 background: 'var(--bg-secondary)',
                 borderRadius: '0.75rem',
                 border: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -94,37 +109,59 @@ export default function TimedScriptResults({ timedScriptData, filename }) {
                         </span>
                     </div>
                 </div>
-                <button
-                    onClick={handleDownloadDocx}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        borderRadius: '0.5rem',
-                        border: 'none',
-                        background: 'var(--accent-primary)',
-                        color: 'white',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        cursor: isDownloading ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        opacity: isDownloading ? 0.7 : 1,
-                        transition: 'all 0.2s ease',
-                    }}
-                >
-                    {isDownloading ? (
-                        <>
-                            <Loader2 size={14} className="animate-spin" />
-                            Generating...
-                        </>
-                    ) : (
-                        <>
-                            <Download size={14} />
-                            Download DOCX
-                        </>
-                    )}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                        onClick={handleTranslateClick}
+                        style={{
+                            padding: '0.5rem 0.85rem',
+                            borderRadius: '0.5rem',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-tertiary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.85rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        <Languages size={14} style={{ color: 'var(--accent-primary)' }} />
+                        Translate
+                    </button>
+                    <button
+                        onClick={handleDownloadDocx}
+                        disabled={isDownloading}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: 'none',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: isDownloading ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            opacity: isDownloading ? 0.7 : 1,
+                            transition: 'all 0.2s ease',
+                        }}
+                    >
+                        {isDownloading ? (
+                            <>
+                                <Loader2 size={14} className="animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Download size={14} />
+                                Download DOCX
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Sentences Table */}
