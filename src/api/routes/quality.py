@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 import traceback
 
 from src.api.auth import get_current_user, TokenData
+from src.activity.tracker import log_activity
 
 router = APIRouter(tags=["quality"])
 
@@ -40,6 +41,32 @@ async def check_quality_endpoint(data: dict, current_user: TokenData = Depends(g
         print(f"✅ Quality check complete ({lang_name}): {summary.get('ai_passed', 0)}/{summary.get('total', 0)} passed")
         print(f"📊 Avg translation quality: {summary.get('avg_quality_score', 0)}/5")
         
+        title = json_script.get('title') or (json_script.get('metadata') or {}).get('title') or 'Tutorial Script'
+        avg_score = summary.get('avg_quality_score', 0)
+        ai_passed = summary.get('ai_passed', 0)
+        ai_failed = summary.get('ai_failed', 0)
+
+        log_activity(
+            user=current_user,
+            activity_type="quality_check",
+            detail=f"Quality check ({lang_name}): {title} - {avg_score}/5",
+            status="completed",
+            metadata={
+                "tutorial_title": title,
+                "language_code": language_code,
+                "language_name": lang_name,
+                "language_native": result.get('language_native', ''),
+                "avg_quality_score": avg_score,
+                "quality_score": avg_score,
+                "passed": ai_passed,
+                "failed": ai_failed,
+                "total": summary.get('total', 0),
+                "summary": summary,
+                "compliance_type": "quality",
+                "report": result,
+            },
+        )
+
         return result
         
     except Exception as e:
@@ -78,6 +105,20 @@ async def batch_check_quality_endpoint(data: dict, current_user: TokenData = Dep
         summary = result.get('batch_summary', {})
         print(f"✅ Batch quality check complete: {summary.get('scripts_passed', 0)}/{summary.get('total_scripts', 0)} passed")
         
+        log_activity(
+            user=current_user,
+            activity_type="batch_quality_check",
+            detail=f"Batch quality ({language_code}): {len(scripts)} scripts, {summary.get('scripts_passed', 0)} passed",
+            status="completed",
+            metadata={
+                "language_code": language_code,
+                "total_scripts": len(scripts),
+                "passed": summary.get('scripts_passed', 0),
+                "failed": len(scripts) - summary.get('scripts_passed', 0),
+                "compliance_type": "batch_quality",
+            },
+        )
+
         return result
         
     except Exception as e:

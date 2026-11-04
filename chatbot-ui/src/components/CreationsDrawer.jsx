@@ -19,8 +19,9 @@ import {
     Video,
     Play,
     Pause,
+    ShieldCheck,
 } from 'lucide-react';
-import { apiJson, API_URL } from '../services/api';
+import { apiJson, apiBlob, API_URL } from '../services/api';
 
 function formatDuration(val, secondsVal) {
     if (typeof val === 'string' && val.trim().length > 0) {
@@ -75,6 +76,13 @@ function getActivityIcon(type) {
         case 'slide_generation':
         case 'slides_generation':
             return <Presentation size={14} />;
+        case 'compliance_check':
+        case 'admin_compliance_check':
+        case 'batch_compliance_check':
+        case 'quality_check':
+        case 'batch_quality_check':
+        case 'outline_compliance_check':
+            return <ShieldCheck size={14} />;
         case 'voice_generation':
         case 'voice_generation_combined':
         case 'voice_patch':
@@ -91,6 +99,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     const [timedScripts, setTimedScripts] = useState([]);
     const [scripts, setScripts] = useState([]);
     const [slides, setSlides] = useState([]);
+    const [compliance, setCompliance] = useState([]);
     const [audio, setAudio] = useState([]);
     const [videos, setVideos] = useState([]);
     const [activities, setActivities] = useState([]);
@@ -99,6 +108,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
     const [downloadingDocxId, setDownloadingDocxId] = useState(null);
+    const [downloadingComplianceId, setDownloadingComplianceId] = useState(null);
     const [playingAudioId, setPlayingAudioId] = useState(null);
     const audioRef = React.useRef(null);
 
@@ -129,6 +139,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                 setTimedScripts(userTimedScripts);
                 setScripts(c.scripts || []);
                 setSlides(c.slides || []);
+                setCompliance(c.compliance || []);
                 setAudio(c.audio || []);
                 setVideos(c.videos || []);
             } else {
@@ -139,6 +150,30 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
             if (actRes.status === 'fulfilled' && actRes.value?.activities) {
                 setActivities(actRes.value.activities);
+                // If compliance is empty from creations, fallback synthesize from activities
+                setCompliance((prev) => {
+                    if (prev && prev.length > 0) return prev;
+                    return (actRes.value.activities || [])
+                        .filter((a) =>
+                            ['compliance_check', 'admin_compliance_check', 'batch_compliance_check', 'quality_check', 'batch_quality_check', 'outline_compliance_check'].includes(a.activity_type)
+                        )
+                        .map((a) => ({
+                            ...a,
+                            compliance_type: a.metadata?.compliance_type || (a.activity_type.includes('quality') ? 'quality' : (a.activity_type.includes('admin') ? 'admin_v1' : 'standard')),
+                            title: a.metadata?.tutorial_title || a.metadata?.title || a.detail,
+                            passed: a.metadata?.passed ?? a.metadata?.summary?.ai_passed ?? 0,
+                            failed: a.metadata?.failed ?? a.metadata?.summary?.ai_failed ?? 0,
+                            skipped: a.metadata?.skipped ?? a.metadata?.summary?.ai_skipped ?? 0,
+                            total: a.metadata?.total ?? a.metadata?.summary?.total ?? 0,
+                            blockers: a.metadata?.blockers ?? 0,
+                            quality_score: a.metadata?.quality_score ?? a.metadata?.avg_quality_score,
+                            language_name: a.metadata?.language_name,
+                            language_native: a.metadata?.language_native,
+                            language_code: a.metadata?.language_code,
+                            report: a.metadata?.report,
+                            summary: a.metadata?.summary,
+                        }));
+                });
             }
         } catch (err) {
             console.error('Failed to load creations and activities:', err);
@@ -242,6 +277,51 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
             console.error('Script DOCX download error:', err);
         } finally {
             setDownloadingDocxId(null);
+        }
+    };
+
+    const handleDownloadComplianceDocx = async (comp) => {
+        const targetId = comp.id || comp.activity_id || 'compliance';
+        setDownloadingComplianceId(targetId);
+        try {
+            const report = comp.report || comp.metadata?.report || {};
+            let checks = report?.checks || comp.metadata?.checks || [];
+            if ((!checks || checks.length === 0) && report?.reports && Array.isArray(report.reports)) {
+                checks = report.reports.flatMap((r) => r.checks || []);
+            }
+            const normalizedChecks = (checks || []).map((c) => ({
+                criteria: c.criteria || c.name || c.check_name || c.rule || 'Criterion',
+                ai_review: c.ai_review !== undefined ? c.ai_review : (c.passed !== undefined ? c.passed : (c.status === 'passed')),
+                ai_notes: c.ai_notes || c.notes || c.details || c.message || (c.passed ? 'Passed' : 'Failed'),
+                human_review: c.human_review || '',
+            }));
+            const summary = comp.summary || report?.summary || comp.metadata?.summary || {
+                ai_passed: comp.passed ?? normalizedChecks.filter((c) => c.ai_review).length,
+                ai_failed: comp.failed ?? normalizedChecks.filter((c) => !c.ai_review).length,
+                total: comp.total ?? normalizedChecks.length,
+            };
+
+            const blob = await apiBlob('/export_compliance_report', {
+                method: 'POST',
+                body: JSON.stringify({
+                    checks: normalizedChecks,
+                    summary,
+                    format: 'docx',
+                }),
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeTitle = (comp.title || comp.tutorial_title || 'compliance').replace(/[^a-zA-Z0-9_-]/g, '_');
+            a.download = `${safeTitle}_compliance_report.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Compliance DOCX download error:', err);
+        } finally {
+            setDownloadingComplianceId(null);
         }
     };
 
@@ -361,6 +441,17 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
         );
     }, [slides, query]);
 
+    const filteredCompliance = useMemo(() => {
+        if (!query) return compliance;
+        return compliance.filter((c) =>
+            (c.title || '').toLowerCase().includes(query) ||
+            (c.detail || '').toLowerCase().includes(query) ||
+            (c.compliance_type || '').toLowerCase().includes(query) ||
+            (c.language_name || '').toLowerCase().includes(query) ||
+            (c.status || '').toLowerCase().includes(query)
+        );
+    }, [compliance, query]);
+
     const filteredAudio = useMemo(() => {
         if (!query) return audio;
         return audio.filter((a) =>
@@ -388,14 +479,15 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
     if (!isOpen) return null;
 
-    const totalCreationsCount = timedScripts.length + scripts.length + slides.length + audio.length + videos.length;
+    const totalCreationsCount = timedScripts.length + scripts.length + slides.length + compliance.length + audio.length + videos.length;
     const totalCount = totalCreationsCount + activities.length;
 
     const tabs = [
         { id: 'all', label: 'All', count: totalCount },
         { id: 'timed_scripts', label: 'Timed Scripts', count: timedScripts.length },
         { id: 'scripts', label: 'Tutorial Scripts', count: scripts.length },
-        { id: 'slides', label: 'Slide Decks', count: slides.length },
+        { id: 'slides', label: 'Slides', count: slides.length },
+        { id: 'compliance', label: 'Compliance', count: compliance.length },
         { id: 'audio', label: 'Voice & Audio', count: audio.length },
         { id: 'activities', label: 'Activity Logs', count: activities.length },
     ];
@@ -1029,7 +1121,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                 </>
                             )}
 
-                            {/* Section: Slide Decks */}
+                            {/* Section: Slides */}
                             {(activeTab === 'all' || activeTab === 'slides') && (
                                 <>
                                     {activeTab === 'all' && filteredSlides.length > 0 && (
@@ -1048,7 +1140,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             }}
                                         >
                                             <Presentation size={14} />
-                                            <span>Slide Decks ({filteredSlides.length})</span>
+                                            <span>Slides ({filteredSlides.length})</span>
                                         </div>
                                     )}
 
@@ -1139,6 +1231,264 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             )}
                                         </div>
                                     ))}
+                                </>
+                            )}
+
+                            {/* Section: Compliance */}
+                            {(activeTab === 'all' || activeTab === 'compliance') && (
+                                <>
+                                    {activeTab === 'all' && filteredCompliance.length > 0 && (
+                                        <div
+                                            style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-secondary, #9ca3af)',
+                                                marginTop: '0.5rem',
+                                                marginBottom: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                        >
+                                            <ShieldCheck size={14} />
+                                            <span>Compliance ({filteredCompliance.length})</span>
+                                        </div>
+                                    )}
+
+                                    {filteredCompliance.map((comp) => {
+                                        const compId = comp.id || comp.activity_id || Math.random().toString();
+                                        const isQuality = comp.compliance_type === 'quality' || (comp.activity_type && comp.activity_type.includes('quality'));
+                                        const isAdmin = comp.compliance_type === 'admin_v1' || (comp.activity_type && comp.activity_type.includes('admin'));
+                                        const hasBlockers = comp.blockers && comp.blockers > 0;
+                                        const hasFailed = comp.failed && comp.failed > 0;
+                                        const isSuccess = !hasBlockers && !hasFailed && (comp.status === 'success' || comp.status === 'completed' || comp.passed > 0);
+                                        const isDownloading = downloadingComplianceId === compId;
+
+                                        const typeLabel = isAdmin
+                                            ? 'Admin Compliance (V1)'
+                                            : isQuality
+                                            ? 'Translation Quality'
+                                            : 'Compliance Review';
+
+                                        return (
+                                            <div
+                                                key={compId}
+                                                style={{
+                                                    borderRadius: '10px',
+                                                    border: '1px solid var(--border-color, #2d2d38)',
+                                                    background: 'var(--bg-primary, #141418)',
+                                                    padding: '1rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.75rem',
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                        <ShieldCheck size={18} style={{ color: isSuccess ? '#10b981' : hasBlockers ? '#ef4444' : '#f59e0b', flexShrink: 0 }} />
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '0.9rem',
+                                                                    fontWeight: '600',
+                                                                    color: 'var(--text-primary, #ffffff)',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                                title={comp.title || comp.tutorial_title || comp.detail}
+                                                            >
+                                                                {comp.title || comp.tutorial_title || comp.detail || 'Compliance Check'}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px', flexWrap: 'wrap' }}>
+                                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                                    <Calendar size={11} />
+                                                                    <span>{formatDate(comp.created_at)}</span>
+                                                                </span>
+                                                                <span>•</span>
+                                                                <span
+                                                                    style={{
+                                                                        fontSize: '0.65rem',
+                                                                        padding: '1px 6px',
+                                                                        borderRadius: '4px',
+                                                                        background: 'var(--bg-tertiary, #252530)',
+                                                                        color: 'var(--text-secondary, #9ca3af)',
+                                                                    }}
+                                                                >
+                                                                    {typeLabel}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Status Badge */}
+                                                    <span
+                                                        style={{
+                                                            fontSize: '0.7rem',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '999px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.3rem',
+                                                            fontWeight: '500',
+                                                            flexShrink: 0,
+                                                            background: hasBlockers
+                                                                ? 'rgba(239, 68, 68, 0.15)'
+                                                                : hasFailed
+                                                                ? 'rgba(234, 179, 8, 0.15)'
+                                                                : 'rgba(34, 197, 94, 0.15)',
+                                                            color: hasBlockers ? '#f87171' : hasFailed ? '#fde047' : '#4ade80',
+                                                            border: `1px solid ${hasBlockers ? 'rgba(239, 68, 68, 0.3)' : hasFailed ? 'rgba(234, 179, 8, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
+                                                        }}
+                                                    >
+                                                        {hasBlockers ? (
+                                                            <>
+                                                                <AlertCircle size={12} />
+                                                                <span>{comp.blockers} Blocker{comp.blockers > 1 ? 's' : ''}</span>
+                                                            </>
+                                                        ) : hasFailed ? (
+                                                            <>
+                                                                <AlertCircle size={12} />
+                                                                <span>{comp.failed} Issue{comp.failed > 1 ? 's' : ''}</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <CheckCircle2 size={12} />
+                                                                <span>Passed</span>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                {/* Metrics Pills */}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
+                                                    {comp.quality_score != null && (
+                                                        <span
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.25rem',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'rgba(245, 158, 11, 0.15)',
+                                                                color: '#fbbf24',
+                                                                border: '1px solid rgba(245, 158, 11, 0.25)',
+                                                                fontWeight: '500',
+                                                            }}
+                                                        >
+                                                            ⭐ {Number(comp.quality_score).toFixed(1)}/5 Quality
+                                                        </span>
+                                                    )}
+                                                    {comp.language_name && (
+                                                        <span
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.25rem',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'rgba(99, 102, 241, 0.12)',
+                                                                color: '#a5b4fc',
+                                                                border: '1px solid rgba(99, 102, 241, 0.25)',
+                                                            }}
+                                                        >
+                                                            🌐 {comp.language_name} {comp.language_native ? `(${comp.language_native})` : ''}
+                                                        </span>
+                                                    )}
+                                                    {comp.passed != null && (
+                                                        <span
+                                                            style={{
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'rgba(34, 197, 94, 0.12)',
+                                                                color: '#86efac',
+                                                                border: '1px solid rgba(34, 197, 94, 0.25)',
+                                                            }}
+                                                        >
+                                                            ✓ {comp.passed} Passed
+                                                        </span>
+                                                    )}
+                                                    {comp.failed != null && comp.failed > 0 && (
+                                                        <span
+                                                            style={{
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'rgba(239, 68, 68, 0.12)',
+                                                                color: '#fca5a5',
+                                                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                                            }}
+                                                        >
+                                                            ✗ {comp.failed} Failed
+                                                        </span>
+                                                    )}
+                                                    {comp.skipped != null && comp.skipped > 0 && (
+                                                        <span
+                                                            style={{
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'var(--bg-tertiary, #252530)',
+                                                                color: 'var(--text-secondary, #9ca3af)',
+                                                            }}
+                                                        >
+                                                            — {comp.skipped} Skipped
+                                                        </span>
+                                                    )}
+                                                    {comp.total != null && comp.total > 0 && !comp.passed && (
+                                                        <span
+                                                            style={{
+                                                                padding: '2px 8px',
+                                                                borderRadius: '6px',
+                                                                background: 'var(--bg-tertiary, #252530)',
+                                                                color: 'var(--text-secondary, #9ca3af)',
+                                                            }}
+                                                        >
+                                                            {comp.total} Total Checks
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Action Bar */}
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        paddingTop: '0.25rem',
+                                                        borderTop: '1px solid var(--border-color, #2d2d38)',
+                                                    }}
+                                                >
+                                                    <button
+                                                        onClick={() => handleDownloadComplianceDocx(comp)}
+                                                        disabled={isDownloading}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            padding: '0.4rem 0.85rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '500',
+                                                            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                                                            border: 'none',
+                                                            color: '#ffffff',
+                                                            cursor: isDownloading ? 'not-allowed' : 'pointer',
+                                                            opacity: isDownloading ? 0.7 : 1,
+                                                            transition: 'opacity 0.2s',
+                                                        }}
+                                                    >
+                                                        {isDownloading ? (
+                                                            <Loader2 size={13} className="spin" />
+                                                        ) : (
+                                                            <Download size={13} />
+                                                        )}
+                                                        <span>{isDownloading ? 'Generating...' : 'Download Report (.docx)'}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </>
                             )}
 
@@ -1562,6 +1912,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                             {(filteredTimedScripts.length === 0 &&
                                 filteredScripts.length === 0 &&
                                 filteredSlides.length === 0 &&
+                                filteredCompliance.length === 0 &&
                                 filteredAudio.length === 0 &&
                                 filteredVideos.length === 0 &&
                                 filteredActivities.length === 0) && (
@@ -1584,7 +1935,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                     <div style={{ fontSize: '0.8rem', maxWidth: '280px' }}>
                                         {searchQuery
                                             ? 'Try searching with a different keyword.'
-                                            : 'Generate scripts, timed recordings, or slide decks to see your creations here.'}
+                                            : 'Generate scripts, timed recordings, slides, or compliance reports to see your creations here.'}
                                     </div>
                                 </div>
                             )}
