@@ -552,6 +552,7 @@ async def get_user_creations(
                             item["language_code"] = meta.get("language_code")
                             item["report"] = meta.get("report")
                             item["summary"] = meta.get("summary")
+                            item["json_script"] = meta.get("json_script")
                             compliance.append(item)
             except Exception as e:
                 logger.debug("Failed to query user_activities in get_user_creations: %s", e)

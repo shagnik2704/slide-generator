@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     X,
     FolderClock,
@@ -96,6 +97,7 @@ function getActivityIcon(type) {
 }
 
 export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
+    const navigate = useNavigate();
     const [timedScripts, setTimedScripts] = useState([]);
     const [scripts, setScripts] = useState([]);
     const [slides, setSlides] = useState([]);
@@ -322,6 +324,48 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
             console.error('Compliance DOCX download error:', err);
         } finally {
             setDownloadingComplianceId(null);
+        }
+    };
+
+    const handleOpenComplianceWorkspace = (comp) => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+        setPlayingAudioId(null);
+
+        const report = comp.report || comp.metadata?.report || {
+            checks: comp.checks || comp.metadata?.checks || [],
+            summary: comp.summary || comp.metadata?.summary || {
+                ai_passed: comp.passed || 0,
+                ai_failed: comp.failed || 0,
+                ai_skipped: comp.skipped || 0,
+                total: comp.total || 0,
+            },
+            issues: comp.issues || comp.metadata?.issues || [],
+            artifact_summary: {
+                title: comp.title || comp.tutorial_title || 'Tutorial Script',
+            },
+        };
+        const jsonScript = comp.json_script || comp.metadata?.json_script || report?.json_script;
+
+        const payload = {
+            report,
+            jsonScript,
+            filename: comp.title || comp.tutorial_title || 'tutorial_script',
+            tutorialTitle: comp.title || comp.tutorial_title,
+        };
+
+        try {
+            window.sessionStorage.setItem('adminComplianceReviewPayload', JSON.stringify(payload));
+        } catch (e) {
+            console.error('Failed to save compliance payload to sessionStorage:', e);
+        }
+
+        onClose();
+        if (navigate) {
+            navigate('/admin-compliance-review', { state: payload });
+        } else {
+            window.location.href = '/admin-compliance-review';
         }
     };
 
@@ -696,34 +740,12 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                             return (
                                 <button
                                     key={tab.id}
+                                    type="button"
                                     onClick={() => setActiveTab(tab.id)}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.35rem',
-                                        padding: '0.35rem 0.65rem',
-                                        borderRadius: '6px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: active ? '600' : '400',
-                                        border: active ? '1px solid var(--accent-primary, #6366f1)' : '1px solid var(--border-color, #2d2d38)',
-                                        background: active ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                                        color: active ? 'var(--accent-primary, #818cf8)' : 'var(--text-secondary, #9ca3af)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s',
-                                        whiteSpace: 'nowrap',
-                                        flexShrink: 0,
-                                    }}
+                                    className={`creation-tab-btn ${active ? 'is-active' : ''}`}
                                 >
                                     <span>{tab.label}</span>
-                                    <span
-                                        style={{
-                                            padding: '1px 5px',
-                                            borderRadius: '10px',
-                                            fontSize: '0.7rem',
-                                            background: active ? 'var(--accent-primary, #6366f1)' : 'var(--bg-tertiary, #252530)',
-                                            color: active ? '#fff' : 'var(--text-secondary, #9ca3af)',
-                                        }}
-                                    >
+                                    <span className="creation-tab-badge">
                                         {tab.count}
                                     </span>
                                 </button>
@@ -814,7 +836,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 style={{
                                                     borderRadius: '10px',
                                                     border: '1px solid var(--border-color, #2d2d38)',
-                                                    background: 'var(--bg-primary, #141418)',
+                                                    background: 'var(--card, var(--bg-primary, #141418))',
                                                     padding: '1rem',
                                                     display: 'flex',
                                                     flexDirection: 'column',
@@ -849,19 +871,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
                                                     {/* Status Badge */}
                                                     <span
-                                                        style={{
-                                                            fontSize: '0.7rem',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '999px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.3rem',
-                                                            fontWeight: '500',
-                                                            flexShrink: 0,
-                                                            background: isComplete ? 'rgba(34, 197, 94, 0.15)' : isProcessing ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                                            color: isComplete ? '#4ade80' : isProcessing ? '#fde047' : '#f87171',
-                                                            border: `1px solid ${isComplete ? 'rgba(34, 197, 94, 0.3)' : isProcessing ? 'rgba(234, 179, 8, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                                                        }}
+                                                        className={isComplete ? 'creation-badge-success' : isProcessing ? 'creation-badge-warning' : 'creation-badge-danger'}
                                                     >
                                                         {isComplete && <CheckCircle2 size={12} />}
                                                         {isProcessing && <Loader2 size={12} className="spin" />}
@@ -994,7 +1004,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 style={{
                                                     borderRadius: '10px',
                                                     border: '1px solid var(--border-color, #2d2d38)',
-                                                    background: 'var(--bg-primary, #141418)',
+                                                    background: 'var(--card, var(--bg-primary, #141418))',
                                                     padding: '1rem',
                                                     display: 'flex',
                                                     flexDirection: 'column',
@@ -1150,7 +1160,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             style={{
                                                 borderRadius: '10px',
                                                 border: '1px solid var(--border-color, #2d2d38)',
-                                                background: 'var(--bg-primary, #141418)',
+                                                background: 'var(--card, var(--bg-primary, #141418))',
                                                 padding: '1rem',
                                                 display: 'flex',
                                                 flexDirection: 'column',
@@ -1278,7 +1288,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 style={{
                                                     borderRadius: '10px',
                                                     border: '1px solid var(--border-color, #2d2d38)',
-                                                    background: 'var(--bg-primary, #141418)',
+                                                    background: 'var(--card, var(--bg-primary, #141418))',
                                                     padding: '1rem',
                                                     display: 'flex',
                                                     flexDirection: 'column',
@@ -1289,34 +1299,41 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                                                         <ShieldCheck size={18} style={{ color: isSuccess ? '#10b981' : hasBlockers ? '#ef4444' : '#f59e0b', flexShrink: 0 }} />
                                                         <div style={{ minWidth: 0 }}>
-                                                            <div
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenComplianceWorkspace(comp)}
                                                                 style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: 0,
+                                                                    margin: 0,
+                                                                    textAlign: 'left',
+                                                                    cursor: 'pointer',
                                                                     fontSize: '0.9rem',
                                                                     fontWeight: '600',
                                                                     color: 'var(--text-primary, #ffffff)',
                                                                     overflow: 'hidden',
                                                                     textOverflow: 'ellipsis',
                                                                     whiteSpace: 'nowrap',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '0.35rem',
+                                                                    maxWidth: '100%',
                                                                 }}
-                                                                title={comp.title || comp.tutorial_title || comp.detail}
+                                                                title="Open in Compliance Review Workspace"
                                                             >
-                                                                {comp.title || comp.tutorial_title || comp.detail || 'Compliance Check'}
-                                                            </div>
+                                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                    {comp.title || comp.tutorial_title || comp.detail || 'Compliance Check'}
+                                                                </span>
+                                                                <ExternalLink size={12} style={{ opacity: 0.65, flexShrink: 0 }} />
+                                                            </button>
                                                             <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2px', flexWrap: 'wrap' }}>
                                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                                     <Calendar size={11} />
                                                                     <span>{formatDate(comp.created_at)}</span>
                                                                 </span>
                                                                 <span>•</span>
-                                                                <span
-                                                                    style={{
-                                                                        fontSize: '0.65rem',
-                                                                        padding: '1px 6px',
-                                                                        borderRadius: '4px',
-                                                                        background: 'var(--bg-tertiary, #252530)',
-                                                                        color: 'var(--text-secondary, #9ca3af)',
-                                                                    }}
-                                                                >
+                                                                <span className="creation-pill-type">
                                                                     {typeLabel}
                                                                 </span>
                                                             </div>
@@ -1325,23 +1342,13 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
                                                     {/* Status Badge */}
                                                     <span
-                                                        style={{
-                                                            fontSize: '0.7rem',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '999px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.3rem',
-                                                            fontWeight: '500',
-                                                            flexShrink: 0,
-                                                            background: hasBlockers
-                                                                ? 'rgba(239, 68, 68, 0.15)'
+                                                        className={
+                                                            hasBlockers
+                                                                ? 'creation-badge-danger'
                                                                 : hasFailed
-                                                                ? 'rgba(234, 179, 8, 0.15)'
-                                                                : 'rgba(34, 197, 94, 0.15)',
-                                                            color: hasBlockers ? '#f87171' : hasFailed ? '#fde047' : '#4ade80',
-                                                            border: `1px solid ${hasBlockers ? 'rgba(239, 68, 68, 0.3)' : hasFailed ? 'rgba(234, 179, 8, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
-                                                        }}
+                                                                ? 'creation-badge-warning'
+                                                                : 'creation-badge-success'
+                                                        }
                                                     >
                                                         {hasBlockers ? (
                                                             <>
@@ -1363,87 +1370,34 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 </div>
 
                                                 {/* Metrics Pills */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                     {comp.quality_score != null && (
-                                                        <span
-                                                            style={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.25rem',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'rgba(245, 158, 11, 0.15)',
-                                                                color: '#fbbf24',
-                                                                border: '1px solid rgba(245, 158, 11, 0.25)',
-                                                                fontWeight: '500',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-quality">
                                                             ⭐ {Number(comp.quality_score).toFixed(1)}/5 Quality
                                                         </span>
                                                     )}
                                                     {comp.language_name && (
-                                                        <span
-                                                            style={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.25rem',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'rgba(99, 102, 241, 0.12)',
-                                                                color: '#a5b4fc',
-                                                                border: '1px solid rgba(99, 102, 241, 0.25)',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-lang">
                                                             🌐 {comp.language_name} {comp.language_native ? `(${comp.language_native})` : ''}
                                                         </span>
                                                     )}
                                                     {comp.passed != null && (
-                                                        <span
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'rgba(34, 197, 94, 0.12)',
-                                                                color: '#86efac',
-                                                                border: '1px solid rgba(34, 197, 94, 0.25)',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-passed">
                                                             ✓ {comp.passed} Passed
                                                         </span>
                                                     )}
                                                     {comp.failed != null && comp.failed > 0 && (
-                                                        <span
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'rgba(239, 68, 68, 0.12)',
-                                                                color: '#fca5a5',
-                                                                border: '1px solid rgba(239, 68, 68, 0.25)',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-failed">
                                                             ✗ {comp.failed} Failed
                                                         </span>
                                                     )}
                                                     {comp.skipped != null && comp.skipped > 0 && (
-                                                        <span
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'var(--bg-tertiary, #252530)',
-                                                                color: 'var(--text-secondary, #9ca3af)',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-skipped">
                                                             — {comp.skipped} Skipped
                                                         </span>
                                                     )}
                                                     {comp.total != null && comp.total > 0 && !comp.passed && (
-                                                        <span
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                borderRadius: '6px',
-                                                                background: 'var(--bg-tertiary, #252530)',
-                                                                color: 'var(--text-secondary, #9ca3af)',
-                                                            }}
-                                                        >
+                                                        <span className="creation-pill creation-pill-skipped">
                                                             {comp.total} Total Checks
                                                         </span>
                                                     )}
@@ -1455,28 +1409,17 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'flex-end',
-                                                        paddingTop: '0.25rem',
+                                                        gap: '0.5rem',
+                                                        paddingTop: '0.5rem',
                                                         borderTop: '1px solid var(--border-color, #2d2d38)',
                                                     }}
                                                 >
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleDownloadComplianceDocx(comp)}
                                                         disabled={isDownloading}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.35rem',
-                                                            padding: '0.4rem 0.85rem',
-                                                            borderRadius: '6px',
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: '500',
-                                                            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                                                            border: 'none',
-                                                            color: '#ffffff',
-                                                            cursor: isDownloading ? 'not-allowed' : 'pointer',
-                                                            opacity: isDownloading ? 0.7 : 1,
-                                                            transition: 'opacity 0.2s',
-                                                        }}
+                                                        className="creation-action-btn creation-action-btn-secondary"
+                                                        title="Download compliance matrix report (.docx)"
                                                     >
                                                         {isDownloading ? (
                                                             <Loader2 size={13} className="spin" />
@@ -1484,6 +1427,16 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                             <Download size={13} />
                                                         )}
                                                         <span>{isDownloading ? 'Generating...' : 'Download Report (.docx)'}</span>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenComplianceWorkspace(comp)}
+                                                        className="creation-action-btn creation-action-btn-primary"
+                                                        title="Open in Compliance Review Workspace directly without downloading"
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                        <span>Open in Workspace</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -1531,7 +1484,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                                 style={{
                                                     borderRadius: '10px',
                                                     border: isPlaying ? '1px solid #ec4899' : '1px solid var(--border-color, #2d2d38)',
-                                                    background: 'var(--bg-primary, #141418)',
+                                                    background: 'var(--card, var(--bg-primary, #141418))',
                                                     padding: '1rem',
                                                     display: 'flex',
                                                     flexDirection: 'column',
@@ -1748,7 +1701,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             style={{
                                                 borderRadius: '10px',
                                                 border: '1px solid var(--border-color, #2d2d38)',
-                                                background: 'var(--bg-primary, #141418)',
+                                                background: 'var(--card, var(--bg-primary, #141418))',
                                                 padding: '1rem',
                                                 display: 'flex',
                                                 flexDirection: 'column',
@@ -1845,7 +1798,7 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
                                             style={{
                                                 borderRadius: '8px',
                                                 border: '1px solid var(--border-color, #2d2d38)',
-                                                background: 'var(--bg-primary, #141418)',
+                                                background: 'var(--card, var(--bg-primary, #141418))',
                                                 padding: '0.75rem 1rem',
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -1890,15 +1843,8 @@ export default function CreationsDrawer({ isOpen, onClose, onLoadJob }) {
 
                                             {act.status && (
                                                 <span
-                                                    style={{
-                                                        fontSize: '0.7rem',
-                                                        padding: '2px 6px',
-                                                        borderRadius: '4px',
-                                                        background: act.status === 'success' || act.status === 'completed' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.15)',
-                                                        color: act.status === 'success' || act.status === 'completed' ? '#4ade80' : '#fde047',
-                                                        textTransform: 'capitalize',
-                                                        flexShrink: 0,
-                                                    }}
+                                                    className={act.status === 'success' || act.status === 'completed' ? 'creation-badge-success' : 'creation-badge-warning'}
+                                                    style={{ textTransform: 'capitalize' }}
                                                 >
                                                     {act.status}
                                                 </span>
