@@ -77,6 +77,7 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
                 "summary": summary,
                 "compliance_type": "standard",
                 "report": compliance_report,
+                "json_script": json_script,
             },
         )
 
@@ -144,6 +145,7 @@ async def check_admin_compliance_v1_endpoint(data: dict, current_user: TokenData
                 "policy": compliance_report.get("policy"),
                 "compliance_type": "admin_v1",
                 "report": compliance_report,
+                "json_script": json_script,
             },
         )
 
