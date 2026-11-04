@@ -62,12 +62,22 @@ async def check_compliance_endpoint(data: dict, current_user: TokenData = Depend
         summary = compliance_report.get('summary', {})
         print(f"✅ Compliance check complete: {summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed")
 
+        title = json_script.get('title') or (json_script.get('metadata') or {}).get('title') or 'Tutorial Script'
         log_activity(
             user=current_user,
             activity_type="compliance_check",
-            detail=f"Compliance check ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
+            detail=f"Compliance check: {title} ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
             status="completed",
-            metadata={"passed": summary.get("ai_passed", 0), "failed": summary.get("ai_failed", 0)},
+            metadata={
+                "tutorial_title": title,
+                "tutorial_type": tutorial_type,
+                "passed": summary.get("ai_passed", 0),
+                "failed": summary.get("ai_failed", 0),
+                "total": summary.get("total", 0),
+                "summary": summary,
+                "compliance_type": "standard",
+                "report": compliance_report,
+            },
         )
 
         return compliance_report
@@ -106,6 +116,9 @@ async def check_admin_compliance_v1_endpoint(data: dict, current_user: TokenData
         )
 
         summary = compliance_report.get('summary', {})
+        issues = compliance_report.get('issues', [])
+        blockers = sum(1 for iss in issues if iss.get('severity') == 'blocker')
+        title = json_script.get('title') or (json_script.get('metadata') or {}).get('title') or compliance_report.get('artifact_summary', {}).get('title') or 'Tutorial Script'
         print(
             "✅ Evidence-based compliance complete: "
             f"{summary.get('ai_passed', 0)} passed, "
@@ -116,9 +129,22 @@ async def check_admin_compliance_v1_endpoint(data: dict, current_user: TokenData
         log_activity(
             user=current_user,
             activity_type="admin_compliance_check",
-            detail=f"Admin compliance ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
+            detail=f"Admin compliance: {title} ({summary.get('ai_passed', 0)} passed, {summary.get('ai_failed', 0)} failed)",
             status="completed",
-            metadata={"passed": summary.get("ai_passed", 0), "failed": summary.get("ai_failed", 0), "skipped": summary.get("ai_skipped", 0)},
+            metadata={
+                "tutorial_title": title,
+                "tutorial_type": tutorial_type,
+                "passed": summary.get("ai_passed", 0),
+                "failed": summary.get("ai_failed", 0),
+                "skipped": summary.get("ai_skipped", 0),
+                "total": summary.get("total", 0),
+                "blockers": blockers,
+                "issues_count": len(issues),
+                "summary": summary,
+                "policy": compliance_report.get("policy"),
+                "compliance_type": "admin_v1",
+                "report": compliance_report,
+            },
         )
 
         return compliance_report

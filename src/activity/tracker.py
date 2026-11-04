@@ -354,6 +354,7 @@ async def get_user_creations(
         "timed_scripts": [],
         "scripts": [],
         "slides": [],
+        "compliance": [],
         "audio": [],
         "videos": [],
         "total_count": 0,
@@ -375,6 +376,7 @@ async def get_user_creations(
         timed_scripts: list[dict[str, Any]] = []
         scripts: list[dict[str, Any]] = []
         slides: list[dict[str, Any]] = []
+        compliance: list[dict[str, Any]] = []
         audio: list[dict[str, Any]] = []
         videos: list[dict[str, Any]] = []
 
@@ -517,14 +519,49 @@ async def get_user_creations(
                             item["video_url"] = meta.get("video_url")
                             item["url"] = meta.get("video_url")
                             videos.append(item)
+                        elif act_type in (
+                            "compliance_check",
+                            "admin_compliance_check",
+                            "batch_compliance_check",
+                            "quality_check",
+                            "batch_quality_check",
+                            "outline_compliance_check",
+                        ):
+                            comp_type = meta.get("compliance_type")
+                            if not comp_type:
+                                if "admin" in act_type:
+                                    comp_type = "admin_v1"
+                                elif "quality" in act_type:
+                                    comp_type = "quality"
+                                elif "batch" in act_type:
+                                    comp_type = "batch"
+                                else:
+                                    comp_type = "standard"
+
+                            item["compliance_type"] = comp_type
+                            item["title"] = meta.get("tutorial_title") or meta.get("title") or item["detail"]
+                            item["tutorial_title"] = item["title"]
+                            item["passed"] = meta.get("passed", 0)
+                            item["failed"] = meta.get("failed", 0)
+                            item["skipped"] = meta.get("skipped", 0)
+                            item["total"] = meta.get("total", 0)
+                            item["blockers"] = meta.get("blockers", 0)
+                            item["quality_score"] = meta.get("quality_score") or meta.get("avg_quality_score")
+                            item["language_name"] = meta.get("language_name")
+                            item["language_native"] = meta.get("language_native")
+                            item["language_code"] = meta.get("language_code")
+                            item["report"] = meta.get("report")
+                            item["summary"] = meta.get("summary")
+                            compliance.append(item)
             except Exception as e:
                 logger.debug("Failed to query user_activities in get_user_creations: %s", e)
 
-        total_count = len(timed_scripts) + len(scripts) + len(slides) + len(audio) + len(videos)
+        total_count = len(timed_scripts) + len(scripts) + len(slides) + len(compliance) + len(audio) + len(videos)
         return {
             "timed_scripts": timed_scripts,
             "scripts": scripts,
             "slides": slides,
+            "compliance": compliance,
             "audio": audio,
             "videos": videos,
             "total_count": total_count,

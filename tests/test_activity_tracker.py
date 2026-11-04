@@ -141,6 +141,7 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("timed_scripts", res)
             self.assertIn("scripts", res)
             self.assertIn("slides", res)
+            self.assertIn("compliance", res)
             self.assertIn("audio", res)
             self.assertIn("videos", res)
             self.assertEqual(res["total_count"], 0)
@@ -378,6 +379,85 @@ class ActivityTrackerUnitTests(unittest.IsolatedAsyncioTestCase):
             exp_aud = creations["audio"][3]
             self.assertEqual(exp_aud["audio_url"], "/output/audio/project_proj_explicit/slide_1.wav")
             self.assertEqual(exp_aud["zip_url"], "/output/audio/project_proj_explicit/audio_project_proj_explicit.zip")
+
+    async def test_get_user_creations_extracts_compliance_activities(self):
+        """get_user_creations extracts admin and quality compliance activities into compliance array."""
+        from datetime import datetime, timezone
+        from src.activity.tracker import get_user_creations
+
+        now = datetime.now(timezone.utc)
+        mock_activities = [
+            {
+                "id": 901,
+                "activity_type": "admin_compliance_check",
+                "detail": "Admin compliance: Python Basics (14 passed, 2 failed)",
+                "status": "completed",
+                "metadata": {
+                    "tutorial_title": "Python Basics",
+                    "compliance_type": "admin_v1",
+                    "passed": 14,
+                    "failed": 2,
+                    "skipped": 1,
+                    "total": 17,
+                    "blockers": 1,
+                    "summary": {"ai_passed": 14, "ai_failed": 2},
+                },
+                "created_at": now,
+            },
+            {
+                "id": 902,
+                "activity_type": "quality_check",
+                "detail": "Quality check (Hindi): Python Basics - 4.8/5",
+                "status": "completed",
+                "metadata": {
+                    "tutorial_title": "Python Basics",
+                    "compliance_type": "quality",
+                    "language_code": "hi",
+                    "language_name": "Hindi",
+                    "language_native": "हिंदी",
+                    "quality_score": 4.8,
+                    "passed": 10,
+                    "failed": 0,
+                    "total": 10,
+                },
+                "created_at": now,
+            },
+        ]
+
+        mock_cur = AsyncMock()
+        mock_cur.fetchall.side_effect = [
+            [],                 # background_jobs
+            [],                 # script_chat_threads
+            mock_activities,    # user_activities
+        ]
+        mock_cursor_ctx = MagicMock()
+        mock_cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cur)
+        mock_cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor_ctx
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool = MagicMock()
+        mock_pool.connection.return_value = mock_conn_ctx
+
+        with patch("src.script_chat.persistence.get_pool", return_value=mock_pool):
+            creations = await get_user_creations(user_id=str(uuid4()))
+            self.assertIn("compliance", creations)
+            self.assertEqual(len(creations["compliance"]), 2)
+            self.assertEqual(creations["total_count"], 2)
+
+            admin_item = creations["compliance"][0]
+            self.assertEqual(admin_item["compliance_type"], "admin_v1")
+            self.assertEqual(admin_item["title"], "Python Basics")
+            self.assertEqual(admin_item["passed"], 14)
+            self.assertEqual(admin_item["failed"], 2)
+            self.assertEqual(admin_item["blockers"], 1)
+
+            quality_item = creations["compliance"][1]
+            self.assertEqual(quality_item["compliance_type"], "quality")
+            self.assertEqual(quality_item["language_name"], "Hindi")
+            self.assertEqual(quality_item["quality_score"], 4.8)
 
     def test_extract_client_context(self):
         """extract_client_context accurately extracts IP and user agent headers."""
